@@ -1,0 +1,145 @@
+{
+  "version": "3.0",
+  "signals": [
+    { "id": "dr", "type": "dateRange", "default": { "days": 30 }, "persist": "url" },
+    { "id": "view", "type": "selection", "default": 0, "persist": "session" }
+  ],
+  "layers": [
+    {
+      "id": 0,
+      "visible": true,
+      "root": {
+        "uid": "root",
+        "type": "fragment",
+        "children": [
+          {
+            "uid": "b0",
+            "type": "container",
+            "layout": { "priority": "hero" },
+            "children": [
+              { "uid": "b0.0", "type": "text", "value": "CENTRO DE MANDO" }
+            ]
+          },
+          {
+            "uid": "b1",
+            "type": "container",
+            "children": [
+              { "uid": "b1.0", "type": "button", "label": "Dashboard", "signals": { "emit": "view", "receive": "view", "value": 0 } },
+              { "uid": "b1.1", "type": "button", "label": "Pilotos", "signals": { "emit": "view", "receive": "view", "value": 1 } },
+              { "uid": "b1.2", "type": "button", "label": "Alertas", "signals": { "emit": "view", "receive": "view", "value": 2 } },
+              { "uid": "b1.3", "type": "button", "label": "Vuelos", "signals": { "emit": "view", "receive": "view", "value": 3 } }
+            ]
+          },
+          {
+            "uid": "b2",
+            "type": "container",
+            "condition": { "signal": "view", "op": "eq", "value": 0 },
+            "children": [
+              { "uid": "b2.0", "type": "kpi", "binding": { "field": 0 }, "label": "Pilotos" },
+              { "uid": "b2.1", "type": "kpi", "binding": { "field": 1 }, "label": "Horas" },
+              { "uid": "b2.2", "type": "kpi", "binding": { "field": 2 }, "label": "Vuelos" },
+              { "uid": "b2.3", "type": "kpi", "binding": { "field": 3 }, "label": "Ops" },
+              {
+                "uid": "b2.4",
+                "type": "grid",
+                "layout": { "columns": 2 },
+                "children": [
+                  {
+                    "uid": "b2.4.0",
+                    "type": "list",
+                    "binding": { "field": "pilots" },
+                    "layout": { "span": 2 },
+                    "template": {
+                      "uid": "b2.4.0.t",
+                      "type": "card",
+                      "binding": { "field": "." },
+                      "trigger": { "action": "openLayer", "layer": 1 }
+                    }
+                  },
+                  {
+                    "uid": "b2.4.1",
+                    "type": "container",
+                    "children": [
+                      {
+                        "uid": "b2.4.1.0",
+                        "type": "list",
+                        "binding": { "field": "alerts" },
+                        "template": {
+                          "uid": "b2.4.1.0.t",
+                          "type": "text",
+                          "binding": { "field": "." }
+                        }
+                      },
+                      {
+                        "uid": "b2.4.1.1",
+                        "type": "button",
+                        "label": "Acción",
+                        "trigger": { "action": "openLayer", "layer": 2 }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uid": "b3",
+            "type": "container",
+            "condition": { "signal": "view", "op": "eq", "value": 3 },
+            "children": [
+              { "uid": "b3.0", "type": "table", "binding": { "field": "flights" } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "visible": false,
+      "root": {
+        "uid": "l1",
+        "type": "modal",
+        "children": [
+          { "uid": "l1.0", "type": "kpi", "binding": { "field": ".hours" } },
+          { "uid": "l1.1", "type": "kpi", "binding": { "field": ".ops" } },
+          { "uid": "l1.2", "type": "button", "label": "Asignar", "trigger": { "action": "openLayer", "layer": 2 } },
+          { "uid": "l1.3", "type": "button", "label": "Cerrar", "trigger": { "action": "closeLayer" } }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "visible": false,
+      "root": {
+        "uid": "l2",
+        "type": "modal",
+        "children": [
+          {
+            "uid": "l2.0",
+            "type": "form",
+            "children": [
+              { "uid": "l2.0.0", "type": "select", "binding": { "field": "pilots" } },
+              { "uid": "l2.0.1", "type": "select", "binding": { "field": "missions" } }
+            ]
+          },
+          { "uid": "l2.1", "type": "button", "label": "Confirmar" },
+          { "uid": "l2.2", "type": "button", "label": "Cancelar", "trigger": { "action": "closeLayer" } }
+        ]
+      }
+    }
+  ],
+  "components": {
+    "fragment": { "component": "Fragment", "props": [] },
+    "container": { "component": "Container", "props": ["layout", "condition"] },
+    "text": { "component": "Text", "props": ["value", "binding"] },
+    "button": { "component": "Button", "props": ["label", "signals", "trigger"] },
+    "kpi": { "component": "KPI", "props": ["binding", "label", "signals"] },
+    "grid": { "component": "Grid", "props": ["layout", "children"] },
+    "list": { "component": "List", "props": ["binding", "template", "layout"] },
+    "card": { "component": "Card", "props": ["binding", "trigger", "children"] },
+    "table": { "component": "Table", "props": ["binding", "columns", "signals"] },
+    "modal": { "component": "Modal", "props": ["visible", "onClose", "children"] },
+    "form": { "component": "Form", "props": ["children", "onSubmit"] },
+    "select": { "component": "Select", "props": ["binding", "options", "signals"] }
+  }
+}

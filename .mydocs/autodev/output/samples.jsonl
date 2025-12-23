@@ -1,0 +1,25 @@
+{"iteration":1,"prompt":"Create a KPI card showing revenue with trend indicator","consistent":false,"findings":[{"type":"gap","severity":"major","description":"No trend indicator syntax in spec"},{"type":"gap","severity":"minor","description":"Schema has nested child for trend, LiquidCode is flat"}]}
+{"iteration":2,"prompt":"Build a data table with sortable columns","consistent":true,"findings":[{"type":"gap","severity":"minor","description":"Column binding syntax for tables not explicitly defined"}]}
+{"iteration":3,"prompt":"Design a tabbed interface with 3 tabs","consistent":true,"findings":[{"type":"inconsistency","severity":"minor","description":"Emit with specific value syntax unclear"}]}
+{"iteration":4,"prompt":"Create a modal dialog with a form","consistent":false,"findings":[{"type":"gap","severity":"major","description":"No form submission action syntax"}]}
+{"iteration":5,"prompt":"Build a selectable list component","consistent":true,"findings":[]}
+{"iteration":6,"prompt":"Create a pie chart showing category distribution","consistent":true,"findings":[]}
+{"iteration":7,"prompt":"Build a search input with results dropdown","consistent":false,"findings":[{"type":"gap","severity":"major","description":"No array notEmpty condition syntax"}]}
+{"iteration":8,"prompt":"Create a progress bar with percentage","consistent":true,"findings":[]}
+{"iteration":9,"prompt":"Design a card grid with 6 items","consistent":true,"findings":[]}
+{"iteration":10,"prompt":"Build a notification toast","consistent":false,"findings":[{"type":"gap","severity":"minor","description":"Icon type not in spec"},{"type":"gap","severity":"minor","description":"Dismiss action not defined"}]}
+{"iteration":11,"prompt":"Create a sidebar navigation","consistent":true,"findings":[]}
+{"iteration":12,"prompt":"Build a date range picker","consistent":false,"findings":[{"type":"gap","severity":"major","description":"No input type modifier"}]}
+{"iteration":13,"prompt":"Create a toggle switch","consistent":false,"findings":[{"type":"gap","severity":"major","description":"Switch type not in spec"}]}
+{"iteration":14,"prompt":"Design a user avatar with status","consistent":false,"findings":[{"type":"gap","severity":"minor","description":"Status indicator type unclear"}]}
+{"iteration":15,"prompt":"Build a collapsible accordion","consistent":false,"findings":[{"type":"inconsistency","severity":"major","description":"Index reference in iteration unclear"}]}
+{"iteration":16,"prompt":"Create a stepper/wizard component","consistent":false,"findings":[{"type":"gap","severity":"major","description":"Stepper type not in spec"},{"type":"gap","severity":"major","description":"Increment/decrement syntax not defined"}]}
+{"iteration":17,"prompt":"Design a file upload dropzone","consistent":false,"findings":[{"type":"gap","severity":"major","description":"Upload type not in spec"}]}
+{"iteration":18,"prompt":"Build a rating stars component","consistent":false,"findings":[{"type":"gap","severity":"major","description":"Rating type not in spec"}]}
+{"iteration":19,"prompt":"Create a breadcrumb navigation","consistent":false,"findings":[{"type":"gap","severity":"minor","description":"List separator syntax not defined"}]}
+{"iteration":20,"prompt":"Design a color picker","consistent":true,"findings":[]}
+{"iteration":21,"prompt":"Build a countdown timer","consistent":true,"findings":[]}
+{"iteration":22,"prompt":"Create a data card with chart","consistent":true,"findings":[]}
+{"iteration":23,"prompt":"Design a filter panel","consistent":true,"findings":[]}
+{"iteration":24,"prompt":"Build an image gallery","consistent":false,"findings":[{"type":"gap","severity":"minor","description":"Index access in iteration unclear"}]}
+{"iteration":25,"prompt":"Create a stat comparison card","consistent":true,"findings":[]}

@@ -56,4 +56,4 @@ dist/
 .turbo
 
 # content collections
-.content-collections
+.content-collections.claude/audio/

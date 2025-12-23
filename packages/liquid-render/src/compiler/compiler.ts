@@ -1,9 +1,37 @@
-// LiquidSurvey Compiler - Main Entry Point
-// Provides compile, parse, and roundtrip functions
+// Liquid Render Compiler - Main Entry Point
+// Provides compile, parse, and roundtrip functions for both UI and Survey DSLs
 
 import { SurveyScanner } from './scanner';
 import { SurveyParser, type SurveyAST } from './parser';
 import { SurveyEmitter, type GraphSurvey, type GraphSurveyNode, type EmitOptions } from './emitter';
+
+// Re-export UI compiler functions and types
+export {
+  compileUI,
+  parseUI,
+  parseUIToAST,
+  roundtripUI,
+  type LiquidSchema,
+  type Block,
+  type Layer,
+  type Signal,
+  type Binding,
+  type Layout,
+  type SignalBinding,
+  type Style,
+  type UIAST,
+  type BlockAST,
+  type LayerAST,
+  type ModifierAST,
+  type BindingAST,
+} from './ui-compiler';
+
+// Re-export survey types
+export type { GraphSurvey, GraphSurveyNode, EmitOptions };
+
+// ============================================================================
+// LiquidSurvey Compiler (Part II - Survey Flows)
+// ============================================================================
 
 /**
  * Compile GraphSurvey schema to LiquidSurvey DSL
@@ -229,4 +257,76 @@ function compareSchemas(
     isEquivalent: differences.length === 0,
     differences,
   };
+}
+
+// ============================================================================
+// Unified Compiler API (Auto-detect format)
+// ============================================================================
+
+import { parseUI, type LiquidSchema } from './ui-compiler';
+
+/**
+ * Detect whether source is LiquidCode (UI) or LiquidSurvey format
+ */
+export function detectFormat(source: string): 'liquidcode' | 'liquidsurvey' {
+  const trimmed = source.trim();
+
+  // LiquidSurvey indicators: starts with >, ?, !, <, or has --- header separator
+  // Use [\s\S]* to match across newlines for survey header detection
+  const surveyPattern = /^(>|[?!<]|\w[\w-]*\s+"[^"]*"[\s\S]*---)/;
+
+  // LiquidCode indicators: starts with @signal, /layer, digit followed by space/colon, or type code
+  const uiPattern = /^(@\w|\/\d|\d[\s:]|[A-Z][a-z])/;
+
+  if (surveyPattern.test(trimmed)) {
+    return 'liquidsurvey';
+  }
+
+  if (uiPattern.test(trimmed)) {
+    return 'liquidcode';
+  }
+
+  // Default to survey if contains node symbols
+  if (/^\s*[>?!<]\s+\w/.test(trimmed)) {
+    return 'liquidsurvey';
+  }
+
+  return 'liquidcode';
+}
+
+/**
+ * Parse any Liquid DSL source (auto-detects format)
+ */
+export function parseAny(source: string): GraphSurvey | LiquidSchema {
+  const format = detectFormat(source);
+
+  if (format === 'liquidsurvey') {
+    return parse(source);
+  } else {
+    return parseUI(source);
+  }
+}
+
+/**
+ * Check if a schema is a LiquidSchema (UI)
+ */
+export function isLiquidSchema(schema: unknown): schema is LiquidSchema {
+  return (
+    typeof schema === 'object' &&
+    schema !== null &&
+    'version' in schema &&
+    'layers' in schema
+  );
+}
+
+/**
+ * Check if a schema is a GraphSurvey
+ */
+export function isGraphSurvey(schema: unknown): schema is GraphSurvey {
+  return (
+    typeof schema === 'object' &&
+    schema !== null &&
+    'nodes' in schema &&
+    'startNodeId' in schema
+  );
 }

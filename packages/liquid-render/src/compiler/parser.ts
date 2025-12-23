@@ -324,29 +324,41 @@ export class SurveyParser {
         value: '',
       };
 
-      // Format: id:label=value or just label or id=label
+      let parsed = false;
+
+      // Format: id:"label"=value or just "label" or id="label" or value:"label"
       if (this.check('STRING')) {
         option.label = this.advance().value;
         option.value = option.label.toLowerCase().replace(/\s+/g, '-');
+        parsed = true;
       } else if (this.check('IDENTIFIER')) {
         const first = this.advance().value;
+        parsed = true;
 
         if (this.check('COLON')) {
-          // id:label format
-          this.advance();
+          // id:"label"=value format or id:"label" format
+          this.advance(); // consume :
           option.id = first;
           if (this.check('STRING')) {
             option.label = this.advance().value;
           }
+          // Check for =value part
+          if (this.check('EQUALS')) {
+            this.advance(); // consume =
+            if (this.check('STRING')) {
+              option.value = this.advance().value;
+            } else if (this.check('IDENTIFIER')) {
+              option.value = this.advance().value;
+            }
+          }
         } else if (this.check('EQUALS')) {
-          // id=value format
-          this.advance();
-          option.id = first;
-          option.label = first;
+          // value="label" format (where first is the value)
+          this.advance(); // consume =
+          option.value = first;
           if (this.check('STRING')) {
-            option.value = this.advance().value;
+            option.label = this.advance().value;
           } else if (this.check('IDENTIFIER')) {
-            option.value = this.advance().value;
+            option.label = this.advance().value;
           }
         } else {
           option.label = first;
@@ -358,9 +370,14 @@ export class SurveyParser {
         option.value = option.label?.toLowerCase().replace(/\s+/g, '-') || '';
       }
 
-      options.push(option);
+      if (parsed && (option.label || option.value)) {
+        options.push(option);
+      }
 
       if (this.check('COMMA')) {
+        this.advance();
+      } else if (!this.check('RBRACKET') && !parsed) {
+        // Skip unknown token to avoid infinite loop
         this.advance();
       }
     }
@@ -419,17 +436,34 @@ export class SurveyParser {
     this.advance(); // consume [
 
     while (!this.check('RBRACKET') && !this.isAtEnd()) {
+      let parsed = false;
+
       if (this.check('STRING')) {
         arr.push(this.advance().value);
+        parsed = true;
       } else if (this.check('NUMBER')) {
         arr.push(parseFloat(this.advance().value));
+        parsed = true;
       } else if (this.check('BOOLEAN')) {
         arr.push(this.advance().value === 'true');
+        parsed = true;
+      } else if (this.check('LBRACE')) {
+        // Handle nested objects inside arrays
+        arr.push(this.parseConfig());
+        parsed = true;
+      } else if (this.check('LBRACKET')) {
+        // Handle nested arrays
+        arr.push(this.parseArrayValue());
+        parsed = true;
       } else if (this.check('IDENTIFIER')) {
         arr.push(this.advance().value);
+        parsed = true;
       }
 
       if (this.check('COMMA')) {
+        this.advance();
+      } else if (!this.check('RBRACKET') && !parsed) {
+        // Skip unknown token to avoid infinite loop
         this.advance();
       }
     }

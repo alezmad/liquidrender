@@ -1,0 +1,23 @@
+{
+  "sample": "07-market-research",
+  "schemaChars": 5209,
+  "dslChars": 1850,
+  "compressionRatio": 2.82,
+  "nodesPreserved": true,
+  "conditionsPreserved": true,
+  "findings": [
+    "Successfully converted complex market research survey with 3 distinct branching paths",
+    "Preserved all conditional routing: users branch based on product-usage answer (regularly/occasionally -> satisfaction, aware -> why-not-tried, never -> product-explanation)",
+    "All paths converge at price-importance node, demonstrating proper flow merge handling",
+    "Converted 10 nodes total: 1 start, 8 questions, 1 message, 1 end",
+    "Question types mapped: Ch (choice/yesNo), Rt (rating), Mc (multiChoice), Sl (slider), Tx (text)",
+    "Used ?in [regularly, occasionally] condition for combining multiple equals conditions into single conditional branch",
+    "Preserved all question descriptions, option labels with value mappings (e.g., regularly:\"Yes regularly\")",
+    "Slider configuration preserved with full parameters: min, max, step, showValue",
+    "Required field markers (*) correctly applied to 6 of 8 questions",
+    "Inline comments preserved to mark branching sections and flow structure",
+    "Multi-choice question (features-used) has 6 options all preserved",
+    "Message node (product-explanation) includes full explanatory content before question",
+    "Compression ratio of 2.82x demonstrates significant reduction while maintaining full survey logic"
+  ]
+}

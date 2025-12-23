@@ -1,0 +1,137 @@
+# Customer Journey Survey
+# Share your complete experience with us - from discovery to satisfaction
+
+> start "Welcome!" "Thank you for taking the time to share your journey with us. This should take about 5 minutes." -> discovery-how-found
+
+# ===== STAGE 1: Discovery =====
+? discovery-how-found Ch* "How did you first find out about us?" "Understanding where our customers discover us helps us improve our outreach" [
+  search: "Search Engine",
+  social: "Social Media",
+  referral: "Friend/Family Referral",
+  ad: "Advertisement",
+  other: "Other"
+] -> discovery-search-detail ?= search
+  -> discovery-social-detail ?= social
+  -> discovery-referral-detail ?= referral
+  -> discovery-ad-detail ?= ad
+  -> discovery-other-detail ?= other
+
+? discovery-search-detail Ch* "Which search engine did you use?" [
+  google: "Google",
+  bing: "Bing",
+  duckduckgo: "DuckDuckGo",
+  other-search: "Other"
+] -> experience-purchase
+
+? discovery-social-detail Ch* "Which social media platform?" [
+  facebook: "Facebook",
+  instagram: "Instagram",
+  twitter: "Twitter/X",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  other-social: "Other"
+] -> experience-purchase
+
+? discovery-referral-detail Ch* "How did you hear about us from them?" [
+  in-person: "In-person conversation",
+  message: "Message/Email",
+  social-share: "Social media share",
+  other-referral: "Other"
+] -> experience-purchase
+
+? discovery-ad-detail Ch* "Where did you see the advertisement?" [
+  online-ad: "Online (Google, Facebook, etc.)",
+  tv: "Television",
+  radio: "Radio",
+  print: "Print (Magazine, Newspaper)",
+  billboard: "Billboard/Outdoor",
+  other-ad: "Other"
+] -> experience-purchase
+
+? discovery-other-detail Tx* "Please tell us how you discovered us" {placeholder: "Describe how you found us..."} -> experience-purchase
+
+# ===== STAGE 2: Experience (Convergence Point 1) =====
+? experience-purchase Ch* "What did you purchase or interact with?" "Select what best describes your experience with us" [
+  product-a: "Product A - Premium Widget",
+  product-b: "Product B - Essential Kit",
+  service: "Service/Consultation",
+  nothing: "Just browsing - didn't purchase"
+] -> experience-no-purchase-reason ?= nothing
+  -> satisfaction-matrix ?in [product-a, product-b, service]
+
+? experience-no-purchase-reason Ch* "What prevented you from making a purchase?" "Your feedback helps us improve" [
+  price: "Price too high",
+  not-ready: "Not ready to buy yet",
+  no-need: "Didn't find what I needed",
+  trust: "Trust/credibility concerns",
+  competitor: "Found a better option elsewhere",
+  other-reason: "Other reason"
+] -> future-would-purchase
+
+# ===== STAGE 3: Satisfaction (for purchasers only) =====
+? satisfaction-matrix Lk* "Please rate different aspects of your experience" "Help us understand what we did well and where we can improve" {
+  rows: ["Quality", "Price", "Delivery/Service", "Customer Support"],
+  columns: ["1 - Poor", "2 - Fair", "3 - Good", "4 - Very Good", "5 - Excellent"],
+  type: "radio"
+} -> satisfaction-nps
+
+? satisfaction-nps Np* "How likely are you to recommend us to a friend or colleague?" "0 = Not at all likely, 10 = Extremely likely" {min: 0, max: 10} -> satisfaction-promoter-share ?>= 9
+  -> satisfaction-detractor-issues ?<= 6
+  -> future-would-purchase
+
+? satisfaction-promoter-share Ch "Would you like to share your experience on social media?" "Your recommendation means the world to us!" [
+  facebook-share: "Share on Facebook" @"https://cdn.simpleicons.org/facebook/1877F2",
+  twitter-share: "Share on Twitter" @"https://cdn.simpleicons.org/x/000000",
+  linkedin-share: "Share on LinkedIn" @"https://cdn.simpleicons.org/linkedin/0A66C2",
+  no-share: "Maybe later" @"https://cdn.simpleicons.org/data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjOTk5IiBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnoiLz48L3N2Zz4=/gray"
+] -> future-would-purchase
+
+? satisfaction-detractor-issues Ms* "What were the main issues you experienced?" "Select all that apply - we want to make this right" [
+  quality-issue: "Product/Service quality below expectations",
+  price-high: "Price too high for value received",
+  delivery-slow: "Slow delivery or service",
+  delivery-damaged: "Damaged or incorrect delivery",
+  support-poor: "Poor customer support",
+  support-slow: "Slow support response",
+  website-ux: "Website difficult to use",
+  not-as-described: "Product not as described",
+  other-issue: "Other issues"
+] {searchable: true} -> satisfaction-detractor-details
+
+? satisfaction-detractor-details Tx* "Please provide more details about your experience" "The more specific you are, the better we can address these concerns" {
+  placeholder: "Tell us what happened...",
+  minLength: 20,
+  errorMessage: "Please provide at least 20 characters of detail"
+} -> future-would-purchase
+
+# ===== STAGE 4: Future (Convergence Point 2 - all paths merge here) =====
+? future-would-purchase Ch* "Would you consider purchasing from us in the future?" [
+  yes: "Yes",
+  no: "No"
+] -> future-interests ?= yes
+  -> future-price-quality
+
+? future-interests Mc "What products or services interest you?" "Select all that interest you" [
+  new-products: "New product launches",
+  premium-line: "Premium product line",
+  budget-line: "Budget-friendly options",
+  services: "Professional services",
+  subscriptions: "Subscription plans",
+  bundles: "Product bundles"
+] -> future-price-quality
+
+? future-price-quality Ch* "For you, what matters more when making a purchase?" "Slide to indicate your preference" {
+  type: "slider",
+  min: 0,
+  max: 100,
+  step: 1,
+  showValue: true,
+  placeholder: "0 = Price is everything | 100 = Quality is everything"
+} -> future-email
+
+? future-email Em "Stay in touch with exclusive offers and updates?" "Optional - we respect your privacy and never spam" {
+  placeholder: "your.email@example.com",
+  validation: "basic"
+} -> end
+
+< end "Thank You!" "Your feedback is invaluable to us. We appreciate you taking the time to share your complete journey. Every response helps us serve our customers better."

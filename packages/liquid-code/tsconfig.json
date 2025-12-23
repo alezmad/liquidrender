@@ -18,20 +18,5 @@
     "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "tests",
-    "src/compiler/cli.ts",
-    "src/compiler/mastra.ts",
-    "src/compiler/agents/**",
-    "src/compiler/steps/**",
-    "src/compiler/workflows/**",
-    "src/compiler/types/**",
-    "src/compiler/utils/**",
-    "src/compiler/iteration.ts",
-    "src/compiler/compression-analysis.ts",
-    "src/compiler/label-compression-trial.ts",
-    "src/compiler/test-pipeline.ts"
-  ]
+  "exclude": ["node_modules", "dist", "tests"]
 }

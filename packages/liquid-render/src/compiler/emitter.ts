@@ -20,7 +20,7 @@ export interface GraphSurveyNode {
 export interface GraphSurvey {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   startNodeId: string;
   nodes: Record<string, GraphSurveyNode>;
 }
@@ -210,17 +210,21 @@ export class SurveyEmitter {
 
   private emitConfig(config: Record<string, unknown>): string {
     const pairs = Object.entries(config).map(([k, v]) => {
-      if (typeof v === 'string') {
-        return `${k}: "${this.escapeString(v)}"`;
-      } else if (Array.isArray(v)) {
-        return `${k}: [${v.map(i => typeof i === 'string' ? `"${i}"` : i).join(', ')}]`;
-      } else if (typeof v === 'object' && v !== null) {
-        return `${k}: ${this.emitConfig(v as Record<string, unknown>)}`;
-      } else {
-        return `${k}: ${v}`;
-      }
+      return `${k}: ${this.emitConfigValue(v)}`;
     });
     return `{${pairs.join(', ')}}`;
+  }
+
+  private emitConfigValue(v: unknown): string {
+    if (typeof v === 'string') {
+      return `"${this.escapeString(v)}"`;
+    } else if (Array.isArray(v)) {
+      return `[${v.map(i => this.emitConfigValue(i)).join(', ')}]`;
+    } else if (typeof v === 'object' && v !== null) {
+      return this.emitConfig(v as Record<string, unknown>);
+    } else {
+      return String(v);
+    }
   }
 
   private emitTransition(t: TransitionAST): string {

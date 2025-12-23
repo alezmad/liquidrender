@@ -20,7 +20,7 @@ import {
   countQuestions,
   validateSurvey,
   estimateSurveyTime
-} from './utils';
+} from '../src/utils';
 import {
   isQuestionContent,
   isMessageContent,
@@ -30,7 +30,7 @@ import {
   type SurveyNode,
   type QuestionContent,
   type MessageContent
-} from './types';
+} from '../src/types';
 
 // ============================================================================
 // §1 ID Generation Tests

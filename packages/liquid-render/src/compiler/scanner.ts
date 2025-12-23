@@ -1,7 +1,7 @@
 // LiquidSurvey Scanner - Lexical Analysis
 // Tokenizes LiquidSurvey DSL source code
 
-import { NODE_TYPE_SYMBOLS, QUESTION_TYPE_CODES } from './constants';
+import { QUESTION_TYPE_CODES } from './constants';
 
 export type TokenType =
   | 'NODE_START'      // >
@@ -69,21 +69,33 @@ export class SurveyScanner {
         this.addToken('NODE_START', c);
         break;
       case '?':
-        // Check for condition operators
+        // Check for condition operators (order matters - check longer patterns first)
         if (this.match('>=')) {
           this.addToken('CONDITION_OP', '?>=');
         } else if (this.match('<=')) {
           this.addToken('CONDITION_OP', '?<=');
+        } else if (this.match('!=')) {
+          this.addToken('CONDITION_OP', '?!=');
+        } else if (this.match('!in')) {
+          this.addToken('CONDITION_OP', '?!in');
+        } else if (this.match('!contains')) {
+          this.addToken('CONDITION_OP', '?!contains');
+        } else if (this.match('!empty')) {
+          this.addToken('CONDITION_OP', '?!empty');
         } else if (this.match('>')) {
           this.addToken('CONDITION_OP', '?>');
         } else if (this.match('<')) {
           this.addToken('CONDITION_OP', '?<');
         } else if (this.match('=')) {
           this.addToken('CONDITION_OP', '?=');
+        } else if (this.match('~')) {
+          this.addToken('CONDITION_OP', '?~');
         } else if (this.matchWord('in')) {
           this.addToken('CONDITION_OP', '?in');
         } else if (this.matchWord('contains')) {
           this.addToken('CONDITION_OP', '?contains');
+        } else if (this.matchWord('empty')) {
+          this.addToken('CONDITION_OP', '?empty');
         } else {
           this.addToken('NODE_QUESTION', c);
         }
@@ -119,7 +131,7 @@ export class SurveyScanner {
         this.addToken('EQUALS', c);
         break;
       case '-':
-        if (this.match('->')) {
+        if (this.match('>')) {
           this.addToken('ARROW', '->');
         } else if (this.match('--')) {
           this.addToken('HEADER_SEP', '---');
@@ -197,6 +209,22 @@ export class SurveyScanner {
 
     while (this.isDigit(this.peek())) {
       value += this.advance();
+    }
+
+    // Check if this is actually an identifier that starts with a number
+    // (e.g., "1_to_3", "3_to_5")
+    if (this.peek() === '_' || this.isAlpha(this.peek())) {
+      // Continue parsing as an identifier
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === '-' || this.peek() === '_') {
+        value += this.advance();
+      }
+      this.tokens.push({
+        type: 'IDENTIFIER',
+        value,
+        line: this.line,
+        column: startColumn,
+      });
+      return;
     }
 
     if (this.peek() === '.' && this.isDigit(this.peekNext())) {

@@ -1,0 +1,74 @@
+[
+  {
+    "type": "inconsistency",
+    "severity": "critical",
+    "description": "Schema condition logic is incorrect - uses equality check instead of highlighting selected item",
+    "suggestedFix": "Remove condition from list component and add conditional styling to list-item based on selectedItem signal"
+  },
+  {
+    "type": "gap",
+    "severity": "major",
+    "description": "Missing click interaction handler in Schema and LiquidCode",
+    "suggestedFix": "Add interaction/event handler to list-item that emits selectedItem signal with current item value"
+  },
+  {
+    "type": "gap",
+    "severity": "major",
+    "description": "Missing conditional styling for selected vs unselected states",
+    "suggestedFix": "Add styling properties or classes that change based on selectedItem signal comparison with current item"
+  },
+  {
+    "type": "gap",
+    "severity": "major",
+    "description": "Missing hover state styling present in JSX",
+    "suggestedFix": "Add hover state styling to list-item container"
+  },
+  {
+    "type": "inconsistency",
+    "severity": "minor",
+    "description": "LiquidCode syntax appears to have structural differences that don't match the nested container pattern",
+    "suggestedFix": "Ensure LiquidCode properly represents the container hierarchy with list > list-item > text structure"
+  },
+  {
+    "type": "gap",
+    "severity": "minor",
+    "description": "Missing spacing and visual styling attributes (padding, rounded corners, transitions)",
+    "suggestedFix": "Add appropriate styling properties to match JSX visual appearance"
+  },
+  {
+    "type": "inconsistency",
+    "severity": "critical",
+    "description": "JSX shows all tab content simultaneously, but LiquidCode implements conditional rendering based on @view signal for proper tab switching functionality",
+    "suggestedFix": "JSX should implement state management and conditional rendering to show only the active tab's content, or LiquidCode should remove conditional logic to match JSX behavior"
+  },
+  {
+    "type": "inconsistency",
+    "severity": "major",
+    "description": "JSX uses anchor tags (<a>) for tabs, while Schema uses button elements and LiquidCode uses Bt (button) elements",
+    "suggestedFix": "Standardize tab elements across all representations - recommend using buttons for better accessibility"
+  },
+  {
+    "type": "gap",
+    "severity": "critical",
+    "description": "Schema lacks the @view signal and conditional rendering logic present in LiquidCode",
+    "suggestedFix": "Add @view signal declaration and conditional rendering conditions to Schema elements"
+  },
+  {
+    "type": "inconsistency",
+    "severity": "major",
+    "description": "JSX has rich content structure with headers (h3) and paragraphs (p) for each tab, while Schema and LiquidCode only have simple text elements",
+    "suggestedFix": "Schema and LiquidCode should include header elements and additional text elements to match JSX content structure"
+  },
+  {
+    "type": "gap",
+    "severity": "major",
+    "description": "JSX includes hover interactions and styling that are not represented in Schema or LiquidCode",
+    "suggestedFix": "Add hover state definitions and styling properties to Schema and LiquidCode"
+  },
+  {
+    "type": "inconsistency",
+    "severity": "minor",
+    "description": "LiquidCode includes a HEADER element (0!h[Tx\"HEADER\"]) that doesn't exist in JSX or Schema",
+    "suggestedFix": "Remove the HEADER element from LiquidCode or add corresponding header to JSX and Schema"
+  }
+]

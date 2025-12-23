@@ -1,0 +1,552 @@
+{
+  "iteration": 1,
+  "samples": [
+    {
+      "id": "iter1-sample0",
+      "prompt": "Build a list component with selectable items",
+      "jsx": "<div>\n  <ul className=\"space-y-2\">\n    {items.map((item) => (\n      <li\n        key={item.id}\n        className={`px-4 py-2 rounded-md cursor-pointer transition-colors ${\n          selectedItem === item ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'\n        }`}\n        onClick={() => onItemSelect(item)}\n      >\n        {item.label}\n      </li>\n    ))}\n  </ul>\n</div>",
+      "schema": {
+        "version": "3.0",
+        "signals": [
+          "selectedItem"
+        ],
+        "layers": [
+          {
+            "id": 0,
+            "visible": true,
+            "root": {
+              "uid": "list",
+              "type": "list",
+              "binding": {
+                "type": "named",
+                "value": "items"
+              },
+              "label": "List",
+              "layout": {
+                "priority": "primary",
+                "span": 12,
+                "flex": "fill"
+              },
+              "signals": {
+                "declare": [],
+                "receive": [],
+                "emit": [],
+                "bidirectional": [
+                  "selectedItem"
+                ]
+              },
+              "condition": {
+                "signal": "selectedItem",
+                "equals": null
+              },
+              "children": [
+                {
+                  "uid": "list-item",
+                  "type": "container",
+                  "binding": {
+                    "type": "indexed",
+                    "value": "item"
+                  },
+                  "label": "List Item",
+                  "layout": {
+                    "priority": "primary",
+                    "span": 12,
+                    "flex": "fill"
+                  },
+                  "signals": {
+                    "declare": [],
+                    "receive": [],
+                    "emit": [
+                      "selectedItem"
+                    ],
+                    "bidirectional": []
+                  },
+                  "condition": {
+                    "signal": "selectedItem",
+                    "equals": "item"
+                  },
+                  "children": [
+                    {
+                      "uid": "list-item-label",
+                      "type": "text",
+                      "binding": {
+                        "type": "named",
+                        "value": "label"
+                      },
+                      "label": "List Item Label",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 12,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "liquidcode": "@dr @view\n0!h[Tx\"List\"]\n0[Ls*12^f[0:items[1*12^f[Tx=.label]]]<>selectedItem]",
+      "consistent": false,
+      "findings": [
+        {
+          "type": "inconsistency",
+          "severity": "critical",
+          "description": "Schema condition logic is incorrect - uses equality check instead of highlighting selected item",
+          "suggestedFix": "Remove condition from list component and add conditional styling to list-item based on selectedItem signal"
+        },
+        {
+          "type": "gap",
+          "severity": "major",
+          "description": "Missing click interaction handler in Schema and LiquidCode",
+          "suggestedFix": "Add interaction/event handler to list-item that emits selectedItem signal with current item value"
+        },
+        {
+          "type": "gap",
+          "severity": "major",
+          "description": "Missing conditional styling for selected vs unselected states",
+          "suggestedFix": "Add styling properties or classes that change based on selectedItem signal comparison with current item"
+        },
+        {
+          "type": "gap",
+          "severity": "major",
+          "description": "Missing hover state styling present in JSX",
+          "suggestedFix": "Add hover state styling to list-item container"
+        },
+        {
+          "type": "inconsistency",
+          "severity": "minor",
+          "description": "LiquidCode syntax appears to have structural differences that don't match the nested container pattern",
+          "suggestedFix": "Ensure LiquidCode properly represents the container hierarchy with list > list-item > text structure"
+        },
+        {
+          "type": "gap",
+          "severity": "minor",
+          "description": "Missing spacing and visual styling attributes (padding, rounded corners, transitions)",
+          "suggestedFix": "Add appropriate styling properties to match JSX visual appearance"
+        }
+      ]
+    },
+    {
+      "id": "iter1-sample1",
+      "prompt": "Design a tabbed interface with 3 tabs and content panels",
+      "jsx": "<div className=\"flex flex-col h-full\">\n  <div className=\"flex justify-center border-b border-gray-300 mb-6\">\n    <div className=\"flex\">\n      <a href=\"#\" className=\"px-4 py-2 text-gray-500 hover:text-gray-800 cursor-pointer\">\n        Tab 1\n      </a>\n      <a href=\"#\" className=\"px-4 py-2 text-gray-500 hover:text-gray-800 cursor-pointer\">\n        Tab 2\n      </a>\n      <a href=\"#\" className=\"px-4 py-2 text-gray-500 hover:text-gray-800 cursor-pointer\">\n        Tab 3\n      </a>\n    </div>\n  </div>\n\n  <div className=\"flex-1 p-6\">\n    <div className=\"space-y-6\">\n      <div>\n        <h3 className=\"text-lg font-medium mb-2\">Content for Tab 1</h3>\n        <p className=\"text-gray-600\">This is the content for the first tab.</p>\n      </div>\n\n      <div>\n        <h3 className=\"text-lg font-medium mb-2\">Content for Tab 2</h3>\n        <p className=\"text-gray-600\">This is the content for the second tab.</p>\n      </div>\n\n      <div>\n        <h3 className=\"text-lg font-medium mb-2\">Content for Tab 3</h3>\n        <p className=\"text-gray-600\">This is the content for the third tab.</p>\n      </div>\n    </div>\n  </div>\n</div>",
+      "schema": {
+        "version": "3.0",
+        "signals": [],
+        "layers": [
+          {
+            "id": 0,
+            "visible": true,
+            "root": {
+              "uid": "0",
+              "type": "container",
+              "binding": {
+                "type": "literal",
+                "value": null
+              },
+              "label": "",
+              "layout": {
+                "priority": "primary",
+                "span": 12,
+                "flex": "fill"
+              },
+              "signals": {
+                "declare": [],
+                "receive": [],
+                "emit": [],
+                "bidirectional": []
+              },
+              "condition": {
+                "signal": "",
+                "equals": null
+              },
+              "trigger": {
+                "action": "",
+                "layer": 0
+              },
+              "children": [
+                {
+                  "uid": "1",
+                  "type": "container",
+                  "binding": {
+                    "type": "literal",
+                    "value": null
+                  },
+                  "label": "",
+                  "layout": {
+                    "priority": "primary",
+                    "span": 12,
+                    "flex": "fill"
+                  },
+                  "signals": {
+                    "declare": [],
+                    "receive": [],
+                    "emit": [],
+                    "bidirectional": []
+                  },
+                  "condition": {
+                    "signal": "",
+                    "equals": null
+                  },
+                  "trigger": {
+                    "action": "",
+                    "layer": 0
+                  },
+                  "children": [
+                    {
+                      "uid": "2",
+                      "type": "button",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Tab 1",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 4,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    },
+                    {
+                      "uid": "3",
+                      "type": "button",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Tab 2",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 4,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    },
+                    {
+                      "uid": "4",
+                      "type": "button",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Tab 3",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 4,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    }
+                  ],
+                  "template": null
+                },
+                {
+                  "uid": "5",
+                  "type": "container",
+                  "binding": {
+                    "type": "literal",
+                    "value": null
+                  },
+                  "label": "",
+                  "layout": {
+                    "priority": "primary",
+                    "span": 12,
+                    "flex": "fill"
+                  },
+                  "signals": {
+                    "declare": [],
+                    "receive": [],
+                    "emit": [],
+                    "bidirectional": []
+                  },
+                  "condition": {
+                    "signal": "",
+                    "equals": null
+                  },
+                  "trigger": {
+                    "action": "",
+                    "layer": 0
+                  },
+                  "children": [
+                    {
+                      "uid": "6",
+                      "type": "text",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Content for Tab 1",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 12,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    },
+                    {
+                      "uid": "7",
+                      "type": "text",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Content for Tab 2",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 12,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    },
+                    {
+                      "uid": "8",
+                      "type": "text",
+                      "binding": {
+                        "type": "literal",
+                        "value": null
+                      },
+                      "label": "Content for Tab 3",
+                      "layout": {
+                        "priority": "primary",
+                        "span": 12,
+                        "flex": "fill"
+                      },
+                      "signals": {
+                        "declare": [],
+                        "receive": [],
+                        "emit": [],
+                        "bidirectional": []
+                      },
+                      "condition": {
+                        "signal": "",
+                        "equals": null
+                      },
+                      "trigger": {
+                        "action": "",
+                        "layer": 0
+                      },
+                      "children": [],
+                      "template": null
+                    }
+                  ],
+                  "template": null
+                }
+              ],
+              "template": null
+            }
+          }
+        ]
+      },
+      "liquidcode": "@dr @view\n0!h[Tx\"HEADER\"]\n0[Bt\"Tab1\"<>view, Bt\"Tab2\"<>view, Bt\"Tab3\"<>view]\n0?@view=0[1 0, 1 1, 1 2, 1 0[Tx\"Content for Tab 1\"], 1 1[Tx\"Content for Tab 2\"], 1 2[Tx\"Content for Tab 3\"]]",
+      "consistent": false,
+      "findings": [
+        {
+          "type": "inconsistency",
+          "severity": "critical",
+          "description": "JSX shows all tab content simultaneously, but LiquidCode implements conditional rendering based on @view signal for proper tab switching functionality",
+          "suggestedFix": "JSX should implement state management and conditional rendering to show only the active tab's content, or LiquidCode should remove conditional logic to match JSX behavior"
+        },
+        {
+          "type": "inconsistency",
+          "severity": "major",
+          "description": "JSX uses anchor tags (<a>) for tabs, while Schema uses button elements and LiquidCode uses Bt (button) elements",
+          "suggestedFix": "Standardize tab elements across all representations - recommend using buttons for better accessibility"
+        },
+        {
+          "type": "gap",
+          "severity": "critical",
+          "description": "Schema lacks the @view signal and conditional rendering logic present in LiquidCode",
+          "suggestedFix": "Add @view signal declaration and conditional rendering conditions to Schema elements"
+        },
+        {
+          "type": "inconsistency",
+          "severity": "major",
+          "description": "JSX has rich content structure with headers (h3) and paragraphs (p) for each tab, while Schema and LiquidCode only have simple text elements",
+          "suggestedFix": "Schema and LiquidCode should include header elements and additional text elements to match JSX content structure"
+        },
+        {
+          "type": "gap",
+          "severity": "major",
+          "description": "JSX includes hover interactions and styling that are not represented in Schema or LiquidCode",
+          "suggestedFix": "Add hover state definitions and styling properties to Schema and LiquidCode"
+        },
+        {
+          "type": "inconsistency",
+          "severity": "minor",
+          "description": "LiquidCode includes a HEADER element (0!h[Tx\"HEADER\"]) that doesn't exist in JSX or Schema",
+          "suggestedFix": "Remove the HEADER element from LiquidCode or add corresponding header to JSX and Schema"
+        }
+      ]
+    }
+  ],
+  "successRate": 1,
+  "consistencyRate": 0,
+  "findings": [
+    {
+      "type": "inconsistency",
+      "severity": "critical",
+      "description": "Schema condition logic is incorrect - uses equality check instead of highlighting selected item",
+      "suggestedFix": "Remove condition from list component and add conditional styling to list-item based on selectedItem signal"
+    },
+    {
+      "type": "gap",
+      "severity": "major",
+      "description": "Missing click interaction handler in Schema and LiquidCode",
+      "suggestedFix": "Add interaction/event handler to list-item that emits selectedItem signal with current item value"
+    },
+    {
+      "type": "gap",
+      "severity": "major",
+      "description": "Missing conditional styling for selected vs unselected states",
+      "suggestedFix": "Add styling properties or classes that change based on selectedItem signal comparison with current item"
+    },
+    {
+      "type": "gap",
+      "severity": "major",
+      "description": "Missing hover state styling present in JSX",
+      "suggestedFix": "Add hover state styling to list-item container"
+    },
+    {
+      "type": "inconsistency",
+      "severity": "minor",
+      "description": "LiquidCode syntax appears to have structural differences that don't match the nested container pattern",
+      "suggestedFix": "Ensure LiquidCode properly represents the container hierarchy with list > list-item > text structure"
+    },
+    {
+      "type": "gap",
+      "severity": "minor",
+      "description": "Missing spacing and visual styling attributes (padding, rounded corners, transitions)",
+      "suggestedFix": "Add appropriate styling properties to match JSX visual appearance"
+    },
+    {
+      "type": "inconsistency",
+      "severity": "critical",
+      "description": "JSX shows all tab content simultaneously, but LiquidCode implements conditional rendering based on @view signal for proper tab switching functionality",
+      "suggestedFix": "JSX should implement state management and conditional rendering to show only the active tab's content, or LiquidCode should remove conditional logic to match JSX behavior"
+    },
+    {
+      "type": "inconsistency",
+      "severity": "major",
+      "description": "JSX uses anchor tags (<a>) for tabs, while Schema uses button elements and LiquidCode uses Bt (button) elements",
+      "suggestedFix": "Standardize tab elements across all representations - recommend using buttons for better accessibility"
+    },
+    {
+      "type": "gap",
+      "severity": "critical",
+      "description": "Schema lacks the @view signal and conditional rendering logic present in LiquidCode",
+      "suggestedFix": "Add @view signal declaration and conditional rendering conditions to Schema elements"
+    },
+    {
+      "type": "inconsistency",
+      "severity": "major",
+      "description": "JSX has rich content structure with headers (h3) and paragraphs (p) for each tab, while Schema and LiquidCode only have simple text elements",
+      "suggestedFix": "Schema and LiquidCode should include header elements and additional text elements to match JSX content structure"
+    },
+    {
+      "type": "gap",
+      "severity": "major",
+      "description": "JSX includes hover interactions and styling that are not represented in Schema or LiquidCode",
+      "suggestedFix": "Add hover state definitions and styling properties to Schema and LiquidCode"
+    },
+    {
+      "type": "inconsistency",
+      "severity": "minor",
+      "description": "LiquidCode includes a HEADER element (0!h[Tx\"HEADER\"]) that doesn't exist in JSX or Schema",
+      "suggestedFix": "Remove the HEADER element from LiquidCode or add corresponding header to JSX and Schema"
+    }
+  ],
+  "needsReview": true,
+  "reviewReasons": [
+    "Low consistency rate: 0%",
+    "Critical findings: 3"
+  ],
+  "metrics": {
+    "generationTime": 28313,
+    "validationTime": 0,
+    "totalTime": 28314
+  }
+}

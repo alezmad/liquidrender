@@ -1,0 +1,375 @@
+# Squadron Commander Dashboard - LiquidCode v2.1
+# Centro de Mando - Escuadrón Alfa - Sistema de Gestión Operativa
+
+#squadron_command;G2x1
+§dateRange:dr=30d,url
+§category:sel=all,session
+§pilotSelect:sel=,none
+§missionType:sel=,none
+§activeView:sel=dashboard,session
+§assignmentModal:tog=false,none
+§pilotDetailModal:tog=false,none
+
+# ==============================================================================
+# HEADER SECTION
+# ==============================================================================
+S!hero^fixed[
+  G1x2[
+    # Left: Logo and title
+    S$horizontal[
+      I$shieldIcon!primary
+      S$vertical[
+        X$"CENTRO DE MANDO"!title^fixed
+        X$"ESCUADRÓN ALFA • SISTEMA DE GESTIÓN OPERATIVA"!subtitle
+      ]
+    ]
+    # Right: Status and date
+    S$horizontal[
+      S$status[
+        I$pulseIndicator!live
+        X$"SISTEMA OPERATIVO"!statusLabel
+      ]
+      X$currentDate!date^fixed
+    ]
+  ]
+]#header
+
+# ==============================================================================
+# NAVIGATION TABS
+# ==============================================================================
+S!secondary^fixed[
+  TB$views<>@activeView[
+    TI$"Dashboard"$trendingUpIcon>@activeView:onClick
+    TI$"Pilotos"$usersIcon>@activeView:onClick
+    TI$"Alertas"$alertTriangleIcon>@activeView:onClick
+    TI$"Registro Vuelos"$planeIcon>@activeView:onClick
+  ]
+]#navigation
+
+# ==============================================================================
+# MAIN CONTENT AREA - DASHBOARD VIEW
+# ==============================================================================
+S^grow<@activeView[filter.view=dashboard][
+
+  # Stats Cards Row
+  G4x1!primary^fixed[
+    K$pilotCount!stat"Pilotos Activos"$"100% disponibles"$usersIcon#statsUsers
+    K$totalHours!stat"Horas Totales"$"Acumulado escuadrón"$clockIcon#statsHours
+    K$flightCount!stat"Vuelos Realizados"$"Último trimestre"$planeIcon#statsFlights
+    K$avgOperativity!stat"Operatividad Media"$"Estado del escuadrón"$targetIcon#statsOps
+  ]#statsRow
+
+  # Main Content Grid
+  G2x1^grow[
+    # Left: Pilots Overview (2fr)
+    S^grow*2[
+      S$horizontal!header^fixed[
+        X$"Estado de Pilotos"!sectionTitle
+        BT$"Nueva Asignación"$planeIcon>@assignmentModal:onClick#assignBtn
+      ]
+      G2xAuto^grow[
+        # Pilot cards - repeating for each pilot in pilotStats
+        R$pilotStats[
+          CD$pilot<@pilotSelect:onClick[
+            S$horizontal^fixed[
+              S$vertical[
+                X$pilot.nombre!cardTitle
+                X$pilot.ultimoVuelo!cardSubtitle"Último vuelo: "
+              ]
+              BG$pilot.operatividad!badge[
+                cond:>=80:#3fb950
+                cond:>=50:#d29922
+                cond:<50:#f85149
+              ]
+            ]
+            G4x1^fixed[
+              S$stat[
+                X$pilot.totalVuelos!statValue
+                X$"Vuelos"!statLabel
+              ]
+              S$stat[
+                X$pilot.tiempoFormateado!statValue
+                X$"Horas"!statLabel
+              ]
+              S$stat[
+                X$pilot.nocturnas!statValue
+                X$"Noct."!statLabel
+              ]
+              S$stat[
+                X$pilot.ifr!statValue
+                X$"IFR"!statLabel
+              ]
+            ]
+          ]#pilotCard
+        ]
+      ]#pilotsGrid
+    ]#pilotsSection
+
+    # Right: Alerts and Quick Actions (1fr)
+    S^grow*1[
+      # Alerts Panel
+      S^grow[
+        X$"Alertas Operativas"!sectionTitle^fixed
+        S$alertsContainer^grow[
+          R$alerts[
+            AL$alert[
+              type:warning=>#d29922
+              type:critical=>#f85149
+              type:info=>#58a6ff
+            ][
+              I$alert.icon
+              S$vertical[
+                X$alert.pilot!alertTitle
+                X$alert.message!alertMessage
+              ]
+            ]
+          ]
+          # Empty state
+          ES$alerts.length=0[
+            I$checkCircleIcon
+            X$"Sin alertas pendientes"
+          ]
+        ]
+      ]#alertsPanel
+
+      # Quick Actions
+      S^fixed[
+        X$"Acciones Rápidas"!sectionTitle
+        S$vertical[
+          BT$"Programar vuelo nocturno"$moonIcon!action>@quickAction:onClick
+          BT$"Revisión de cualificaciones"$checkCircleIcon!action>@quickAction:onClick
+          BT$"Generar informe mensual"$calendarIcon!action>@quickAction:onClick
+        ]
+      ]#quickActions
+    ]#rightPanel
+  ]#mainGrid
+]#dashboardView
+
+# ==============================================================================
+# PILOTOS VIEW
+# ==============================================================================
+S^grow<@activeView[filter.view=pilotos][
+  G3xAuto^grow[
+    R$pilotStats[
+      CD$pilot<@pilotSelect:onClick[
+        S$horizontal^fixed[
+          S$vertical[
+            X$pilot.nombre!cardTitle
+            X$pilot.ultimoVuelo!cardSubtitle"Último vuelo: "
+          ]
+          BG$pilot.operatividad!badge
+        ]
+        G4x1^fixed[
+          S$stat[X$pilot.totalVuelos!statValue;X$"Vuelos"!statLabel]
+          S$stat[X$pilot.tiempoFormateado!statValue;X$"Horas"!statLabel]
+          S$stat[X$pilot.nocturnas!statValue;X$"Noct."!statLabel]
+          S$stat[X$pilot.ifr!statValue;X$"IFR"!statLabel]
+        ]
+      ]
+    ]
+  ]
+]#pilotosView
+
+# ==============================================================================
+# ALERTAS VIEW
+# ==============================================================================
+S^grow<@activeView[filter.view=alertas][
+  S$maxWidth600[
+    X$"Centro de Alertas"!pageTitle^fixed
+    R$alerts[
+      AL$alert[
+        type:warning=>#d29922
+        type:critical=>#f85149
+        type:info=>#58a6ff
+      ][
+        I$alert.icon
+        S$vertical[
+          X$alert.pilot!alertTitle
+          X$alert.message!alertMessage
+        ]
+      ]
+    ]
+  ]
+]#alertasView
+
+# ==============================================================================
+# VUELOS (FLIGHTS) VIEW - DATA TABLE
+# ==============================================================================
+S^grow<@activeView[filter.view=vuelos][
+  T$flightData!dataTable^grow[
+    COL$piloto"Piloto"
+    COL$fecha"Fecha"
+    COL$tiempo"Tiempo"!mono
+    COL$nocturna"Noct."!icon[Sí:checkCircle;No:xCircle]
+    COL$ifr"IFR"!icon[Sí:checkCircle;No:xCircle]
+    COL$instrumental"Instr."!icon[Sí:checkCircle;No:xCircle]
+    COL$cruzada"Cruz."!icon[Sí:checkCircle;No:xCircle]
+    COL$periodo"Per."!badge"P"
+    COL$despegue"Despegue"!mono
+    COL$toma"Toma"!mono
+    COL$indicativo"Indicativo"!accent
+  ]
+]#vuelosView
+
+# ==============================================================================
+# ASSIGNMENT MODAL
+# ==============================================================================
+MD<@assignmentModal[
+  S$modal^fixed[
+    S$horizontal!header[
+      X$"Asignar Misión"!modalTitle
+      BT$"×"!close>@assignmentModal:onClose
+    ]
+
+    # Pilot Selection
+    S$formGroup[
+      X$"PILOTO SELECCIONADO"!formLabel
+      SL$pilotStats$nombre<>@pilotSelect[
+        OPT$p.nombre$p.operatividad"({operatividad}%)"
+      ]
+    ]
+
+    # Mission Type Selection
+    S$formGroup[
+      X$"TIPO DE MISIÓN"!formLabel
+      G2x2[
+        BT$"Vuelo Nocturno"$moonIcon<>@missionType:nocturna
+        BT$"Práctica IFR"$navigationIcon<>@missionType:ifr
+        BT$"Instrucción"$targetIcon<>@missionType:instruccion
+        BT$"Patrulla"$shieldIcon<>@missionType:patrulla
+      ]
+    ]
+
+    # Period Selection
+    S$formGroup[
+      X$"PERIODO"!formLabel
+      G4x1[
+        BT$"P1"<>@period:1
+        BT$"P2"<>@period:2
+        BT$"P3"<>@period:3
+        BT$"P4"<>@period:4
+      ]
+    ]
+
+    # Recommendation Analysis (conditional on pilot selection)
+    S$analysisBox<@pilotSelect[filter.selected=true][
+      X$"ANÁLISIS DE RECOMENDACIÓN"!formLabel
+      S$recommendations[
+        # Conditional warnings based on pilot stats
+        X$"⚠️ Priorizar vuelos nocturnos"<@pilotSelect[filter.nocturnas<2]
+        X$"⚠️ Requiere práctica IFR adicional"<@pilotSelect[filter.ifr<2]
+        X$"✅ Piloto en estado óptimo para cualquier misión"<@pilotSelect[filter.operatividad>=80]
+      ]
+    ]
+
+    # Action Buttons
+    S$horizontal!footer[
+      BT$"Cancelar"!secondary>@assignmentModal:onClose
+      BT$"Confirmar Asignación"!primary>@assignmentConfirm:onClick
+    ]
+  ]
+]#assignmentModal
+
+# ==============================================================================
+# PILOT DETAIL MODAL
+# ==============================================================================
+MD<@pilotDetailModal[
+  S$modal^fixed[
+    S$horizontal!header[
+      S$vertical[
+        X$selectedPilot.nombre!modalTitle
+        X$"Perfil de Operatividad"!modalSubtitle
+      ]
+      BT$"×"!close>@pilotDetailModal:onClose
+    ]
+
+    # Stats Summary
+    G2x1[
+      S$statBox[
+        X$"HORAS TOTALES"!formLabel
+        X$selectedPilot.tiempoFormateado!bigStat
+      ]
+      S$statBox[
+        X$"OPERATIVIDAD"!formLabel
+        X$selectedPilot.operatividad!bigStat"%"[
+          cond:>=80:#3fb950
+          cond:>=50:#d29922
+          cond:<50:#f85149
+        ]
+      ]
+    ]
+
+    # Requirements Grid
+    S$section[
+      X$"Requisitos Cumplidos"!sectionTitle
+      G2x2[
+        RQ$selectedPilot.nocturnas$2"Tomas Nocturnas"$moonIcon
+        RQ$selectedPilot.ifr$2"Aproximaciones IFR"$navigationIcon
+        RQ$selectedPilot.instrumental$1"Vuelo Instrumental"$radioIcon
+        RQ$selectedPilot.cruzada$1"Tomas Cruzadas"$planeIcon
+      ]
+    ]
+
+    # Period Distribution Chart
+    S$section[
+      X$"Distribución por Periodo"!sectionTitle
+      B$selectedPilot.periodos!barChart$period$count[
+        P1:#f0883e
+        P2:#f0883e
+        P3:#f0883e
+        P4:#f0883e
+      ]
+    ]
+
+    # Action Buttons
+    S$horizontal!footer[
+      BT$"Asignar Misión"!primary>@assignmentModal:onClick
+      BT$"Cerrar"!secondary>@pilotDetailModal:onClose
+    ]
+  ]
+]#pilotDetailModal
+
+# ==============================================================================
+# DATA SOURCES (Schema Hints)
+# ==============================================================================
+# @source:flightData = array<{
+#   id: number,
+#   piloto: string,
+#   fecha: string,
+#   tiempo: string,
+#   nocturna: "Sí"|"No",
+#   ifr: "Sí"|"No",
+#   instrumental: "Sí"|"No",
+#   cruzada: "Sí"|"No",
+#   periodo: 1|2|3|4,
+#   despegue: string,
+#   toma: string,
+#   indicativo: string
+# }>
+#
+# @computed:pilotStats = aggregate(flightData, groupBy:piloto)[
+#   totalVuelos: count(*),
+#   tiempoTotal: sum(parseTime(tiempo)),
+#   nocturnas: countWhere(nocturna="Sí"),
+#   ifr: countWhere(ifr="Sí"),
+#   instrumental: countWhere(instrumental="Sí"),
+#   cruzada: countWhere(cruzada="Sí"),
+#   ultimoVuelo: max(fecha),
+#   periodos: {1: countWhere(periodo=1), 2: countWhere(periodo=2), 3: countWhere(periodo=3), 4: countWhere(periodo=4)},
+#   tiempoFormateado: formatTime(tiempoTotal),
+#   operatividad: min(100, round((nocturnas + ifr + instrumental + cruzada) / (totalVuelos * 0.5) * 25))
+# ]
+#
+# @computed:alerts = filter(pilotStats)[
+#   where: nocturnas < 2 OR ifr < 2 OR totalVuelos < 3
+# ].map(pilot => {
+#   type: ifr < 2 ? "critical" : nocturnas < 2 ? "warning" : "info",
+#   pilot: pilot.nombre,
+#   message: ifr < 2 ? "Insuficientes aproximaciones IFR" : nocturnas < 2 ? "Requiere más tomas nocturnas" : "Bajo número de vuelos totales",
+#   icon: ifr < 2 ? navigationIcon : nocturnas < 2 ? moonIcon : planeIcon
+# }).slice(0, 8)
+#
+# @computed:totalHours = formatTime(sum(pilotStats.tiempoTotal))
+# @computed:avgOperativity = round(avg(pilotStats.operatividad))
+# @computed:pilotCount = count(pilotStats)
+# @computed:flightCount = count(flightData)

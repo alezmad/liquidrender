@@ -1,0 +1,100 @@
+{
+  "conversion": "02-nps-survey.ts to LiquidSurvey DSL",
+  "timestamp": "2025-12-23",
+  "findings": [
+    {
+      "category": "branching-logic",
+      "severity": "critical",
+      "issue": "Multi-branch conditional routing from single node",
+      "description": "The nps-question node has 3 conditional branches (>=9, >=7, <=6) targeting different nodes. LiquidSurvey DSL requires duplicating the question definition for each conditional branch.",
+      "source": "nps-question node lines 29-51",
+      "solution": "Repeated the nps-question definition 3 times, each with a different condition and target",
+      "impact": "Verbose DSL output, potential maintenance issue if question text needs updating"
+    },
+    {
+      "category": "node-type-mapping",
+      "severity": "info",
+      "mapping": {
+        "start": "> (start node)",
+        "question-nps": "? Np (NPS question)",
+        "question-text": "? Tx (text question)",
+        "question-multiChoice": "? Mc (multi-choice question)",
+        "end": "< (end node)"
+      },
+      "description": "All node types mapped successfully to LiquidSurvey DSL equivalents"
+    },
+    {
+      "category": "conditional-operators",
+      "severity": "info",
+      "mapping": {
+        "greaterOrEqual": "?>=",
+        "lessOrEqual": "?<="
+      },
+      "description": "Conditional operators mapped successfully"
+    },
+    {
+      "category": "question-properties",
+      "severity": "warning",
+      "issue": "Required flag handling",
+      "description": "The nps-question has required: true, while follow-up questions have required: false. LiquidSurvey DSL uses * suffix for required fields.",
+      "solution": "Added * suffix only to nps-question (Np*), omitted from follow-up text questions"
+    },
+    {
+      "category": "multi-choice-options",
+      "severity": "info",
+      "issue": "Option ID mapping",
+      "description": "GraphSurvey multiChoice options have separate id, label, and value fields. LiquidSurvey DSL uses array notation for labels and a config object for values.",
+      "source": "detractor-issues node lines 97-128",
+      "solution": "Extracted labels into main array, created {values: [...]} config for option values",
+      "note": "Option IDs (issue-1, issue-2, etc.) are not preserved in DSL - only labels and values"
+    },
+    {
+      "category": "placeholder-text",
+      "severity": "info",
+      "description": "Placeholder text from text questions preserved in {placeholder: ...} config objects"
+    },
+    {
+      "category": "nps-config",
+      "severity": "info",
+      "description": "NPS min/max values (0-10) preserved in {min: 0, max: 10} config object"
+    },
+    {
+      "category": "survey-metadata",
+      "severity": "info",
+      "description": "Survey-level metadata (id, title, description) converted to comments at top of DSL file",
+      "note": "LiquidSurvey DSL does not have explicit survey metadata syntax, using comments instead"
+    }
+  ],
+  "statistics": {
+    "total_nodes": 7,
+    "node_types": {
+      "start": 1,
+      "question": 5,
+      "end": 1
+    },
+    "question_types": {
+      "nps": 1,
+      "text": 3,
+      "multiChoice": 1
+    },
+    "conditional_branches": 3,
+    "total_dsl_lines": 15
+  },
+  "potential_issues": [
+    {
+      "category": "dsl-limitation",
+      "issue": "No native support for multi-branch conditionals from single question",
+      "recommendation": "Consider extending DSL syntax to support multiple conditions per question definition, e.g., '-> [target1 ?cond1, target2 ?cond2, target3 ?cond3]'"
+    },
+    {
+      "category": "metadata-loss",
+      "issue": "Survey-level metadata (id, title, description) cannot be expressed in DSL",
+      "recommendation": "Consider adding survey metadata syntax, e.g., '@survey id: \"nps-survey\" title: \"Net Promoter Score Survey\"'"
+    },
+    {
+      "category": "option-id-loss",
+      "issue": "Multi-choice option IDs are lost in conversion",
+      "recommendation": "If option IDs are needed for data tracking, extend DSL to support them, e.g., '[label:id]' syntax"
+    }
+  ]
+}

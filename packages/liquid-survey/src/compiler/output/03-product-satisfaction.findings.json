@@ -1,0 +1,121 @@
+{
+  "surveyId": "product-satisfaction",
+  "surveyTitle": "Product Satisfaction Survey",
+  "surveyDescription": "Help us understand your experience with our product",
+  "conversionStatus": "success",
+  "nodeCount": 8,
+  "questionCount": 6,
+  "findings": [
+    {
+      "type": "start_node",
+      "nodeId": "start",
+      "message": "Thank you for purchasing from us! Please take a moment to share your experience.",
+      "title": "Product Feedback",
+      "conversion": "Converted to > node with message and title"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q1",
+      "questionType": "choice",
+      "required": true,
+      "question": "Which product did you purchase?",
+      "optionCount": 3,
+      "conversion": "Converted to Ch* (required choice) with 3 options using label = value format"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q2",
+      "questionType": "rating",
+      "required": true,
+      "question": "Rate the overall quality",
+      "config": {
+        "min": 1,
+        "max": 5
+      },
+      "conversion": "Converted to Rt* (required rating) with min/max config"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q3",
+      "questionType": "rating",
+      "required": true,
+      "question": "Rate the value for money",
+      "config": {
+        "min": 1,
+        "max": 5
+      },
+      "conversion": "Converted to Rt* (required rating) with min/max config"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q4",
+      "questionType": "likert",
+      "required": true,
+      "question": "The product met my expectations",
+      "config": {
+        "likertScale": 5,
+        "likertLabels": {
+          "start": "Strongly Disagree",
+          "end": "Strongly Agree"
+        }
+      },
+      "conversion": "Converted to Lk* (required likert) with scale and start/end labels config"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q5",
+      "questionType": "multiChoice",
+      "required": true,
+      "question": "What features do you like most?",
+      "optionCount": 5,
+      "config": {
+        "maxSelections": 3
+      },
+      "conversion": "Converted to Mc* (required multiChoice) with 5 options and maxSelections config"
+    },
+    {
+      "type": "question_node",
+      "nodeId": "q6",
+      "questionType": "text",
+      "required": false,
+      "question": "Any suggestions for improvement?",
+      "config": {
+        "placeholder": "Share your ideas (optional)"
+      },
+      "conversion": "Converted to Tx (optional text) with placeholder config"
+    },
+    {
+      "type": "end_node",
+      "nodeId": "end",
+      "message": "Thank you for your valuable feedback!",
+      "title": "Survey Complete",
+      "conversion": "Converted to < node with message and title"
+    }
+  ],
+  "typeMapping": {
+    "choice": "Ch",
+    "rating": "Rt",
+    "likert": "Lk",
+    "multiChoice": "Mc",
+    "text": "Tx"
+  },
+  "features": [
+    "Linear survey flow (no branching)",
+    "Multiple question types tested: choice, rating, likert, multiChoice, text",
+    "Mix of required and optional questions",
+    "Options with id, label, and value mappings",
+    "Configuration objects for constraints (min/max, scale, labels, maxSelections, placeholder)",
+    "Start and end nodes with messages and titles"
+  ],
+  "notes": [
+    "All node transitions are unconditional (single next pointer)",
+    "Question q6 is the only optional question (required: false)",
+    "Options format: id: label = value consistently applied",
+    "Likert scale uses 'scale' key in config with start/end label format",
+    "Rating uses min/max config format",
+    "MultiChoice includes maxSelections constraint",
+    "No descriptions on questions (only on survey level)",
+    "No conditional logic or branching present"
+  ],
+  "timestamp": "2025-12-23T00:00:00.000Z"
+}

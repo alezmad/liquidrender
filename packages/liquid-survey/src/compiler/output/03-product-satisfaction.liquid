@@ -1,0 +1,28 @@
+# Product Satisfaction Survey
+# Help us understand your experience with our product
+
+> start "Thank you for purchasing from us! Please take a moment to share your experience." "Product Feedback" -> q1
+
+? q1 Ch* "Which product did you purchase?" [
+  a: "Product A - Basic" = product_a,
+  b: "Product B - Standard" = product_b,
+  c: "Product C - Premium" = product_c
+] -> q2
+
+? q2 Rt* "Rate the overall quality" {min: 1, max: 5} -> q3
+
+? q3 Rt* "Rate the value for money" {min: 1, max: 5} -> q4
+
+? q4 Lk* "The product met my expectations" {scale: 5, start: "Strongly Disagree", end: "Strongly Agree"} -> q5
+
+? q5 Mc* "What features do you like most?" [
+  design: "Design & Aesthetics" = design,
+  ease: "Ease of Use" = ease,
+  performance: "Performance" = performance,
+  durability: "Durability" = durability,
+  price: "Price Point" = price
+] {maxSelections: 3} -> q6
+
+? q6 Tx "Any suggestions for improvement?" {placeholder: "Share your ideas (optional)"} -> end
+
+< end "Thank you for your valuable feedback!" "Survey Complete"

@@ -1,0 +1,63 @@
+// Real Estate Inquiry Survey
+// Find your perfect property or sell with confidence
+
+> start
+! "Welcome to Real Estate Services" "Let us help you find your dream property or sell your current one. This quick survey will help us understand your needs." -> q1-name
+
+? q1-name Tx* "What is your name?" {placeholder: "Enter your full name"} -> q2-email
+
+? q2-email Em* "What is your email address?" {placeholder: "you@example.com", emailValidation: "strict"} -> q3-phone
+
+? q3-phone Ph* "What is your phone number?" {countryCode: "US"} -> q4-intent
+
+? q4-intent Ch* "What are you looking to do?" [buy="Buy a property", rent="Rent a property", sell="Sell my property"] -> q5-buy-budget ?= buy
+                                                                                                                                  -> q5-rent-budget ?= rent
+                                                                                                                                  -> q5-sell-property-type ?= sell
+
+// Buy path
+? q5-buy-budget Cu* "What is your budget for purchasing?" {currency: "USD", currencyPosition: "before", placeholder: "500000"} -> q6-buy-property-type
+
+? q6-buy-property-type Ch* "What type of property are you looking for?" [house="Single Family House", apartment="Apartment", condo="Condominium", land="Land/Lot"] -> q7-buy-lot-size ?= house
+                                                                                                                                                                      -> q7-buy-lot-size ?= land
+                                                                                                                                                                      -> q8-buy-bedrooms ?in [apartment, condo]
+
+? q7-buy-lot-size Dm* "What is the minimum lot size you need?" "Enter the width and length (depth) of the lot" {dimensionType: "2d", dimensionUnits: "sq ft"} -> q8-buy-bedrooms
+
+? q8-buy-bedrooms Nu* "How many bedrooms do you need?" {min: 1, max: 10, step: 1, unit: "bedrooms"} -> q9-buy-features
+
+? q9-buy-features Mc "What are your must-have features?" "Select all that apply" [pool="Swimming Pool", garage="Garage", garden="Garden/Yard", security="Security System", fireplace="Fireplace", balcony="Balcony/Terrace", gym="Gym/Fitness Center", elevator="Elevator"] -> q10-buy-location
+
+? q10-buy-location Gl* "Where would you like to buy?" "Click on the map or search for your preferred location" {geolocationDefaultLocation: {lat: 37.7749, lng: -122.4194}, geolocationDefaultZoom: 10, geolocationMapHeight: "400px", geolocationEnableUserLocation: true, geolocationSearchEnabled: true, geolocationMaxLocations: 1} -> q-timeframe
+
+// Rent path
+? q5-rent-budget Cu* "What is your monthly rental budget?" {currency: "USD", currencyPosition: "before", placeholder: "2500"} -> q6-rent-property-type
+
+? q6-rent-property-type Ch* "What type of property are you looking to rent?" [house="Single Family House", apartment="Apartment", condo="Condominium", land="Land/Lot"] -> q7-rent-lot-size ?= house
+                                                                                                                                                                          -> q7-rent-lot-size ?= land
+                                                                                                                                                                          -> q8-rent-bedrooms ?in [apartment, condo]
+
+? q7-rent-lot-size Dm* "What is the minimum lot size you need?" "Enter the width and length (depth) of the lot" {dimensionType: "2d", dimensionUnits: "sq ft"} -> q8-rent-bedrooms
+
+? q8-rent-bedrooms Nu* "How many bedrooms do you need?" {min: 1, max: 10, step: 1, unit: "bedrooms"} -> q9-rent-features
+
+? q9-rent-features Mc "What are your must-have features?" "Select all that apply" [pool="Swimming Pool", garage="Garage/Parking", garden="Garden/Yard", security="Security System", fireplace="Fireplace", balcony="Balcony/Terrace", gym="Gym/Fitness Center", elevator="Elevator", pets="Pet-Friendly", furnished="Furnished"] -> q10-rent-location
+
+? q10-rent-location Gl* "Where would you like to rent?" "Click on the map or search for your preferred location" {geolocationDefaultLocation: {lat: 37.7749, lng: -122.4194}, geolocationDefaultZoom: 10, geolocationMapHeight: "400px", geolocationEnableUserLocation: true, geolocationSearchEnabled: true, geolocationMaxLocations: 1} -> q-timeframe
+
+// Sell path
+? q5-sell-property-type Ch* "What type of property are you selling?" [house="Single Family House", apartment="Apartment", condo="Condominium", land="Land/Lot"] -> q6-sell-price
+
+? q6-sell-price Cu* "What is your asking price?" {currency: "USD", currencyPosition: "before", placeholder: "750000"} -> q7-sell-property-size
+
+? q7-sell-property-size Dm* "What is the property size?" "Enter the width and length of the property" {dimensionType: "2d", dimensionUnits: "sq ft"} -> q8-sell-year-built
+
+? q8-sell-year-built Nu* "What year was the property built?" {min: 1800, max: 2025, step: 1, placeholder: "2010"} -> q9-sell-location
+
+? q9-sell-location Gl* "Where is the property located?" "Click on the map or search for the property address" {geolocationDefaultLocation: {lat: 37.7749, lng: -122.4194}, geolocationDefaultZoom: 10, geolocationMapHeight: "400px", geolocationEnableUserLocation: true, geolocationSearchEnabled: true, geolocationMaxLocations: 1} -> q-timeframe
+
+// Common questions (all paths merge)
+? q-timeframe Dr* "What is your preferred timeframe?" "When would you like to complete this transaction?" {numberOfMonths: 2, startDatePlaceholder: "Start date", endDatePlaceholder: "End date", minDate: "new Date().toISOString()"} -> q-additional
+
+? q-additional Tx "Any additional requirements or comments?" {placeholder: "Tell us anything else that would help us assist you better..."} -> end
+
+< end "Thank You!" "We have received your inquiry. One of our real estate specialists will contact you within 24 hours to discuss your needs."

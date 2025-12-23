@@ -1,0 +1,25 @@
+{
+  "sample": "08-job-application",
+  "schemaChars": 6844,
+  "dslChars": 2149,
+  "compressionRatio": 3.18,
+  "nodesPreserved": true,
+  "conditionsPreserved": true,
+  "findings": [
+    "Complex branching survey with 4 distinct role-based paths (developer, designer, manager, intern)",
+    "All paths converge at q_resume node before proceeding to common questions",
+    "Conditional routing based on position choice (q5) successfully preserved with ?= conditions",
+    "File dropzone accepts specific formats (PDF, DOC, DOCX) with 5MB size limit",
+    "Email validation uses 'strict' mode for enhanced validation",
+    "Phone field includes country code specification (US)",
+    "Multiple URL fields with HTTPS protocol enforcement",
+    "Number fields include units (years, people) and step values",
+    "Text field validation includes character length constraints (50-1000 chars)",
+    "Survey includes start message and end message nodes",
+    "All role-specific questions maintain proper flow to convergence point",
+    "Note: TypeScript 'url' type mapped to Tx (text) in DSL, 'date' type mapped to Tx",
+    "LinkedIn and portfolio fields stored as text with URL protocol hints in config",
+    "Expected graduation date stored as text with dateFormat hint",
+    "68.6% compression achieved while maintaining full survey logic"
+  ]
+}

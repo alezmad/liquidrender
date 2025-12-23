@@ -1,0 +1,20 @@
+// NPS Survey
+// Converted from: 02-nps-survey.ts
+// Title: Net Promoter Score Survey
+// Description: Simple NPS survey with branching logic based on score
+
+> start "Welcome!" "Thank you for taking the time to share your feedback with us. This will only take a minute." -> nps-question
+
+? nps-question Np* "How likely are you to recommend us to a friend or colleague?" "Please rate on a scale from 0 (not at all likely) to 10 (extremely likely)" {min: 0, max: 10} -> promoter-question ?>= 9
+? nps-question Np* "How likely are you to recommend us to a friend or colleague?" "Please rate on a scale from 0 (not at all likely) to 10 (extremely likely)" {min: 0, max: 10} -> passive-question ?>= 7
+? nps-question Np* "How likely are you to recommend us to a friend or colleague?" "Please rate on a scale from 0 (not at all likely) to 10 (extremely likely)" {min: 0, max: 10} -> detractor-question ?<= 6
+
+? promoter-question Tx "What do you love most about our product or service?" "We'd love to know what we're doing right!" {placeholder: "Share what you appreciate most..."} -> end
+
+? passive-question Tx "What would make you rate us higher?" "Help us understand what we could improve" {placeholder: "Tell us what would make a difference..."} -> end
+
+? detractor-question Tx "What went wrong?" "We're sorry to hear you had a poor experience. Please help us understand what happened." {placeholder: "Share your concerns..."} -> detractor-issues
+
+? detractor-issues Mc "Which of the following issues did you experience?" "Select all that apply" ["Poor customer service", "Product quality issues", "Pricing concerns", "Technical problems", "Delivery or shipping issues", "Other"] {values: ["customer-service", "product-quality", "pricing", "technical", "delivery", "other"]} -> end
+
+< end "Thank you!" "We appreciate you taking the time to share your feedback. Your input helps us improve and serve you better."

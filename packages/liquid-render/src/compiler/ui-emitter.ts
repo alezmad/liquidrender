@@ -683,6 +683,7 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
     signals: schema.signals.map((s, i) => ({ name: s.name, line: i + 1 })),
     layers: [],
     mainBlocks: [],
+    mainBlocksSeparator: 'newline',
     surveys: [],
     comments: [],
   };
@@ -873,7 +874,7 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
     if (block.condition?.signal) {
       astBlock.condition = {
         signal: block.condition.signal,
-        value: block.condition.signalValue,
+        value: block.condition.signalValue ?? '',
       };
     }
 

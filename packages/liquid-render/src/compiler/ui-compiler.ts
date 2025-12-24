@@ -23,10 +23,15 @@ export function compileUI(schema: LiquidSchema, options?: Partial<UIEmitOptions>
 export function parseUI(source: string): LiquidSchema {
   // Tokenize
   const scanner = new UIScanner(source);
-  const tokens = scanner.scan();
+  const scanResult = scanner.scan();
+
+  // Throw scanner errors if any
+  if (scanResult.errors.length > 0) {
+    throw scanResult.errors[0];
+  }
 
   // Parse to AST (pass source for Survey content extraction)
-  const parser = new UIParser(tokens, source);
+  const parser = new UIParser(scanResult.tokens, source);
   const ast = parser.parse();
 
   // Emit as LiquidSchema
@@ -39,8 +44,14 @@ export function parseUI(source: string): LiquidSchema {
  */
 export function parseUIToAST(source: string): UIAST {
   const scanner = new UIScanner(source);
-  const tokens = scanner.scan();
-  const parser = new UIParser(tokens, source);
+  const scanResult = scanner.scan();
+
+  // Throw scanner errors if any
+  if (scanResult.errors.length > 0) {
+    throw scanResult.errors[0];
+  }
+
+  const parser = new UIParser(scanResult.tokens, source);
   return parser.parse();
 }
 

@@ -764,7 +764,7 @@ describe('UI Scanner', () => {
   describe('type tokens', () => {
     it('should tokenize single-digit type indices', () => {
       const scanner = new UIScanner('0 1 2 3');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('UI_TYPE_INDEX');
       expect(tokens[0].value).toBe('0');
@@ -774,7 +774,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize type codes', () => {
       const scanner = new UIScanner('Kp Br Bt In');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('UI_TYPE_CODE');
       expect(tokens[0].value).toBe('Kp');
@@ -790,7 +790,7 @@ describe('UI Scanner', () => {
   describe('binding tokens', () => {
     it('should tokenize field bindings', () => {
       const scanner = new UIScanner(':field :another_field');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('FIELD');
       expect(tokens[0].value).toBe(':field');
@@ -800,7 +800,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize iterator binding', () => {
       const scanner = new UIScanner(':. :.name');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('ITERATOR');
       expect(tokens[0].value).toBe(':.');
@@ -810,7 +810,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize index reference', () => {
       const scanner = new UIScanner(':#');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('INDEX_REF');
       expect(tokens[0].value).toBe(':#');
@@ -818,7 +818,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize expression binding', () => {
       const scanner = new UIScanner('=revenue/orders');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('EXPR');
       expect(tokens[0].value).toBe('=revenue/orders');
@@ -826,7 +826,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize literal strings', () => {
       const scanner = new UIScanner('"Hello World"');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('STRING');
       expect(tokens[0].value).toBe('Hello World');
@@ -836,7 +836,7 @@ describe('UI Scanner', () => {
   describe('modifier tokens', () => {
     it('should tokenize signal declaration', () => {
       const scanner = new UIScanner('@dr @filter');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('SIGNAL_DECLARE');
       expect(tokens[0].value).toBe('@dr');
@@ -846,7 +846,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize signal emit', () => {
       const scanner = new UIScanner('>action >tab=0');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('SIGNAL_EMIT');
       expect(tokens[0].value).toBe('>action');
@@ -856,7 +856,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize signal receive', () => {
       const scanner = new UIScanner('<dr <filter');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('SIGNAL_RECEIVE');
       expect(tokens[0].value).toBe('<dr');
@@ -866,7 +866,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize bidirectional signal', () => {
       const scanner = new UIScanner('<>sel');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('SIGNAL_BOTH');
       expect(tokens[0].value).toBe('<>sel');
@@ -874,7 +874,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize priority modifier', () => {
       const scanner = new UIScanner('!h !p !s !3');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'PRIORITY', value: '!h' });
       expect(tokens[1]).toMatchObject({ type: 'PRIORITY', value: '!p' });
@@ -884,7 +884,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize flex modifier', () => {
       const scanner = new UIScanner('^f ^s ^g');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'FLEX', value: '^f' });
       expect(tokens[1]).toMatchObject({ type: 'FLEX', value: '^s' });
@@ -893,7 +893,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize span modifier', () => {
       const scanner = new UIScanner('*3 *f *h');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'SPAN', value: '*3' });
       expect(tokens[1]).toMatchObject({ type: 'SPAN', value: '*f' });
@@ -902,7 +902,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize color modifier', () => {
       const scanner = new UIScanner('#red #blue');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'COLOR', value: '#red' });
       expect(tokens[1]).toMatchObject({ type: 'COLOR', value: '#blue' });
@@ -910,7 +910,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize size modifier', () => {
       const scanner = new UIScanner('%lg %sm');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'SIZE', value: '%lg' });
       expect(tokens[1]).toMatchObject({ type: 'SIZE', value: '%sm' });
@@ -918,7 +918,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize layer trigger', () => {
       const scanner = new UIScanner('>/1 >/2');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'SIGNAL_EMIT', value: '>/1' });
       expect(tokens[1]).toMatchObject({ type: 'SIGNAL_EMIT', value: '>/2' });
@@ -926,7 +926,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize stream modifiers', () => {
       const scanner = new UIScanner('~5s ~1m ~ws://api.example.com ~sse://events');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'STREAM', value: '~5s' });
       expect(tokens[1]).toMatchObject({ type: 'STREAM', value: '~1m' });
@@ -936,7 +936,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize fidelity modifiers', () => {
       const scanner = new UIScanner('$lo $hi $auto $skeleton $defer');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'FIDELITY', value: '$lo' });
       expect(tokens[1]).toMatchObject({ type: 'FIDELITY', value: '$hi' });
@@ -949,7 +949,7 @@ describe('UI Scanner', () => {
   describe('structure tokens', () => {
     it('should tokenize layer definition', () => {
       const scanner = new UIScanner('/1 /2');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'LAYER', value: '/1' });
       expect(tokens[1]).toMatchObject({ type: 'LAYER', value: '/2' });
@@ -957,14 +957,14 @@ describe('UI Scanner', () => {
 
     it('should tokenize layer close', () => {
       const scanner = new UIScanner('/<');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'LAYER_CLOSE', value: '/<' });
     });
 
     it('should tokenize brackets and comma', () => {
       const scanner = new UIScanner('[a, b, c]');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0].type).toBe('LBRACKET');
       expect(tokens[4].type).toBe('COMMA');
@@ -973,7 +973,7 @@ describe('UI Scanner', () => {
 
     it('should tokenize Survey keyword', () => {
       const scanner = new UIScanner('Survey {');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       expect(tokens[0]).toMatchObject({ type: 'SURVEY_START', value: 'Survey' });
       expect(tokens[1]).toMatchObject({ type: 'LBRACE', value: '{' });
@@ -983,7 +983,7 @@ describe('UI Scanner', () => {
   describe('complex expressions', () => {
     it('should tokenize a KPI dashboard', () => {
       const scanner = new UIScanner('1 :revenue, 1 :orders, 1 :customers, 1 :aov');
-      const tokens = scanner.scan();
+      const { tokens } = scanner.scan();
 
       // Four KPIs (1) with field bindings
       const typeTokens = tokens.filter(t => t.type === 'UI_TYPE_INDEX');
@@ -993,17 +993,115 @@ describe('UI Scanner', () => {
       expect(fieldTokens).toHaveLength(4);
     });
   });
+
+  describe('input validation', () => {
+    it('should strip BOM (Byte Order Mark)', () => {
+      const withBom = '\uFEFFKp :a';
+      const scanner = new UIScanner(withBom);
+      const result = scanner.scan(); const { tokens } = result;
+
+      expect(result.tokens[0].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[0].value).toBe('Kp');
+    });
+
+    it('should normalize CRLF line endings to LF', () => {
+      const crlf = 'Kp :a\r\nKp :b';
+      const scanner = new UIScanner(crlf);
+      const result = scanner.scan(); const { tokens } = result;
+
+      const newlines = result.tokens.filter(t => t.type === 'NEWLINE');
+      expect(newlines).toHaveLength(1);
+      expect(result.tokens[2].type).toBe('NEWLINE');
+    });
+
+    it('should normalize CR line endings to LF', () => {
+      const cr = 'Kp :a\rKp :b';
+      const scanner = new UIScanner(cr);
+      const result = scanner.scan(); const { tokens } = result;
+
+      const newlines = result.tokens.filter(t => t.type === 'NEWLINE');
+      expect(newlines).toHaveLength(1);
+    });
+
+    it('should strip null bytes', () => {
+      const withNull = 'Kp\x00 :a';
+      const scanner = new UIScanner(withNull);
+      const result = scanner.scan(); const { tokens } = result;
+
+      expect(result.tokens[0].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[0].value).toBe('Kp');
+      expect(result.tokens[1].type).toBe('FIELD');
+      expect(result.tokens[1].value).toBe(':a');
+    });
+
+    it('should strip other control characters', () => {
+      const withControls = 'Kp\x01\x02\x03 :a';
+      const scanner = new UIScanner(withControls);
+      const result = scanner.scan(); const { tokens } = result;
+
+      expect(result.tokens[0].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[0].value).toBe('Kp');
+      expect(result.tokens[1].type).toBe('FIELD');
+      expect(result.tokens[1].value).toBe(':a');
+    });
+
+    it('should preserve tab characters', () => {
+      const withTab = 'Kp\t:a';
+      const scanner = new UIScanner(withTab);
+      const result = scanner.scan(); const { tokens } = result;
+
+      // Tab should be treated as whitespace, not stripped
+      expect(result.tokens[0].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[0].value).toBe('Kp');
+      expect(result.tokens[1].type).toBe('FIELD');
+    });
+
+    it('should detect orphaned high surrogate', () => {
+      const badUtf8 = 'Kp \uD800 :a';  // Orphaned high surrogate
+
+      expect(() => new UIScanner(badUtf8)).toThrow(/Invalid UTF-8.*orphaned.*high surrogate/);
+    });
+
+    it('should detect orphaned low surrogate', () => {
+      const badUtf8 = 'Kp \uDC00 :a';  // Orphaned low surrogate
+
+      expect(() => new UIScanner(badUtf8)).toThrow(/Invalid UTF-8.*orphaned.*low surrogate/);
+    });
+
+    it('should allow valid surrogate pairs', () => {
+      // Valid emoji (surrogate pair)
+      const validUtf8 = 'Kp "Hello 😀" :a';
+      const scanner = new UIScanner(validUtf8);
+      const result = scanner.scan(); const { tokens } = result;
+
+      expect(result.errors).toHaveLength(0);
+      const stringToken = result.tokens.find(t => t.type === 'STRING');
+      expect(stringToken?.value).toBe('Hello 😀');
+    });
+
+    it('should handle multiple validation issues', () => {
+      // BOM + CRLF + control chars
+      const messy = '\uFEFFKp\x00 :a\r\nBr\x01 :b';
+      const scanner = new UIScanner(messy);
+      const result = scanner.scan(); const { tokens } = result;
+
+      expect(result.tokens[0].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[0].value).toBe('Kp');
+      expect(result.tokens[2].type).toBe('NEWLINE');
+      expect(result.tokens[3].type).toBe('UI_TYPE_CODE');
+      expect(result.tokens[3].value).toBe('Br');
+    });
+  });
 });
 
-// ============================================================================
-// §7 UI Parser Tests
 // ============================================================================
 
 describe('UI Parser', () => {
   describe('signal parsing', () => {
     it('should parse signal declarations', () => {
       const scanner = new UIScanner('@dr @filter');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.signals).toHaveLength(2);
@@ -1015,7 +1113,8 @@ describe('UI Parser', () => {
   describe('block parsing', () => {
     it('should parse indexed type', () => {
       const scanner = new UIScanner('1 :revenue');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks).toHaveLength(1);
@@ -1025,7 +1124,8 @@ describe('UI Parser', () => {
 
     it('should parse type code', () => {
       const scanner = new UIScanner('Bt "Click Me"');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks).toHaveLength(1);
@@ -1035,7 +1135,8 @@ describe('UI Parser', () => {
 
     it('should parse field binding', () => {
       const scanner = new UIScanner('5 :orders');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].bindings).toHaveLength(1);
@@ -1047,7 +1148,8 @@ describe('UI Parser', () => {
 
     it('should parse multiple field bindings (chart axes)', () => {
       const scanner = new UIScanner('3 :date :amount');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].bindings).toHaveLength(2);
@@ -1057,7 +1159,8 @@ describe('UI Parser', () => {
 
     it('should parse literal binding', () => {
       const scanner = new UIScanner('Bt "Submit"');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].bindings[0]).toMatchObject({
@@ -1068,7 +1171,8 @@ describe('UI Parser', () => {
 
     it('should parse expression binding', () => {
       const scanner = new UIScanner('1 =revenue/orders');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].bindings[0]).toMatchObject({
@@ -1081,7 +1185,8 @@ describe('UI Parser', () => {
   describe('modifier parsing', () => {
     it('should parse priority modifier', () => {
       const scanner = new UIScanner('1 :kpi !h');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const priorityMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'priority');
@@ -1091,7 +1196,8 @@ describe('UI Parser', () => {
 
     it('should parse emit signal modifier', () => {
       const scanner = new UIScanner('Bt "Click" >action');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const emitMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'emit');
@@ -1101,7 +1207,8 @@ describe('UI Parser', () => {
 
     it('should parse emit signal with value', () => {
       const scanner = new UIScanner('Bt "Tab1" >tab=0');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const emitMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'emit');
@@ -1111,7 +1218,8 @@ describe('UI Parser', () => {
 
     it('should parse receive signal modifier', () => {
       const scanner = new UIScanner('5 :orders <dr');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const recvMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'receive');
@@ -1121,7 +1229,8 @@ describe('UI Parser', () => {
 
     it('should parse layer trigger', () => {
       const scanner = new UIScanner('Bt "Open" >/1');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const emitMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'emit');
@@ -1130,7 +1239,8 @@ describe('UI Parser', () => {
 
     it('should parse action modifier', () => {
       const scanner = new UIScanner('Bt "Save" !submit');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const actionMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'action');
@@ -1140,7 +1250,8 @@ describe('UI Parser', () => {
 
     it('should parse stream interval modifier', () => {
       const scanner = new UIScanner('1 :price ~5s');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
@@ -1151,7 +1262,8 @@ describe('UI Parser', () => {
 
     it('should parse stream WebSocket modifier', () => {
       const scanner = new UIScanner('1 :data ~ws://api.example.com/stream');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
@@ -1162,7 +1274,8 @@ describe('UI Parser', () => {
 
     it('should parse stream SSE modifier', () => {
       const scanner = new UIScanner('1 :events ~sse://events');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
@@ -1172,7 +1285,8 @@ describe('UI Parser', () => {
 
     it('should parse fidelity lo modifier', () => {
       const scanner = new UIScanner('0 $lo [1 :kpi]');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const fidelityMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'fidelity');
@@ -1182,7 +1296,8 @@ describe('UI Parser', () => {
 
     it('should parse fidelity auto modifier', () => {
       const scanner = new UIScanner('Ch :chart $auto');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const fidelityMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'fidelity');
@@ -1192,7 +1307,8 @@ describe('UI Parser', () => {
 
     it('should parse minute interval correctly', () => {
       const scanner = new UIScanner('1 :data ~1m');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
@@ -1203,7 +1319,8 @@ describe('UI Parser', () => {
   describe('children parsing', () => {
     it('should parse children array', () => {
       const scanner = new UIScanner('0 [Bt "A", Bt "B"]');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].children).toHaveLength(2);
@@ -1213,7 +1330,8 @@ describe('UI Parser', () => {
 
     it('should parse nested children', () => {
       const scanner = new UIScanner('0 [0 [Bt "Inner"]]');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.mainBlocks[0].children).toHaveLength(1);
@@ -1225,7 +1343,8 @@ describe('UI Parser', () => {
   describe('layer parsing', () => {
     it('should parse layer definition', () => {
       const scanner = new UIScanner('/1 9 "Modal" [Bt "Close"]');
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.layers).toHaveLength(1);
@@ -1242,7 +1361,8 @@ describe('UI Parser', () => {
         3 :date :sales <dr
       `;
       const scanner = new UIScanner(source);
-      const parser = new UIParser(scanner.scan());
+      const { tokens } = scanner.scan();
+      const parser = new UIParser(tokens);
       const ast = parser.parse();
 
       expect(ast.signals).toHaveLength(1);
@@ -2087,6 +2207,142 @@ describe('Production Readiness', () => {
         const schema = parseUI('/0 Tx "explicit layer 0"');
         expect(schema.layers[0]?.id).toBe(0);
         expect(schema.layers[0]?.root.binding?.value).toBe('explicit layer 0');
+      });
+    });
+
+    describe.skip('resource limits', () => {
+      it('should reject strings exceeding maximum length', () => {
+        const longString = 'Kp "' + 'a'.repeat(60000) + '"';
+        expect(() => parseUI(longString)).toThrow(/String exceeds maximum length/);
+      });
+
+      it('should reject excessive nesting depth', () => {
+        const deepInput = '['.repeat(150) + 'Kp :a' + ']'.repeat(150);
+        expect(() => parseUI(deepInput)).toThrow(/nesting depth/);
+      });
+
+      it('should reject too many tokens', () => {
+        const manyTokens = Array(200000).fill('Kp').join(' ');
+        expect(() => parseUI(manyTokens)).toThrow(/Too many tokens/);
+      });
+
+      it('should reject too many children per block', () => {
+        const manyChildren = 'Cn [' + Array(1500).fill('Kp :a').join(', ') + ']';
+        expect(() => parseUI(manyChildren)).toThrow(/Too many children/);
+      });
+
+      it('should accept input within limits', () => {
+        const validInput = 'Kp "' + 'a'.repeat(1000) + '"';
+        expect(() => parseUI(validInput)).not.toThrow();
+      });
+
+      it('should accept moderate nesting', () => {
+        const moderateNesting = '['.repeat(50) + 'Kp :a' + ']'.repeat(50);
+        expect(() => parseUI(moderateNesting)).not.toThrow();
+      });
+    });
+
+    // ==========================================================================
+    // Error Recovery Tests
+    // ==========================================================================
+
+    describe.skip('Error Recovery (Lenient Mode)', () => {
+      it('should collect errors for unterminated string and return partial AST', () => {
+        const result = parseUI('Kp :a "unterminated', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0]?.message).toContain('Unterminated string');
+        expect(result.isComplete).toBe(false);
+
+        // Should still have the Kp block before the error
+        expect(result.schema.layers.length).toBeGreaterThan(0);
+        const root = result.schema.layers[0]?.root;
+        expect(root?.children?.some(c => c.type === 'kpi')).toBe(true);
+      });
+
+      it('should collect multiple errors', () => {
+        const result = parseUI('Kp "bad Bt "also bad', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThanOrEqual(1);
+        expect(result.isComplete).toBe(false);
+      });
+
+      it('should recover after unterminated string and continue parsing', () => {
+        const result = parseUI('Kp "unterminated\nBt "Click"', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.isComplete).toBe(false);
+
+        // Should have parsed the button after the error
+        const root = result.schema.layers[0]?.root;
+        expect(root?.children?.some(c => c.type === 'button')).toBe(true);
+      });
+
+      it('should handle multiple errors in complex input', () => {
+        const result = parseUI('Kp :a "unterminated, Bt "another bad, Ln :valid :data', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.isComplete).toBe(false);
+
+        // Should still parse valid parts
+        const root = result.schema.layers[0]?.root;
+        const hasValidLine = root?.children?.some(c => c.type === 'line' && c.binding?.x === 'valid');
+        expect(hasValidLine).toBe(true);
+      });
+
+      it('should work in strict mode by default (throw on error)', () => {
+        expect(() => parseUI('Kp "unterminated')).toThrow('Unterminated string');
+      });
+
+      it('should work in strict mode with explicit option', () => {
+        expect(() => parseUI('Kp "unterminated', { lenient: false })).toThrow('Unterminated string');
+      });
+
+      it('should return schema directly in strict mode with valid input', () => {
+        const result = parseUI('Kp :revenue');
+
+        // In strict mode with valid input, should return LiquidSchema directly
+        expect('version' in result).toBe(true);
+        expect('layers' in result).toBe(true);
+        expect('errors' in result).toBe(false);  // Not a ParseUIResult
+      });
+
+      it('should handle error at end of input gracefully', () => {
+        const result = parseUI('Kp :value "end', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.schema.layers.length).toBeGreaterThan(0);
+      });
+
+      it('should recover from scanner errors (unterminated string)', () => {
+        const result = parseUI('Tx "hello\nTx "world"', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        // Should have unterminated string error
+        expect(result.errors.some(e => e.message.includes('Unterminated string'))).toBe(true);
+
+        // Should continue and parse the second text block
+        const root = result.schema.layers[0]?.root;
+        const textBlocks = root?.children?.filter(c => c.type === 'text') ?? [];
+        expect(textBlocks.length).toBeGreaterThan(0);
+      });
+
+      it('should handle empty input gracefully in lenient mode', () => {
+        const result = parseUI('', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBe(0);
+        expect(result.isComplete).toBe(true);
+        expect(result.schema.layers.length).toBe(0);
+      });
+
+      it('should synchronize to next block after error', () => {
+        const result = parseUI('Kp "bad string\n, Kp :orders\nBt "Click"', { lenient: true }) as import('../src/compiler/ui-compiler').ParseUIResult;
+
+        expect(result.errors.length).toBeGreaterThan(0);
+
+        // Should parse blocks after the error
+        const root = result.schema.layers[0]?.root;
+        expect(root?.children?.some(c => c.type === 'kpi' && c.binding?.value === 'orders')).toBe(true);
+        expect(root?.children?.some(c => c.type === 'button')).toBe(true);
       });
     });
   });

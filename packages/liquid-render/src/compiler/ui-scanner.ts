@@ -94,21 +94,94 @@ export interface UIToken {
   column: number;
 }
 
+export interface ScanResult {
+  tokens: UIToken[];
+  errors: LiquidCodeError[];
+}
+
 export class UIScanner {
   private source: string;
   private tokens: UIToken[] = [];
+  private errors: LiquidCodeError[] = [];
   private current = 0;
   private line = 1;
   private column = 1;
   private inSurveyBlock = 0; // Nesting depth for Survey { }
 
   constructor(source: string) {
-    this.source = source;
+    this.source = this.preprocessSource(source);
   }
 
-  scan(): UIToken[] {
+    /**
+   * Preprocess source code for normalization and validation
+   * 1. Strip UTF-8 BOM
+   * 2. Normalize line endings
+   * 3. Validate UTF-8 encoding
+   * 4. Handle control characters
+   */
+  private preprocessSource(source: string): string {
+    // 1. Strip BOM (Byte Order Mark)
+    let result = source.replace(/^\uFEFF/, '');
+
+    // 2. Normalize line endings to \n
+    result = result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    // 3. Validate UTF-8 (check for orphaned surrogates)
+    this.validateUTF8(result);
+
+    // 4. Handle control characters (keep \n, \t, strip others)
+    result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+    return result;
+  }
+
+  /**
+   * Validate UTF-8 encoding by checking for orphaned surrogates
+   * @throws {LiquidCodeError} if invalid UTF-8 is detected
+   */
+  private validateUTF8(source: string): void {
+    for (let i = 0; i < source.length; i++) {
+      const code = source.charCodeAt(i);
+      // Check for orphaned high surrogate
+      if (code >= 0xD800 && code <= 0xDBFF) {
+        const next = source.charCodeAt(i + 1);
+        if (!(next >= 0xDC00 && next <= 0xDFFF)) {
+          throw new LiquidCodeError(
+            'Invalid UTF-8: orphaned high surrogate',
+            1,
+            i + 1,
+            source
+          );
+        }
+        i++; // Skip low surrogate
+      }
+      // Check for orphaned low surrogate
+      else if (code >= 0xDC00 && code <= 0xDFFF) {
+        throw new LiquidCodeError(
+          'Invalid UTF-8: orphaned low surrogate',
+          1,
+          i + 1,
+          source
+        );
+      }
+    }
+  }
+
+
+  scan(): ScanResult {
     while (!this.isAtEnd()) {
-      this.scanToken();
+      try {
+        this.scanToken();
+
+  
+      } catch (e) {
+        if (e instanceof LiquidCodeError) {
+          this.errors.push(e);
+          this.synchronize();
+        } else {
+          throw e;
+        }
+      }
     }
 
     this.tokens.push({
@@ -118,7 +191,26 @@ export class UIScanner {
       column: this.column,
     });
 
-    return this.tokens;
+    return { tokens: this.tokens, errors: this.errors };
+  }
+
+  /**
+   * Synchronize scanner to a safe point after error
+   * Skip until newline, bracket, comma, or known prefix character
+   */
+  private synchronize(): void {
+    while (!this.isAtEnd()) {
+      const c = this.peek();
+      // Stop at structural boundaries
+      if (c === '\n' || c === '[' || c === ']' || c === ',' || c === '{' || c === '}') {
+        break;
+      }
+      // Stop at start of new block (type codes or signals at start of line)
+      if ((this.isAlpha(c) || c === '@') && this.column === 1) {
+        break;
+      }
+      this.advance();
+    }
   }
 
   private scanToken(): void {
@@ -347,8 +439,11 @@ export class UIScanner {
   private stream(): void {
     let value = '~';
     // Stream can be: ~5s, ~1m, ~ws://url, ~sse://url, ~poll
-    // Consume until whitespace, comma, or bracket
+    // Consume until whitespace, comma, bracket, or prefix (but allow : for URLs)
     while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
+      const c = this.peek();
+      // Stop at prefix characters except : (needed for URLs)
+      if (c !== ':' && this.isPrefixChar(c)) break;
       value += this.advance();
     }
     this.addToken('STREAM', value);
@@ -399,8 +494,11 @@ export class UIScanner {
 
   private expression(): void {
     let value = '=';
-    // Consume until whitespace, comma, or bracket
+    // Consume until whitespace, comma, bracket, or prefix (but allow :*% as operators)
     while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
+      const c = this.peek();
+      // Stop at prefix characters except :*% (allowed as expression operators)
+      if (c !== ':' && c !== '*' && c !== '%' && this.isPrefixChar(c)) break;
       value += this.advance();
     }
     this.addToken('EXPR', value);
@@ -433,6 +531,7 @@ export class UIScanner {
     const startColumn = this.column;
 
     while (this.peek() !== '"' && !this.isAtEnd()) {
+
       if (this.peek() === '\n') {
         this.line++;
         this.column = 0;
@@ -542,8 +641,9 @@ export class UIScanner {
     // 2. Unknown but matches pattern: 2-3 chars, starts with capital letter
     //    This allows forward-compatibility with new component types
     const isKnownType = UI_TYPE_CODES[value] !== undefined;
+    const firstChar = value.charAt(0);
     const isTypeCodePattern = value.length >= 2 && value.length <= 3 &&
-                              value[0] >= 'A' && value[0] <= 'Z' &&
+                              firstChar >= 'A' && firstChar <= 'Z' &&
                               /^[A-Z][a-z]{1,2}$/.test(value);
 
     if (isKnownType || isTypeCodePattern) {
@@ -605,6 +705,16 @@ export class UIScanner {
   private isAlphaNumeric(c: string): boolean {
     return this.isAlpha(c) || this.isDigit(c);
   }
+
+  /**
+   * Check if character is a modifier prefix that signals end of current token
+   * These characters are unambiguous delimiters in LiquidCode
+   */
+  private isPrefixChar(c: string): boolean {
+    return ':@><#!^*%~$?'.includes(c);
+  }
+
+
 
   private addToken(type: UITokenType, value: string): void {
     this.tokens.push({

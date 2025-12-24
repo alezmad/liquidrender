@@ -36,6 +36,7 @@ export interface Block {
   style?: Style;
   action?: string;
   children?: Block[];
+  columns?: string[];  // For tables: column field names
   survey?: unknown; // GraphSurvey when parsed
 }
 
@@ -43,6 +44,9 @@ export interface Binding {
   kind: 'indexed' | 'field' | 'computed' | 'literal' | 'iterator' | 'indexRef';
   value: string | number[];
   indices?: number[];
+  // For charts with multiple bindings (x, y axes)
+  x?: string;
+  y?: string;
 }
 
 export interface Layout {
@@ -53,8 +57,8 @@ export interface Layout {
 
 export interface SignalBinding {
   emit?: SignalEmit;
-  receive?: string;
-  both?: string;
+  receive?: string | string[];  // Supports multiple receive signals
+  both?: string | string[];     // Supports multiple bidirectional signals
   layer?: number;
 }
 
@@ -67,6 +71,8 @@ export interface SignalEmit {
 export interface Condition {
   state?: string;
   expression?: string;
+  signal?: string;
+  signalValue?: string;
 }
 
 export interface Style {
@@ -122,14 +128,24 @@ export class UIEmitter {
 
     // Layer 0 = main content
     if (ast.mainBlocks.length > 0) {
+      // Expand blocks (handles repetition shorthand)
+      const expandedBlocks = ast.mainBlocks.flatMap(b => this.emitBlockWithExpansion(b));
+
       // Wrap multiple main blocks in a container
-      const root: Block = ast.mainBlocks.length === 1
-        ? this.emitBlock(ast.mainBlocks[0]!)
-        : {
-            uid: 'root',
-            type: 'container',
-            children: ast.mainBlocks.map(b => this.emitBlock(b)),
-          };
+      let root: Block;
+      if (expandedBlocks.length === 1) {
+        root = expandedBlocks[0]!;
+      } else {
+        // Infer layout based on separator type
+        // comma = row, newline = column, mixed = column
+        const flex = ast.mainBlocksSeparator === 'comma' ? 'row' : 'column';
+        root = {
+          uid: 'root',
+          type: 'container',
+          layout: { flex },
+          children: expandedBlocks,
+        };
+      }
 
       schema.layers.push({
         id: 0,
@@ -159,6 +175,67 @@ export class UIEmitter {
     return schema;
   }
 
+  // Chart types use multi-binding for x/y axes
+  private static CHART_TYPES = new Set(['bar', 'line', 'pie', 'heatmap', 'sankey', 'area', 'scatter']);
+
+  // Types that should NOT expand (single instance with special handling)
+  private static NO_EXPAND_TYPES = new Set(['table', 'form', 'container']);
+
+  /**
+   * Emit block with expansion for repetition shorthand.
+   * Non-chart types with multiple field bindings expand into multiple blocks.
+   * e.g., "Kp :revenue :orders :customers" → 3 separate KPI blocks
+   */
+  private emitBlockWithExpansion(astBlock: BlockAST): Block[] {
+    const isChart = UIEmitter.CHART_TYPES.has(astBlock.type);
+    const noExpand = UIEmitter.NO_EXPAND_TYPES.has(astBlock.type);
+    const fieldBindings = astBlock.bindings.filter(b => b.kind === 'field');
+
+    // Expand if: not a chart, not special type, has multiple field bindings
+    if (!isChart && !noExpand && fieldBindings.length > 1) {
+      // Create one block per field binding
+      return fieldBindings.map((binding, i) => {
+        const expandedBlock: Block = {
+          uid: `${astBlock.uid}_${i}`,
+          type: astBlock.type,
+          binding: this.emitBinding(binding),
+          label: this.fieldToLabel(binding.value),
+        };
+
+        // Copy layout modifiers to each expanded block
+        const layout = this.extractLayout(astBlock.modifiers);
+        if (Object.keys(layout).length > 0) {
+          expandedBlock.layout = layout;
+        }
+
+        // Copy signal modifiers
+        const signals = this.extractSignals(astBlock.modifiers);
+        if (Object.keys(signals).length > 0) {
+          expandedBlock.signals = signals;
+        }
+
+        // Copy style modifiers
+        const style = this.extractStyle(astBlock.modifiers);
+        if (Object.keys(style).length > 0) {
+          expandedBlock.style = style;
+        }
+
+        // Copy condition (from ?@signal=value)
+        if (astBlock.condition) {
+          expandedBlock.condition = {
+            signal: astBlock.condition.signal,
+            signalValue: astBlock.condition.value,
+          };
+        }
+
+        return expandedBlock;
+      });
+    }
+
+    // No expansion - return single block
+    return [this.emitBlock(astBlock)];
+  }
+
   private emitBlock(astBlock: BlockAST): Block {
     const block: Block = {
       uid: astBlock.uid,
@@ -170,9 +247,28 @@ export class UIEmitter {
       const firstBinding = astBlock.bindings[0]!;
       block.binding = this.emitBinding(firstBinding);
 
+      // For charts, check if there are x/y bindings
+      const isChart = ['bar', 'line', 'pie', 'heatmap', 'sankey'].includes(astBlock.type);
+      if (isChart && astBlock.bindings.length >= 2) {
+        const fieldBindings = astBlock.bindings.filter(b => b.kind === 'field');
+        if (fieldBindings.length >= 2) {
+          block.binding.x = fieldBindings[0]!.value;
+          block.binding.y = fieldBindings[1]!.value;
+        }
+      }
+
       // Literal binding becomes label
       if (firstBinding.kind === 'literal') {
         block.label = firstBinding.value;
+      } else {
+        // Auto-generate label from field name if no explicit label
+        const literalBinding = astBlock.bindings.find(b => b.kind === 'literal');
+        if (literalBinding) {
+          block.label = literalBinding.value;
+        } else if (firstBinding.kind === 'field') {
+          // Auto-label: camelCase/snake_case -> "Title Case"
+          block.label = this.fieldToLabel(firstBinding.value);
+        }
       }
     }
 
@@ -200,15 +296,29 @@ export class UIEmitter {
       block.condition = { state: stateModifier.value as string };
     }
 
+    // Signal conditions (from ?@signal=value)
+    if (astBlock.condition) {
+      block.condition = {
+        ...block.condition,
+        signal: astBlock.condition.signal,
+        signalValue: astBlock.condition.value,
+      };
+    }
+
     // Action
     const actionModifier = astBlock.modifiers.find(m => m.kind === 'action');
     if (actionModifier) {
       block.action = actionModifier.value as string;
     }
 
-    // Children
+    // Table columns
+    if (astBlock.columns && astBlock.columns.length > 0) {
+      block.columns = astBlock.columns;
+    }
+
+    // Children (with expansion support)
     if (astBlock.children && astBlock.children.length > 0) {
-      block.children = astBlock.children.map(c => this.emitBlock(c));
+      block.children = astBlock.children.flatMap(c => this.emitBlockWithExpansion(c));
     }
 
     // Embedded survey
@@ -279,6 +389,8 @@ export class UIEmitter {
 
   private extractSignals(modifiers: ModifierAST[]): SignalBinding {
     const signals: SignalBinding = {};
+    const receivers: string[] = [];
+    const bothSignals: string[] = [];
 
     for (const mod of modifiers) {
       if (mod.kind === 'emit') {
@@ -291,10 +403,23 @@ export class UIEmitter {
           };
         }
       } else if (mod.kind === 'receive') {
-        signals.receive = mod.target;
+        if (mod.target) receivers.push(mod.target);
       } else if (mod.kind === 'both') {
-        signals.both = mod.target;
+        if (mod.target) bothSignals.push(mod.target);
       }
+    }
+
+    // Store as array if multiple, string if single
+    if (receivers.length === 1) {
+      signals.receive = receivers[0];
+    } else if (receivers.length > 1) {
+      signals.receive = receivers;
+    }
+
+    if (bothSignals.length === 1) {
+      signals.both = bothSignals[0];
+    } else if (bothSignals.length > 1) {
+      signals.both = bothSignals;
     }
 
     return signals;
@@ -347,6 +472,12 @@ export class UIEmitter {
   private emitBlockDSL(block: BlockAST): string {
     const parts: string[] = [];
 
+    // Condition prefix (e.g., ?@tab=0)
+    if (block.condition) {
+      const condValue = block.condition.value !== undefined ? `=${block.condition.value}` : '';
+      parts.push(`?@${block.condition.signal}${condValue}`);
+    }
+
     // Type (prefer index if available)
     const typeIndex = UI_TYPE_TO_INDEX[block.type];
     if (typeIndex !== undefined && typeIndex >= 0 && typeIndex <= 9) {
@@ -364,6 +495,12 @@ export class UIEmitter {
     // Modifiers
     for (const mod of block.modifiers) {
       parts.push(this.emitModifierDSL(mod));
+    }
+
+    // Columns (for tables)
+    if (block.columns && block.columns.length > 0) {
+      const columnsDSL = block.columns.map(c => `:${c}`).join(' ');
+      parts.push(`[${columnsDSL}]`);
     }
 
     // Children
@@ -433,13 +570,58 @@ export class UIEmitter {
   }
 
   private escapeString(s: string): string {
-    return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return s
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\t/g, '\\t');
+  }
+
+  /**
+   * Convert field name to human-readable label
+   * Examples:
+   *   revenue -> "Revenue"
+   *   totalRevenue -> "Total Revenue"
+   *   order_count -> "Order Count"
+   *   avgOrderValue -> "Avg Order Value"
+   */
+  private fieldToLabel(field: string): string {
+    // Remove any path prefix (e.g., "summary.revenue" -> "revenue")
+    const name = field.split('.').pop() || field;
+
+    // Replace underscores with spaces
+    let result = name.replace(/_/g, ' ');
+
+    // Split camelCase: "totalRevenue" -> "total Revenue"
+    result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+    // Capitalize first letter of each word
+    result = result
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return result;
   }
 }
 
 // ============================================================================
 // Conversion: LiquidSchema -> UIAST (for roundtrip)
 // ============================================================================
+
+/**
+ * Convert field name to human-readable label (standalone version for roundtrip)
+ */
+function fieldToLabel(field: string): string {
+  const name = field.split('.').pop() || field;
+  let result = name.replace(/_/g, ' ');
+  result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
+  result = result
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  return result;
+}
 
 export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
   const ast: UIAST = {
@@ -466,20 +648,38 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
       astBlock.bindings.push(convertBinding(block.binding));
     }
 
-    // Label as literal binding
-    if (block.label && !block.binding) {
-      astBlock.bindings.push({
-        kind: 'literal',
-        value: block.label,
-      });
+    // Label as literal binding - emit if explicit (differs from auto-generated)
+    if (block.label) {
+      if (!block.binding) {
+        // No binding - label is standalone
+        astBlock.bindings.push({
+          kind: 'literal',
+          value: block.label,
+        });
+      } else if (block.binding.kind === 'field') {
+        // Has field binding - check if label differs from auto-generated
+        const autoLabel = fieldToLabel(String(block.binding.value));
+        if (block.label !== autoLabel) {
+          // Explicit label differs from auto-label - preserve it
+          astBlock.bindings.push({
+            kind: 'literal',
+            value: block.label,
+          });
+        }
+      }
     }
 
     // Layout
     if (block.layout) {
       if (block.layout.priority !== undefined) {
+        // Convert numeric priority to symbolic form for proper roundtrip
+        const prioritySymbol = block.layout.priority === 100 ? 'h' :
+                               block.layout.priority === 75 ? 'p' :
+                               block.layout.priority === 50 ? 's' :
+                               String(block.layout.priority);
         astBlock.modifiers.push({
           kind: 'priority',
-          raw: `!${block.layout.priority}`,
+          raw: `!${prioritySymbol}`,
           value: block.layout.priority,
         });
       }
@@ -512,18 +712,28 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
         });
       }
       if (block.signals.receive) {
-        astBlock.modifiers.push({
-          kind: 'receive',
-          raw: `<${block.signals.receive}`,
-          target: block.signals.receive,
-        });
+        const receivers = Array.isArray(block.signals.receive)
+          ? block.signals.receive
+          : [block.signals.receive];
+        for (const receiver of receivers) {
+          astBlock.modifiers.push({
+            kind: 'receive',
+            raw: `<${receiver}`,
+            target: receiver,
+          });
+        }
       }
       if (block.signals.both) {
-        astBlock.modifiers.push({
-          kind: 'both',
-          raw: `<>${block.signals.both}`,
-          target: block.signals.both,
-        });
+        const bothSignals = Array.isArray(block.signals.both)
+          ? block.signals.both
+          : [block.signals.both];
+        for (const sig of bothSignals) {
+          astBlock.modifiers.push({
+            kind: 'both',
+            raw: `<>${sig}`,
+            target: sig,
+          });
+        }
       }
       if (block.signals.layer !== undefined) {
         astBlock.modifiers.push({
@@ -568,6 +778,14 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
       });
     }
 
+    // Signal condition (for conditional rendering)
+    if (block.condition?.signal) {
+      astBlock.condition = {
+        signal: block.condition.signal,
+        value: block.condition.signalValue,
+      };
+    }
+
     // Action
     if (block.action) {
       astBlock.modifiers.push({
@@ -575,6 +793,11 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
         raw: `!${block.action}`,
         value: block.action,
       });
+    }
+
+    // Columns (for tables)
+    if (block.columns && block.columns.length > 0) {
+      astBlock.columns = block.columns;
     }
 
     // Children

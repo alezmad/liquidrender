@@ -1,0 +1,7 @@
+@search @role @dateRange
+In :search <>search "Search users"
+Se :role <>role [admin, editor, viewer]
+Dt :startDate <>dateRange.start
+Dt :endDate <>dateRange.end
+Bt "Apply Filters" >apply
+Tb :results <search <role <dateRange [:name :email :role :lastLogin]

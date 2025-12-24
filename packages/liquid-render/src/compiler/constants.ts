@@ -55,6 +55,7 @@ export const UI_TYPE_CODES: Record<string, string> = {
   // Form Controls
   Bt: 'button',
   In: 'input',
+  Ta: 'textarea',
   Se: 'select',
   Sw: 'switch',
   Ck: 'checkbox',
@@ -122,12 +123,16 @@ export const UI_PRIORITY_VALUES: Record<string, number> = {
   s: 50,   // secondary
 };
 
-// Flex values
+// Flex values (single char and full words)
 export const UI_FLEX_VALUES: Record<string, string> = {
   f: 'fixed',
   s: 'shrink',
   g: 'grow',
   c: 'collapse',
+  r: 'row',
+  row: 'row',
+  column: 'column',
+  col: 'column',
 };
 
 // Span values

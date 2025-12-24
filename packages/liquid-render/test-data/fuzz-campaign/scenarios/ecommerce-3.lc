@@ -1,0 +1,13 @@
+Fm [
+  Hd "Checkout" %lg
+  In :fullName "Full Name"
+  In :email @email "Email"
+  In :phone "Phone Number"
+  In :address "Street Address"
+  In :city :state :zipCode
+  Se :country [:options]
+  Ck :saveAddress "Save for future orders"
+  Sw :newsletter "Subscribe to newsletter"
+  Bt "Place Order" !submit #primary
+  Bt "Cancel" !cancel
+]

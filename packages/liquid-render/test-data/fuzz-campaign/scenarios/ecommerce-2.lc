@@ -1,0 +1,14 @@
+@cartTotal
+Cd "Shopping Cart" [
+  Ls :cartItems [
+    Cd [
+      Im :.image %sm
+      Tx :.name
+      In :.quantity
+      Kp :.price
+      Bt "Remove" !removeItem
+    ]
+  ]
+  Kp :subtotal :tax :shipping :total
+  Bt "Checkout" !checkout #primary
+]

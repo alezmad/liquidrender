@@ -1,0 +1,32 @@
+// Scenario 3: Live Metrics - Auto-updating KPIs with sparklines and trends
+
+@requests_per_sec @requests_trend @avg_response_time @response_trend @error_rate @error_trend
+
+Gd *3 #gap2 [
+  Cd [
+    Tx "Requests/sec" %sm #muted
+    0 ^row [
+      Tx :requests_per_sec %xl %bold
+      Tx :requests_trend %sm #success
+    ]
+    Tx "▁▂▃▅▄▆▇▆▅▄▃" #muted
+  ]
+
+  Cd [
+    Tx "Avg Response Time" %sm #muted
+    0 ^row [
+      Tx :avg_response_time %xl %bold
+      Tx :response_trend %sm #success
+    ]
+    Tx "▃▄▃▂▃▂▁▂▁▂▁" #muted
+  ]
+
+  Cd [
+    Tx "Error Rate" %sm #muted
+    0 ^row [
+      Tx :error_rate %xl %bold
+      Tx :error_trend %sm #error
+    ]
+    Tx "▁▁▂▁▁▂▃▂▁▁▂" #muted
+  ]
+]

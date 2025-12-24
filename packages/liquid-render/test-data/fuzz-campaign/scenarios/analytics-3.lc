@@ -1,0 +1,16 @@
+# Scenario 3: Metrics with Filters - Signals for filtering, conditional visibility
+@dateRange @category
+
+Se :dateOptions <>dateRange
+Se :categoryOptions <>category
+
+Kp :revenue <dateRange <category
+Ln :date :sales <dateRange <category
+
+Cn ?@category="electronics" [
+  Br :product :quantity "Electronics Sales"
+]
+
+Cn ?@category="clothing" [
+  Pi :size :quantity "Size Distribution"
+]

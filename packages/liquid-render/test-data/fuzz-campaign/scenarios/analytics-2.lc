@@ -1,0 +1,7 @@
+# Scenario 2: Chart Grid - Bar/line/pie charts with data bindings
+Gd *2 [
+  Br :category :sales "Sales by Category"
+  Ln :date :revenue "Revenue Trend"
+  Pi :segment :value "Market Share"
+  Br :product :quantity "Top Products"
+]

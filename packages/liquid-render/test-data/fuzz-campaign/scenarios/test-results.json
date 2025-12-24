@@ -1,0 +1,624 @@
+[
+  {
+    "scenario": 1,
+    "file": "/Users/agutierrez/Desktop/liquidrender/packages/liquid-render/test-data/fuzz-campaign/scenarios/analytics-1.lc",
+    "source": "# Scenario 1: KPI Overview - Multiple KPIs with priorities and colors\nKp :revenue \"Total Revenue\" !h #green\nKp :orders \"Total Orders\" !p #blue\nKp :customers \"New Customers\" !p #purple\nKp :growth \"Growth Rate\" !s #?>=10:green,<10:red\n",
+    "parseSuccess": true,
+    "schema": {
+      "version": "1.0",
+      "signals": [],
+      "layers": [
+        {
+          "id": 0,
+          "visible": true,
+          "root": {
+            "uid": "root",
+            "type": "container",
+            "layout": {
+              "flex": "row"
+            },
+            "children": [
+              {
+                "uid": "b3",
+                "type": "kpi"
+              },
+              {
+                "uid": "b4",
+                "type": "kpi",
+                "binding": {
+                  "kind": "field",
+                  "value": "revenue"
+                },
+                "label": "Total Revenue",
+                "layout": {
+                  "priority": 100
+                },
+                "style": {
+                  "color": "green"
+                }
+              },
+              {
+                "uid": "b5",
+                "type": "kpi",
+                "binding": {
+                  "kind": "field",
+                  "value": "orders"
+                },
+                "label": "Total Orders",
+                "layout": {
+                  "priority": 75
+                },
+                "style": {
+                  "color": "blue"
+                }
+              },
+              {
+                "uid": "b6",
+                "type": "kpi",
+                "binding": {
+                  "kind": "field",
+                  "value": "customers"
+                },
+                "label": "New Customers",
+                "layout": {
+                  "priority": 75
+                },
+                "style": {
+                  "color": "purple"
+                }
+              },
+              {
+                "uid": "b7",
+                "type": "kpi",
+                "binding": {
+                  "kind": "field",
+                  "value": "growth"
+                },
+                "label": "Growth Rate",
+                "layout": {
+                  "priority": 50
+                },
+                "style": {
+                  "colorCondition": "?>=10:green"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "roundtripSuccess": false,
+    "roundtripDifferences": [
+      "layer0[1].label mismatch: Total Revenue vs Revenue",
+      "layer0[2].label mismatch: Total Orders vs Orders",
+      "layer0[3].label mismatch: New Customers vs Customers",
+      "layer0[4].label mismatch: Growth Rate vs Growth"
+    ],
+    "reconstructedDSL": "1\n1 :revenue !h #green\n1 :orders !p #blue\n1 :customers !p #purple\n1 :growth !s #?>=10:green"
+  },
+  {
+    "scenario": 2,
+    "file": "/Users/agutierrez/Desktop/liquidrender/packages/liquid-render/test-data/fuzz-campaign/scenarios/analytics-2.lc",
+    "source": "# Scenario 2: Chart Grid - Bar/line/pie charts with data bindings\nGd *2 [\n  Br :category :sales \"Sales by Category\"\n  Ln :date :revenue \"Revenue Trend\"\n  Pi :segment :value \"Market Share\"\n  Br :product :quantity \"Top Products\"\n]\n",
+    "parseSuccess": true,
+    "schema": {
+      "version": "1.0",
+      "signals": [],
+      "layers": [
+        {
+          "id": 0,
+          "visible": true,
+          "root": {
+            "uid": "root",
+            "type": "container",
+            "layout": {
+              "flex": "row"
+            },
+            "children": [
+              {
+                "uid": "b3",
+                "type": "bar"
+              },
+              {
+                "uid": "b4",
+                "type": "bar"
+              },
+              {
+                "uid": "b5",
+                "type": "grid",
+                "layout": {
+                  "span": 2
+                },
+                "children": [
+                  {
+                    "uid": "b6",
+                    "type": "bar",
+                    "binding": {
+                      "kind": "field",
+                      "value": "category",
+                      "x": "category",
+                      "y": "sales"
+                    },
+                    "label": "Sales by Category"
+                  },
+                  {
+                    "uid": "b7",
+                    "type": "line",
+                    "binding": {
+                      "kind": "field",
+                      "value": "date",
+                      "x": "date",
+                      "y": "revenue"
+                    },
+                    "label": "Revenue Trend"
+                  },
+                  {
+                    "uid": "b8",
+                    "type": "pie",
+                    "binding": {
+                      "kind": "field",
+                      "value": "segment",
+                      "x": "segment",
+                      "y": "value"
+                    },
+                    "label": "Market Share"
+                  },
+                  {
+                    "uid": "b9",
+                    "type": "bar",
+                    "binding": {
+                      "kind": "field",
+                      "value": "product",
+                      "x": "product",
+                      "y": "quantity"
+                    },
+                    "label": "Top Products"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "roundtripSuccess": false,
+    "roundtripDifferences": [
+      "layer0[2][0].label mismatch: Sales by Category vs Category",
+      "layer0[2][1].label mismatch: Revenue Trend vs Date",
+      "layer0[2][2].label mismatch: Market Share vs Segment",
+      "layer0[2][3].label mismatch: Top Products vs Product"
+    ],
+    "reconstructedDSL": "2\n2\nGd *2 [2 :category, 3 :date, 4 :segment, 2 :product]"
+  },
+  {
+    "scenario": 3,
+    "file": "/Users/agutierrez/Desktop/liquidrender/packages/liquid-render/test-data/fuzz-campaign/scenarios/analytics-3.lc",
+    "source": "# Scenario 3: Metrics with Filters - Signals for filtering, conditional visibility\n@dateRange @category\n\nSe :dateOptions <>dateRange\nSe :categoryOptions <>category\n\nKp :revenue <dateRange <category\nLn :date :sales <dateRange <category\n\nCn ?@category=\"electronics\" [\n  Br :product :quantity \"Electronics Sales\"\n]\n\nCn ?@category=\"clothing\" [\n  Pi :size :quantity \"Size Distribution\"\n]\n",
+    "parseSuccess": true,
+    "schema": {
+      "version": "1.0",
+      "signals": [
+        {
+          "name": "dateRange"
+        },
+        {
+          "name": "category"
+        }
+      ],
+      "layers": [
+        {
+          "id": 0,
+          "visible": true,
+          "root": {
+            "uid": "root",
+            "type": "container",
+            "layout": {
+              "flex": "row"
+            },
+            "children": [
+              {
+                "uid": "b3",
+                "type": "line"
+              },
+              {
+                "uid": "b6",
+                "type": "select",
+                "binding": {
+                  "kind": "field",
+                  "value": "dateOptions"
+                },
+                "label": "Date Options",
+                "signals": {
+                  "both": "dateRange"
+                }
+              },
+              {
+                "uid": "b7",
+                "type": "select",
+                "binding": {
+                  "kind": "field",
+                  "value": "categoryOptions"
+                },
+                "label": "Category Options",
+                "signals": {
+                  "both": "category"
+                }
+              },
+              {
+                "uid": "b8",
+                "type": "kpi",
+                "binding": {
+                  "kind": "field",
+                  "value": "revenue"
+                },
+                "label": "Revenue",
+                "signals": {
+                  "receive": "category"
+                }
+              },
+              {
+                "uid": "b9",
+                "type": "line",
+                "binding": {
+                  "kind": "field",
+                  "value": "date",
+                  "x": "date",
+                  "y": "sales"
+                },
+                "label": "Date",
+                "signals": {
+                  "receive": "category"
+                }
+              },
+              {
+                "uid": "b10",
+                "type": "container",
+                "children": [
+                  {
+                    "uid": "b11",
+                    "type": "bar",
+                    "binding": {
+                      "kind": "field",
+                      "value": "product",
+                      "x": "product",
+                      "y": "quantity"
+                    },
+                    "label": "Electronics Sales"
+                  }
+                ]
+              },
+              {
+                "uid": "b12",
+                "type": "container",
+                "children": [
+                  {
+                    "uid": "b13",
+                    "type": "pie",
+                    "binding": {
+                      "kind": "field",
+                      "value": "size",
+                      "x": "size",
+                      "y": "quantity"
+                    },
+                    "label": "Size Distribution"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "roundtripSuccess": false,
+    "roundtripDifferences": [
+      "layer0[5][0].label mismatch: Electronics Sales vs Product",
+      "layer0[6][0].label mismatch: Size Distribution vs Size"
+    ],
+    "reconstructedDSL": "@dateRange @category\n3\nSe :dateOptions <>dateRange\nSe :categoryOptions <>category\n1 :revenue <category\n3 :date <category\n0 [2 :product]\n0 [4 :size]"
+  },
+  {
+    "scenario": 4,
+    "file": "/Users/agutierrez/Desktop/liquidrender/packages/liquid-render/test-data/fuzz-campaign/scenarios/analytics-4.lc",
+    "source": "# Scenario 4: Complex Dashboard - Nested containers, multiple chart types, responsive layout\n@tab @filter\n\nCn ^row [\n  Bt \"Overview\" >tab=0\n  Bt \"Details\" >tab=1\n  Bt \"Trends\" >tab=2\n]\n\nCn ?@tab=0 [\n  Gd *3 [\n    Kp :revenue !h #green\n    Kp :orders !p #blue\n    Kp :customers !s #purple\n  ]\n  Cn ^row *2 [\n    Ln :month :revenue \"Monthly Revenue\" *f\n    Br :category :sales \"Category Performance\" *f\n  ]\n]\n\nCn ?@tab=1 [\n  Cn ^row [\n    Se :filterOptions <>filter\n    In :search <>query\n  ]\n  Tb :orders [:id :customer :amount :status] <filter <query\n]\n\nCn ?@tab=2 [\n  Sk [\n    Ln :date :revenue \"Revenue Trend\" *f\n    Ln :date :orders \"Order Volume\" *f\n    Hm :product :date :value \"Product Heatmap\" *f\n  ]\n]\n",
+    "parseSuccess": true,
+    "schema": {
+      "version": "1.0",
+      "signals": [
+        {
+          "name": "tab"
+        },
+        {
+          "name": "filter"
+        }
+      ],
+      "layers": [
+        {
+          "id": 0,
+          "visible": true,
+          "root": {
+            "uid": "root",
+            "type": "container",
+            "layout": {
+              "flex": "row"
+            },
+            "children": [
+              {
+                "uid": "b3",
+                "type": "pie"
+              },
+              {
+                "uid": "b9",
+                "type": "container",
+                "layout": {
+                  "flex": "row"
+                },
+                "children": [
+                  {
+                    "uid": "b10",
+                    "type": "button",
+                    "binding": {
+                      "kind": "literal",
+                      "value": "Overview"
+                    },
+                    "label": "Overview",
+                    "signals": {
+                      "emit": {
+                        "name": "tab",
+                        "value": "0"
+                      }
+                    }
+                  },
+                  {
+                    "uid": "b11",
+                    "type": "button",
+                    "binding": {
+                      "kind": "literal",
+                      "value": "Details"
+                    },
+                    "label": "Details",
+                    "signals": {
+                      "emit": {
+                        "name": "tab",
+                        "value": "1"
+                      }
+                    }
+                  },
+                  {
+                    "uid": "b12",
+                    "type": "button",
+                    "binding": {
+                      "kind": "literal",
+                      "value": "Trends"
+                    },
+                    "label": "Trends",
+                    "signals": {
+                      "emit": {
+                        "name": "tab",
+                        "value": "2"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "uid": "b13",
+                "type": "container",
+                "children": [
+                  {
+                    "uid": "b14",
+                    "type": "grid",
+                    "layout": {
+                      "span": 3
+                    },
+                    "children": [
+                      {
+                        "uid": "b15",
+                        "type": "kpi",
+                        "binding": {
+                          "kind": "field",
+                          "value": "revenue"
+                        },
+                        "label": "Revenue",
+                        "layout": {
+                          "priority": 100
+                        },
+                        "style": {
+                          "color": "green"
+                        }
+                      },
+                      {
+                        "uid": "b16",
+                        "type": "kpi",
+                        "binding": {
+                          "kind": "field",
+                          "value": "orders"
+                        },
+                        "label": "Orders",
+                        "layout": {
+                          "priority": 75
+                        },
+                        "style": {
+                          "color": "blue"
+                        }
+                      },
+                      {
+                        "uid": "b17",
+                        "type": "kpi",
+                        "binding": {
+                          "kind": "field",
+                          "value": "customers"
+                        },
+                        "label": "Customers",
+                        "layout": {
+                          "priority": 50
+                        },
+                        "style": {
+                          "color": "purple"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "uid": "b18",
+                    "type": "container",
+                    "layout": {
+                      "flex": "row",
+                      "span": 2
+                    },
+                    "children": [
+                      {
+                        "uid": "b19",
+                        "type": "line",
+                        "binding": {
+                          "kind": "field",
+                          "value": "month",
+                          "x": "month",
+                          "y": "revenue"
+                        },
+                        "label": "Monthly Revenue",
+                        "layout": {
+                          "span": "full"
+                        }
+                      },
+                      {
+                        "uid": "b20",
+                        "type": "bar",
+                        "binding": {
+                          "kind": "field",
+                          "value": "category",
+                          "x": "category",
+                          "y": "sales"
+                        },
+                        "label": "Category Performance",
+                        "layout": {
+                          "span": "full"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "uid": "b21",
+                "type": "container",
+                "children": [
+                  {
+                    "uid": "b22",
+                    "type": "container",
+                    "layout": {
+                      "flex": "row"
+                    },
+                    "children": [
+                      {
+                        "uid": "b23",
+                        "type": "select",
+                        "binding": {
+                          "kind": "field",
+                          "value": "filterOptions"
+                        },
+                        "label": "Filter Options",
+                        "signals": {
+                          "both": "filter"
+                        }
+                      },
+                      {
+                        "uid": "b24",
+                        "type": "input",
+                        "binding": {
+                          "kind": "field",
+                          "value": "search"
+                        },
+                        "label": "Search",
+                        "signals": {
+                          "both": "query"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "uid": "b25",
+                    "type": "table",
+                    "binding": {
+                      "kind": "field",
+                      "value": "orders"
+                    },
+                    "label": "Orders",
+                    "columns": [
+                      "id",
+                      "customer",
+                      "amount",
+                      "status"
+                    ]
+                  }
+                ]
+              },
+              {
+                "uid": "b28",
+                "type": "container",
+                "children": [
+                  {
+                    "uid": "b29",
+                    "type": "stack",
+                    "children": [
+                      {
+                        "uid": "b30",
+                        "type": "line",
+                        "binding": {
+                          "kind": "field",
+                          "value": "date",
+                          "x": "date",
+                          "y": "revenue"
+                        },
+                        "label": "Revenue Trend",
+                        "layout": {
+                          "span": "full"
+                        }
+                      },
+                      {
+                        "uid": "b31",
+                        "type": "line",
+                        "binding": {
+                          "kind": "field",
+                          "value": "date",
+                          "x": "date",
+                          "y": "orders"
+                        },
+                        "label": "Order Volume",
+                        "layout": {
+                          "span": "full"
+                        }
+                      },
+                      {
+                        "uid": "b32",
+                        "type": "heatmap",
+                        "binding": {
+                          "kind": "field",
+                          "value": "product",
+                          "x": "product",
+                          "y": "date"
+                        },
+                        "label": "Product Heatmap",
+                        "layout": {
+                          "span": "full"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "roundtripSuccess": false,
+    "roundtripDifferences": [
+      "layer0[2][1][0].label mismatch: Monthly Revenue vs Month",
+      "layer0[2][1][1].label mismatch: Category Performance vs Category",
+      "layer0[4][0][0].label mismatch: Revenue Trend vs Date",
+      "layer0[4][0][1].label mismatch: Order Volume vs Date",
+      "layer0[4][0][2].label mismatch: Product Heatmap vs Product"
+    ],
+    "reconstructedDSL": "@tab @filter\n4\n0 ^r [Bt \"Overview\" >tab=0, Bt \"Details\" >tab=1, Bt \"Trends\" >tab=2]\n0 [Gd *3 [1 :revenue !h #green, 1 :orders !p #blue, 1 :customers !s #purple], 0 ^r *2 [3 :month *full, 2 :category *full]]\n0 [0 ^r [Se :filterOptions <>filter, In :search <>query], 5 :orders [:id :customer :amount :status]]\n0 [Sk [3 :date *full, 3 :date *full, Hm :product *full]]"
+  }
+]

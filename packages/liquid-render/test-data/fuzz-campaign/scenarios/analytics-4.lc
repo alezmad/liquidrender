@@ -1,0 +1,36 @@
+# Scenario 4: Complex Dashboard - Nested containers, multiple chart types, responsive layout
+@tab @filter
+
+Cn ^row [
+  Bt "Overview" >tab=0
+  Bt "Details" >tab=1
+  Bt "Trends" >tab=2
+]
+
+Cn ?@tab=0 [
+  Gd *3 [
+    Kp :revenue !h #green
+    Kp :orders !p #blue
+    Kp :customers !s #purple
+  ]
+  Cn ^row *2 [
+    Ln :month :revenue "Monthly Revenue" *f
+    Br :category :sales "Category Performance" *f
+  ]
+]
+
+Cn ?@tab=1 [
+  Cn ^row [
+    Se :filterOptions <>filter
+    In :search <>query
+  ]
+  Tb :orders [:id :customer :amount :status] <filter <query
+]
+
+Cn ?@tab=2 [
+  Sk [
+    Ln :date :revenue "Revenue Trend" *f
+    Ln :date :orders "Order Volume" *f
+    Hm :product :date :value "Product Heatmap" *f
+  ]
+]

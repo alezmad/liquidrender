@@ -1,0 +1,26 @@
+// Scenario 2: Alert Panel - Alerts with severity levels, dismiss buttons, layer popups
+
+@dismiss_alert_1 @dismiss_alert_2
+
+/0 Cd [
+  Tx "Active Alerts" %bold %lg
+  Tg "3" #error
+
+  Cd #outlined [
+    0 ^row #between [
+      Tx "High memory usage on prod-server-12" %md
+      Tx "Triggered 2 minutes ago" %sm #muted
+      Bt "Details" %ghost %sm /alert_details
+      Bt "Dismiss" %ghost %sm >dismiss_alert_1
+    ]
+  ]
+
+  Cd #outlined [
+    0 ^row #between [
+      Tx "SSL certificate expires in 7 days" %md
+      Tx "Triggered 1 hour ago" %sm #muted
+      Bt "Details" %ghost %sm /cert_details
+      Bt "Dismiss" %ghost %sm >dismiss_alert_2
+    ]
+  ]
+]

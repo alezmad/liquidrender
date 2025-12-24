@@ -1338,6 +1338,226 @@ describe('UI Roundtrip', () => {
 });
 
 // ============================================================================
+// §9.5 LLM-Optimal Syntax Tests
+// ============================================================================
+
+describe('LLM-Optimal Syntax', () => {
+  describe('Auto-labels', () => {
+    it('should generate label from camelCase field', () => {
+      const schema = parseUI('Kp :totalRevenue');
+      expect(schema.layers[0].root.label).toBe('Total Revenue');
+    });
+
+    it('should generate label from snake_case field', () => {
+      const schema = parseUI('Kp :order_count');
+      expect(schema.layers[0].root.label).toBe('Order Count');
+    });
+
+    it('should generate label from nested field path', () => {
+      const schema = parseUI('Kp :summary.activeUsers');
+      expect(schema.layers[0].root.label).toBe('Active Users');
+    });
+
+    it('should prefer explicit label over auto-label', () => {
+      const schema = parseUI('Kp :revenue "Total $"');
+      expect(schema.layers[0].root.label).toBe('Total $');
+    });
+  });
+
+  describe('Layout inference', () => {
+    it('should infer row layout from comma-separated blocks', () => {
+      const schema = parseUI('Kp :a, Kp :b, Kp :c');
+      expect(schema.layers[0].root.layout?.flex).toBe('row');
+    });
+
+    it('should infer column layout from newline-separated blocks', () => {
+      const schema = parseUI('Kp :a\nKp :b\nKp :c');
+      expect(schema.layers[0].root.layout?.flex).toBe('column');
+    });
+
+    it('should infer column layout from mixed separators', () => {
+      const schema = parseUI('Kp :a, Kp :b\nKp :c');
+      expect(schema.layers[0].root.layout?.flex).toBe('column');
+    });
+  });
+
+  describe('Chart multi-binding', () => {
+    it('should extract x/y from line chart bindings', () => {
+      const schema = parseUI('Ln :date :revenue');
+      const binding = schema.layers[0].root.binding;
+      expect(binding?.x).toBe('date');
+      expect(binding?.y).toBe('revenue');
+    });
+
+    it('should extract x/y from bar chart bindings', () => {
+      const schema = parseUI('Br :category :count');
+      const binding = schema.layers[0].root.binding;
+      expect(binding?.x).toBe('category');
+      expect(binding?.y).toBe('count');
+    });
+
+    it('should not add x/y for non-chart types', () => {
+      const schema = parseUI('Kp :value :extra');
+      const binding = schema.layers[0].root.binding;
+      expect(binding?.x).toBeUndefined();
+      expect(binding?.y).toBeUndefined();
+    });
+  });
+
+  describe('Table columns', () => {
+    it('should parse column definitions in brackets', () => {
+      const schema = parseUI('Tb :users [:name :age :email]');
+      expect(schema.layers[0].root.columns).toEqual(['name', 'age', 'email']);
+    });
+
+    it('should handle comma-separated columns', () => {
+      const schema = parseUI('Tb :data [:a, :b, :c]');
+      expect(schema.layers[0].root.columns).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should preserve table binding with columns', () => {
+      const schema = parseUI('Tb :transactions [:date :amount]');
+      expect(schema.layers[0].root.binding?.value).toBe('transactions');
+      expect(schema.layers[0].root.columns).toEqual(['date', 'amount']);
+    });
+  });
+
+  describe('Semantic type codes', () => {
+    it('should parse Kp as kpi', () => {
+      const schema = parseUI('Kp :value');
+      expect(schema.layers[0].root.type).toBe('kpi');
+    });
+
+    it('should parse Ln as line chart', () => {
+      const schema = parseUI('Ln :data');
+      expect(schema.layers[0].root.type).toBe('line');
+    });
+
+    it('should parse Br as bar chart', () => {
+      const schema = parseUI('Br :data');
+      expect(schema.layers[0].root.type).toBe('bar');
+    });
+
+    it('should parse Tb as table', () => {
+      const schema = parseUI('Tb :data');
+      expect(schema.layers[0].root.type).toBe('table');
+    });
+
+    it('should parse Fm as form', () => {
+      const schema = parseUI('Fm [In :name]');
+      expect(schema.layers[0].root.type).toBe('form');
+    });
+  });
+
+  describe('Complete dashboard example', () => {
+    it('should parse LLM-optimal dashboard syntax', () => {
+      const dashboard = `Kp :revenue, Kp :orders, Kp :customers
+Ln :month :sales
+Tb :transactions [:date :amount :status]`;
+
+      const schema = parseUI(dashboard);
+      const root = schema.layers[0].root;
+
+      // Layout should be column (newlines between rows)
+      expect(root.layout?.flex).toBe('column');
+
+      // Should have 5 children
+      expect(root.children).toHaveLength(5);
+
+      // KPIs should have auto-labels
+      expect(root.children![0].label).toBe('Revenue');
+      expect(root.children![1].label).toBe('Orders');
+      expect(root.children![2].label).toBe('Customers');
+
+      // Chart should have x/y bindings
+      expect(root.children![3].binding?.x).toBe('month');
+      expect(root.children![3].binding?.y).toBe('sales');
+
+      // Table should have columns
+      expect(root.children![4].columns).toEqual(['date', 'amount', 'status']);
+    });
+  });
+
+  describe('Repetition shorthand', () => {
+    it('should expand KPIs with multiple field bindings', () => {
+      const schema = parseUI('Kp :revenue :orders :customers :growth');
+      expect(schema.layers[0].root.children).toHaveLength(4);
+      expect(schema.layers[0].root.children![0].type).toBe('kpi');
+      expect(schema.layers[0].root.children![0].binding?.value).toBe('revenue');
+      expect(schema.layers[0].root.children![1].binding?.value).toBe('orders');
+      expect(schema.layers[0].root.children![2].binding?.value).toBe('customers');
+      expect(schema.layers[0].root.children![3].binding?.value).toBe('growth');
+    });
+
+    it('should NOT expand charts (x/y binding)', () => {
+      const schema = parseUI('Ln :month :revenue');
+      // Should be single chart, not multiple
+      expect(schema.layers[0].root.type).toBe('line');
+      expect(schema.layers[0].root.binding?.x).toBe('month');
+      expect(schema.layers[0].root.binding?.y).toBe('revenue');
+    });
+
+    it('should NOT expand tables (columns are separate)', () => {
+      const schema = parseUI('Tb :data [:a :b :c]');
+      expect(schema.layers[0].root.type).toBe('table');
+      expect(schema.layers[0].root.columns).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should expand inputs in forms', () => {
+      const schema = parseUI('Fm [In :name :email :phone]');
+      expect(schema.layers[0].root.children).toHaveLength(3);
+      expect(schema.layers[0].root.children![0].type).toBe('input');
+      expect(schema.layers[0].root.children![1].type).toBe('input');
+      expect(schema.layers[0].root.children![2].type).toBe('input');
+    });
+
+    it('should expand buttons with multiple labels', () => {
+      // Multiple literal bindings should create multiple buttons
+      const schema = parseUI('Bt :submit :cancel :reset');
+      expect(schema.layers[0].root.children).toHaveLength(3);
+    });
+
+    it('should copy modifiers to all expanded blocks', () => {
+      const schema = parseUI('Kp :a :b :c #green');
+      schema.layers[0].root.children?.forEach(child => {
+        expect(child.style?.color).toBe('green');
+      });
+    });
+
+    it('should generate auto-labels for each expanded block', () => {
+      const schema = parseUI('Kp :totalRevenue :orderCount :activeUsers');
+      expect(schema.layers[0].root.children![0].label).toBe('Total Revenue');
+      expect(schema.layers[0].root.children![1].label).toBe('Order Count');
+      expect(schema.layers[0].root.children![2].label).toBe('Active Users');
+    });
+
+    it('should handle compact dashboard syntax', () => {
+      const dashboard = `Kp :revenue :orders :customers :growth
+Ln :month :sales
+Tb :transactions [:date :amount :status]`;
+
+      const schema = parseUI(dashboard);
+      const root = schema.layers[0].root;
+
+      // Should have 6 children: 4 KPIs + 1 chart + 1 table
+      expect(root.children).toHaveLength(6);
+
+      // First 4 are KPIs
+      expect(root.children![0].type).toBe('kpi');
+      expect(root.children![3].type).toBe('kpi');
+
+      // 5th is chart
+      expect(root.children![4].type).toBe('line');
+      expect(root.children![4].binding?.x).toBe('month');
+
+      // 6th is table
+      expect(root.children![5].type).toBe('table');
+      expect(root.children![5].columns).toEqual(['date', 'amount', 'status']);
+    });
+  });
+});
+
+// ============================================================================
 // §10 Format Detection Tests
 // ============================================================================
 
@@ -1363,5 +1583,398 @@ describe('Format Detection', () => {
     const uiResult = parseAny('1 :revenue');
     expect('layers' in uiResult).toBe(true);
     expect('version' in uiResult).toBe(true);
+  });
+});
+
+// ============================================================================
+// §11 Production Readiness Edge Cases
+// ============================================================================
+
+describe('Production Readiness', () => {
+  describe('Error Handling', () => {
+    it('should throw on unterminated string', () => {
+      expect(() => parseUI('Bt "Hello')).toThrow();
+    });
+
+    it('should handle empty input', () => {
+      const schema = parseUI('');
+      expect(schema.layers.length).toBe(0);
+      expect(schema.signals.length).toBe(0);
+    });
+
+    it('should handle whitespace-only input', () => {
+      const schema = parseUI('   \n\t  ');
+      expect(schema.layers.length).toBe(0);
+    });
+
+    it('should handle comment-only input', () => {
+      const schema = parseUI('// comment\n// another');
+      expect(schema.layers.length).toBe(0);
+    });
+  });
+
+  describe('String Escapes', () => {
+    it('should unescape quotes', () => {
+      const schema = parseUI('Bt "Say \\"Hello\\""');
+      expect(schema.layers[0].root.label).toBe('Say "Hello"');
+    });
+
+    it('should unescape newlines', () => {
+      const schema = parseUI('Tx "Line1\\nLine2"');
+      expect(schema.layers[0].root.label).toBe('Line1\nLine2');
+    });
+
+    it('should unescape tabs', () => {
+      const schema = parseUI('Tx "Col1\\tCol2"');
+      expect(schema.layers[0].root.label).toBe('Col1\tCol2');
+    });
+
+    it('should unescape backslashes', () => {
+      const schema = parseUI('Tx "C:\\\\path"');
+      expect(schema.layers[0].root.label).toBe('C:\\path');
+    });
+  });
+
+  describe('Unknown Type Codes', () => {
+    it('should parse 2-char unknown type codes', () => {
+      const schema = parseUI('Xx :data');
+      expect(schema.layers[0].root.type).toBe('xx');
+    });
+
+    it('should parse 3-char unknown type codes', () => {
+      const schema = parseUI('Abc :data');
+      expect(schema.layers[0].root.type).toBe('abc');
+    });
+  });
+
+  describe('Complex Bindings', () => {
+    it('should handle deeply nested field paths', () => {
+      const schema = parseUI('Kp :a.b.c.d.e');
+      expect(schema.layers[0].root.binding?.value).toBe('a.b.c.d.e');
+    });
+
+    it('should handle expressions with all operators', () => {
+      const schema = parseUI('Kp =a+b*c/d-e%f');
+      expect(schema.layers[0].root.binding?.value).toBe('a+b*c/d-e%f');
+    });
+  });
+
+  describe('Conditional Blocks', () => {
+    it('should parse single conditional block', () => {
+      const schema = parseUI('?@tab=1 [Kp :x]');
+      expect(schema.layers[0].root.condition?.signal).toBe('tab');
+      expect(schema.layers[0].root.condition?.signalValue).toBe('1');
+    });
+
+    it('should parse multiple conditional blocks', () => {
+      const schema = parseUI('?@tab=1 [Kp :a, Kp :b]');
+      expect(schema.layers[0].root.children?.[0].condition?.signal).toBe('tab');
+      expect(schema.layers[0].root.children?.[1].condition?.signal).toBe('tab');
+    });
+  });
+
+  describe('Deep Nesting', () => {
+    it('should handle 5 levels of nesting', () => {
+      const schema = parseUI('0 [0 [0 [0 [0 [Kp :x]]]]]');
+      const deepKpi = schema.layers[0].root
+        .children?.[0]
+        .children?.[0]
+        .children?.[0]
+        .children?.[0]
+        .children?.[0];
+      expect(deepKpi?.type).toBe('kpi');
+    });
+  });
+
+  // ==========================================================================
+  // Escape Sequence Edge Cases
+  // ==========================================================================
+
+  describe('Escape sequence edge cases', () => {
+    it('should handle escaped backslash before quote (string ending with backslash)', () => {
+      // "a\\" should be text 'a\' (a followed by literal backslash)
+      const schema = parseUI('Tx "a\\\\"');
+      expect(schema.layers[0]?.root.binding?.value).toBe('a\\');
+    });
+
+    it('should handle multiple escaped backslashes before quote', () => {
+      // "a\\\\" should be text 'a\\' (a followed by two literal backslashes)
+      const schema = parseUI('Tx "a\\\\\\\\"');
+      expect(schema.layers[0]?.root.binding?.value).toBe('a\\\\');
+    });
+
+    it('should handle backslash-quote in middle of string', () => {
+      // "a\"b" should be text 'a"b'
+      const schema = parseUI('Tx "a\\"b"');
+      expect(schema.layers[0]?.root.binding?.value).toBe('a"b');
+    });
+
+    it('should handle backslash-backslash-quote-more-text', () => {
+      // "a\\" followed by more stuff should be: text 'a\' then parse next token
+      const schema = parseUI('Tx "a\\\\" Bt "Click"');
+      expect(schema.layers[0]?.root.type).toBe('container');
+      expect(schema.layers[0]?.root.children?.[0]?.binding?.value).toBe('a\\');
+      expect(schema.layers[0]?.root.children?.[1]?.type).toBe('button');
+    });
+
+    it('should roundtrip strings with newlines correctly', () => {
+      const original = parseUI('Tx "Line1\\nLine2"');
+      expect(original.layers[0]?.root.binding?.value).toBe('Line1\nLine2');
+
+      const { reconstructed, isEquivalent } = roundtripUI(original);
+      expect(reconstructed.layers[0]?.root.binding?.value).toBe('Line1\nLine2');
+      expect(isEquivalent).toBe(true);
+    });
+
+    it('should roundtrip strings with tabs correctly', () => {
+      const original = parseUI('Tx "Col1\\tCol2"');
+      expect(original.layers[0]?.root.binding?.value).toBe('Col1\tCol2');
+
+      const { reconstructed, isEquivalent } = roundtripUI(original);
+      expect(reconstructed.layers[0]?.root.binding?.value).toBe('Col1\tCol2');
+      expect(isEquivalent).toBe(true);
+    });
+
+    it('should roundtrip strings with backslashes correctly', () => {
+      const original = parseUI('Tx "path\\\\to\\\\file"');
+      expect(original.layers[0]?.root.binding?.value).toBe('path\\to\\file');
+
+      const { reconstructed, isEquivalent } = roundtripUI(original);
+      expect(reconstructed.layers[0]?.root.binding?.value).toBe('path\\to\\file');
+      expect(isEquivalent).toBe(true);
+    });
+
+    it('should roundtrip strings with quotes correctly', () => {
+      const original = parseUI('Tx "He said \\"Hello\\""');
+      expect(original.layers[0]?.root.binding?.value).toBe('He said "Hello"');
+
+      const { reconstructed, isEquivalent } = roundtripUI(original);
+      expect(reconstructed.layers[0]?.root.binding?.value).toBe('He said "Hello"');
+      expect(isEquivalent).toBe(true);
+    });
+
+    it('should handle complex mixed escape sequences', () => {
+      // "a\\b\"c\nd" should be: a\b"c<newline>d
+      const schema = parseUI('Tx "a\\\\b\\"c\\nd"');
+      expect(schema.layers[0]?.root.binding?.value).toBe('a\\b"c\nd');
+    });
+  });
+
+  // ==========================================================================
+  // Robustness & Edge Cases
+  // ==========================================================================
+
+  describe('Robustness tests', () => {
+    describe('Empty and whitespace inputs', () => {
+      it('should handle empty string', () => {
+        const schema = parseUI('');
+        expect(schema.layers).toHaveLength(0);
+        expect(schema.signals).toHaveLength(0);
+      });
+
+      it('should handle whitespace only', () => {
+        const schema = parseUI('   \n\t\n   ');
+        expect(schema.layers).toHaveLength(0);
+      });
+
+      it('should handle comments only', () => {
+        const schema = parseUI('// This is a comment\n// Another comment');
+        expect(schema.layers).toHaveLength(0);
+      });
+
+      it('should handle empty children brackets', () => {
+        const schema = parseUI('Cn []');
+        expect(schema.layers[0]?.root.type).toBe('container');
+        // Empty brackets result in no children property (not empty array)
+        expect(schema.layers[0]?.root.children).toBeUndefined();
+      });
+
+      it('should handle empty table columns', () => {
+        const schema = parseUI('Tb []');
+        expect(schema.layers[0]?.root.type).toBe('table');
+        // Empty brackets result in no columns property (not empty array)
+        expect(schema.layers[0]?.root.columns).toBeUndefined();
+      });
+    });
+
+    describe('Unicode handling', () => {
+      it('should handle unicode in strings', () => {
+        const schema = parseUI('Tx "Hello 世界 🌍"');
+        expect(schema.layers[0]?.root.binding?.value).toBe('Hello 世界 🌍');
+      });
+
+      it('should roundtrip unicode strings', () => {
+        const original = parseUI('Tx "Ñoño 日本語 émoji 🎉"');
+        const { reconstructed, isEquivalent } = roundtripUI(original);
+        expect(reconstructed.layers[0]?.root.binding?.value).toBe('Ñoño 日本語 émoji 🎉');
+        expect(isEquivalent).toBe(true);
+      });
+
+      it('should handle unicode in field names', () => {
+        // Field names with accented characters
+        const schema = parseUI('Kp :résumé');
+        expect(schema.layers[0]?.root.binding?.value).toBe('résumé');
+      });
+    });
+
+    describe('Deep nesting', () => {
+      it('should handle deeply nested containers (10 levels)', () => {
+        const deep = 'Cn [Cn [Cn [Cn [Cn [Cn [Cn [Cn [Cn [Cn [Tx "deep"]]]]]]]]]]';
+        const schema = parseUI(deep);
+
+        // Navigate to the deepest level
+        let current = schema.layers[0]?.root;
+        for (let i = 0; i < 10; i++) {
+          expect(current?.type).toBe('container');
+          current = current?.children?.[0];
+        }
+        expect(current?.type).toBe('text');
+        expect(current?.binding?.value).toBe('deep');
+      });
+
+      it('should handle very long strings', () => {
+        const longText = 'A'.repeat(10000);
+        const schema = parseUI(`Tx "${longText}"`);
+        expect(schema.layers[0]?.root.binding?.value).toBe(longText);
+      });
+
+      it('should handle many siblings', () => {
+        const siblings = Array(100).fill('Kp :value').join(', ');
+        const schema = parseUI(`Cn [${siblings}]`);
+        expect(schema.layers[0]?.root.children).toHaveLength(100);
+      });
+    });
+
+    describe('Malformed input handling', () => {
+      it('should throw on unterminated string', () => {
+        expect(() => parseUI('Tx "unterminated')).toThrow('Unterminated string');
+      });
+
+      it('should handle unclosed brackets gracefully', () => {
+        // Parser should not hang or crash
+        const schema = parseUI('Cn [Tx "test"');
+        expect(schema.layers).toBeDefined();
+      });
+
+      it('should handle extra closing brackets gracefully', () => {
+        const schema = parseUI('Cn [Tx "test"]]');
+        expect(schema.layers).toBeDefined();
+      });
+
+      it('should handle invalid token sequences gracefully', () => {
+        // Random tokens that don't form valid DSL
+        const schema = parseUI('!!! ### %%% @@@');
+        expect(schema.layers).toHaveLength(0);
+      });
+
+      it('should handle mixing valid and invalid', () => {
+        const schema = parseUI('Tx "valid" ??? invalid Bt "also valid"');
+        expect(schema.layers[0]?.root.type).toBe('container');
+        // Should still parse the valid parts
+        const children = schema.layers[0]?.root.children;
+        expect(children?.some(c => c.type === 'text')).toBe(true);
+        expect(children?.some(c => c.type === 'button')).toBe(true);
+      });
+    });
+
+    describe('Property-based roundtrip tests', () => {
+      it('should roundtrip all basic types', () => {
+        // Use correct type codes from constants
+        const types = ['Tx', 'Kp', 'Bt', 'Cn', 'Br', 'Ls', 'Tb', 'Ln', 'Fm', 'Pi'];
+        for (const type of types) {
+          const source = `${type} "test"`;
+          const schema = parseUI(source);
+          const { isEquivalent, differences } = roundtripUI(schema);
+          if (!isEquivalent) {
+            console.log(`Roundtrip fail for ${type}:`, differences);
+          }
+          expect(isEquivalent).toBe(true);
+        }
+      });
+
+      it('should roundtrip all modifiers', () => {
+        const modifiers = [
+          '!h', '!p', '!s',           // priority
+          '^r', '^c', '^g',           // flex
+          '*2', '*f', '*h',           // span
+          '#red', '#blue',            // color
+          '%lg', '%sm',               // size
+        ];
+        for (const mod of modifiers) {
+          const source = `Tx "test" ${mod}`;
+          const schema = parseUI(source);
+          const { isEquivalent } = roundtripUI(schema);
+          expect(isEquivalent).toBe(true);
+        }
+      });
+
+      it('should roundtrip signal combinations', () => {
+        const cases = [
+          '@tab Bt "Tab 1" >tab=1',
+          '@state Tx "Status" <state',
+          '@toggle Bt "Toggle" <>toggle',
+        ];
+        for (const source of cases) {
+          const schema = parseUI(source);
+          const { isEquivalent } = roundtripUI(schema);
+          expect(isEquivalent).toBe(true);
+        }
+      });
+
+      it('should roundtrip complex real-world examples', () => {
+        const examples = [
+          // Dashboard layout
+          'Cn ^r [Kp :revenue !h, Kp :orders !p, Kp :customers !s]',
+          // Tabbed interface
+          '@tab Cn [Bt "Overview" >tab=1, Bt "Details" >tab=2] ?@tab=1 [Tx "Overview content"] ?@tab=2 [Tx "Details content"]',
+          // Table with columns
+          'Tb :data [:name, :email, :role]',
+          // Bar chart with axes (Br not Ch)
+          'Br :metrics.x :metrics.y',
+        ];
+        for (const source of examples) {
+          const schema = parseUI(source);
+          const { isEquivalent, differences } = roundtripUI(schema);
+          if (!isEquivalent) {
+            console.log(`Roundtrip diff for: ${source}`);
+            console.log(differences);
+          }
+          expect(isEquivalent).toBe(true);
+        }
+      });
+    });
+
+    describe('Boundary conditions', () => {
+      it('should handle single character field names', () => {
+        const schema = parseUI('Kp :x');
+        expect(schema.layers[0]?.root.binding?.value).toBe('x');
+      });
+
+      it('should handle numeric field names', () => {
+        const schema = parseUI('Kp :field123');
+        expect(schema.layers[0]?.root.binding?.value).toBe('field123');
+      });
+
+      it('should handle deeply nested field paths', () => {
+        const schema = parseUI('Kp :a.b.c.d.e.f.g');
+        expect(schema.layers[0]?.root.binding?.value).toBe('a.b.c.d.e.f.g');
+      });
+
+      it('should handle multiple signals declaration', () => {
+        const schema = parseUI('@sig1 @sig2 @sig3 @sig4 @sig5 Tx "test"');
+        expect(schema.signals).toHaveLength(5);
+      });
+
+      it('should handle multiple layers', () => {
+        const schema = parseUI('Tx "main" /1 Tx "layer1" /2 Tx "layer2" /3 Tx "layer3"');
+        expect(schema.layers).toHaveLength(4); // layer 0 (main) + 3 more
+      });
+
+      it('should handle layer zero explicitly', () => {
+        const schema = parseUI('/0 Tx "explicit layer 0"');
+        expect(schema.layers[0]?.id).toBe(0);
+        expect(schema.layers[0]?.root.binding?.value).toBe('explicit layer 0');
+      });
+    });
   });
 });

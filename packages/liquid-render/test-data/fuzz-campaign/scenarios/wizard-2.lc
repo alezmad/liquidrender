@@ -1,0 +1,12 @@
+@hasPartner @employmentType
+Hd "Application Form"
+Fm [
+  In :fullName "Full Name"
+  Se :maritalStatus
+  ?maritalStatus=married: In :partnerName "Partner's Name"
+  Se :employment ["employed", "self-employed", "unemployed"]
+  ?employment=employed: In :employer "Employer Name"
+  ?employment=employed: In :jobTitle "Job Title"
+  ?employment=self-employed: In :businessName "Business Name"
+  Bt "Submit Application" !submit
+]

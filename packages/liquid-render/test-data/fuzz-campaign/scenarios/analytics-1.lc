@@ -1,0 +1,5 @@
+# Scenario 1: KPI Overview - Multiple KPIs with priorities and colors
+Kp :revenue "Total Revenue" !h #green
+Kp :orders "Total Orders" !p #blue
+Kp :customers "New Customers" !p #purple
+Kp :growth "Growth Rate" !s #?>=10:green,<10:red

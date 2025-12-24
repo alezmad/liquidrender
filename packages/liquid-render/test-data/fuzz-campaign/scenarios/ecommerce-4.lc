@@ -1,0 +1,18 @@
+Cd "Order Summary" [
+  Kp :orderNumber "Order #"
+  Tg :status #?=delivered:green,=shipped:blue,=pending:yellow
+  Hd "Order Details" %md
+  Ls :items [
+    Cd [
+      Im :.image %sm
+      Tx :.name
+      Kp :.quantity "Qty"
+      Kp :.price
+    ]
+  ]
+  Kp :subtotal :tax :shipping :total
+  Hd "Shipping Info" %md
+  Tx :shippingAddress
+  Tx :estimatedDelivery
+  Pg :deliveryProgress
+]

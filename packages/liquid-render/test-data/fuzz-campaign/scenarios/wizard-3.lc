@@ -1,0 +1,26 @@
+@activeTab
+Cn [
+  Cn ^row [
+    Bt "Basic" >activeTab=0
+    Bt "Advanced" >activeTab=1
+    Bt "Review" >activeTab=2
+  ]
+  ?activeTab=0: Fm [
+    Hd "Basic Settings"
+    In :projectName
+    Ta :description
+    Se :category ["web", "mobile", "desktop"]
+  ]
+  ?activeTab=1: Fm [
+    Hd "Advanced Options"
+    Sw :enableNotifications
+    Sw :autoSave
+    Rg :priority
+  ]
+  ?activeTab=2: Cn [
+    Hd "Review Your Settings"
+    Kp :projectName
+    Tx :.description
+    Bt "Save All" !submit
+  ]
+]

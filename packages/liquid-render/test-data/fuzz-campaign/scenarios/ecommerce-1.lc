@@ -1,0 +1,8 @@
+Cd [
+  Im :productImage
+  Hd :productName %lg
+  Tx :description
+  Kp :price "Price"
+  Rt :rating
+  Bt "Add to Cart" !addToCart #primary
+]

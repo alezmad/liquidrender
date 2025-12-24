@@ -1,0 +1,31 @@
+@page
+Pg :. #?page=0:primary,page=1:blue,page=2:green
+Fm [
+  ?page=0: Cn [
+    Hd "Step 1: User Details"
+    In :firstName
+    In :lastName
+    In :email @email
+    Bt "Continue" >page=1
+  ]
+  ?page=1: Cn [
+    Hd "Step 2: Preferences"
+    Ck :newsletter "Subscribe to newsletter"
+    Se :language ["en", "es", "fr"]
+    Se :timezone
+    Cn ^row [
+      Bt "Back" >page=0
+      Bt "Next" >page=2
+    ]
+  ]
+  ?page=2: Cn [
+    Hd "Step 3: Summary"
+    Tx "Name:" :.firstName :.lastName
+    Tx "Email:" :.email
+    Tx "Language:" :.language
+    Cn ^row [
+      Bt "Back" >page=1
+      Bt "Submit" !submit #green
+    ]
+  ]
+]

@@ -3,6 +3,43 @@
 
 import { UI_TYPE_CODES } from './constants';
 
+// ============================================================================
+// Compiler Error Class
+// ============================================================================
+
+export class LiquidCodeError extends Error {
+  constructor(
+    message: string,
+    public readonly line: number,
+    public readonly column: number,
+    public readonly source?: string
+  ) {
+    super(`${message} at line ${line}, column ${column}`);
+    this.name = 'LiquidCodeError';
+  }
+
+  /**
+   * Get a formatted error message with source context
+   */
+  format(): string {
+    if (!this.source) {
+      return this.message;
+    }
+
+    const lines = this.source.split('\n');
+    const errorLine = lines[this.line - 1] || '';
+    const pointer = ' '.repeat(this.column - 1) + '^';
+
+    return [
+      `LiquidCodeError: ${this.message.split(' at line')[0]}`,
+      '',
+      `  ${this.line} | ${errorLine}`,
+      `      ${pointer}`,
+      '',
+    ].join('\n');
+  }
+}
+
 export type UITokenType =
   // Types
   | 'UI_TYPE_INDEX'    // 0-9 (single digit for core types)
@@ -23,6 +60,8 @@ export type UITokenType =
   | 'SIGNAL_EMIT'      // >signal or >/1
   | 'SIGNAL_RECEIVE'   // <signal
   | 'SIGNAL_BOTH'      // <>signal
+  // Conditional
+  | 'CONDITION'        // ?@signal=value
   // Style modifiers
   | 'COLOR'            // #color or #?cond
   | 'SIZE'             // %lg, %sm
@@ -165,6 +204,10 @@ export class UIScanner {
         this.string();
         break;
 
+      case '?':
+        this.condition();
+        break;
+
       case '\n':
         this.addToken('NEWLINE', c);
         this.line++;
@@ -245,7 +288,8 @@ export class UIScanner {
 
   private flex(): void {
     let value = '^';
-    if (this.isAlpha(this.peek())) {
+    // Allow multi-character flex values like ^row, ^column, ^grow
+    while (this.isAlpha(this.peek())) {
       value += this.advance();
     }
     this.addToken('FLEX', value);
@@ -265,10 +309,10 @@ export class UIScanner {
 
   private color(): void {
     let value = '#';
-    // Check for conditional color #?>=80:green
+    // Check for conditional color #?>=80:green,<80:red
     if (this.peek() === '?') {
-      // Consume until whitespace or comma or bracket
-      while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
+      // Consume until whitespace or bracket (allow commas for multi-condition)
+      while (!this.isAtEnd() && !' \t\n[]'.includes(this.peek())) {
         value += this.advance();
       }
     } else {
@@ -304,9 +348,9 @@ export class UIScanner {
       this.advance();
       this.tokens.push({ type: 'INDEX_REF', value: ':#', line: this.line, column: startColumn });
     } else if (this.isAlpha(this.peek())) {
-      // Field binding :fieldName
+      // Field binding :fieldName or :nested.field.path
       let value = ':';
-      while (this.isAlphaNumeric(this.peek()) || this.peek() === '_') {
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === '_' || this.peek() === '.') {
         value += this.advance();
       }
       // Check for state condition :hover?expr
@@ -331,6 +375,20 @@ export class UIScanner {
     this.addToken('EXPR', value);
   }
 
+  private condition(): void {
+    // Handles ?@signal=value conditional expressions
+    let value = '?';
+    // Expect @ for signal condition
+    if (this.peek() === '@') {
+      value += this.advance();
+      // Signal name and optional =value
+      while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
+        value += this.advance();
+      }
+    }
+    this.addToken('CONDITION', value);
+  }
+
   private layer(): void {
     let value = '/';
     while (this.isDigit(this.peek())) {
@@ -348,20 +406,41 @@ export class UIScanner {
         this.line++;
         this.column = 0;
       }
-      if (this.peek() === '\\' && this.peekNext() === '"') {
-        this.advance(); // skip backslash
+      if (this.peek() === '\\') {
+        // Skip backslash and the next character (handles \\, \", \n, \t, etc.)
+        this.advance();
+        if (!this.isAtEnd()) {
+          if (this.peek() === '\n') {
+            this.line++;
+            this.column = 0;
+          }
+          this.advance();
+        }
+      } else {
+        this.advance();
       }
-      this.advance();
     }
 
     if (this.isAtEnd()) {
-      throw new Error(`Unterminated string at line ${this.line}`);
+      throw new LiquidCodeError('Unterminated string', this.line, startColumn, this.source);
     }
 
     // Closing quote
     this.advance();
 
-    const value = this.source.slice(start, this.current - 1);
+    // Unescape the string using single-pass to avoid re-processing
+    // Handles: \" -> ", \\ -> \, \n -> newline, \t -> tab
+    const raw = this.source.slice(start, this.current - 1);
+    const value = raw.replace(/\\(.)/g, (_, char) => {
+      switch (char) {
+        case '"': return '"';
+        case '\\': return '\\';
+        case 'n': return '\n';
+        case 't': return '\t';
+        default: return char; // Unknown escapes: keep the character
+      }
+    });
+
     this.tokens.push({
       type: 'STRING',
       value,
@@ -427,8 +506,16 @@ export class UIScanner {
       return;
     }
 
-    // Check if it's a UI type code (2 chars, capital + lowercase)
-    if (UI_TYPE_CODES[value]) {
+    // Check if it's a UI type code:
+    // 1. Known type code (in lookup table)
+    // 2. Unknown but matches pattern: 2-3 chars, starts with capital letter
+    //    This allows forward-compatibility with new component types
+    const isKnownType = UI_TYPE_CODES[value] !== undefined;
+    const isTypeCodePattern = value.length >= 2 && value.length <= 3 &&
+                              value[0] >= 'A' && value[0] <= 'Z' &&
+                              /^[A-Z][a-z]{1,2}$/.test(value);
+
+    if (isKnownType || isTypeCodePattern) {
       this.tokens.push({
         type: 'UI_TYPE_CODE',
         value,
@@ -480,7 +567,8 @@ export class UIScanner {
   }
 
   private isAlpha(c: string): boolean {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
+    // Support ASCII letters, underscore, and unicode letters
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_' || /\p{L}/u.test(c);
   }
 
   private isAlphaNumeric(c: string): boolean {

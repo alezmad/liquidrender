@@ -1,0 +1,3 @@
+@sel
+Tb :users [:name :email :role :status :created] >sel
+Bt "Edit" >/1, Bt "Delete" !delete

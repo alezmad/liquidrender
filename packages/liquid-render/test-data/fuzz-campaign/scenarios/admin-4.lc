@@ -1,0 +1,19 @@
+@tab
+Bt "General" >tab=0, Bt "Security" >tab=1, Bt "Notifications" >tab=2
+?tab=0: Fm [
+  In :siteName :siteUrl
+  Se :timezone [:utc :est :pst]
+  Bt "Save" !submit
+]
+?tab=1: Fm [
+  Sw :twoFactor "Enable 2FA"
+  Sw :passwordExpiry "Password expiration"
+  In :sessionTimeout "Session timeout (minutes)"
+  Bt "Save" !submit
+]
+?tab=2: Fm [
+  Ck :emailNotifications "Email notifications"
+  Ck :slackNotifications "Slack notifications"
+  In :notificationEmail :email
+  Bt "Save" !submit
+]

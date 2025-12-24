@@ -34,6 +34,8 @@ export interface Block {
   signals?: SignalBinding;
   condition?: Condition;
   style?: Style;
+  stream?: StreamConfig;       // Real-time data source
+  fidelity?: FidelityLevel;    // Adaptive rendering level
   action?: string;
   children?: Block[];
   columns?: string[];  // For tables: column field names
@@ -80,6 +82,14 @@ export interface Style {
   colorCondition?: string;
   size?: string;
 }
+
+export interface StreamConfig {
+  type: 'ws' | 'sse' | 'poll' | 'interval';
+  url?: string;
+  interval?: number;  // in milliseconds
+}
+
+export type FidelityLevel = 'lo' | 'hi' | 'auto' | 'skeleton' | 'defer';
 
 export interface EmbeddedSurvey {
   raw: string;
@@ -220,6 +230,18 @@ export class UIEmitter {
           expandedBlock.style = style;
         }
 
+        // Copy stream modifiers
+        const stream = this.extractStream(astBlock.modifiers);
+        if (stream) {
+          expandedBlock.stream = stream;
+        }
+
+        // Copy fidelity modifiers
+        const fidelity = this.extractFidelity(astBlock.modifiers);
+        if (fidelity) {
+          expandedBlock.fidelity = fidelity;
+        }
+
         // Copy condition (from ?@signal=value)
         if (astBlock.condition) {
           expandedBlock.condition = {
@@ -288,6 +310,18 @@ export class UIEmitter {
     const style = this.extractStyle(astBlock.modifiers);
     if (Object.keys(style).length > 0) {
       block.style = style;
+    }
+
+    // Stream modifiers (real-time data)
+    const stream = this.extractStream(astBlock.modifiers);
+    if (stream) {
+      block.stream = stream;
+    }
+
+    // Fidelity modifiers (adaptive rendering)
+    const fidelity = this.extractFidelity(astBlock.modifiers);
+    if (fidelity) {
+      block.fidelity = fidelity;
     }
 
     // State conditions
@@ -443,6 +477,23 @@ export class UIEmitter {
     return style;
   }
 
+  private extractStream(modifiers: ModifierAST[]): StreamConfig | undefined {
+    const streamMod = modifiers.find(m => m.kind === 'stream');
+    if (!streamMod) return undefined;
+
+    return {
+      type: streamMod.streamType || 'poll',
+      url: streamMod.streamUrl,
+      interval: streamMod.interval,
+    };
+  }
+
+  private extractFidelity(modifiers: ModifierAST[]): FidelityLevel | undefined {
+    const fidelityMod = modifiers.find(m => m.kind === 'fidelity');
+    if (!fidelityMod) return undefined;
+    return fidelityMod.fidelityLevel;
+  }
+
   // ============================================================================
   // Emit to LiquidCode DSL
   // ============================================================================
@@ -564,6 +615,10 @@ export class UIEmitter {
         return `:${mod.value}`;
       case 'action':
         return `!${mod.value}`;
+      case 'stream':
+        return `~${mod.value}`;
+      case 'fidelity':
+        return `$${mod.value}`;
       default:
         return '';
     }
@@ -767,6 +822,42 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
           value: block.style.size,
         });
       }
+    }
+
+    // Stream (real-time data)
+    if (block.stream) {
+      let streamValue: string;
+      if (block.stream.url) {
+        streamValue = block.stream.url;
+      } else if (block.stream.interval) {
+        // Convert ms to human-readable: 5000 -> 5s, 60000 -> 1m
+        const ms = block.stream.interval;
+        if (ms >= 60000 && ms % 60000 === 0) {
+          streamValue = `${ms / 60000}m`;
+        } else {
+          streamValue = `${ms / 1000}s`;
+        }
+      } else {
+        streamValue = 'poll';
+      }
+      astBlock.modifiers.push({
+        kind: 'stream',
+        raw: `~${streamValue}`,
+        value: streamValue,
+        streamType: block.stream.type,
+        streamUrl: block.stream.url,
+        interval: block.stream.interval,
+      });
+    }
+
+    // Fidelity (adaptive rendering)
+    if (block.fidelity) {
+      astBlock.modifiers.push({
+        kind: 'fidelity',
+        raw: `$${block.fidelity}`,
+        value: block.fidelity,
+        fidelityLevel: block.fidelity,
+      });
     }
 
     // Condition

@@ -16,9 +16,9 @@ export function resolveBinding(
   switch (binding.kind) {
     case 'field':
       // :fieldName -> data.fieldName
-      return getNestedValue(data, binding.value);
+      return getNestedValue(data, typeof binding.value === 'string' ? binding.value : '');
 
-    case 'index':
+    case 'indexed':
       // Indexed binding (0, 1, 2...) - used for positional data
       if (binding.indices && binding.indices.length > 0) {
         // Multi-index like 012 means data[0], data[1], data[2]
@@ -29,9 +29,9 @@ export function resolveBinding(
       }
       return undefined;
 
-    case 'expr':
+    case 'computed':
       // =expression - evaluate simple expressions
-      return evaluateExpression(binding.value, data);
+      return evaluateExpression(typeof binding.value === 'string' ? binding.value : '', data);
 
     case 'literal':
       // "string" - return as-is
@@ -43,7 +43,7 @@ export function resolveBinding(
 
     case 'iterator':
       // :.field - iterate over array field
-      return getNestedValue(data, binding.value);
+      return getNestedValue(data, typeof binding.value === 'string' ? binding.value : '');
 
     default:
       return undefined;
@@ -78,8 +78,10 @@ function evaluateExpression(expr: string, data: DataContext): unknown {
   // Format expressions like: revenue|currency
   if (expr.includes('|')) {
     const [field, formatter] = expr.split('|');
-    const value = getNestedValue(data, field.trim());
-    return applyFormatter(value, formatter.trim());
+    if (field && formatter) {
+      const value = getNestedValue(data, field.trim());
+      return applyFormatter(value, formatter.trim());
+    }
   }
 
   // Math expressions (very basic)

@@ -2,7 +2,7 @@
 // Parses UI tokens into an AST representing the UI structure
 
 import type { UIToken, UITokenType } from './ui-scanner';
-import { UI_INDEX_TO_TYPE, UI_TYPE_CODES, UI_PRIORITY_VALUES, UI_FLEX_VALUES, UI_SPAN_VALUES } from './constants';
+import { UI_INDEX_TO_TYPE, UI_TYPE_CODES, UI_PRIORITY_VALUES, UI_FLEX_VALUES, UI_SPAN_VALUES, COLOR_ALIASES } from './constants';
 
 // ============================================================================
 // AST Node Types
@@ -403,7 +403,8 @@ export class UIParser {
         if (raw.startsWith('?')) {
           modifier.condition = raw;
         } else {
-          modifier.value = raw;
+          // Expand color aliases: #g -> green, #r -> red, etc.
+          modifier.value = COLOR_ALIASES[raw] ?? raw;
         }
         block.modifiers.push(modifier);
         continue;

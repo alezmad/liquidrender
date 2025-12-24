@@ -116,6 +116,26 @@ export const UI_MODIFIER_SYMBOLS = {
   size: '%',        // %lg, %sm
 } as const;
 
+// Color aliases - 1-character shortcuts that expand to full color names
+export const COLOR_ALIASES: Record<string, string> = {
+  r: 'red',
+  g: 'green',
+  b: 'blue',
+  y: 'yellow',
+  o: 'orange',
+  p: 'purple',
+  w: 'white',
+  k: 'black',
+  gy: 'gray',
+  cy: 'cyan',
+  mg: 'magenta',
+};
+
+// Reverse lookup: full color name -> alias (for emitter optimization)
+export const COLOR_TO_ALIAS = Object.fromEntries(
+  Object.entries(COLOR_ALIASES).map(([alias, color]) => [color, alias])
+) as Record<string, string>;
+
 // Priority values
 export const UI_PRIORITY_VALUES: Record<string, number> = {
   h: 100,  // hero
@@ -239,3 +259,16 @@ export const OPERATOR_TO_CONDITION = {
   '?!empty': 'isNotEmpty',
   '?~': 'matches',
 } as const;
+
+// ============================================================================
+// PART III: Compiler Limits
+// ============================================================================
+
+// Protection against malformed/malicious input that could cause resource exhaustion
+export const COMPILER_LIMITS = {
+  MAX_TOKEN_LENGTH: 10000,      // Single token (string, identifier)
+  MAX_STRING_LENGTH: 50000,     // String literal content
+  MAX_NESTING_DEPTH: 100,       // Bracket nesting depth
+  MAX_TOTAL_TOKENS: 100000,     // Total tokens in input
+  MAX_CHILDREN_PER_BLOCK: 1000, // Children per container
+};

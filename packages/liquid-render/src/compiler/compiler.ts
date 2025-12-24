@@ -26,6 +26,16 @@ export {
   type BindingAST,
 } from './ui-compiler';
 
+// Re-export streaming parser for progressive LLM output
+export {
+  StreamingParser,
+  createStreamingParser,
+  parseStreaming,
+  simulateStreaming,
+  type StreamingResult,
+  type StreamingParserOptions,
+} from './streaming-parser';
+
 // Re-export survey types
 export type { GraphSurvey, GraphSurveyNode, EmitOptions };
 

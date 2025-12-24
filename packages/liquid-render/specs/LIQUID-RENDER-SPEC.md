@@ -50,7 +50,7 @@ Statement   := Block | Layer | Survey
 Block       := Type Binding* Modifier* Children?
 Type        := Index | Code
 Binding     := Index | Field | Expr | Literal
-Modifier    := Layout | Signal | Style | State | Action
+Modifier    := Layout | Signal | Style | State | Action | Stream | Fidelity
 Children    := '[' (Block ',')* Block? ']'
 
 Index       := [0-9]+
@@ -65,6 +65,8 @@ Signal      := '@' Declare | '>' Emit | '<' Recv | '<>' Both
 Style       := '#' Color | '%' Size
 State       := ':' StateName '?' Condition
 Action      := '!' ActionName
+Stream      := '~' Interval | '~' URL
+Fidelity    := '$' Level
 
 Layer       := '/' Index Block
 Survey      := 'Survey' '{' SurveyBody '}'    # Embedded survey
@@ -425,6 +427,57 @@ Bt "Save" !submit           # Form submit
 Bt "Reset" !reset           # Form reset
 Bt "Close" !close           # Close modal
 ```
+
+### §4.6 Streaming Modifiers
+
+Real-time data source bindings with `~` prefix:
+
+| Modifier | Description | Example |
+|----------|-------------|---------|
+| `~5s` | Poll every 5 seconds | `Kp :price ~5s` |
+| `~1m` | Poll every 1 minute | `Tb :orders ~1m` |
+| `~ws://url` | WebSocket stream | `Kp :live ~ws://api.example.com/price` |
+| `~sse://url` | Server-Sent Events | `Tb :events ~sse://stream.example.com` |
+| `~poll` | Poll (default interval) | `Kp :status ~poll` |
+
+```liquid
+# Live price feed via WebSocket
+Kp :price "Live Price" ~ws://api.crypto.com/btc
+
+# Server metrics refreshing every 5 seconds
+Kp :cpu ~5s, Kp :memory ~5s, Kp :disk ~5s
+
+# Event log with SSE
+Tb :events ~sse://logs.example.com/stream
+```
+
+### §4.7 Fidelity Modifiers
+
+Adaptive rendering fidelity with `$` prefix:
+
+| Modifier | Description | Use Case |
+|----------|-------------|----------|
+| `$lo` | Low fidelity | LLM preview, quick sketches |
+| `$hi` | High fidelity | Production, detailed UI |
+| `$auto` | Adaptive | Device-dependent |
+| `$skeleton` | Skeleton loading | Loading states |
+| `$defer` | Lazy rendering | Below-fold content |
+
+```liquid
+# Low-fidelity dashboard for quick preview
+0 $lo [Kp :revenue, Kp :orders, Ln :trend]
+
+# High-fidelity chart with full detail
+Br :monthly $hi
+
+# Skeleton while loading
+Tb :data $skeleton
+
+# Defer below-fold content
+0 $defer [Tb :archive]
+```
+
+**LLM Token Efficiency:** Use `$lo` for rapid iteration (fewer tokens for preview), switch to `$hi` for production.
 
 ---
 

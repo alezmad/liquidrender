@@ -54,12 +54,18 @@ export interface BindingAST {
 }
 
 export interface ModifierAST {
-  kind: 'priority' | 'flex' | 'span' | 'emit' | 'receive' | 'both' | 'color' | 'size' | 'state' | 'action';
+  kind: 'priority' | 'flex' | 'span' | 'emit' | 'receive' | 'both' | 'color' | 'size' | 'state' | 'action' | 'stream' | 'fidelity';
   raw: string;
   value?: string | number;
   target?: string;  // For signals
   layerId?: number; // For layer triggers
   condition?: string; // For conditional styles
+  // Streaming properties
+  streamType?: 'ws' | 'sse' | 'poll' | 'interval';  // Type of stream
+  streamUrl?: string;    // URL for ws/sse
+  interval?: number;     // Polling interval in ms
+  // Fidelity properties
+  fidelityLevel?: 'lo' | 'hi' | 'auto' | 'skeleton' | 'defer';
 }
 
 export interface EmbeddedSurveyAST {
@@ -425,6 +431,49 @@ export class UIParser {
         continue;
       }
 
+      // Streaming modifier: ~5s, ~ws://url, ~sse://url
+      if (this.check('STREAM')) {
+        const token = this.advance();
+        const raw = token.value.slice(1); // Remove ~
+        const modifier: ModifierAST = {
+          kind: 'stream',
+          raw: token.value,
+          value: raw,
+        };
+
+        // Parse stream type
+        if (raw.startsWith('ws://') || raw.startsWith('wss://')) {
+          modifier.streamType = 'ws';
+          modifier.streamUrl = raw;
+        } else if (raw.startsWith('sse://')) {
+          modifier.streamType = 'sse';
+          modifier.streamUrl = raw.replace('sse://', 'https://');
+        } else if (/^\d+[smh]?$/.test(raw)) {
+          // Interval: 5s, 1m, 30, etc.
+          modifier.streamType = 'interval';
+          modifier.interval = this.parseInterval(raw);
+        } else {
+          modifier.streamType = 'poll';
+        }
+
+        block.modifiers.push(modifier);
+        continue;
+      }
+
+      // Fidelity modifier: $lo, $hi, $auto, $skeleton, $defer
+      if (this.check('FIDELITY')) {
+        const token = this.advance();
+        const raw = token.value.slice(1); // Remove $
+        const level = raw as 'lo' | 'hi' | 'auto' | 'skeleton' | 'defer';
+        block.modifiers.push({
+          kind: 'fidelity',
+          raw: token.value,
+          value: raw,
+          fidelityLevel: level,
+        });
+        continue;
+      }
+
       if (this.check('LAYER_CLOSE')) {
         const token = this.advance();
         block.modifiers.push({
@@ -648,5 +697,24 @@ export class UIParser {
 
   private generateUid(): string {
     return `b${++this.uidCounter}`;
+  }
+
+  /**
+   * Parse interval string to milliseconds
+   * Examples: "5s" -> 5000, "1m" -> 60000, "30" -> 30000
+   */
+  private parseInterval(interval: string): number {
+    const match = interval.match(/^(\d+)([smh])?$/);
+    if (!match) return 5000; // Default 5s
+
+    const value = parseInt(match[1]!, 10);
+    const unit = match[2] || 's';
+
+    switch (unit) {
+      case 's': return value * 1000;
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      default: return value * 1000;
+    }
   }
 }

@@ -923,6 +923,27 @@ describe('UI Scanner', () => {
       expect(tokens[0]).toMatchObject({ type: 'SIGNAL_EMIT', value: '>/1' });
       expect(tokens[1]).toMatchObject({ type: 'SIGNAL_EMIT', value: '>/2' });
     });
+
+    it('should tokenize stream modifiers', () => {
+      const scanner = new UIScanner('~5s ~1m ~ws://api.example.com ~sse://events');
+      const tokens = scanner.scan();
+
+      expect(tokens[0]).toMatchObject({ type: 'STREAM', value: '~5s' });
+      expect(tokens[1]).toMatchObject({ type: 'STREAM', value: '~1m' });
+      expect(tokens[2]).toMatchObject({ type: 'STREAM', value: '~ws://api.example.com' });
+      expect(tokens[3]).toMatchObject({ type: 'STREAM', value: '~sse://events' });
+    });
+
+    it('should tokenize fidelity modifiers', () => {
+      const scanner = new UIScanner('$lo $hi $auto $skeleton $defer');
+      const tokens = scanner.scan();
+
+      expect(tokens[0]).toMatchObject({ type: 'FIDELITY', value: '$lo' });
+      expect(tokens[1]).toMatchObject({ type: 'FIDELITY', value: '$hi' });
+      expect(tokens[2]).toMatchObject({ type: 'FIDELITY', value: '$auto' });
+      expect(tokens[3]).toMatchObject({ type: 'FIDELITY', value: '$skeleton' });
+      expect(tokens[4]).toMatchObject({ type: 'FIDELITY', value: '$defer' });
+    });
   });
 
   describe('structure tokens', () => {
@@ -1115,6 +1136,67 @@ describe('UI Parser', () => {
       const actionMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'action');
       expect(actionMod).toBeDefined();
       expect(actionMod!.value).toBe('submit');
+    });
+
+    it('should parse stream interval modifier', () => {
+      const scanner = new UIScanner('1 :price ~5s');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
+      expect(streamMod).toBeDefined();
+      expect(streamMod!.streamType).toBe('interval');
+      expect(streamMod!.interval).toBe(5000);
+    });
+
+    it('should parse stream WebSocket modifier', () => {
+      const scanner = new UIScanner('1 :data ~ws://api.example.com/stream');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
+      expect(streamMod).toBeDefined();
+      expect(streamMod!.streamType).toBe('ws');
+      expect(streamMod!.streamUrl).toBe('ws://api.example.com/stream');
+    });
+
+    it('should parse stream SSE modifier', () => {
+      const scanner = new UIScanner('1 :events ~sse://events');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
+      expect(streamMod).toBeDefined();
+      expect(streamMod!.streamType).toBe('sse');
+    });
+
+    it('should parse fidelity lo modifier', () => {
+      const scanner = new UIScanner('0 $lo [1 :kpi]');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const fidelityMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'fidelity');
+      expect(fidelityMod).toBeDefined();
+      expect(fidelityMod!.fidelityLevel).toBe('lo');
+    });
+
+    it('should parse fidelity auto modifier', () => {
+      const scanner = new UIScanner('Ch :chart $auto');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const fidelityMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'fidelity');
+      expect(fidelityMod).toBeDefined();
+      expect(fidelityMod!.fidelityLevel).toBe('auto');
+    });
+
+    it('should parse minute interval correctly', () => {
+      const scanner = new UIScanner('1 :data ~1m');
+      const parser = new UIParser(scanner.scan());
+      const ast = parser.parse();
+
+      const streamMod = ast.mainBlocks[0].modifiers.find(m => m.kind === 'stream');
+      expect(streamMod!.interval).toBe(60000);
     });
   });
 
@@ -1899,10 +1981,41 @@ describe('Production Readiness', () => {
           '*2', '*f', '*h',           // span
           '#red', '#blue',            // color
           '%lg', '%sm',               // size
+          '~5s', '~1m',               // stream intervals
+          '$lo', '$hi', '$auto',      // fidelity
         ];
         for (const mod of modifiers) {
           const source = `Tx "test" ${mod}`;
           const schema = parseUI(source);
+          const { isEquivalent } = roundtripUI(schema);
+          expect(isEquivalent).toBe(true);
+        }
+      });
+
+      it('should roundtrip stream modifiers', () => {
+        const cases = [
+          { source: 'Kp :price ~5s', expected: 'interval' },
+          { source: 'Kp :data ~1m', expected: 'interval' },
+          { source: 'Kp :live ~ws://api.test.com', expected: 'ws' },
+        ];
+        for (const { source, expected } of cases) {
+          const schema = parseUI(source);
+          expect(schema.layers[0]?.root.stream?.type).toBe(expected);
+          const { isEquivalent } = roundtripUI(schema);
+          expect(isEquivalent).toBe(true);
+        }
+      });
+
+      it('should roundtrip fidelity modifiers', () => {
+        const cases = [
+          { source: '0 $lo [Kp :kpi]', expected: 'lo' },
+          { source: 'Br :chart $hi', expected: 'hi' },
+          { source: 'Cn $auto [Tx "content"]', expected: 'auto' },
+          { source: '0 $skeleton [Kp :loading]', expected: 'skeleton' },
+        ];
+        for (const { source, expected } of cases) {
+          const schema = parseUI(source);
+          expect(schema.layers[0]?.root.fidelity).toBe(expected);
           const { isEquivalent } = roundtripUI(schema);
           expect(isEquivalent).toBe(true);
         }

@@ -67,6 +67,10 @@ export type UITokenType =
   | 'SIZE'             // %lg, %sm
   // State modifiers
   | 'STATE_COND'       // :hover?expr
+  // Streaming modifiers (real-time data)
+  | 'STREAM'           // ~5s, ~ws://url, ~sse://url
+  // Fidelity modifiers (adaptive rendering)
+  | 'FIDELITY'         // $lo, $hi, $auto, $skeleton
   // Structure
   | 'LBRACKET'         // [
   | 'RBRACKET'         // ]
@@ -156,6 +160,14 @@ export class UIScanner {
 
       case '%':
         this.size();
+        break;
+
+      case '~':
+        this.stream();
+        break;
+
+      case '$':
+        this.fidelity();
         break;
 
       case ':':
@@ -330,6 +342,25 @@ export class UIScanner {
       value += this.advance();
     }
     this.addToken('SIZE', value);
+  }
+
+  private stream(): void {
+    let value = '~';
+    // Stream can be: ~5s, ~1m, ~ws://url, ~sse://url, ~poll
+    // Consume until whitespace, comma, or bracket
+    while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
+      value += this.advance();
+    }
+    this.addToken('STREAM', value);
+  }
+
+  private fidelity(): void {
+    let value = '$';
+    // Fidelity: $lo, $hi, $auto, $skeleton, $defer
+    while (this.isAlphaNumeric(this.peek())) {
+      value += this.advance();
+    }
+    this.addToken('FIDELITY', value);
   }
 
   private field(): void {

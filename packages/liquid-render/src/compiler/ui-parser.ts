@@ -12,6 +12,7 @@ export interface UIAST {
   signals: SignalDeclaration[];
   layers: LayerAST[];
   mainBlocks: BlockAST[];
+  mainBlocksSeparator: 'comma' | 'newline' | 'mixed';  // Track how main blocks are separated
   surveys: EmbeddedSurveyAST[];
   comments: string[];
 }
@@ -35,8 +36,15 @@ export interface BlockAST {
   bindings: BindingAST[];
   modifiers: ModifierAST[];
   children?: BlockAST[];
+  columns?: string[];  // For tables: column field names
   survey?: EmbeddedSurveyAST;
+  condition?: ConditionAST;  // Conditional rendering
   line: number;
+}
+
+export interface ConditionAST {
+  signal: string;
+  value: string;
 }
 
 export interface BindingAST {
@@ -66,10 +74,14 @@ export interface EmbeddedSurveyAST {
 
 export class UIParser {
   private tokens: UIToken[];
+  private rawTokens: UIToken[];  // Keep original tokens for separator detection
+  private source: string;        // Original source for Survey extraction
   private current = 0;
   private uidCounter = 0;
 
-  constructor(tokens: UIToken[]) {
+  constructor(tokens: UIToken[], source: string = '') {
+    this.rawTokens = tokens;
+    this.source = source;
     // Filter newlines but keep them for line tracking
     this.tokens = tokens.filter(t => t.type !== 'NEWLINE' && t.type !== 'COMMENT');
   }
@@ -79,9 +91,13 @@ export class UIParser {
       signals: [],
       layers: [],
       mainBlocks: [],
+      mainBlocksSeparator: 'comma',  // Default
       surveys: [],
       comments: [],
     };
+
+    // Detect separator type from raw tokens
+    ast.mainBlocksSeparator = this.detectSeparatorType();
 
     // Parse top-level elements
     while (!this.isAtEnd()) {
@@ -111,6 +127,15 @@ export class UIParser {
         const survey = this.parseSurveyBlock();
         if (survey) ast.surveys.push(survey);
         continue;
+      }
+
+      // Conditional blocks ?@signal=value [content]
+      if (this.check('CONDITION')) {
+        const blocks = this.parseConditionalBlock();
+        if (blocks) {
+          ast.mainBlocks.push(...blocks);
+          continue;
+        }
       }
 
       // Main blocks (everything else)
@@ -171,9 +196,14 @@ export class UIParser {
     // Parse bindings and modifiers
     this.parseBindingsAndModifiers(block);
 
-    // Parse children [...]
+    // Parse children [...] or columns for tables
     if (this.check('LBRACKET')) {
-      block.children = this.parseChildren();
+      if (block.type === 'table') {
+        // For tables, brackets contain column definitions
+        block.columns = this.parseColumns();
+      } else {
+        block.children = this.parseChildren();
+      }
     }
 
     // Check for embedded survey
@@ -183,6 +213,36 @@ export class UIParser {
     }
 
     return block;
+  }
+
+  /**
+   * Parse conditional block: ?@signal=value [content]
+   * Creates blocks with condition property attached
+   */
+  private parseConditionalBlock(): BlockAST[] | null {
+    const conditionToken = this.advance(); // consume ?@signal=value
+    const raw = conditionToken.value.slice(2); // Remove ?@
+
+    // Parse signal=value
+    const [signal, value] = raw.includes('=') ? raw.split('=') : [raw, 'true'];
+    const condition: ConditionAST = { signal: signal!, value: value! };
+
+    // Expect bracket with content
+    if (!this.check('LBRACKET')) {
+      return null;
+    }
+
+    const children = this.parseChildren();
+    if (!children || children.length === 0) {
+      return null;
+    }
+
+    // Attach condition to each child block
+    for (const child of children) {
+      child.condition = condition;
+    }
+
+    return children;
   }
 
   private parseBindingsAndModifiers(block: BlockAST): void {
@@ -397,6 +457,15 @@ export class UIParser {
         continue;
       }
 
+      // Handle conditional blocks inside children
+      if (this.check('CONDITION')) {
+        const conditionalBlocks = this.parseConditionalBlock();
+        if (conditionalBlocks) {
+          children.push(...conditionalBlocks);
+          continue;
+        }
+      }
+
       const block = this.parseBlock();
       if (block) {
         children.push(block);
@@ -415,39 +484,143 @@ export class UIParser {
     return children;
   }
 
+  private parseColumns(): string[] {
+    const columns: string[] = [];
+
+    this.advance(); // consume [
+
+    while (!this.check('RBRACKET') && !this.isAtEnd()) {
+      // Skip commas
+      if (this.check('COMMA')) {
+        this.advance();
+        continue;
+      }
+
+      // Collect field bindings as column names
+      if (this.check('FIELD')) {
+        const token = this.advance();
+        columns.push(token.value.slice(1)); // Remove :
+        continue;
+      }
+
+      // Skip other tokens
+      if (!this.check('RBRACKET')) {
+        this.advance();
+      }
+    }
+
+    if (this.check('RBRACKET')) {
+      this.advance();
+    }
+
+    return columns;
+  }
+
   private parseSurveyBlock(): EmbeddedSurveyAST | null {
     const startToken = this.advance(); // consume Survey
 
     if (!this.check('LBRACE')) {
       return null;
     }
-    this.advance(); // consume {
+    const openBrace = this.advance(); // consume {
 
-    // Collect raw content until matching }
+    // Find matching closing brace by tracking depth
     const startLine = startToken.line;
     let depth = 1;
-    const contentTokens: string[] = [];
+    let closeBraceToken = openBrace;
 
     while (!this.isAtEnd() && depth > 0) {
       const token = this.advance();
       if (token.type === 'LBRACE') {
         depth++;
-        contentTokens.push('{');
       } else if (token.type === 'RBRACE') {
         depth--;
-        if (depth > 0) {
-          contentTokens.push('}');
+        if (depth === 0) {
+          closeBraceToken = token;
+        }
+      }
+    }
+
+    // Extract raw content from source if available
+    let raw = '';
+    if (this.source) {
+      // Find the content between { and } in the original source
+      const lines = this.source.split('\n');
+      const contentLines: string[] = [];
+
+      // Start from line after { to line before }
+      for (let i = openBrace.line; i < closeBraceToken.line; i++) {
+        if (lines[i - 1] !== undefined) {
+          contentLines.push(lines[i - 1]!);
+        }
+      }
+
+      // If single line, extract between braces
+      if (openBrace.line === closeBraceToken.line) {
+        const line = lines[openBrace.line - 1] || '';
+        const braceStart = line.indexOf('{');
+        const braceEnd = line.lastIndexOf('}');
+        if (braceStart !== -1 && braceEnd !== -1) {
+          raw = line.slice(braceStart + 1, braceEnd).trim();
         }
       } else {
-        contentTokens.push(token.value);
+        raw = contentLines.join('\n').trim();
       }
     }
 
     return {
-      raw: contentTokens.join(' ').trim(),
+      raw,
       startLine,
-      endLine: this.previous().line,
+      endLine: closeBraceToken.line,
     };
+  }
+
+  // Detect separator type from raw tokens (before filtering)
+  private detectSeparatorType(): 'comma' | 'newline' | 'mixed' {
+    let hasComma = false;
+    let hasNewline = false;
+    let depth = 0;  // Track bracket depth - only count top-level separators
+
+    for (let i = 0; i < this.rawTokens.length; i++) {
+      const token = this.rawTokens[i]!;
+
+      if (token.type === 'LBRACKET') {
+        depth++;
+      } else if (token.type === 'RBRACKET') {
+        depth--;
+      }
+
+      // Only count separators at top level (depth 0)
+      if (depth === 0) {
+        if (token.type === 'COMMA') {
+          hasComma = true;
+        } else if (token.type === 'NEWLINE') {
+          // Check if this newline separates UI blocks
+          // Look for: [block-content] NEWLINE [block-start]
+          const prevToken = this.rawTokens[i - 1];
+          const nextToken = this.rawTokens[i + 1];
+          if (prevToken && nextToken) {
+            // Previous can be any block content (field, string, bracket, etc.)
+            const prevIsBlockContent = prevToken.type === 'UI_TYPE_INDEX' ||
+                               prevToken.type === 'UI_TYPE_CODE' ||
+                               prevToken.type === 'FIELD' ||
+                               prevToken.type === 'RBRACKET' ||
+                               prevToken.type === 'STRING' ||
+                               prevToken.type === 'NUMBER';
+            // Next must start a new block
+            const nextIsBlockStart = nextToken.type === 'UI_TYPE_INDEX' ||
+                               nextToken.type === 'UI_TYPE_CODE';
+            if (prevIsBlockContent && nextIsBlockStart) {
+              hasNewline = true;
+            }
+          }
+        }
+      }
+    }
+
+    if (hasComma && hasNewline) return 'mixed';
+    if (hasNewline) return 'newline';
+    return 'comma';  // Default
   }
 
   // Helper methods

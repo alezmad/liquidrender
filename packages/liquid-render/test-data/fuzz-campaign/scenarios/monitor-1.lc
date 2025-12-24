@@ -1,0 +1,25 @@
+// Scenario 1: Status Board - Multiple status indicators with conditional colors
+
+@db_status @api_status @cache_status @worker_count
+
+0 ^row #gap2 [
+  Cd [
+    Tx "Database Status" %bold
+    Tg :db_status >variant=success
+  ]
+
+  Cd [
+    Tx "API Gateway" %bold
+    Tg :api_status >variant=warning
+  ]
+
+  Cd [
+    Tx "Cache Server" %bold
+    Tg :cache_status >variant=error
+  ]
+
+  Cd [
+    Tx "Queue Workers" %bold
+    Tx :worker_count
+  ]
+]

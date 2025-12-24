@@ -1,0 +1,73 @@
+// Scenario 4: System Overview - Multiple signal-connected components, layer switching
+
+@switch_to_infra @switch_to_apps @switch_to_network
+@total_servers @active_services @total_traffic @open_incidents
+@cpu_usage @memory_usage @disk_io
+
+/0 0 [
+  // Header with view switcher
+  0 ^row #between [
+    Tx "System Overview" %xl %bold
+    0 ^row #gap1 [
+      Bt "Infrastructure" %default >switch_to_infra /infrastructure_view
+      Bt "Applications" %outline >switch_to_apps /applications_view
+      Bt "Network" %outline >switch_to_network /network_view
+    ]
+  ]
+
+  // Quick stats
+  Gd *4 #gap2 [
+    Cd [
+      Tx "Total Servers" %sm #muted
+      Tx :total_servers %lg %bold
+      Tg "98% healthy" #success
+    ]
+
+    Cd [
+      Tx "Active Services" %sm #muted
+      Tx :active_services %lg %bold
+      Tg "12 degraded" #warning
+    ]
+
+    Cd [
+      Tx "Total Traffic" %sm #muted
+      Tx :total_traffic %lg %bold
+      Tg "normal" #default
+    ]
+
+    Cd [
+      Tx "Open Incidents" %sm #muted
+      Tx :open_incidents %lg %bold
+      Bt "View All" %link %sm /incidents_list
+    ]
+  ]
+
+  // Resource utilization
+  Cd [
+    Tx "Resource Utilization" %bold
+
+    0 [
+      0 ^row #between [
+        Tx "CPU" %sm
+        Tx :cpu_usage %sm
+      ]
+      Tx "████████████████▒▒▒▒" #muted
+    ]
+
+    0 [
+      0 ^row #between [
+        Tx "Memory" %sm
+        Tx :memory_usage %sm
+      ]
+      Tx "████████████████████▒▒" #muted
+    ]
+
+    0 [
+      0 ^row #between [
+        Tx "Disk I/O" %sm
+        Tx :disk_io %sm
+      ]
+      Tx "████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒" #muted
+    ]
+  ]
+]

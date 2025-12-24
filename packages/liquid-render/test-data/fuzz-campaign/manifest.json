@@ -1,0 +1,103 @@
+{
+  "campaign": "Adversarial Realism Testing v1",
+  "created": "2024-12-24T13:50:00Z",
+  "completed": "2024-12-24T14:15:00Z",
+  "goal": "Generate and test 15-20 realistic LiquidCode snippets across 5 domains",
+  "timeLimit": "1 hour",
+  "status": "completed",
+  "agents": [
+    {
+      "id": "agent-1",
+      "domain": "analytics-dashboard",
+      "description": "KPIs, charts, metrics, date filters, responsive layouts",
+      "status": "completed",
+      "scenarios": ["analytics-1.lc", "analytics-2.lc", "analytics-3.lc", "analytics-4.lc"],
+      "bugsFound": 4,
+      "passed": 0,
+      "failed": 4
+    },
+    {
+      "id": "agent-2",
+      "domain": "ecommerce",
+      "description": "Product cards, shopping cart, checkout forms, order summary",
+      "status": "completed",
+      "scenarios": ["ecommerce-1.lc", "ecommerce-2.lc", "ecommerce-3.lc", "ecommerce-4.lc"],
+      "bugsFound": 2,
+      "passed": 2,
+      "failed": 2
+    },
+    {
+      "id": "agent-3",
+      "domain": "admin-panel",
+      "description": "Data tables, user management, CRUD operations, filters",
+      "status": "completed",
+      "scenarios": ["admin-1.lc", "admin-2.lc", "admin-3.lc", "admin-4.lc"],
+      "bugsFound": 1,
+      "passed": 2,
+      "failed": 2
+    },
+    {
+      "id": "agent-4",
+      "domain": "survey-wizard",
+      "description": "Multi-step forms, conditional visibility, validation, progress",
+      "status": "completed",
+      "scenarios": ["wizard-1.lc", "wizard-2.lc", "wizard-3.lc", "wizard-4.lc"],
+      "bugsFound": 3,
+      "passed": 0,
+      "failed": 4
+    },
+    {
+      "id": "agent-5",
+      "domain": "realtime-monitor",
+      "description": "Live data, signals, layer switching, status indicators, alerts",
+      "status": "completed",
+      "scenarios": ["monitor-1.lc", "monitor-2.lc", "monitor-3.lc", "monitor-4.lc"],
+      "bugsFound": 0,
+      "passed": 4,
+      "failed": 0
+    }
+  ],
+  "summary": {
+    "totalScenarios": 20,
+    "initialPassed": 8,
+    "initialFailed": 12,
+    "initialPassRate": "40%",
+    "compilerBugs": 5,
+    "bugsFixed": 5,
+    "specAmbiguities": 1,
+    "testErrors": 2,
+    "finalPassRate": "100%"
+  },
+  "bugsFixed": [
+    {
+      "id": "BUG-001",
+      "severity": "CRITICAL",
+      "title": "Label Preservation",
+      "file": "ui-emitter.ts"
+    },
+    {
+      "id": "BUG-002",
+      "severity": "CRITICAL",
+      "title": "Missing Ta Type Code",
+      "file": "constants.ts"
+    },
+    {
+      "id": "BUG-003",
+      "severity": "MAJOR",
+      "title": "Conditional Color Truncation",
+      "file": "ui-scanner.ts"
+    },
+    {
+      "id": "BUG-004",
+      "severity": "MAJOR",
+      "title": "Conditionals Not Emitted",
+      "file": "ui-emitter.ts"
+    },
+    {
+      "id": "BUG-005",
+      "severity": "MAJOR",
+      "title": "Multiple Signal Receivers",
+      "file": "ui-emitter.ts"
+    }
+  ]
+}

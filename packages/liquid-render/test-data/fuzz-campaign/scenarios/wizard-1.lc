@@ -1,0 +1,19 @@
+@step
+Bt "Step 1" >step=0, Bt "Step 2" >step=1, Bt "Step 3" >step=2
+?step=0: Fm [
+  Hd "Personal Info"
+  In :name "Full Name"
+  In :email "Email Address"
+  Bt "Next" >step=1
+]
+?step=1: Fm [
+  Hd "Contact Details"
+  In :phone "Phone Number"
+  In :address "Street Address"
+  Bt "Back" >step=0, Bt "Next" >step=2
+]
+?step=2: Fm [
+  Hd "Review & Submit"
+  Tx "Please review your information"
+  Bt "Back" >step=1, Bt "Submit" !submit
+]

@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "revenue": 832000,
+    "orders": 2248,
+    "customers": 1694,
+    "aov": 370.11,
+    "growth": 0.14
+  },
+  "monthly": [
+    { "date": "2024-01", "revenue": 45000, "orders": 120 },
+    { "date": "2024-02", "revenue": 52000, "orders": 145 },
+    { "date": "2024-03", "revenue": 48000, "orders": 132 },
+    { "date": "2024-04", "revenue": 61000, "orders": 168 },
+    { "date": "2024-05", "revenue": 58000, "orders": 155 },
+    { "date": "2024-06", "revenue": 67000, "orders": 182 },
+    { "date": "2024-07", "revenue": 72000, "orders": 195 },
+    { "date": "2024-08", "revenue": 69000, "orders": 188 },
+    { "date": "2024-09", "revenue": 78000, "orders": 210 },
+    { "date": "2024-10", "revenue": 85000, "orders": 228 },
+    { "date": "2024-11", "revenue": 92000, "orders": 245 },
+    { "date": "2024-12", "revenue": 105000, "orders": 280 }
+  ]
+}

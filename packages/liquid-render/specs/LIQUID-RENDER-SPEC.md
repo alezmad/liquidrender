@@ -72,6 +72,149 @@ Survey      := 'Survey' '{' SurveyBody '}'    # Embedded survey
 
 ---
 
+## §1.1 LLM-Optimal Syntax (Preferred)
+
+The preferred syntax maximizes both **token efficiency** and **semantic clarity** for LLM generation.
+
+### Core Principles
+
+1. **Semantic type codes** - Use 2-char codes (`Kp`, `Ln`, `Tb`), not numeric indices
+2. **Named bindings** - Always `:fieldName`, never numeric indices
+3. **Auto-labels** - Labels derived from field names (`:totalRevenue` → "Total Revenue")
+4. **Implicit layout** - Comma = row, newline = stack, brackets only for nesting
+5. **Minimal punctuation** - No unnecessary containers or wrappers
+6. **Repetition shorthand** - Multiple fields after type = multiple instances (`Kp :a :b :c` → 3 KPIs)
+
+### Layout Rules
+
+| Separator | Meaning | Example |
+|-----------|---------|---------|
+| `,` (comma) | Same row | `Kp :a, Kp :b, Kp :c` |
+| `\n` (newline) | New row/stack | `Kp :a`<br>`Ln :b` |
+| `[ ]` | Explicit nesting | `Fm [In :x, In :y]` |
+
+### Auto-Label Generation
+
+Field names are converted to labels automatically:
+
+| Field | Generated Label |
+|-------|-----------------|
+| `:revenue` | "Revenue" |
+| `:totalRevenue` | "Total Revenue" |
+| `:order_count` | "Order Count" |
+| `:avgOrderValue` | "Avg Order Value" |
+
+Override with explicit literal: `Kp :revenue "Custom Label"`
+
+### Repetition Shorthand
+
+For non-chart types, multiple field bindings create multiple instances:
+
+| Syntax | Expands To | Result |
+|--------|------------|--------|
+| `Kp :a :b :c` | `Kp :a, Kp :b, Kp :c` | 3 KPIs |
+| `In :name :email :phone` | `In :name, In :email, In :phone` | 3 inputs |
+| `Bt :submit :cancel` | `Bt :submit, Bt :cancel` | 2 buttons |
+
+**Exception:** Charts use multi-binding for axes, not expansion:
+- `Ln :date :revenue` → 1 chart with x=date, y=revenue
+- `Br :category :sales` → 1 chart with x=category, y=sales
+
+### Implicit Field Detection
+
+The renderer auto-detects fields from data structure when explicit bindings are omitted:
+
+| Type | Input | Behavior |
+|------|-------|----------|
+| `Kp :obj` | Object | Expands all numeric fields to KPIs |
+| `Ln/Br :arr` | Array | Auto-detects x (first string) and y (first numeric) |
+| `Tb :arr` | Array | Infers all columns from first row |
+
+**Examples:**
+
+```liquid
+# Ultra-minimal dashboard (45 chars vs 150+ explicit)
+Kp :summary
+Ln :monthly
+Tb :transactions
+```
+
+Given this data:
+```json
+{
+  "summary": { "revenue": 832000, "orders": 2248, "customers": 1694 },
+  "monthly": [{ "month": "Jan", "revenue": 45000 }],
+  "transactions": [{ "date": "...", "customer": "...", "amount": 123 }]
+}
+```
+
+Produces:
+- 3 KPIs (Revenue, Orders, Customers) with auto-labels
+- Line chart with x=month, y=revenue (auto-detected)
+- Table with columns: Date, Customer, Amount (auto-inferred)
+
+**Override when needed:**
+```liquid
+Ln :monthly.date :monthly.orders    # Explicit x/y
+Tb :data [:col1 :col2]              # Explicit columns
+Kp :summary.revenue "Total Revenue" # Explicit single field + label
+```
+
+### Canonical Examples
+
+**Dashboard - Ultra-minimal (implicit detection):**
+```liquid
+Kp :summary
+Ln :monthly
+Tb :transactions
+```
+
+**Dashboard - Compact (explicit fields):**
+```liquid
+Kp :revenue :orders :customers :growth
+Ln :month :sales
+```
+
+**Table with columns:**
+```liquid
+Tb :users [:name :email :role :status]
+```
+
+**Form with inputs:**
+```liquid
+Fm [
+  In :name :email :phone
+  Se :role
+  Bt "Save" !submit
+]
+```
+
+**Chart with axes:**
+```liquid
+Ln :date :revenue
+Br :category :sales
+```
+
+**Tabs:**
+```liquid
+@tab
+Bt "Overview" >tab=0, Bt "Details" >tab=1
+?tab=0: Kp :revenue, Ln :trend
+?tab=1: Tb :orders [:id :customer :amount]
+```
+
+### Compression Comparison
+
+| Format | Example | Chars | Savings |
+|--------|---------|-------|---------|
+| Verbose | `0 ^row [1 :revenue "Revenue", 1 :orders "Orders"]` | 52 | - |
+| Compact | `Kp :revenue :orders` | 20 | **62%** |
+| Ultra-minimal | `Kp :summary` | 11 | **79%** |
+
+*Ultra-minimal requires structured data (object with numeric fields).*
+
+---
+
 ## §2 Type System
 
 ### §2.1 Core Types (Indexed 0-9)

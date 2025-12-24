@@ -1,0 +1,6 @@
+Fm [
+  In :firstName :lastName :email
+  Se :role [:admin :editor :viewer]
+  Sw :active
+  Bt "Cancel" /<, Bt "Save" !submit
+]

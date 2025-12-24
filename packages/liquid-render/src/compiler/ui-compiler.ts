@@ -25,8 +25,8 @@ export function parseUI(source: string): LiquidSchema {
   const scanner = new UIScanner(source);
   const tokens = scanner.scan();
 
-  // Parse to AST
-  const parser = new UIParser(tokens);
+  // Parse to AST (pass source for Survey content extraction)
+  const parser = new UIParser(tokens, source);
   const ast = parser.parse();
 
   // Emit as LiquidSchema
@@ -40,7 +40,7 @@ export function parseUI(source: string): LiquidSchema {
 export function parseUIToAST(source: string): UIAST {
   const scanner = new UIScanner(source);
   const tokens = scanner.scan();
-  const parser = new UIParser(tokens);
+  const parser = new UIParser(tokens, source);
   return parser.parse();
 }
 
@@ -114,6 +114,21 @@ function compareUISchemas(
   };
 }
 
+/**
+ * Convert field name to human-readable label
+ * e.g., totalRevenue -> "Total Revenue", user_name -> "User Name"
+ */
+function fieldToLabel(field: string): string {
+  const name = field.split('.').pop() || field;
+  let result = name.replace(/_/g, ' ');
+  result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
+  result = result
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  return result;
+}
+
 function compareBlocks(
   original: import('./ui-emitter').Block,
   reconstructed: import('./ui-emitter').Block,
@@ -140,9 +155,17 @@ function compareBlocks(
     }
   }
 
-  // Compare label
+  // Compare label - handle auto-label equivalence
+  // If original has no label but reconstructed has auto-generated label from field, they're equivalent
   if (original.label !== reconstructed.label) {
-    differences.push(`${path}.label mismatch: ${original.label} vs ${reconstructed.label}`);
+    const isAutoLabelEquivalent = !original.label &&
+      reconstructed.label &&
+      original.binding?.kind === 'field' &&
+      fieldToLabel(original.binding.value as string) === reconstructed.label;
+
+    if (!isAutoLabelEquivalent) {
+      differences.push(`${path}.label mismatch: ${original.label} vs ${reconstructed.label}`);
+    }
   }
 
   // Compare action
@@ -162,6 +185,7 @@ function compareBlocks(
   }
 }
 
-// Re-export types
+// Re-export types and classes
 export type { LiquidSchema, Block, Layer, Signal, Binding, Layout, SignalBinding, Style } from './ui-emitter';
 export type { UIAST, BlockAST, LayerAST, ModifierAST, BindingAST } from './ui-parser';
+export { LiquidCodeError } from './ui-scanner';

@@ -16,6 +16,14 @@ import { PieChartComponent } from './components/pie-chart';
 import { Modal } from './components/modal';
 import { Input } from './components/input';
 import { Form } from './components/form';
+import { Avatar } from './components/avatar';
+import { Sidebar } from './components/sidebar';
+import { Tabs } from './components/tabs';
+import { DateRange } from './components/daterange';
+import { Header } from './components/header';
+import { Badge } from './components/badge';
+import { Breadcrumb } from './components/breadcrumb';
+import { Nav } from './components/nav';
 
 /**
  * Props passed to all Liquid components
@@ -53,6 +61,18 @@ export const componentRegistry: ComponentRegistry = {
   modal: Modal,
   input: Input,
   form: Form,
+
+  // Display components
+  avatar: Avatar,
+
+  // Dashboard components (WF-0003)
+  sidebar: Sidebar,
+  tabs: Tabs,
+  daterange: DateRange,
+  header: Header,
+  badge: Badge,
+  breadcrumb: Breadcrumb,
+  nav: Nav,
 };
 
 /**

@@ -1,0 +1,704 @@
+{
+  "examples": [
+    {
+      "id": "medium-001",
+      "description": "Dashboard header with multiple KPIs",
+      "input": "Create dashboard header showing revenue, orders, and customers",
+      "output": "Kp :revenue \"Total Revenue\" #blue, Kp :orders \"Orders\" #green, Kp :customers \"Customers\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-002",
+      "description": "Form with multiple fields",
+      "input": "Contact form with name, email, and message",
+      "output": "Fm :name \"Name\", Fm :email \"Email\", Fm :message \"Message\"",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-003",
+      "description": "Chart section with title",
+      "input": "Sales trend section with line chart",
+      "output": "Tx \"Sales Trend\" #black, Ln :salesData #blue \"Monthly Sales\"",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-004",
+      "description": "Action buttons group",
+      "input": "Form actions with save and cancel",
+      "output": "Bt \"Save\" #green >save, Bt \"Cancel\" #gray >cancel",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-005",
+      "description": "Conditional KPI display",
+      "input": "Show revenue KPI only when data is loaded",
+      "output": "Kp :revenue \"Revenue\" ?@dataLoaded=true",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-006",
+      "description": "Interactive table with actions",
+      "input": "Customer table with edit and delete buttons",
+      "output": "Tb :customers \"Customer List\", Bt \"Edit\" >editCustomer, Bt \"Delete\" #red >deleteCustomer",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-007",
+      "description": "Analytics dashboard section",
+      "input": "Analytics showing traffic chart and conversion rate",
+      "output": "Ln :trafficData \"Website Traffic\" #blue, Kp :conversionRate \"Conversion Rate\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-008",
+      "description": "Form with validation signals",
+      "input": "Login form with email and password that validates",
+      "output": "Fm :email \"Email\" >emailChanged @emailValid, Fm :password \"Password\" >passwordChanged @passwordValid",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-009",
+      "description": "Multi-chart comparison",
+      "input": "Compare sales and revenue with bar charts",
+      "output": "Br :salesByMonth \"Sales\" #blue, Br :revenueByMonth \"Revenue\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-010",
+      "description": "Priority-ordered KPIs",
+      "input": "Show critical, high, and medium priority metrics",
+      "output": "Kp :errorCount #red !critical, Kp :warningCount #yellow !high, Kp :infoCount #blue !medium",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-011",
+      "description": "Nested dashboard section",
+      "input": "Revenue section with KPI and trend chart",
+      "output": "[Tx \"Revenue Overview\", Kp :totalRevenue #green !high, Ln :revenueTrend #green]",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-012",
+      "description": "Form with submit handler",
+      "input": "Registration form with name, email, and submit",
+      "output": "Fm :name \"Full Name\", Fm :email \"Email Address\", Bt \"Register\" #green >submitRegistration",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-013",
+      "description": "Conditional chart display",
+      "input": "Show sales chart when sales mode is active",
+      "output": "Ln :salesData \"Sales Trend\" ?@mode=sales",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-014",
+      "description": "Multi-metric comparison",
+      "input": "Compare current vs previous period",
+      "output": "Kp :currentRevenue \"Current\" #blue, Kp :previousRevenue \"Previous\" #gray, Kp :growthPercent \"Growth\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-015",
+      "description": "Interactive filter section",
+      "input": "Date filters with apply button",
+      "output": "Fm :startDate \"Start Date\", Fm :endDate \"End Date\", Bt \"Apply\" #blue >applyFilters",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-016",
+      "description": "Status dashboard",
+      "input": "System status showing active, pending, and errors",
+      "output": "Kp :activeCount \"Active\" #green, Kp :pendingCount \"Pending\" #yellow, Kp :errorCount \"Errors\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-017",
+      "description": "Product analytics",
+      "input": "Product view with sales pie and inventory bar",
+      "output": "Pi :productDistribution \"Product Sales\", Br :inventoryLevels \"Stock Levels\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-018",
+      "description": "User management table",
+      "input": "Users table with role filter and actions",
+      "output": "Fm :roleFilter \"Filter by Role\" @roleChanged, Tb :users \"User List\" <roleChanged, Bt \"Add User\" #green >addUser",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-019",
+      "description": "Sales funnel view",
+      "input": "Funnel stages from leads to closed deals",
+      "output": "Kp :leads \"Leads\" #blue, Kp :qualified \"Qualified\" #green, Kp :proposals \"Proposals\" #yellow, Kp :closed \"Closed\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-020",
+      "description": "Performance metrics",
+      "input": "Server metrics showing CPU, memory, and disk",
+      "output": "Kp :cpuUsage \"CPU\" #blue !high, Kp :memoryUsage \"Memory\" #green !high, Kp :diskUsage \"Disk\" #yellow !medium",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-021",
+      "description": "E-commerce overview",
+      "input": "Store dashboard with orders, revenue, and customers",
+      "output": "Kp :todayOrders \"Today's Orders\" #blue, Kp :todayRevenue \"Revenue\" #green, Kp :newCustomers \"New Customers\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-022",
+      "description": "Search interface",
+      "input": "Search with input, button, and results table",
+      "output": "Fm :searchQuery \"Search\" >queryChanged, Bt \"Search\" #blue >executeSearch, Tb :searchResults <executeSearch",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-023",
+      "description": "Nested chart section",
+      "input": "Traffic analysis with multiple charts",
+      "output": "[Tx \"Traffic Analysis\", Ln :pageViews \"Page Views\" #blue, Br :topPages \"Top Pages\" #green]",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-024",
+      "description": "Settings form section",
+      "input": "Profile settings with name, email, and save",
+      "output": "[Tx \"Profile Settings\", Fm :profileName \"Name\", Fm :profileEmail \"Email\", Bt \"Save Changes\" #green >saveProfile]",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-025",
+      "description": "Financial dashboard",
+      "input": "Financial overview with income, expenses, profit",
+      "output": "Kp :totalIncome \"Income\" #green !high, Kp :totalExpenses \"Expenses\" #red !high, Kp :netProfit \"Profit\" #blue !critical",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-026",
+      "description": "Notification center",
+      "input": "Notifications with count and list",
+      "output": "Kp :notificationCount \"Notifications\" #red !high, Tb :notifications \"Recent Notifications\" <notificationUpdated",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-027",
+      "description": "Order details view",
+      "input": "Order info with status, total, and items table",
+      "output": "Tx :orderStatus \"Status\" #blue, Kp :orderTotal \"Total\" #green, Tb :orderItems \"Items\"",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-028",
+      "description": "Marketing dashboard",
+      "input": "Campaign metrics with impressions, clicks, conversions",
+      "output": "Kp :impressions \"Impressions\" #blue, Kp :clicks \"Clicks\" #green, Kp :conversions \"Conversions\" #purple !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-029",
+      "description": "Inventory management",
+      "input": "Stock view with low stock warning and chart",
+      "output": "Kp :lowStockCount \"Low Stock Items\" #red !critical, Br :stockByCategory \"Stock by Category\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-030",
+      "description": "Team performance",
+      "input": "Team metrics with individual and team totals",
+      "output": "Kp :teamTotal \"Team Total\" #blue !high, Br :memberPerformance \"Individual Performance\" #green, Tb :teamMembers",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-031",
+      "description": "Support dashboard",
+      "input": "Support metrics with tickets by status",
+      "output": "Kp :openTickets \"Open\" #yellow, Kp :inProgressTickets \"In Progress\" #blue, Kp :resolvedTickets \"Resolved\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-032",
+      "description": "Report builder",
+      "input": "Report configuration with date range and generate button",
+      "output": "Fm :reportStart \"Start Date\", Fm :reportEnd \"End Date\", Fm :reportType \"Report Type\", Bt \"Generate\" #blue >generateReport",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-033",
+      "description": "User activity feed",
+      "input": "Activity timeline with filter and table",
+      "output": "Fm :activityFilter \"Filter Activity\" @filterChanged, Tb :activityLog \"Activity Log\" <filterChanged <activityUpdated",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-034",
+      "description": "Product comparison",
+      "input": "Compare two products side by side",
+      "output": "[Tx :product1Name, Kp :product1Price #blue, Kp :product1Rating #green], [Tx :product2Name, Kp :product2Price #blue, Kp :product2Rating #green]",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-035",
+      "description": "Shipping dashboard",
+      "input": "Logistics view with pending, shipped, delivered",
+      "output": "Kp :pendingShipments \"Pending\" #yellow !high, Kp :inTransit \"In Transit\" #blue, Kp :delivered \"Delivered\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-036",
+      "description": "Revenue breakdown",
+      "input": "Revenue by source with pie chart and totals",
+      "output": "Kp :totalRevenue \"Total Revenue\" #green !critical, Pi :revenueBySource \"Revenue by Source\", Tb :sourceDetails",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-037",
+      "description": "Calendar events view",
+      "input": "Events with count and upcoming list",
+      "output": "Kp :upcomingEvents \"Upcoming Events\" #blue, Tb :eventList \"Event Schedule\" <eventUpdated",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-038",
+      "description": "Subscription metrics",
+      "input": "Subscription dashboard with active, churned, new",
+      "output": "Kp :activeSubscriptions \"Active\" #green !high, Kp :churnedSubscriptions \"Churned\" #red, Kp :newSubscriptions \"New\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-039",
+      "description": "API usage dashboard",
+      "input": "API metrics with requests, errors, latency",
+      "output": "Kp :apiRequests \"Requests\" #blue, Kp :apiErrors \"Errors\" #red !high, Kp :avgLatency \"Avg Latency\" #yellow !medium",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-040",
+      "description": "Content management",
+      "input": "Content stats with published, draft, scheduled",
+      "output": "Kp :publishedCount \"Published\" #green, Kp :draftCount \"Drafts\" #yellow, Kp :scheduledCount \"Scheduled\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-041",
+      "description": "Engagement metrics",
+      "input": "Social engagement with likes, shares, comments",
+      "output": "Kp :totalLikes \"Likes\" #red, Kp :totalShares \"Shares\" #blue, Kp :totalComments \"Comments\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-042",
+      "description": "Quality assurance view",
+      "input": "QA dashboard with passed, failed, pending tests",
+      "output": "Kp :passedTests \"Passed\" #green !high, Kp :failedTests \"Failed\" #red !critical, Kp :pendingTests \"Pending\" #yellow",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-043",
+      "description": "Payment processing",
+      "input": "Payment stats with successful, pending, failed",
+      "output": "Kp :successfulPayments \"Successful\" #green, Kp :pendingPayments \"Pending\" #yellow, Kp :failedPayments \"Failed\" #red !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-044",
+      "description": "Customer segments",
+      "input": "Customer segmentation with pie and table",
+      "output": "Pi :customerSegments \"Customer Segments\", Tb :segmentDetails \"Segment Details\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-045",
+      "description": "Traffic sources",
+      "input": "Traffic breakdown by source and device",
+      "output": "Br :trafficBySource \"Traffic by Source\" #blue, Pi :trafficByDevice \"Traffic by Device\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-046",
+      "description": "Sales by region",
+      "input": "Regional sales with map view and table",
+      "output": "Kp :totalSales \"Total Sales\" #green !high, Br :salesByRegion \"Regional Sales\", Tb :regionDetails",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-047",
+      "description": "Task management",
+      "input": "Tasks with todo, in progress, completed",
+      "output": "Kp :todoTasks \"To Do\" #gray, Kp :inProgressTasks \"In Progress\" #blue, Kp :completedTasks \"Completed\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-048",
+      "description": "Lead generation",
+      "input": "Lead funnel with acquisition, nurture, convert",
+      "output": "Kp :acquiredLeads \"Acquired\" #blue, Kp :nurturedLeads \"Nurtured\" #yellow, Kp :convertedLeads \"Converted\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-049",
+      "description": "Server monitoring",
+      "input": "Server health with uptime, requests, response time",
+      "output": "Kp :serverUptime \"Uptime\" #green !high, Kp :requestCount \"Requests\" #blue, Kp :avgResponseTime \"Avg Response\" #yellow",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-050",
+      "description": "Employee dashboard",
+      "input": "Employee metrics with attendance, performance, tasks",
+      "output": "Kp :attendanceRate \"Attendance\" #green, Kp :performanceScore \"Performance\" #blue !high, Kp :completedTasks \"Tasks Completed\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-051",
+      "description": "Campaign builder",
+      "input": "Campaign setup with name, audience, launch",
+      "output": "Fm :campaignName \"Campaign Name\", Fm :targetAudience \"Target Audience\", Bt \"Launch Campaign\" #green >launchCampaign",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-052",
+      "description": "Feedback collection",
+      "input": "Feedback form with rating, comment, submit",
+      "output": "Fm :feedbackRating \"Rating\", Fm :feedbackComment \"Comments\", Bt \"Submit Feedback\" #blue >submitFeedback",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-053",
+      "description": "Budget tracking",
+      "input": "Budget view with allocated, spent, remaining",
+      "output": "Kp :allocatedBudget \"Allocated\" #blue, Kp :spentBudget \"Spent\" #red, Kp :remainingBudget \"Remaining\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-054",
+      "description": "Project timeline",
+      "input": "Project milestones with planned, completed, delayed",
+      "output": "Kp :plannedMilestones \"Planned\" #blue, Kp :completedMilestones \"Completed\" #green, Kp :delayedMilestones \"Delayed\" #red !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-055",
+      "description": "Email campaign stats",
+      "input": "Email metrics with sent, opened, clicked",
+      "output": "Kp :emailsSent \"Sent\" #blue, Kp :emailsOpened \"Opened\" #green, Kp :emailsClicked \"Clicked\" #purple !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-056",
+      "description": "Warehouse operations",
+      "input": "Warehouse view with receiving, storage, shipping",
+      "output": "Kp :receivingQueue \"Receiving\" #yellow, Kp :storageCapacity \"Storage\" #blue, Kp :shippingQueue \"Shipping\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-057",
+      "description": "Customer service",
+      "input": "Service metrics with satisfaction, resolution, time",
+      "output": "Kp :customerSatisfaction \"Satisfaction\" #green !critical, Kp :resolutionRate \"Resolution Rate\" #blue, Kp :avgHandleTime \"Avg Time\" #yellow",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-058",
+      "description": "Security dashboard",
+      "input": "Security alerts with threats, scans, incidents",
+      "output": "Kp :activeThreats \"Active Threats\" #red !critical, Kp :completedScans \"Scans\" #green, Kp :securityIncidents \"Incidents\" #yellow !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-059",
+      "description": "Learning platform",
+      "input": "Course progress with enrolled, in progress, completed",
+      "output": "Kp :enrolledCourses \"Enrolled\" #blue, Kp :coursesInProgress \"In Progress\" #yellow, Kp :completedCourses \"Completed\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-060",
+      "description": "Recruitment pipeline",
+      "input": "Hiring funnel with applicants, interviews, offers",
+      "output": "Kp :totalApplicants \"Applicants\" #blue, Kp :scheduledInterviews \"Interviews\" #yellow, Kp :offersExtended \"Offers\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-061",
+      "description": "Website analytics",
+      "input": "Web analytics with visitors, sessions, bounce",
+      "output": "Kp :uniqueVisitors \"Visitors\" #blue, Kp :totalSessions \"Sessions\" #green, Kp :bounceRate \"Bounce Rate\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-062",
+      "description": "Pricing calculator",
+      "input": "Price calculator with base, features, total",
+      "output": "Kp :basePrice \"Base Price\" #blue, Fm :selectedFeatures \"Add Features\", Kp :totalPrice \"Total\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-063",
+      "description": "Appointment booking",
+      "input": "Booking interface with date, time, confirm",
+      "output": "Fm :appointmentDate \"Date\", Fm :appointmentTime \"Time\", Bt \"Confirm Booking\" #green >confirmBooking",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-064",
+      "description": "Survey results",
+      "input": "Survey summary with responses, completion, satisfaction",
+      "output": "Kp :totalResponses \"Responses\" #blue, Kp :completionRate \"Completion\" #green, Kp :avgSatisfaction \"Satisfaction\" #purple !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-065",
+      "description": "Affiliate tracking",
+      "input": "Affiliate metrics with clicks, conversions, commission",
+      "output": "Kp :affiliateClicks \"Clicks\" #blue, Kp :affiliateConversions \"Conversions\" #green, Kp :totalCommission \"Commission\" #purple !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-066",
+      "description": "Fleet management",
+      "input": "Fleet status with active, maintenance, idle",
+      "output": "Kp :activeVehicles \"Active\" #green, Kp :underMaintenance \"Maintenance\" #yellow, Kp :idleVehicles \"Idle\" #gray",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-067",
+      "description": "Donation platform",
+      "input": "Donation dashboard with total, donors, campaigns",
+      "output": "Kp :totalDonations \"Total Raised\" #green !critical, Kp :totalDonors \"Donors\" #blue, Kp :activeCampaigns \"Active Campaigns\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-068",
+      "description": "Social media scheduler",
+      "input": "Post scheduler with platforms, schedule, publish",
+      "output": "Fm :postContent \"Content\", Fm :publishTime \"Schedule\", Bt \"Schedule Post\" #blue >schedulePost",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-069",
+      "description": "Resource allocation",
+      "input": "Resource view with available, allocated, utilization",
+      "output": "Kp :availableResources \"Available\" #green, Kp :allocatedResources \"Allocated\" #blue, Kp :utilizationRate \"Utilization\" #yellow !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-070",
+      "description": "Compliance tracker",
+      "input": "Compliance status with compliant, pending, violations",
+      "output": "Kp :compliantItems \"Compliant\" #green, Kp :pendingReview \"Pending\" #yellow, Kp :violations \"Violations\" #red !critical",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-071",
+      "description": "Loyalty program",
+      "input": "Loyalty metrics with members, points, redemptions",
+      "output": "Kp :totalMembers \"Members\" #blue, Kp :pointsIssued \"Points Issued\" #green, Kp :redemptions \"Redemptions\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-072",
+      "description": "Product launch",
+      "input": "Launch dashboard with pre-orders, inventory, promotions",
+      "output": "Kp :preOrders \"Pre-Orders\" #blue !high, Kp :inventoryReady \"Inventory\" #green, Kp :activePromotions \"Promotions\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-073",
+      "description": "Training completion",
+      "input": "Training tracker with assigned, in progress, completed",
+      "output": "Kp :assignedTraining \"Assigned\" #gray, Kp :trainingInProgress \"In Progress\" #yellow, Kp :trainingCompleted \"Completed\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-074",
+      "description": "Service requests",
+      "input": "Service queue with new, assigned, resolved",
+      "output": "Kp :newRequests \"New\" #yellow, Kp :assignedRequests \"Assigned\" #blue, Kp :resolvedRequests \"Resolved\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-075",
+      "description": "Energy monitoring",
+      "input": "Energy dashboard with consumption, cost, savings",
+      "output": "Kp :energyConsumption \"Consumption\" #blue, Kp :energyCost \"Cost\" #red, Kp :energySavings \"Savings\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-076",
+      "description": "Event registration",
+      "input": "Event signup with attendees, capacity, waitlist",
+      "output": "Kp :registeredAttendees \"Registered\" #blue, Kp :eventCapacity \"Capacity\" #gray, Kp :waitlistCount \"Waitlist\" #yellow",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-077",
+      "description": "Maintenance schedule",
+      "input": "Maintenance view with scheduled, overdue, completed",
+      "output": "Kp :scheduledMaintenance \"Scheduled\" #blue, Kp :overdueMaintenance \"Overdue\" #red !high, Kp :completedMaintenance \"Completed\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-078",
+      "description": "Referral program",
+      "input": "Referrals with sent, accepted, rewards",
+      "output": "Kp :referralsSent \"Sent\" #blue, Kp :referralsAccepted \"Accepted\" #green, Kp :rewardsEarned \"Rewards\" #purple !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-079",
+      "description": "Backup status",
+      "input": "Backup monitoring with successful, failed, pending",
+      "output": "Kp :successfulBackups \"Successful\" #green, Kp :failedBackups \"Failed\" #red !critical, Kp :pendingBackups \"Pending\" #yellow",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-080",
+      "description": "Quality metrics",
+      "input": "Quality dashboard with defects, returns, satisfaction",
+      "output": "Kp :defectRate \"Defect Rate\" #red, Kp :returnRate \"Return Rate\" #yellow, Kp :qualitySatisfaction \"Satisfaction\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-081",
+      "description": "Network monitoring",
+      "input": "Network stats with bandwidth, latency, uptime",
+      "output": "Kp :bandwidthUsage \"Bandwidth\" #blue, Kp :networkLatency \"Latency\" #yellow, Kp :networkUptime \"Uptime\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-082",
+      "description": "Inventory forecasting",
+      "input": "Forecast view with current, projected, recommended",
+      "output": "Kp :currentStock \"Current Stock\" #blue, Kp :projectedDemand \"Projected\" #yellow, Kp :recommendedOrder \"Recommended\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-083",
+      "description": "License management",
+      "input": "License tracker with active, expiring, expired",
+      "output": "Kp :activeLicenses \"Active\" #green, Kp :expiringLicenses \"Expiring Soon\" #yellow !high, Kp :expiredLicenses \"Expired\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-084",
+      "description": "Customer onboarding",
+      "input": "Onboarding funnel with started, in progress, completed",
+      "output": "Kp :onboardingStarted \"Started\" #blue, Kp :onboardingInProgress \"In Progress\" #yellow, Kp :onboardingCompleted \"Completed\" #green !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-085",
+      "description": "Contest leaderboard",
+      "input": "Leaderboard with participants, submissions, winners",
+      "output": "Kp :totalParticipants \"Participants\" #blue, Kp :totalSubmissions \"Submissions\" #green, Tb :topWinners \"Top Winners\"",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-086",
+      "description": "Delivery tracking",
+      "input": "Delivery status with processing, shipped, delivered",
+      "output": "Kp :processingOrders \"Processing\" #yellow, Kp :shippedOrders \"Shipped\" #blue, Kp :deliveredOrders \"Delivered\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-087",
+      "description": "Warranty claims",
+      "input": "Claims dashboard with open, processing, resolved",
+      "output": "Kp :openClaims \"Open\" #yellow, Kp :processingClaims \"Processing\" #blue, Kp :resolvedClaims \"Resolved\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-088",
+      "description": "Lab results",
+      "input": "Lab dashboard with samples, pending, completed",
+      "output": "Kp :totalSamples \"Samples\" #blue, Kp :pendingResults \"Pending\" #yellow, Kp :completedResults \"Completed\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-089",
+      "description": "Vendor performance",
+      "input": "Vendor metrics with on-time, quality, cost",
+      "output": "Kp :onTimeDelivery \"On-Time\" #green !high, Kp :qualityScore \"Quality\" #blue, Kp :costEfficiency \"Cost Efficiency\" #purple",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-090",
+      "description": "Insurance claims",
+      "input": "Claims view with submitted, approved, denied",
+      "output": "Kp :submittedClaims \"Submitted\" #blue, Kp :approvedClaims \"Approved\" #green, Kp :deniedClaims \"Denied\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-091",
+      "description": "Restaurant orders",
+      "input": "Kitchen dashboard with pending, preparing, ready",
+      "output": "Kp :pendingOrders \"Pending\" #yellow !high, Kp :preparingOrders \"Preparing\" #blue, Kp :readyOrders \"Ready\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-092",
+      "description": "Vaccination tracker",
+      "input": "Vaccine tracking with eligible, scheduled, completed",
+      "output": "Kp :eligiblePatients \"Eligible\" #blue, Kp :scheduledAppointments \"Scheduled\" #yellow, Kp :vaccinatedPatients \"Completed\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-093",
+      "description": "Exam results",
+      "input": "Test results with passed, failed, average score",
+      "output": "Kp :passedStudents \"Passed\" #green, Kp :failedStudents \"Failed\" #red, Kp :averageScore \"Average Score\" #blue !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-094",
+      "description": "Auction platform",
+      "input": "Auction stats with active, bids, winners",
+      "output": "Kp :activeAuctions \"Active Auctions\" #blue, Kp :totalBids \"Total Bids\" #green, Kp :closedAuctions \"Closed\" #gray",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-095",
+      "description": "Subscription renewals",
+      "input": "Renewal tracking with due, renewed, cancelled",
+      "output": "Kp :dueRenewals \"Due\" #yellow !high, Kp :renewedSubscriptions \"Renewed\" #green, Kp :cancelledSubscriptions \"Cancelled\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-096",
+      "description": "Parking management",
+      "input": "Parking view with occupied, available, reserved",
+      "output": "Kp :occupiedSpots \"Occupied\" #red, Kp :availableSpots \"Available\" #green, Kp :reservedSpots \"Reserved\" #blue",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-097",
+      "description": "Appointment reminders",
+      "input": "Reminders with sent, pending, confirmed",
+      "output": "Kp :sentReminders \"Sent\" #blue, Kp :pendingReminders \"Pending\" #yellow, Kp :confirmedAppointments \"Confirmed\" #green",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-098",
+      "description": "Equipment status",
+      "input": "Equipment tracking with operational, maintenance, offline",
+      "output": "Kp :operationalEquipment \"Operational\" #green, Kp :maintenanceEquipment \"Maintenance\" #yellow, Kp :offlineEquipment \"Offline\" #red !high",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-099",
+      "description": "Certification tracking",
+      "input": "Certifications with valid, expiring, expired",
+      "output": "Kp :validCertifications \"Valid\" #green, Kp :expiringCertifications \"Expiring\" #yellow !high, Kp :expiredCertifications \"Expired\" #red",
+      "complexity": "medium"
+    },
+    {
+      "id": "medium-100",
+      "description": "Workflow automation",
+      "input": "Automation stats with active, scheduled, completed",
+      "output": "Kp :activeWorkflows \"Active\" #blue, Kp :scheduledWorkflows \"Scheduled\" #yellow, Kp :completedWorkflows \"Completed\" #green",
+      "complexity": "medium"
+    }
+  ]
+}

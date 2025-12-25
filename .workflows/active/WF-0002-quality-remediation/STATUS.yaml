@@ -1,0 +1,191 @@
+workflow: "Quality Remediation - shadcn Alignment"
+workflow_id: WF-0002
+started_at: 2025-12-25T00:00:00Z
+current_wave: 0
+overall_status: pending
+
+dependencies_installed: false
+
+waves:
+  wave_0:
+    name: "Bootstrap"
+    status: pending
+    tasks:
+      W0-1:
+        name: "Install Radix dependencies"
+        status: pending
+      W0-2:
+        name: "Create test file stubs"
+        status: pending
+
+  wave_1:
+    name: "P0 Critical Tests"
+    status: pending
+    tasks:
+      T1:
+        name: "Button tests"
+        status: pending
+        files: ["tests/button.test.tsx"]
+        shadcn_ref: "button"
+      T2:
+        name: "Modal tests"
+        status: pending
+        files: ["tests/modal.test.tsx"]
+        shadcn_ref: "dialog"
+      T3:
+        name: "Form tests"
+        status: pending
+        files: ["tests/form.test.tsx"]
+        shadcn_ref: "form"
+      T4:
+        name: "Input tests"
+        status: pending
+        files: ["tests/input.test.tsx"]
+        shadcn_ref: "input"
+      T5:
+        name: "LineChart tests"
+        status: pending
+        files: ["tests/line-chart.test.tsx"]
+        shadcn_ref: "chart"
+      T6:
+        name: "BarChart tests"
+        status: pending
+        files: ["tests/bar-chart.test.tsx"]
+        shadcn_ref: "chart"
+      T7:
+        name: "PieChart tests"
+        status: pending
+        files: ["tests/pie-chart.test.tsx"]
+        shadcn_ref: "chart"
+
+  wave_2:
+    name: "Chart Accessibility + UX"
+    status: pending
+    tasks:
+      T8:
+        name: "LineChart a11y"
+        status: pending
+        files: ["src/renderer/components/line-chart.tsx"]
+        shadcn_ref: "chart"
+      T9:
+        name: "BarChart a11y"
+        status: pending
+        files: ["src/renderer/components/bar-chart.tsx"]
+        shadcn_ref: "chart"
+      T10:
+        name: "PieChart a11y"
+        status: pending
+        files: ["src/renderer/components/pie-chart.tsx"]
+        shadcn_ref: "chart"
+
+  wave_3:
+    name: "Radix Migration"
+    status: pending
+    tasks:
+      T11:
+        name: "Select to Radix"
+        status: pending
+        files: ["src/renderer/components/select.tsx"]
+        shadcn_ref: "select"
+      T12:
+        name: "Radio to Radix"
+        status: pending
+        files: ["src/renderer/components/radio.tsx"]
+        shadcn_ref: "radio-group"
+      T13:
+        name: "Popover to Radix"
+        status: pending
+        files: ["src/renderer/components/popover.tsx"]
+        shadcn_ref: "popover"
+      T14:
+        name: "Tooltip to Radix"
+        status: pending
+        files: ["src/renderer/components/tooltip.tsx"]
+        shadcn_ref: "tooltip"
+
+  wave_4:
+    name: "Focus Rings + ARIA"
+    status: pending
+    tasks:
+      T15:
+        name: "Button focus ring"
+        status: pending
+        files: ["src/renderer/components/button.tsx"]
+        shadcn_ref: "button"
+      T16:
+        name: "Checkbox focus + indeterminate"
+        status: pending
+        files: ["src/renderer/components/checkbox.tsx"]
+        shadcn_ref: "checkbox"
+      T17:
+        name: "Switch focus ring"
+        status: pending
+        files: ["src/renderer/components/switch.tsx"]
+        shadcn_ref: "switch"
+      T18:
+        name: "Range focus ring"
+        status: pending
+        files: ["src/renderer/components/range.tsx"]
+        shadcn_ref: "slider"
+      T19:
+        name: "Accordion ARIA fix"
+        status: pending
+        files: ["src/renderer/components/accordion.tsx"]
+        shadcn_ref: "accordion"
+      T20:
+        name: "Card ARIA"
+        status: pending
+        files: ["src/renderer/components/card.tsx"]
+        shadcn_ref: "card"
+      T21:
+        name: "Avatar role + error handling"
+        status: pending
+        files: ["src/renderer/components/avatar.tsx"]
+        shadcn_ref: "avatar"
+      T22:
+        name: "Badge ARIA"
+        status: pending
+        files: ["src/renderer/components/badge.tsx"]
+        shadcn_ref: "badge"
+
+  wave_5:
+    name: "UX Polish"
+    status: pending
+    tasks:
+      T23:
+        name: "Drawer gestures"
+        status: pending
+        files: ["src/renderer/components/drawer.tsx"]
+        shadcn_ref: "drawer"
+      T24:
+        name: "Accordion animations"
+        status: pending
+        files: ["src/renderer/components/accordion.tsx"]
+        shadcn_ref: "accordion"
+      T25:
+        name: "Form validation"
+        status: pending
+        files: ["src/renderer/components/form.tsx"]
+        shadcn_ref: "form"
+      T26:
+        name: "Progress ARIA placement"
+        status: pending
+        files: ["src/renderer/components/progress.tsx"]
+        shadcn_ref: "progress"
+
+  wave_6:
+    name: "Integration"
+    status: pending
+    tasks:
+      I1:
+        name: "Update exports"
+        status: pending
+      I2:
+        name: "Run full test suite"
+        status: pending
+      I3:
+        name: "Generate completion report"
+        status: pending
+
+errors: []
+checkpoints: []

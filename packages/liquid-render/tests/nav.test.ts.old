@@ -1,0 +1,370 @@
+import { describe, it, expect } from 'vitest';
+import { parseUI, compileUI } from '../src/compiler/compiler';
+
+describe('Nav Component - Parser & Compiler', () => {
+  describe('Basic Nav', () => {
+    it('should parse nav with label only', () => {
+      const dsl = 'Nv "Dashboard"';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Dashboard');
+    });
+
+    it('should parse nav with signal', () => {
+      const dsl = 'Nv "Reports" >view=reports';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Reports');
+      expect(result.layers[0].root.signals?.emit).toMatchObject({name: 'view=reports'});
+    });
+
+    it('should parse nav with binding', () => {
+      const dsl = 'nav :menuItem >select';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.binding?.field).toBe('menuItem');
+      expect(result.layers[0].root.signals?.emit).toMatchObject({name: 'select'});
+    });
+
+    it('should parse disabled nav', () => {
+      const dsl = 'Nv "Settings" :disabled';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Settings');
+      expect(result.layers[0].root.state?.disabled).toBe(true);
+    });
+  });
+
+  describe('Nav with Submenu', () => {
+    it('should parse nav with children', () => {
+      const dsl = `Nv "Reports" [
+        Nv "Monthly" >view=monthly,
+        Nv "Annual" >view=annual
+      ]`;
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Reports');
+      expect(result.layers[0].root.children).toHaveLength(2);
+      expect(result.layers[0].root.children?.[0].label).toBe('Monthly');
+      expect(result.layers[0].root.children?.[1].label).toBe('Annual');
+    });
+
+    it('should parse nested nav structure', () => {
+      const dsl = `Nv "Admin" [
+        Nv "Users" >view=users,
+        Nv "Settings" [
+          Nv "General" >view=settings-general,
+          Nv "Security" >view=settings-security
+        ]
+      ]`;
+      const result = parseUI(dsl);
+
+      const root = result.layers[0].root;
+      expect(root.type).toBe('nav');
+      expect(root.label).toBe('Admin');
+      expect(root.children).toHaveLength(2);
+      expect(root.children?.[1].children).toHaveLength(2);
+      expect(root.children?.[1].children?.[0].label).toBe('General');
+    });
+
+    it('should parse nav with badge child', () => {
+      const dsl = `Nv "Messages" [
+        tag "3" #red
+      ] >view=messages`;
+      const result = parseUI(dsl);
+
+      const root = result.layers[0].root;
+      expect(root.type).toBe('nav');
+      expect(root.label).toBe('Messages');
+      expect(root.children?.[0].type).toBe('tag');
+      expect(root.signals?.emit).toMatchObject({name: 'view=messages'});
+    });
+  });
+
+  describe('Roundtrip: DSL → Schema → DSL', () => {
+    it('should roundtrip basic nav', () => {
+      const original = 'Nv "Dashboard" >view=dashboard';
+      const schema = parseUI(original);
+      const reconstructed = compileUI(schema);
+      const reparsed = parseUI(reconstructed);
+
+      expect(reparsed.layers[0].root.type).toBe('nav');
+      expect(reparsed.layers[0].root.label).toBe('Dashboard');
+      expect(reparsed.layers[0].root.signals?.emit).toMatchObject({name: 'view=dashboard'});
+    });
+
+    it('should roundtrip nav with submenu', () => {
+      const original = `Nv "Reports" [
+        Nv "Monthly" >view=monthly,
+        Nv "Annual" >view=annual
+      ]`;
+      const schema = parseUI(original);
+      const reconstructed = compileUI(schema);
+      const reparsed = parseUI(reconstructed);
+
+      expect(reparsed.layers[0].root.children).toHaveLength(2);
+      expect(reparsed.layers[0].root.children?.[0].label).toBe('Monthly');
+      expect(reparsed.layers[0].root.children?.[1].label).toBe('Annual');
+    });
+
+    it('should roundtrip disabled nav', () => {
+      const original = 'Nv "Settings" :disabled';
+      const schema = parseUI(original);
+      const reconstructed = compileUI(schema);
+      const reparsed = parseUI(reconstructed);
+
+      expect(reparsed.layers[0].root.state?.disabled).toBe(true);
+    });
+  });
+
+  describe('Sidebar Navigation Pattern', () => {
+    it('should parse complete sidebar navigation', () => {
+      const dsl = `@view
+      container [
+        Nv "Dashboard" >view=dashboard,
+        Nv "Reports" [
+          Nv "Monthly" >view=reports-monthly,
+          Nv "Annual" >view=reports-annual,
+          Nv "Custom" >view=reports-custom
+        ],
+        Nv "Users" >view=users,
+        Nv "Settings" [
+          Nv "Profile" >view=settings-profile,
+          Nv "Security" >view=settings-security,
+          Nv "Billing" >view=settings-billing
+        ],
+        Nv "Logout" >action=logout
+      ]`;
+
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('view');
+      expect(result.layers[0].root.type).toBe('container');
+      expect(result.layers[0].root.children).toHaveLength(5);
+
+      // Check first item
+      expect(result.layers[0].root.children?.[0].type).toBe('nav');
+      expect(result.layers[0].root.children?.[0].label).toBe('Dashboard');
+
+      // Check submenu
+      expect(result.layers[0].root.children?.[1].children).toHaveLength(3);
+      expect(result.layers[0].root.children?.[1].children?.[0].label).toBe('Monthly');
+    });
+
+    it('should parse nav with notifications badge', () => {
+      const dsl = `Nv "Messages" [
+        tag "5" #red %xs
+      ] >view=messages`;
+
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.children?.[0].type).toBe('tag');
+      expect(result.layers[0].root.children?.[0].label).toBe('5');
+    });
+
+    it('should parse nav with active state condition', () => {
+      const dsl = `@view
+      Nv "Dashboard" >view=dashboard
+      Nv "Reports" >view=reports`;
+
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('view');
+      expect(result.layers[0].root.type).toBe('nav');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty nav children', () => {
+      const dsl = 'Nv "Empty" []';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.children).toEqual([]);
+    });
+
+    it('should handle nav with long label', () => {
+      const dsl = 'Nv "This is a very long navigation item label that should still work correctly"';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('This is a very long navigation item label that should still work correctly');
+    });
+
+    it('should handle nav with special characters in label', () => {
+      const dsl = `Nv "Reports & Analytics (Beta)"`;
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Reports & Analytics (Beta)');
+    });
+
+    it('should handle multiple nav items at same level', () => {
+      const dsl = `Nv "Item 1"
+      Nv "Item 2"
+      Nv "Item 3"`;
+
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.label).toBe('Item 1');
+    });
+  });
+
+  describe('Modifiers', () => {
+    it('should parse nav with color modifier', () => {
+      const dsl = 'Nv "Active" #blue >view=active';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.style?.color).toBe('blue');
+    });
+
+    it('should parse nav with size modifier', () => {
+      const dsl = 'Nv "Large" %lg';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.style?.size).toBe('lg');
+    });
+
+    it('should parse nav with multiple modifiers', () => {
+      const dsl = 'Nv "Featured" #primary %lg :disabled';
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('nav');
+      expect(result.layers[0].root.style?.color).toBe('primary');
+      expect(result.layers[0].root.style?.size).toBe('lg');
+      expect(result.layers[0].root.state?.disabled).toBe(true);
+    });
+  });
+
+  describe('Signal Integration', () => {
+    it('should parse nav with emit signal', () => {
+      const dsl = '@currentView\nNv "Home" >currentView=home';
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('currentView');
+      expect(result.layers[0].root.signals?.emit).toMatchObject({name: 'currentView=home'});
+    });
+
+    it('should parse nav with receive signal', () => {
+      const dsl = '@activeNav\nNv :label <activeNav';
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('activeNav');
+      expect(result.layers[0].root.signals?.receive?.name).toBe('activeNav');
+    });
+
+    it('should parse nav with bidirectional signal', () => {
+      const dsl = '@selection\nNv "Item" <>selection';
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('selection');
+      expect(result.layers[0].root.signals?.bidirectional?.name).toBe('selection');
+    });
+  });
+
+  describe('Complex Scenarios', () => {
+    it('should parse hierarchical navigation with mixed content', () => {
+      const dsl = `@activeView @badge
+      container [
+        Nv "Dashboard" >activeView=dashboard,
+        Nv "Analytics" [
+          Nv "Overview" >activeView=analytics-overview,
+          Nv "Reports" [
+            Nv "Sales" >activeView=reports-sales,
+            Nv "Traffic" >activeView=reports-traffic
+          ],
+          Nv "Exports" >activeView=analytics-exports
+        ],
+        Nv "Notifications" [
+          tag <badge #red
+        ] >activeView=notifications,
+        Nv "Settings" >activeView=settings :disabled
+      ]`;
+
+      const result = parseUI(dsl);
+
+      expect(result.signals.map(s => s.name)).toContain('activeView');
+      expect(result.signals.map(s => s.name)).toContain('badge');
+
+      const nav = result.layers[0].root.children;
+      expect(nav).toBeDefined();
+      expect(nav?.length).toBe(4);
+
+      // Check nested structure
+      const analytics = nav?.[1];
+      expect(analytics?.children?.length).toBe(3);
+      expect(analytics?.children?.[1].children?.length).toBe(2);
+
+      // Check notifications with badge
+      const notifications = nav?.[2];
+      expect(notifications?.children?.[0].type).toBe('tag');
+
+      // Check disabled state
+      expect(nav?.[3].state?.disabled).toBe(true);
+    });
+
+    it('should handle nav as part of larger UI structure', () => {
+      const dsl = `@page
+      container ^row [
+        container ^f [
+          Nv "Home" >page=home,
+          Nv "About" >page=about,
+          Nv "Contact" >page=contact
+        ],
+        container ^g [
+          text "Content area" <page
+        ]
+      ]`;
+
+      const result = parseUI(dsl);
+
+      expect(result.layers[0].root.type).toBe('container');
+      expect(result.layers[0].root.children).toHaveLength(2);
+
+      const sidebar = result.layers[0].root.children?.[0];
+      expect(sidebar?.children?.[0].type).toBe('nav');
+      expect(sidebar?.children?.length).toBe(3);
+    });
+  });
+
+  describe('Compiler Output', () => {
+    it('should compile nav to correct DSL', () => {
+      const schema = parseUI('Nv "Dashboard" >view=dashboard');
+      const compiled = compileUI(schema);
+
+      expect(compiled).toContain('nav');
+      expect(compiled).toContain('Dashboard');
+      expect(compiled).toContain('>view=dashboard');
+    });
+
+    it('should compile nav with children correctly', () => {
+      const schema = parseUI(`Nv "Reports" [
+        Nv "Monthly",
+        Nv "Annual"
+      ]`);
+      const compiled = compileUI(schema);
+
+      expect(compiled).toContain('nav "Reports"');
+      expect(compiled).toContain('nav "Monthly"');
+      expect(compiled).toContain('nav "Annual"');
+    });
+
+    it('should preserve nav modifiers in compilation', () => {
+      const schema = parseUI('Nv "Item" #blue %lg :disabled');
+      const compiled = compileUI(schema);
+
+      expect(compiled).toContain('#blue');
+      expect(compiled).toContain('%lg');
+      expect(compiled).toContain(':disabled');
+    });
+  });
+});

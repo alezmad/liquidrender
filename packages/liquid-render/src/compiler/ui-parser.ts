@@ -15,6 +15,13 @@ export interface UIAST {
   mainBlocksSeparator: 'comma' | 'newline' | 'mixed';  // Track how main blocks are separated
   surveys: EmbeddedSurveyAST[];
   comments: string[];
+  warnings: ParserWarning[];
+}
+
+export interface ParserWarning {
+  message: string;
+  line: number;
+  type: 'empty-conditional' | 'syntax' | 'semantic';
 }
 
 export interface SignalDeclaration {
@@ -44,6 +51,8 @@ export interface BlockAST {
   min?: number;
   max?: number;
   step?: number;
+  // Custom component (LLM-generated)
+  componentId?: string;  // For type='custom': the registered component identifier
 }
 
 export interface ConditionAST {
@@ -88,6 +97,7 @@ export class UIParser {
   private source: string;        // Original source for Survey extraction
   private current = 0;
   private uidCounter = 0;
+  private warnings: ParserWarning[] = [];
 
   constructor(tokens: UIToken[], source: string = '') {
     this.rawTokens = tokens;
@@ -97,6 +107,9 @@ export class UIParser {
   }
 
   parse(): UIAST {
+    // Reset warnings for each parse
+    this.warnings = [];
+
     const ast: UIAST = {
       signals: [],
       layers: [],
@@ -104,6 +117,7 @@ export class UIParser {
       mainBlocksSeparator: 'comma',  // Default
       surveys: [],
       comments: [],
+      warnings: [],
     };
 
     // Detect separator type from raw tokens
@@ -158,6 +172,9 @@ export class UIParser {
       }
     }
 
+    // Copy collected warnings to AST
+    ast.warnings = this.warnings;
+
     return ast;
   }
 
@@ -198,6 +215,12 @@ export class UIParser {
       const token = this.advance();
       block.type = UI_TYPE_CODES[token.value] || token.value.toLowerCase();
       block.typeCode = token.value;
+
+      // Special handling for Custom blocks: first string is componentId
+      if (block.type === 'custom' && this.check('STRING')) {
+        const componentToken = this.advance();
+        block.componentId = componentToken.value;
+      }
     } else {
       // Not a block start
       return null;
@@ -237,6 +260,7 @@ export class UIParser {
   private parseConditionalBlock(): BlockAST[] | null {
     const conditionToken = this.advance(); // consume ?@signal=value
     const raw = conditionToken.value.slice(2); // Remove ?@
+    const line = conditionToken.line;
 
     // Parse signal=value
     const [signal, value] = raw.includes('=') ? raw.split('=') : [raw, 'true'];
@@ -244,11 +268,21 @@ export class UIParser {
 
     // Expect bracket with content
     if (!this.check('LBRACKET')) {
+      this.warnings.push({
+        message: `Empty conditional block: ?@${raw} has no content (missing brackets)`,
+        line,
+        type: 'empty-conditional',
+      });
       return null;
     }
 
     const children = this.parseChildren();
     if (!children || children.length === 0) {
+      this.warnings.push({
+        message: `Empty conditional block: ?@${raw} [] has no children`,
+        line,
+        type: 'empty-conditional',
+      });
       return null;
     }
 

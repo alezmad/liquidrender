@@ -1,0 +1,8 @@
+@@ -113,6 +116,7 @@
+ import { Tag } from './tag';
+ import { Checkbox } from './checkbox';
+ import { Switch } from './switch';
++import { Icon } from './icon';
+ 
+ import type { LiquidComponentProps } from './utils';
+ import type { ComponentType } from 'react';

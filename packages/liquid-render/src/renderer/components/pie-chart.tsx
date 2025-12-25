@@ -28,6 +28,7 @@ const styles = {
   wrapper: mergeStyles(cardStyles(), {
     padding: tokens.spacing.md,
     minHeight: '280px',
+    outline: 'none',
   }),
 
   header: {
@@ -45,6 +46,18 @@ const styles = {
     color: tokens.colors.mutedForeground,
     fontSize: tokens.fontSize.sm,
     textAlign: 'center',
+  } as React.CSSProperties,
+
+  srOnly: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
   } as React.CSSProperties,
 };
 
@@ -75,6 +88,35 @@ function detectNameValueFields(data: ChartDataPoint[]): { name: string; value: s
   }) || keys[1] || 'value';
 
   return { name: nameField, value: valueField };
+}
+
+function generateChartDescription(
+  data: ChartDataPoint[],
+  nameKey: string,
+  valueKey: string,
+  label?: string
+): string {
+  const count = data.length;
+  const baseDesc = label ? `${label}: ` : '';
+
+  if (count === 0) return `${baseDesc}Empty pie chart`;
+
+  // Calculate total for percentage info
+  const total = data.reduce((sum, row) => {
+    const val = row[valueKey];
+    return sum + (isNumeric(val) ? val : 0);
+  }, 0);
+
+  const topSegments = data
+    .slice(0, 3)
+    .map(row => {
+      const val = row[valueKey];
+      const pct = total > 0 && isNumeric(val) ? Math.round((val / total) * 100) : 0;
+      return `${row[nameKey]} (${pct}%)`;
+    })
+    .join(', ');
+
+  return `${baseDesc}Pie chart with ${count} segments: ${topSegments}${count > 3 ? ', and more' : ''}`;
 }
 
 // Custom label renderer
@@ -122,6 +164,7 @@ export function PieChartComponent({ block, data: context }: LiquidComponentProps
   const rawData = resolveBinding(block.binding, context);
   const chartData = Array.isArray(rawData) ? rawData as ChartDataPoint[] : [];
   const label = block.label;
+  const chartId = useMemo(() => `pie-chart-${Math.random().toString(36).slice(2, 9)}`, []);
 
   const { name: nameKey, value: valueKey } = useMemo(() => {
     const explicitX = block.binding?.x;
@@ -132,10 +175,29 @@ export function PieChartComponent({ block, data: context }: LiquidComponentProps
     return detectNameValueFields(chartData);
   }, [block.binding, chartData]);
 
+  // Generate accessibility description
+  const chartDescription = useMemo(
+    () => generateChartDescription(chartData, nameKey, valueKey, label),
+    [chartData, nameKey, valueKey, label]
+  );
+
+  // Calculate total for percentage display
+  const total = useMemo(() => {
+    return chartData.reduce((sum, row) => {
+      const val = row[valueKey];
+      return sum + (isNumeric(val) ? val : 0);
+    }, 0);
+  }, [chartData, valueKey]);
+
   // SSR fallback
   if (!isBrowser) {
     return (
-      <div data-liquid-type="pie" style={styles.wrapper}>
+      <div
+        data-liquid-type="pie"
+        style={styles.wrapper}
+        role="img"
+        aria-label={chartDescription}
+      >
         {label && <div style={styles.header}>{label}</div>}
         <div style={styles.placeholder}>
           [Pie chart • {chartData.length} segments]
@@ -146,7 +208,12 @@ export function PieChartComponent({ block, data: context }: LiquidComponentProps
 
   if (chartData.length === 0) {
     return (
-      <div data-liquid-type="pie" style={styles.wrapper}>
+      <div
+        data-liquid-type="pie"
+        style={styles.wrapper}
+        role="img"
+        aria-label={`${label ? label + ': ' : ''}Empty pie chart - no data available`}
+      >
         {label && <div style={styles.header}>{label}</div>}
         <div style={styles.placeholder}>No data available</div>
       </div>
@@ -154,8 +221,40 @@ export function PieChartComponent({ block, data: context }: LiquidComponentProps
   }
 
   return (
-    <div data-liquid-type="pie" style={styles.wrapper}>
-      {label && <div style={styles.header}>{label}</div>}
+    <div
+      data-liquid-type="pie"
+      style={styles.wrapper}
+      role="img"
+      aria-label={chartDescription}
+      tabIndex={0}
+      aria-describedby={`${chartId}-desc`}
+    >
+      {label && <div id={`${chartId}-title`} style={styles.header}>{label}</div>}
+      {/* Screen reader accessible data table */}
+      <table id={`${chartId}-desc`} style={styles.srOnly}>
+        <caption>{chartDescription}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Segment</th>
+            <th scope="col">Value</th>
+            <th scope="col">Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {chartData.map((row, i) => {
+            const val = row[valueKey];
+            const numVal = isNumeric(val) ? val : 0;
+            const pct = total > 0 ? Math.round((numVal / total) * 100) : 0;
+            return (
+              <tr key={i}>
+                <td>{String(row[nameKey] ?? '')}</td>
+                <td>{String(numVal)}</td>
+                <td>{pct}%</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
       <ResponsiveContainer width="100%" height={220}>
         <RechartsPieChart>
           <Pie

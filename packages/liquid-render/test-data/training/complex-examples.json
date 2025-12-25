@@ -1,0 +1,354 @@
+{
+  "examples": [
+    {
+      "id": "complex-001",
+      "description": "Complete executive dashboard",
+      "input": "Build executive dashboard with revenue overview, sales trends, and team performance",
+      "output": "[Tx \"Revenue Overview\" #black !critical, Kp :totalRevenue \"Total Revenue\" #green !critical, Kp :monthlyGrowth \"Monthly Growth\" #blue !high, Ln :revenueTrend \"Revenue Trend\" #green], [Tx \"Sales Performance\" #black !high, Br :salesByRegion \"Sales by Region\" #blue, Pi :salesByProduct \"Product Mix\" #purple, Tb :topSellers \"Top Sellers\"], [Tx \"Team Metrics\" #black !high, Kp :teamSize \"Team Size\" #blue, Kp :avgPerformance \"Avg Performance\" #green !high, Br :individualPerformance \"Individual Performance\" #purple]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-002",
+      "description": "E-commerce analytics dashboard",
+      "input": "Create e-commerce dashboard with orders, revenue, customers, and conversion funnel",
+      "output": "[Tx \"Today's Overview\" !critical, Kp :todayOrders \"Orders\" #blue !high, Kp :todayRevenue \"Revenue\" #green !critical, Kp :newCustomers \"New Customers\" #purple], [Tx \"Conversion Funnel\", Kp :visitors \"Visitors\" #blue, Kp :addToCart \"Add to Cart\" #yellow, Kp :checkout \"Checkout\" #orange, Kp :completed \"Completed\" #green !high], [Ln :revenueByDay \"Daily Revenue\" #green, Br :topProducts \"Top Products\" #blue, Tb :recentOrders \"Recent Orders\" <orderUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-003",
+      "description": "User management interface",
+      "input": "Build user management with search, filters, table, and bulk actions",
+      "output": "[Tx \"User Management\" #black !high, Fm :searchUsers \"Search\" >searchChanged @searchValid, Fm :roleFilter \"Role\" >roleChanged, Fm :statusFilter \"Status\" >statusChanged], [Tb :users \"User List\" <searchChanged <roleChanged <statusChanged, Bt \"Add User\" #green >addUser, Bt \"Export\" #blue >exportUsers, Bt \"Bulk Edit\" #orange >bulkEdit ?@usersSelected=true]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-004",
+      "description": "Project management dashboard",
+      "input": "Create project dashboard with milestones, tasks, team, and timeline",
+      "output": "[Tx \"Project Status\" !critical, Kp :completionPercent \"Completion\" #green !critical, Kp :onTimeTasks \"On Time\" #blue, Kp :delayedTasks \"Delayed\" #red !high, Kp :blockedTasks \"Blocked\" #yellow], [Tx \"Milestones\", Tb :milestones \"Project Milestones\" @milestoneUpdated, Bt \"Add Milestone\" #green >addMilestone], [Tx \"Team Activity\", Br :tasksByMember \"Tasks by Member\" #blue, Pi :tasksByStatus \"Status Distribution\" #purple, Tb :recentActivity \"Recent Activity\" <activityUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-005",
+      "description": "Marketing campaign dashboard",
+      "input": "Build marketing dashboard with campaign metrics, ROI, channels, and audience",
+      "output": "[Tx \"Campaign Performance\" !critical, Kp :totalImpressions \"Impressions\" #blue, Kp :clickThroughRate \"CTR\" #green !high, Kp :conversions \"Conversions\" #purple !critical, Kp :roi \"ROI\" #green !critical], [Tx \"Channel Performance\", Br :performanceByChannel \"By Channel\" #blue, Ln :dailyPerformance \"Daily Trend\" #green, Pi :budgetAllocation \"Budget Allocation\" #orange], [Tx \"Audience Insights\", Kp :totalReach \"Reach\" #blue, Kp :engagement \"Engagement\" #purple, Tb :topSegments \"Top Segments\", Bt \"Create Campaign\" #green >createCampaign]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-006",
+      "description": "Financial reporting dashboard",
+      "input": "Create financial dashboard with P&L, cash flow, expenses, and forecasts",
+      "output": "[Tx \"Profit & Loss\" #black !critical, Kp :totalIncome \"Income\" #green !critical, Kp :totalExpenses \"Expenses\" #red !high, Kp :netProfit \"Net Profit\" #blue !critical, Kp :profitMargin \"Margin\" #green !high], [Tx \"Cash Flow\", Ln :cashFlowTrend \"Cash Flow Trend\" #blue, Kp :cashOnHand \"Cash on Hand\" #green !high, Kp :accountsReceivable \"AR\" #yellow, Kp :accountsPayable \"AP\" #orange], [Tx \"Expense Breakdown\", Pi :expensesByCategory \"By Category\" #red, Br :monthlyExpenses \"Monthly Expenses\" #orange, Tb :topExpenses \"Top Expenses\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-007",
+      "description": "Customer support dashboard",
+      "input": "Build support dashboard with tickets, SLA, agent performance, and satisfaction",
+      "output": "[Tx \"Ticket Overview\" !critical, Kp :openTickets \"Open\" #yellow !high, Kp :inProgressTickets \"In Progress\" #blue, Kp :resolvedToday \"Resolved Today\" #green, Kp :averageResponseTime \"Avg Response\" #orange !high], [Tx \"SLA Compliance\", Kp :slaCompliance \"SLA Met\" #green !critical, Kp :slaBreached \"SLA Breached\" #red !critical, Ln :responseTimeTrend \"Response Time Trend\" #blue], [Tx \"Agent Performance\", Br :ticketsByAgent \"Tickets by Agent\" #purple, Kp :customerSatisfaction \"CSAT Score\" #green !critical, Tb :recentTickets \"Recent Tickets\" <ticketUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-008",
+      "description": "Inventory management dashboard",
+      "input": "Create inventory dashboard with stock levels, orders, alerts, and forecasts",
+      "output": "[Tx \"Inventory Status\" !critical, Kp :totalItems \"Total Items\" #blue, Kp :lowStockItems \"Low Stock\" #red !critical, Kp :outOfStock \"Out of Stock\" #red !critical, Kp :overstock \"Overstock\" #yellow], [Tx \"Purchase Orders\", Kp :pendingPOs \"Pending\" #yellow, Kp :approvedPOs \"Approved\" #green, Kp :receivedPOs \"Received\" #blue, Tb :recentPOs \"Recent Orders\" <poUpdated], [Tx \"Stock Analysis\", Br :stockByCategory \"Stock by Category\" #blue, Ln :stockMovement \"Stock Movement\" #green, Pi :stockValue \"Stock Value Distribution\" #purple, Bt \"Create PO\" #green >createPO]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-009",
+      "description": "HR analytics dashboard",
+      "input": "Build HR dashboard with headcount, hiring, retention, and performance",
+      "output": "[Tx \"Workforce Overview\" !critical, Kp :totalEmployees \"Total Employees\" #blue !high, Kp :newHires \"New Hires\" #green, Kp :separations \"Separations\" #red, Kp :headcountChange \"Net Change\" #purple], [Tx \"Recruitment Pipeline\", Kp :openPositions \"Open Positions\" #yellow !high, Kp :applicants \"Applicants\" #blue, Kp :interviews \"Interviews\" #green, Kp :offers \"Offers\" #purple, Ln :hiringTrend \"Hiring Trend\" #blue], [Tx \"Retention & Performance\", Kp :retentionRate \"Retention\" #green !critical, Kp :avgPerformanceScore \"Avg Performance\" #blue !high, Br :turnoverByDept \"Turnover by Dept\" #red, Tb :topPerformers \"Top Performers\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-010",
+      "description": "Sales CRM dashboard",
+      "input": "Create sales CRM with pipeline, deals, activities, and forecasts",
+      "output": "[Tx \"Sales Pipeline\" !critical, Kp :pipelineValue \"Pipeline Value\" #green !critical, Kp :dealsInProgress \"Active Deals\" #blue !high, Kp :expectedClose \"Expected Close\" #purple, Kp :winRate \"Win Rate\" #green !high], [Tx \"Pipeline Stages\", Kp :leads \"Leads\" #blue, Kp :qualified \"Qualified\" #green, Kp :proposal \"Proposal\" #yellow, Kp :negotiation \"Negotiation\" #orange, Kp :closed \"Closed Won\" #green !high], [Tx \"Activities & Performance\", Br :dealsByRep \"Deals by Rep\" #blue, Ln :revenueForecast \"Revenue Forecast\" #green, Tb :recentDeals \"Recent Deals\" <dealUpdated, Bt \"Add Deal\" #green >addDeal]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-011",
+      "description": "Website analytics dashboard",
+      "input": "Build web analytics with traffic, engagement, conversions, and sources",
+      "output": "[Tx \"Traffic Overview\" !critical, Kp :totalVisitors \"Visitors\" #blue !high, Kp :pageViews \"Page Views\" #green, Kp :bounceRate \"Bounce Rate\" #red, Kp :avgSessionDuration \"Avg Session\" #purple], [Tx \"Engagement Metrics\", Ln :dailyTraffic \"Daily Traffic\" #blue, Br :topPages \"Top Pages\" #green, Pi :deviceBreakdown \"Device Breakdown\" #purple], [Tx \"Traffic Sources\", Br :trafficBySource \"Traffic by Source\" #blue, Kp :organicTraffic \"Organic\" #green !high, Kp :paidTraffic \"Paid\" #orange, Kp :referralTraffic \"Referral\" #purple, Tb :topReferrers \"Top Referrers\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-012",
+      "description": "Product analytics dashboard",
+      "input": "Create product dashboard with usage, features, retention, and feedback",
+      "output": "[Tx \"Usage Overview\" !critical, Kp :activeUsers \"Active Users\" #green !critical, Kp :newUsers \"New Users\" #blue, Kp :retentionRate \"Retention\" #purple !high, Kp :churnRate \"Churn\" #red !high], [Tx \"Feature Adoption\", Br :featureUsage \"Feature Usage\" #blue, Kp :topFeature \"Top Feature\" #green, Ln :adoptionTrend \"Adoption Trend\" #purple], [Tx \"User Feedback\", Kp :npsScore \"NPS Score\" #green !critical, Kp :satisfactionScore \"CSAT\" #blue !high, Pi :feedbackCategories \"Feedback Categories\" #orange, Tb :recentFeedback \"Recent Feedback\" <feedbackUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-013",
+      "description": "Logistics dashboard",
+      "input": "Build logistics dashboard with shipments, deliveries, fleet, and routes",
+      "output": "[Tx \"Shipment Status\" !critical, Kp :pendingShipments \"Pending\" #yellow !high, Kp :inTransit \"In Transit\" #blue, Kp :delivered \"Delivered\" #green, Kp :delayed \"Delayed\" #red !critical], [Tx \"Fleet Management\", Kp :activeVehicles \"Active\" #green, Kp :underMaintenance \"Maintenance\" #yellow, Kp :fuelEfficiency \"Fuel Efficiency\" #blue !high, Br :vehicleUtilization \"Vehicle Utilization\" #purple], [Tx \"Delivery Performance\", Kp :onTimeDelivery \"On-Time Rate\" #green !critical, Ln :dailyDeliveries \"Daily Deliveries\" #blue, Tb :activeRoutes \"Active Routes\" <routeUpdated, Bt \"Create Route\" #green >createRoute]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-014",
+      "description": "Security monitoring dashboard",
+      "input": "Create security dashboard with threats, incidents, compliance, and alerts",
+      "output": "[Tx \"Security Status\" #red !critical, Kp :activeThreats \"Active Threats\" #red !critical, Kp :blockedAttempts \"Blocked\" #yellow !high, Kp :securityScore \"Security Score\" #green !critical, Kp :vulnerabilities \"Vulnerabilities\" #orange !high], [Tx \"Incident Management\", Kp :openIncidents \"Open\" #red !critical, Kp :investigating \"Investigating\" #yellow, Kp :resolved \"Resolved\" #green, Tb :recentIncidents \"Recent Incidents\" <incidentUpdated], [Tx \"Compliance Status\", Kp :complianceScore \"Score\" #green !critical, Br :complianceByArea \"By Area\" #blue, Ln :threatTrend \"Threat Trend\" #red, Bt \"Run Scan\" #blue >runScan]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-015",
+      "description": "Manufacturing dashboard",
+      "input": "Build manufacturing dashboard with production, quality, downtime, and efficiency",
+      "output": "[Tx \"Production Overview\" !critical, Kp :unitsProduced \"Units Produced\" #green !high, Kp :productionTarget \"Target\" #blue, Kp :targetAchievement \"Achievement\" #purple !critical, Kp :efficiency \"Efficiency\" #green !high], [Tx \"Quality Metrics\", Kp :qualityRate \"Quality Rate\" #green !critical, Kp :defectRate \"Defect Rate\" #red !high, Kp :reworkRate \"Rework\" #yellow, Ln :qualityTrend \"Quality Trend\" #blue], [Tx \"Equipment Status\", Kp :uptime \"Uptime\" #green !critical, Kp :downtime \"Downtime\" #red !high, Br :downtimeByReason \"Downtime by Reason\" #orange, Tb :activeJobs \"Active Jobs\" <jobUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-016",
+      "description": "SaaS metrics dashboard",
+      "input": "Create SaaS dashboard with MRR, churn, CAC, LTV, and growth",
+      "output": "[Tx \"Revenue Metrics\" !critical, Kp :mrr \"MRR\" #green !critical, Kp :arr \"ARR\" #blue !critical, Kp :revenueGrowth \"Growth\" #purple !high, Ln :mrrTrend \"MRR Trend\" #green], [Tx \"Customer Metrics\", Kp :totalCustomers \"Total Customers\" #blue, Kp :newCustomers \"New\" #green, Kp :churned \"Churned\" #red !high, Kp :churnRate \"Churn Rate\" #red !critical], [Tx \"Unit Economics\", Kp :cac \"CAC\" #orange, Kp :ltv \"LTV\" #green !high, Kp :ltvCacRatio \"LTV:CAC\" #purple !critical, Br :customersByPlan \"Customers by Plan\" #blue]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-017",
+      "description": "Social media dashboard",
+      "input": "Build social media dashboard with engagement, followers, content, and sentiment",
+      "output": "[Tx \"Social Overview\" !critical, Kp :totalFollowers \"Followers\" #blue !high, Kp :followerGrowth \"Growth\" #green, Kp :totalEngagement \"Engagement\" #purple !high, Kp :engagementRate \"Engagement Rate\" #green !critical], [Tx \"Content Performance\", Kp :postsPublished \"Posts\" #blue, Kp :avgLikes \"Avg Likes\" #red, Kp :avgShares \"Avg Shares\" #blue, Kp :avgComments \"Avg Comments\" #green, Tb :topPosts \"Top Posts\"], [Tx \"Platform Breakdown\", Br :followersByPlatform \"Followers by Platform\" #blue, Pi :engagementByPlatform \"Engagement Mix\" #purple, Ln :followerTrend \"Follower Trend\" #green]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-018",
+      "description": "Healthcare patient dashboard",
+      "input": "Create healthcare dashboard with patients, appointments, wait times, and outcomes",
+      "output": "[Tx \"Patient Overview\" !critical, Kp :totalPatients \"Total Patients\" #blue, Kp :newPatients \"New Today\" #green, Kp :readmissions \"Readmissions\" #red !high, Kp :patientSatisfaction \"Satisfaction\" #green !critical], [Tx \"Appointments\", Kp :todayAppointments \"Today\" #blue !high, Kp :completed \"Completed\" #green, Kp :cancelled \"Cancelled\" #red, Kp :noShows \"No-Shows\" #yellow, Tb :upcomingAppointments \"Upcoming\" <appointmentUpdated], [Tx \"Performance Metrics\", Kp :avgWaitTime \"Avg Wait Time\" #yellow !high, Ln :dailyPatientVolume \"Daily Volume\" #blue, Br :visitsByDept \"Visits by Dept\" #purple]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-019",
+      "description": "Education LMS dashboard",
+      "input": "Build education dashboard with courses, students, progress, and performance",
+      "output": "[Tx \"Course Overview\" !critical, Kp :totalCourses \"Total Courses\" #blue, Kp :activeCourses \"Active\" #green, Kp :totalStudents \"Students\" #purple !high, Kp :enrollmentRate \"Enrollment\" #green], [Tx \"Student Progress\", Kp :averageProgress \"Avg Progress\" #blue !high, Kp :completionRate \"Completion\" #green !critical, Kp :dropoutRate \"Dropout\" #red !high, Ln :progressTrend \"Progress Trend\" #blue], [Tx \"Performance Analytics\", Kp :averageGrade \"Avg Grade\" #green !high, Br :gradesBySubject \"Grades by Subject\" #purple, Tb :topStudents \"Top Students\", Bt \"Add Course\" #green >addCourse]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-020",
+      "description": "Restaurant management dashboard",
+      "input": "Create restaurant dashboard with orders, revenue, inventory, and reservations",
+      "output": "[Tx \"Today's Performance\" !critical, Kp :todayOrders \"Orders\" #blue !high, Kp :todayRevenue \"Revenue\" #green !critical, Kp :avgOrderValue \"Avg Order\" #purple, Kp :tableOccupancy \"Occupancy\" #yellow], [Tx \"Kitchen Status\", Kp :pendingOrders \"Pending\" #yellow !critical, Kp :preparingOrders \"Preparing\" #blue, Kp :completedOrders \"Completed\" #green, Kp :avgPrepTime \"Avg Prep Time\" #orange !high, Tb :activeOrders \"Active Orders\" <orderUpdated], [Tx \"Inventory & Reservations\", Kp :lowStockItems \"Low Stock\" #red !high, Kp :todayReservations \"Reservations\" #blue, Br :popularDishes \"Popular Dishes\" #green]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-021",
+      "description": "DevOps monitoring dashboard",
+      "input": "Build DevOps dashboard with deployments, uptime, errors, and performance",
+      "output": "[Tx \"System Health\" #green !critical, Kp :systemUptime \"Uptime\" #green !critical, Kp :activeServices \"Active Services\" #blue, Kp :failedServices \"Failed\" #red !critical, Kp :avgResponseTime \"Avg Response\" #yellow !high], [Tx \"Deployments\", Kp :todayDeployments \"Today\" #blue, Kp :successfulDeployments \"Successful\" #green !high, Kp :failedDeployments \"Failed\" #red !critical, Ln :deploymentTrend \"Deployment Trend\" #blue], [Tx \"Error Monitoring\", Kp :errorRate \"Error Rate\" #red !critical, Kp :criticalErrors \"Critical\" #red !critical, Br :errorsByService \"Errors by Service\" #orange, Tb :recentErrors \"Recent Errors\" <errorUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-022",
+      "description": "Real estate dashboard",
+      "input": "Create real estate dashboard with listings, showings, sales, and leads",
+      "output": "[Tx \"Property Overview\" !critical, Kp :activeListings \"Active Listings\" #blue !high, Kp :avgListingPrice \"Avg Price\" #green, Kp :daysOnMarket \"Avg DOM\" #yellow, Kp :pricePerSqft \"Price/Sqft\" #purple], [Tx \"Sales Activity\", Kp :monthSales \"This Month\" #green !high, Kp :monthRevenue \"Revenue\" #green !critical, Kp :closingRate \"Closing Rate\" #blue !high, Ln :salesTrend \"Sales Trend\" #green], [Tx \"Lead Management\", Kp :newLeads \"New Leads\" #blue, Kp :scheduledShowings \"Showings\" #yellow, Tb :hotLeads \"Hot Leads\" !high, Bt \"Add Listing\" #green >addListing]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-023",
+      "description": "Energy management dashboard",
+      "input": "Build energy dashboard with consumption, costs, efficiency, and sustainability",
+      "output": "[Tx \"Energy Overview\" !critical, Kp :totalConsumption \"Consumption\" #blue !high, Kp :energyCost \"Cost\" #red !high, Kp :costPerUnit \"Cost/Unit\" #orange, Kp :efficiency \"Efficiency\" #green !critical], [Tx \"Consumption Breakdown\", Ln :hourlyConsumption \"Hourly Consumption\" #blue, Br :consumptionByArea \"By Area\" #purple, Pi :energyMix \"Energy Mix\" #green], [Tx \"Sustainability Metrics\", Kp :carbonFootprint \"Carbon Footprint\" #red !high, Kp :renewablePercent \"Renewable %\" #green !critical, Kp :energySavings \"Savings\" #green !high, Tb :topConsumers \"Top Consumers\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-024",
+      "description": "Call center dashboard",
+      "input": "Create call center dashboard with calls, wait times, agent performance, and satisfaction",
+      "output": "[Tx \"Call Overview\" !critical, Kp :totalCalls \"Total Calls\" #blue !high, Kp :answeredCalls \"Answered\" #green, Kp :missedCalls \"Missed\" #red !high, Kp :avgWaitTime \"Avg Wait\" #yellow !critical], [Tx \"Agent Performance\", Kp :activeAgents \"Active Agents\" #green, Kp :avgHandleTime \"Avg Handle Time\" #blue, Kp :firstCallResolution \"FCR\" #green !critical, Br :callsByAgent \"Calls by Agent\" #purple], [Tx \"Quality Metrics\", Kp :customerSatisfaction \"CSAT\" #green !critical, Kp :slaCompliance \"SLA Compliance\" #green !high, Ln :callVolumeTrend \"Call Volume\" #blue, Tb :activeAgents \"Active Agents\" <agentStatusUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-025",
+      "description": "Subscription box dashboard",
+      "input": "Build subscription box dashboard with subscribers, retention, MRR, and fulfillment",
+      "output": "[Tx \"Subscriber Metrics\" !critical, Kp :totalSubscribers \"Total\" #blue !high, Kp :newSubscribers \"New\" #green, Kp :cancelledSubscribers \"Cancelled\" #red !high, Kp :retentionRate \"Retention\" #green !critical], [Tx \"Revenue Metrics\", Kp :mrr \"MRR\" #green !critical, Kp :avgRevenuePerUser \"ARPU\" #blue, Kp :churnRate \"Churn\" #red !high, Ln :mrrTrend \"MRR Trend\" #green], [Tx \"Fulfillment Status\", Kp :boxesPending \"Pending\" #yellow, Kp :boxesShipped \"Shipped\" #blue, Kp :boxesDelivered \"Delivered\" #green, Tb :upcomingShipments \"Upcoming\" <shipmentUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-026",
+      "description": "Fitness tracking dashboard",
+      "input": "Create fitness dashboard with workouts, progress, goals, and health metrics",
+      "output": "[Tx \"Workout Summary\" !critical, Kp :workoutsThisWeek \"This Week\" #blue !high, Kp :totalMinutes \"Total Minutes\" #green, Kp :caloriesBurned \"Calories\" #orange, Kp :avgHeartRate \"Avg HR\" #red], [Tx \"Goal Progress\", Kp :weeklyGoal \"Weekly Goal\" #blue, Kp :goalProgress \"Progress\" #green !high, Kp :streakDays \"Streak\" #purple !high, Ln :progressTrend \"Progress Trend\" #green], [Tx \"Health Metrics\", Kp :currentWeight \"Weight\" #blue, Kp :bodyFat \"Body Fat %\" #orange, Br :workoutsByType \"Workouts by Type\" #purple, Tb :recentWorkouts \"Recent Workouts\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-027",
+      "description": "Event management dashboard",
+      "input": "Build event dashboard with registrations, attendance, revenue, and feedback",
+      "output": "[Tx \"Event Overview\" !critical, Kp :totalRegistrations \"Registrations\" #blue !high, Kp :confirmed \"Confirmed\" #green, Kp :waitlist \"Waitlist\" #yellow, Kp :capacity \"Capacity\" #gray], [Tx \"Revenue & Tickets\", Kp :ticketRevenue \"Revenue\" #green !critical, Kp :avgTicketPrice \"Avg Price\" #blue, Br :ticketsByType \"Tickets by Type\" #purple, Kp :earlyBirdSold \"Early Bird\" #orange], [Tx \"Engagement\", Kp :checkInRate \"Check-In Rate\" #green !high, Kp :attendeeSatisfaction \"Satisfaction\" #green !critical, Tb :registrations \"Registrations\" <registrationUpdated, Bt \"Export List\" #blue >exportRegistrations]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-028",
+      "description": "Fleet telematics dashboard",
+      "input": "Create fleet dashboard with vehicles, drivers, routes, fuel, and maintenance",
+      "output": "[Tx \"Fleet Status\" !critical, Kp :activeVehicles \"Active\" #green !high, Kp :idleVehicles \"Idle\" #yellow, Kp :maintenanceVehicles \"Maintenance\" #orange, Kp :totalDistance \"Total Distance\" #blue], [Tx \"Driver Performance\", Kp :activeDrivers \"Active Drivers\" #green, Kp :avgSpeed \"Avg Speed\" #blue, Kp :hardBraking \"Hard Braking\" #red !high, Kp :fuelEfficiency \"Fuel Efficiency\" #green !high, Br :driverScores \"Driver Scores\" #purple], [Tx \"Maintenance & Fuel\", Kp :maintenanceDue \"Maintenance Due\" #red !high, Kp :fuelCost \"Fuel Cost\" #orange !high, Ln :fuelConsumption \"Fuel Consumption\" #blue, Tb :vehicleAlerts \"Alerts\" <alertUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-029",
+      "description": "Crowdfunding campaign dashboard",
+      "input": "Build crowdfunding dashboard with pledges, backers, goals, and tiers",
+      "output": "[Tx \"Campaign Progress\" !critical, Kp :totalRaised \"Total Raised\" #green !critical, Kp :fundingGoal \"Goal\" #blue, Kp :percentFunded \"% Funded\" #purple !critical, Kp :daysRemaining \"Days Left\" #yellow !high], [Tx \"Backer Metrics\", Kp :totalBackers \"Total Backers\" #blue !high, Kp :newBackers \"New Today\" #green, Kp :avgPledge \"Avg Pledge\" #purple, Ln :pledgeTrend \"Pledge Trend\" #green], [Tx \"Reward Tiers\", Br :backersByTier \"Backers by Tier\" #blue, Pi :revenueByTier \"Revenue by Tier\" #purple, Tb :recentPledges \"Recent Pledges\" <pledgeUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-030",
+      "description": "Supply chain dashboard",
+      "input": "Create supply chain dashboard with suppliers, orders, lead times, and costs",
+      "output": "[Tx \"Supply Chain Overview\" !critical, Kp :activeSuppliers \"Active Suppliers\" #blue, Kp :pendingOrders \"Pending Orders\" #yellow !high, Kp :avgLeadTime \"Avg Lead Time\" #orange !high, Kp :supplierCompliance \"Compliance\" #green !critical], [Tx \"Procurement Metrics\", Kp :totalSpend \"Total Spend\" #red !high, Kp :costSavings \"Cost Savings\" #green !high, Br :spendByCategory \"Spend by Category\" #blue, Ln :purchaseTrend \"Purchase Trend\" #purple], [Tx \"Supplier Performance\", Kp :onTimeDelivery \"On-Time Rate\" #green !critical, Kp :qualityScore \"Quality Score\" #blue !high, Tb :supplierScores \"Supplier Scores\", Bt \"Create PO\" #green >createPurchaseOrder]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-031",
+      "description": "Mobile app analytics dashboard",
+      "input": "Build mobile app dashboard with users, sessions, crashes, and revenue",
+      "output": "[Tx \"App Overview\" !critical, Kp :dailyActiveUsers \"DAU\" #blue !high, Kp :monthlyActiveUsers \"MAU\" #green !critical, Kp :newInstalls \"New Installs\" #purple, Kp :uninstalls \"Uninstalls\" #red], [Tx \"Engagement Metrics\", Kp :avgSessionLength \"Avg Session\" #blue, Kp :sessionsPerUser \"Sessions/User\" #green !high, Kp :retentionDay1 \"D1 Retention\" #purple !critical, Ln :dauTrend \"DAU Trend\" #blue], [Tx \"Performance & Revenue\", Kp :crashRate \"Crash Rate\" #red !critical, Kp :appRevenue \"Revenue\" #green !critical, Br :revenueByPlatform \"Revenue by Platform\" #purple, Tb :topScreens \"Top Screens\"]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-032",
+      "description": "Warehouse operations dashboard",
+      "input": "Create warehouse dashboard with receiving, storage, picking, shipping, accuracy",
+      "output": "[Tx \"Warehouse Overview\" !critical, Kp :receivingQueue \"Receiving\" #yellow !high, Kp :pickingQueue \"Picking\" #blue, Kp :shippingQueue \"Shipping\" #green, Kp :storageUtilization \"Storage %\" #orange !high], [Tx \"Productivity Metrics\", Kp :pickRate \"Pick Rate\" #blue !high, Kp :packRate \"Pack Rate\" #green !high, Kp :avgOrderTime \"Avg Order Time\" #yellow, Br :productivityByShift \"By Shift\" #purple], [Tx \"Quality & Accuracy\", Kp :pickAccuracy \"Pick Accuracy\" #green !critical, Kp :shipAccuracy \"Ship Accuracy\" #green !critical, Kp :damages \"Damages\" #red !high, Tb :activeOrders \"Active Orders\" <orderUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-033",
+      "description": "Digital marketing ROI dashboard",
+      "input": "Build marketing ROI dashboard with spend, conversions, CAC, ROI by channel",
+      "output": "[Tx \"Marketing Performance\" !critical, Kp :totalSpend \"Total Spend\" #red !high, Kp :totalConversions \"Conversions\" #green !critical, Kp :cac \"CAC\" #orange !high, Kp :roi \"ROI\" #green !critical], [Tx \"Channel Performance\", Br :conversionsByChannel \"Conversions\" #green, Br :spendByChannel \"Spend\" #red, Br :roiByChannel \"ROI\" #blue !high], [Tx \"Campaign Analytics\", Kp :activeCampaigns \"Active\" #blue, Kp :impressions \"Impressions\" #purple, Kp :clickThroughRate \"CTR\" #green !high, Tb :topCampaigns \"Top Campaigns\", Bt \"Create Campaign\" #green >createCampaign]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-034",
+      "description": "Blood bank management dashboard",
+      "input": "Create blood bank dashboard with inventory, donations, requests, expiration",
+      "output": "[Tx \"Inventory Status\" !critical, Kp :totalUnits \"Total Units\" #blue !high, Kp :criticalLevels \"Critical Levels\" #red !critical, Kp :expiringUnits \"Expiring Soon\" #yellow !high, Br :unitsByType \"Units by Blood Type\" #purple], [Tx \"Donations\", Kp :todayDonations \"Today\" #green !high, Kp :scheduledDonations \"Scheduled\" #blue, Kp :donorRetention \"Retention\" #green !critical, Ln :donationTrend \"Donation Trend\" #green], [Tx \"Requests & Distribution\", Kp :pendingRequests \"Pending\" #yellow !high, Kp :fulfilledRequests \"Fulfilled\" #green, Tb :urgentRequests \"Urgent Requests\" !critical <requestUpdated, Bt \"Add Donation\" #green >addDonation]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-035",
+      "description": "Airport operations dashboard",
+      "input": "Build airport dashboard with flights, gates, delays, passengers, baggage",
+      "output": "[Tx \"Flight Operations\" !critical, Kp :totalFlights \"Total Flights\" #blue !high, Kp :onTime \"On Time\" #green !high, Kp :delayed \"Delayed\" #red !critical, Kp :cancelled \"Cancelled\" #red], [Tx \"Gate Management\", Kp :occupiedGates \"Occupied\" #yellow, Kp :availableGates \"Available\" #green, Kp :avgTurnaround \"Avg Turnaround\" #blue, Tb :gateSchedule \"Gate Schedule\" <gateUpdated], [Tx \"Passenger & Baggage\", Kp :totalPassengers \"Passengers\" #blue !high, Kp :checkInComplete \"Checked In\" #green, Kp :baggageProcessed \"Baggage\" #purple, Kp :baggageLost \"Lost Baggage\" #red !high]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-036",
+      "description": "Hotel management dashboard",
+      "input": "Create hotel dashboard with occupancy, revenue, bookings, services, staff",
+      "output": "[Tx \"Occupancy Overview\" !critical, Kp :occupancyRate \"Occupancy\" #green !critical, Kp :availableRooms \"Available\" #blue, Kp :avgRoomRate \"ADR\" #green !high, Kp :revPAR \"RevPAR\" #purple !critical], [Tx \"Bookings\", Kp :todayCheckIns \"Check-Ins\" #blue, Kp :todayCheckOuts \"Check-Outs\" #yellow, Kp :newBookings \"New Bookings\" #green, Ln :bookingTrend \"Booking Trend\" #blue], [Tx \"Revenue & Services\", Kp :roomRevenue \"Room Revenue\" #green !high, Kp :serviceRevenue \"Service Revenue\" #blue, Br :revenueByRoomType \"By Room Type\" #purple, Tb :activeGuests \"Active Guests\" <guestUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-037",
+      "description": "Political campaign dashboard",
+      "input": "Build campaign dashboard with polls, donations, volunteers, events, outreach",
+      "output": "[Tx \"Campaign Status\" !critical, Kp :pollNumbers \"Poll Numbers\" #blue !critical, Kp :trendDirection \"Trend\" #green !high, Kp :daysToElection \"Days to Election\" #yellow !critical, Kp :voterRegistrations \"Registrations\" #purple], [Tx \"Fundraising\", Kp :totalDonations \"Total Raised\" #green !critical, Kp :avgDonation \"Avg Donation\" #blue, Kp :newDonors \"New Donors\" #purple, Ln :donationTrend \"Donation Trend\" #green], [Tx \"Field Operations\", Kp :activeVolunteers \"Volunteers\" #blue !high, Kp :doorKnocks \"Door Knocks\" #green, Kp :phoneContacts \"Phone Calls\" #purple, Tb :upcomingEvents \"Upcoming Events\" <eventUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-038",
+      "description": "Insurance claims dashboard",
+      "input": "Create insurance dashboard with claims, processing, payouts, fraud, reserves",
+      "output": "[Tx \"Claims Overview\" !critical, Kp :totalClaims \"Total Claims\" #blue !high, Kp :newClaims \"New\" #yellow !high, Kp :processing \"Processing\" #orange, Kp :avgClaimValue \"Avg Value\" #green], [Tx \"Processing Status\", Kp :pendingReview \"Pending Review\" #yellow !high, Kp :approved \"Approved\" #green, Kp :denied \"Denied\" #red, Kp :avgProcessTime \"Avg Time\" #blue !high, Tb :urgentClaims \"Urgent Claims\" !critical <claimUpdated], [Tx \"Financial Metrics\", Kp :totalPayouts \"Total Payouts\" #red !high, Kp :reserves \"Reserves\" #blue !high, Kp :fraudSuspected \"Fraud Suspected\" #red !critical, Br :claimsByType \"Claims by Type\" #purple]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-039",
+      "description": "Veterinary clinic dashboard",
+      "input": "Build vet clinic dashboard with appointments, patients, treatments, inventory",
+      "output": "[Tx \"Clinic Overview\" !critical, Kp :todayAppointments \"Appointments\" #blue !high, Kp :completedAppointments \"Completed\" #green, Kp :waitingPatients \"Waiting\" #yellow !high, Kp :emergencyCases \"Emergencies\" #red !critical], [Tx \"Patient Care\", Kp :totalPatients \"Total Patients\" #blue, Kp :newPatients \"New\" #green, Kp :followUps \"Follow-Ups\" #yellow, Tb :todaySchedule \"Today's Schedule\" <appointmentUpdated], [Tx \"Operations\", Kp :todayRevenue \"Revenue\" #green !high, Kp :lowStockMeds \"Low Stock Meds\" #red !high, Br :treatmentsByType \"Treatments\" #purple, Bt \"Add Appointment\" #green >addAppointment]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-040",
+      "description": "Construction project dashboard",
+      "input": "Create construction dashboard with progress, budget, safety, materials, workforce",
+      "output": "[Tx \"Project Status\" !critical, Kp :projectProgress \"Progress\" #green !critical, Kp :daysRemaining \"Days Remaining\" #yellow !high, Kp :milestonesComplete \"Milestones\" #blue, Kp :delayedTasks \"Delayed\" #red !high], [Tx \"Budget & Costs\", Kp :totalBudget \"Budget\" #blue !high, Kp :spentToDate \"Spent\" #red !high, Kp :costVariance \"Variance\" #orange !critical, Ln :spendingTrend \"Spending Trend\" #red], [Tx \"Safety & Resources\", Kp :safetyIncidents \"Incidents\" #red !critical, Kp :workforceCount \"Workforce\" #blue, Kp :materialShortages \"Material Shortages\" #yellow !high, Tb :criticalPath \"Critical Path\" !high]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-041",
+      "description": "Broadcast media dashboard",
+      "input": "Build broadcast dashboard with viewership, ratings, ad revenue, programs, schedule",
+      "output": "[Tx \"Viewership Overview\" !critical, Kp :liveViewers \"Live Viewers\" #blue !critical, Kp :peakViewers \"Peak\" #green !high, Kp :avgViewers \"Avg Viewers\" #purple, Kp :marketShare \"Market Share\" #green !critical], [Tx \"Program Performance\", Br :viewersByProgram \"Viewers by Program\" #blue, Kp :topProgram \"Top Program\" #green !high, Ln :viewershipTrend \"Viewership Trend\" #blue, Tb :programSchedule \"Schedule\" <scheduleUpdated], [Tx \"Revenue Metrics\", Kp :adRevenue \"Ad Revenue\" #green !critical, Kp :adsSold \"Ads Sold\" #blue, Kp :avgAdRate \"Avg Ad Rate\" #purple !high, Pi :revenueByProgram \"Revenue Mix\" #green]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-042",
+      "description": "Library management dashboard",
+      "input": "Create library dashboard with circulation, inventory, members, reservations, fines",
+      "output": "[Tx \"Circulation Overview\" !critical, Kp :itemsCheckedOut \"Checked Out\" #blue !high, Kp :itemsReturned \"Returned\" #green, Kp :overdueItems \"Overdue\" #red !high, Kp :circulationRate \"Circulation Rate\" #purple], [Tx \"Inventory & Reservations\", Kp :totalItems \"Total Items\" #blue, Kp :availableItems \"Available\" #green, Kp :pendingReservations \"Reservations\" #yellow, Br :checkoutsByCategory \"By Category\" #purple], [Tx \"Membership\", Kp :totalMembers \"Total Members\" #blue, Kp :newMembers \"New\" #green, Kp :activeMemberships \"Active\" #purple !high, Kp :outstandingFines \"Fines\" #red !high, Tb :overdueItems \"Overdue Items\" <overdueUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-043",
+      "description": "Sports team analytics dashboard",
+      "input": "Build sports team dashboard with stats, players, games, injuries, scouting",
+      "output": "[Tx \"Season Overview\" !critical, Kp :wins \"Wins\" #green !high, Kp :losses \"Losses\" #red, Kp :winPercentage \"Win %\" #blue !critical, Kp :leagueRanking \"Ranking\" #purple !high], [Tx \"Player Performance\", Kp :avgPlayerRating \"Avg Rating\" #green !high, Kp :topScorer \"Top Scorer\" #blue, Br :statsByPlayer \"Stats by Player\" #purple, Kp :activeInjuries \"Injuries\" #red !high], [Tx \"Game Analytics\", Ln :seasonTrend \"Season Trend\" #blue, Kp :homeWinRate \"Home Win %\" #green, Kp :awayWinRate \"Away Win %\" #yellow, Tb :upcomingGames \"Upcoming Games\" <gameUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-044",
+      "description": "E-learning platform dashboard",
+      "input": "Create e-learning dashboard with students, courses, completion, engagement, revenue",
+      "output": "[Tx \"Student Metrics\" !critical, Kp :totalStudents \"Total Students\" #blue !high, Kp :activeStudents \"Active\" #green !high, Kp :newEnrollments \"New Enrollments\" #purple, Kp :completionRate \"Completion\" #green !critical], [Tx \"Course Performance\", Kp :totalCourses \"Total Courses\" #blue, Kp :avgCourseRating \"Avg Rating\" #green !high, Br :enrollmentsByCourse \"Enrollments\" #purple, Tb :topCourses \"Top Courses\"], [Tx \"Engagement & Revenue\", Kp :avgEngagementTime \"Avg Time\" #blue !high, Kp :courseRevenue \"Revenue\" #green !critical, Ln :enrollmentTrend \"Enrollment Trend\" #blue, Bt \"Add Course\" #green >addCourse]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-045",
+      "description": "Pharmacy management dashboard",
+      "input": "Build pharmacy dashboard with prescriptions, inventory, sales, insurance claims",
+      "output": "[Tx \"Prescription Overview\" !critical, Kp :todayPrescriptions \"Today\" #blue !high, Kp :waitingPrescriptions \"Waiting\" #yellow !high, Kp :readyForPickup \"Ready\" #green, Kp :avgWaitTime \"Avg Wait\" #orange], [Tx \"Inventory Management\", Kp :totalMedications \"Total Meds\" #blue, Kp :lowStockItems \"Low Stock\" #red !critical, Kp :expiringSoon \"Expiring Soon\" #yellow !high, Br :dispensedByCategory \"Dispensed by Category\" #purple], [Tx \"Sales & Insurance\", Kp :todaySales \"Sales\" #green !high, Kp :pendingClaims \"Pending Claims\" #yellow, Kp :claimRejections \"Rejections\" #red !high, Tb :prescriptionQueue \"Queue\" <prescriptionUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-046",
+      "description": "Nonprofit organization dashboard",
+      "input": "Create nonprofit dashboard with donations, programs, volunteers, impact, grants",
+      "output": "[Tx \"Fundraising Overview\" !critical, Kp :totalDonations \"Total Donations\" #green !critical, Kp :recurringDonations \"Recurring\" #blue !high, Kp :avgDonation \"Avg Donation\" #purple, Kp :donorRetention \"Retention\" #green !high], [Tx \"Program Impact\", Kp :peopleServed \"People Served\" #blue !critical, Kp :activePrograms \"Active Programs\" #green, Kp :programCost \"Program Cost\" #red, Br :impactByProgram \"Impact by Program\" #purple], [Tx \"Volunteers & Grants\", Kp :activeVolunteers \"Volunteers\" #blue !high, Kp :volunteerHours \"Hours\" #green, Kp :grantRevenue \"Grant Revenue\" #green !high, Tb :upcomingEvents \"Upcoming Events\" <eventUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-047",
+      "description": "Telecommunications dashboard",
+      "input": "Build telecom dashboard with network, customers, outages, data usage, revenue",
+      "output": "[Tx \"Network Status\" !critical, Kp :networkUptime \"Uptime\" #green !critical, Kp :activeOutages \"Outages\" #red !critical, Kp :avgLatency \"Latency\" #yellow !high, Kp :bandwidth \"Bandwidth\" #blue], [Tx \"Customer Metrics\", Kp :totalSubscribers \"Subscribers\" #blue !high, Kp :newActivations \"New\" #green, Kp :churnRate \"Churn\" #red !high, Kp :customerSatisfaction \"CSAT\" #green !critical], [Tx \"Usage & Revenue\", Kp :totalDataUsage \"Data Usage\" #blue !high, Kp :avgUsagePerUser \"Avg/User\" #purple, Kp :monthRevenue \"Revenue\" #green !critical, Ln :revenueTrend \"Revenue Trend\" #green]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-048",
+      "description": "Bakery production dashboard",
+      "input": "Create bakery dashboard with production, orders, inventory, waste, sales",
+      "output": "[Tx \"Production Overview\" !critical, Kp :todayProduction \"Today's Production\" #blue !high, Kp :productionTarget \"Target\" #green, Kp :productionEfficiency \"Efficiency\" #purple !high, Kp :wastePercentage \"Waste %\" #red !high], [Tx \"Orders & Sales\", Kp :pendingOrders \"Pending\" #yellow !high, Kp :completedOrders \"Completed\" #green, Kp :todaySales \"Sales\" #green !high, Br :salesByProduct \"Sales by Product\" #blue], [Tx \"Inventory\", Kp :lowStockIngredients \"Low Stock\" #red !high, Kp :expiringIngredients \"Expiring\" #yellow !high, Tb :productionSchedule \"Schedule\" <scheduleUpdated, Bt \"Add Order\" #green >addOrder]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-049",
+      "description": "Gaming platform dashboard",
+      "input": "Build gaming platform dashboard with players, sessions, revenue, retention, bugs",
+      "output": "[Tx \"Player Metrics\" !critical, Kp :dailyActiveUsers \"DAU\" #blue !critical, Kp :monthlyActiveUsers \"MAU\" #green !critical, Kp :newPlayers \"New Players\" #purple, Kp :retentionDay7 \"D7 Retention\" #green !high], [Tx \"Engagement\", Kp :avgSessionTime \"Avg Session\" #blue !high, Kp :sessionsPerUser \"Sessions/User\" #green !high, Ln :dauTrend \"DAU Trend\" #blue, Br :playTimeByMode \"Time by Mode\" #purple], [Tx \"Monetization & Quality\", Kp :gameRevenue \"Revenue\" #green !critical, Kp :avgRevenuePerUser \"ARPU\" #purple !high, Kp :crashRate \"Crash Rate\" #red !critical, Tb :activeBugs \"Active Bugs\" <bugUpdated]",
+      "complexity": "complex"
+    },
+    {
+      "id": "complex-050",
+      "description": "Agriculture farm dashboard",
+      "input": "Create farm dashboard with crops, weather, equipment, harvest, livestock",
+      "output": "[Tx \"Crop Management\" !critical, Kp :totalAcreage \"Total Acreage\" #blue, Kp :plantedAcreage \"Planted\" #green !high, Kp :harvestReady \"Ready to Harvest\" #yellow !high, Kp :expectedYield \"Expected Yield\" #green !critical], [Tx \"Weather & Conditions\", Kp :currentTemperature \"Temperature\" #orange, Kp :rainfall \"Rainfall\" #blue, Kp :soilMoisture \"Soil Moisture\" #green !high, Ln :weatherTrend \"Weather Trend\" #blue], [Tx \"Equipment & Livestock\", Kp :operationalEquipment \"Equipment\" #green, Kp :maintenanceDue \"Maintenance\" #yellow !high, Kp :livestockCount \"Livestock\" #blue, Tb :harvestSchedule \"Harvest Schedule\" <scheduleUpdated]",
+      "complexity": "complex"
+    }
+  ]
+}

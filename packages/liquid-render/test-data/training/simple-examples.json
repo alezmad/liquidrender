@@ -1,0 +1,704 @@
+{
+  "examples": [
+    {
+      "id": "simple-001",
+      "description": "Show revenue as a KPI",
+      "input": "Display revenue KPI",
+      "output": "Kp :revenue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-002",
+      "description": "Display total orders",
+      "input": "Show total orders",
+      "output": "Kp :totalOrders",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-003",
+      "description": "Show customer count",
+      "input": "Display customer count",
+      "output": "Kp :customerCount",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-004",
+      "description": "KPI with label",
+      "input": "Show revenue with 'Total Revenue' label",
+      "output": "Kp :revenue \"Total Revenue\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-005",
+      "description": "KPI with color",
+      "input": "Display revenue in blue",
+      "output": "Kp :revenue #blue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-006",
+      "description": "Simple button",
+      "input": "Create a submit button",
+      "output": "Bt \"Submit\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-007",
+      "description": "Button with emit",
+      "input": "Button that emits click event",
+      "output": "Bt \"Click Me\" >click",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-008",
+      "description": "Text display",
+      "input": "Show welcome message",
+      "output": "Tx \"Welcome to Dashboard\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-009",
+      "description": "Text with field binding",
+      "input": "Display username",
+      "output": "Tx :username",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-010",
+      "description": "Line chart",
+      "input": "Show sales line chart",
+      "output": "Ln :salesData",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-011",
+      "description": "Bar chart",
+      "input": "Display revenue bar chart",
+      "output": "Br :revenueData",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-012",
+      "description": "Pie chart",
+      "input": "Show market share pie chart",
+      "output": "Pi :marketShare",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-013",
+      "description": "Data table",
+      "input": "Display customer table",
+      "output": "Tb :customers",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-014",
+      "description": "Form input",
+      "input": "Email input field",
+      "output": "Fm :email",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-015",
+      "description": "Form with label",
+      "input": "Email field with label",
+      "output": "Fm :email \"Email Address\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-016",
+      "description": "Priority modifier",
+      "input": "High priority revenue KPI",
+      "output": "Kp :revenue !high",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-017",
+      "description": "Signal binding",
+      "input": "Show active users count",
+      "output": "Kp :activeUsers @status",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-018",
+      "description": "Two KPIs",
+      "input": "Show revenue and orders",
+      "output": "Kp :revenue, Kp :orders",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-019",
+      "description": "Button with color",
+      "input": "Green submit button",
+      "output": "Bt \"Submit\" #green",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-020",
+      "description": "Text with color",
+      "input": "Red error message",
+      "output": "Tx \"Error occurred\" #red",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-021",
+      "description": "KPI with all modifiers",
+      "input": "Revenue KPI labeled 'Total' in blue with high priority",
+      "output": "Kp :revenue \"Total\" #blue !high",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-022",
+      "description": "Multiple buttons",
+      "input": "Save and cancel buttons",
+      "output": "Bt \"Save\", Bt \"Cancel\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-023",
+      "description": "Chart with label",
+      "input": "Sales line chart with title",
+      "output": "Ln :salesData \"Monthly Sales\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-024",
+      "description": "Table with label",
+      "input": "Customer list table",
+      "output": "Tb :customers \"Customer List\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-025",
+      "description": "Conditional display",
+      "input": "Show KPI when active",
+      "output": "Kp :revenue ?@active=true",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-026",
+      "description": "Form with emit",
+      "input": "Email field that emits change",
+      "output": "Fm :email >emailChanged",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-027",
+      "description": "Button receiving signal",
+      "input": "Submit button listening to formValid",
+      "output": "Bt \"Submit\" <formValid",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-028",
+      "description": "Multiple fields",
+      "input": "Show revenue, orders, and customers",
+      "output": "Kp :revenue, Kp :orders, Kp :customers",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-029",
+      "description": "Colored chart",
+      "input": "Blue line chart for sales",
+      "output": "Ln :salesData #blue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-030",
+      "description": "Priority button",
+      "input": "High priority submit button",
+      "output": "Bt \"Submit\" !high",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-031",
+      "description": "Revenue metric",
+      "input": "Display total revenue",
+      "output": "Kp :totalRevenue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-032",
+      "description": "Active users",
+      "input": "Show active user count",
+      "output": "Kp :activeUserCount",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-033",
+      "description": "Conversion rate",
+      "input": "Display conversion rate",
+      "output": "Kp :conversionRate",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-034",
+      "description": "Average order value",
+      "input": "Show average order value",
+      "output": "Kp :avgOrderValue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-035",
+      "description": "Growth percentage",
+      "input": "Display growth percentage",
+      "output": "Kp :growthPercent",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-036",
+      "description": "Refresh button",
+      "input": "Create refresh button",
+      "output": "Bt \"Refresh\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-037",
+      "description": "Download button",
+      "input": "Add download button",
+      "output": "Bt \"Download\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-038",
+      "description": "Export button",
+      "input": "Create export button",
+      "output": "Bt \"Export\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-039",
+      "description": "Delete button",
+      "input": "Add delete button",
+      "output": "Bt \"Delete\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-040",
+      "description": "Edit button",
+      "input": "Create edit button",
+      "output": "Bt \"Edit\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-041",
+      "description": "Status text",
+      "input": "Show current status",
+      "output": "Tx :status",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-042",
+      "description": "Description text",
+      "input": "Display product description",
+      "output": "Tx :productDescription",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-043",
+      "description": "Title text",
+      "input": "Show page title",
+      "output": "Tx :pageTitle",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-044",
+      "description": "Sales chart",
+      "input": "Display sales trend",
+      "output": "Ln :salesTrend",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-045",
+      "description": "Traffic chart",
+      "input": "Show website traffic",
+      "output": "Ln :websiteTraffic",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-046",
+      "description": "Category bars",
+      "input": "Bar chart by category",
+      "output": "Br :categoryData",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-047",
+      "description": "Region bars",
+      "input": "Revenue by region",
+      "output": "Br :revenueByRegion",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-048",
+      "description": "Product distribution",
+      "input": "Product sales distribution",
+      "output": "Pi :productDistribution",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-049",
+      "description": "User segments",
+      "input": "User segment breakdown",
+      "output": "Pi :userSegments",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-050",
+      "description": "Orders table",
+      "input": "Show all orders",
+      "output": "Tb :orders",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-051",
+      "description": "Products table",
+      "input": "Display product list",
+      "output": "Tb :products",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-052",
+      "description": "Users table",
+      "input": "Show user list",
+      "output": "Tb :users",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-053",
+      "description": "Name input",
+      "input": "Name input field",
+      "output": "Fm :name",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-054",
+      "description": "Password input",
+      "input": "Password field",
+      "output": "Fm :password",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-055",
+      "description": "Phone input",
+      "input": "Phone number field",
+      "output": "Fm :phone",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-056",
+      "description": "Address input",
+      "input": "Address field",
+      "output": "Fm :address",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-057",
+      "description": "City input",
+      "input": "City field",
+      "output": "Fm :city",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-058",
+      "description": "Low priority KPI",
+      "input": "Low priority customer count",
+      "output": "Kp :customerCount !low",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-059",
+      "description": "Medium priority KPI",
+      "input": "Medium priority orders",
+      "output": "Kp :orders !medium",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-060",
+      "description": "Signal on status",
+      "input": "Revenue with status signal",
+      "output": "Kp :revenue @status",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-061",
+      "description": "Signal on mode",
+      "input": "Data with mode signal",
+      "output": "Kp :data @mode",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-062",
+      "description": "Emit on click",
+      "input": "Button emits onClick",
+      "output": "Bt \"Click\" >onClick",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-063",
+      "description": "Emit on submit",
+      "input": "Form emits onSubmit",
+      "output": "Fm :data >onSubmit",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-064",
+      "description": "Receive on load",
+      "input": "Component receives onLoad",
+      "output": "Kp :data <onLoad",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-065",
+      "description": "Receive on update",
+      "input": "Table receives onUpdate",
+      "output": "Tb :data <onUpdate",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-066",
+      "description": "Conditional on true",
+      "input": "Show when enabled is true",
+      "output": "Kp :data ?@enabled=true",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-067",
+      "description": "Conditional on false",
+      "input": "Hide when active is false",
+      "output": "Kp :data ?@active=false",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-068",
+      "description": "Red KPI",
+      "input": "Red warning KPI",
+      "output": "Kp :warnings #red",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-069",
+      "description": "Green KPI",
+      "input": "Green success count",
+      "output": "Kp :successCount #green",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-070",
+      "description": "Yellow KPI",
+      "input": "Yellow pending items",
+      "output": "Kp :pendingItems #yellow",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-071",
+      "description": "Orange button",
+      "input": "Orange warning button",
+      "output": "Bt \"Warning\" #orange",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-072",
+      "description": "Purple chart",
+      "input": "Purple line chart",
+      "output": "Ln :data #purple",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-073",
+      "description": "Gray text",
+      "input": "Gray subtitle text",
+      "output": "Tx \"Subtitle\" #gray",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-074",
+      "description": "Black text",
+      "input": "Black heading",
+      "output": "Tx \"Heading\" #black",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-075",
+      "description": "White button",
+      "input": "White outlined button",
+      "output": "Bt \"Outlined\" #white",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-076",
+      "description": "Total sales",
+      "input": "Show total sales",
+      "output": "Kp :totalSales",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-077",
+      "description": "New customers",
+      "input": "Display new customers",
+      "output": "Kp :newCustomers",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-078",
+      "description": "Bounce rate",
+      "input": "Show bounce rate",
+      "output": "Kp :bounceRate",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-079",
+      "description": "Session duration",
+      "input": "Average session duration",
+      "output": "Kp :avgSessionDuration",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-080",
+      "description": "Page views",
+      "input": "Total page views",
+      "output": "Kp :totalPageViews",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-081",
+      "description": "Cart value",
+      "input": "Average cart value",
+      "output": "Kp :avgCartValue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-082",
+      "description": "Return rate",
+      "input": "Product return rate",
+      "output": "Kp :returnRate",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-083",
+      "description": "Stock level",
+      "input": "Current stock level",
+      "output": "Kp :stockLevel",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-084",
+      "description": "Pending orders",
+      "input": "Pending orders count",
+      "output": "Kp :pendingOrders",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-085",
+      "description": "Churn rate",
+      "input": "Customer churn rate",
+      "output": "Kp :churnRate",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-086",
+      "description": "Lifetime value",
+      "input": "Customer lifetime value",
+      "output": "Kp :customerLifetimeValue",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-087",
+      "description": "Response time",
+      "input": "Average response time",
+      "output": "Kp :avgResponseTime",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-088",
+      "description": "Satisfaction score",
+      "input": "Customer satisfaction score",
+      "output": "Kp :satisfactionScore",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-089",
+      "description": "Ticket volume",
+      "input": "Support ticket volume",
+      "output": "Kp :ticketVolume",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-090",
+      "description": "Resolution rate",
+      "input": "First contact resolution rate",
+      "output": "Kp :firstContactResolution",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-091",
+      "description": "Login button",
+      "input": "Create login button",
+      "output": "Bt \"Login\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-092",
+      "description": "Logout button",
+      "input": "Add logout button",
+      "output": "Bt \"Logout\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-093",
+      "description": "Search button",
+      "input": "Search submit button",
+      "output": "Bt \"Search\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-094",
+      "description": "Filter button",
+      "input": "Apply filters button",
+      "output": "Bt \"Apply Filters\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-095",
+      "description": "Reset button",
+      "input": "Reset form button",
+      "output": "Bt \"Reset\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-096",
+      "description": "Add button",
+      "input": "Add new item button",
+      "output": "Bt \"Add\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-097",
+      "description": "Remove button",
+      "input": "Remove item button",
+      "output": "Bt \"Remove\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-098",
+      "description": "Update button",
+      "input": "Update record button",
+      "output": "Bt \"Update\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-099",
+      "description": "Close button",
+      "input": "Close modal button",
+      "output": "Bt \"Close\"",
+      "complexity": "simple"
+    },
+    {
+      "id": "simple-100",
+      "description": "Confirm button",
+      "input": "Confirm action button",
+      "output": "Bt \"Confirm\"",
+      "complexity": "simple"
+    }
+  ]
+}

@@ -52,6 +52,12 @@ const styles = {
     margin: 0,
     accentColor: tokens.colors.primary,
     cursor: 'pointer',
+    outline: 'none',
+  } as React.CSSProperties,
+
+  inputFocus: {
+    outline: `2px solid ${tokens.colors.ring}`,
+    outlineOffset: '2px',
   } as React.CSSProperties,
 
   label: {

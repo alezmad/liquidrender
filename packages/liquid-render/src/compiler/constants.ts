@@ -98,6 +98,8 @@ export const UI_TYPE_CODES: Record<string, string> = {
   Kb: 'kanban',
   Ca: 'calendar',
   Ti: 'timeline',
+  // Custom (LLM-generated components)
+  Custom: 'custom',
 };
 
 // Reverse lookup: type name -> code

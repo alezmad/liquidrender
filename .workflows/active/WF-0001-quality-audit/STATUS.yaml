@@ -1,0 +1,148 @@
+workflow: "Quality Audit: liquid-render vs shadcn"
+workflow_id: WF-0001
+started_at: 2025-12-25T00:00:00Z
+current_wave: 0
+overall_status: in_progress
+
+dependencies_installed: true  # No deps needed for audit
+
+waves:
+  wave_0:
+    name: "Bootstrap"
+    status: in_progress
+    tasks:
+      W0-1:
+        name: "Create audit template"
+        status: pending
+      W0-2:
+        name: "Create report skeleton"
+        status: pending
+
+  wave_1:
+    name: "Core Components"
+    status: pending
+    tasks:
+      A1:
+        name: "Card audit"
+        status: pending
+        files: ["audits/core/card.audit.md"]
+      A2:
+        name: "Modal audit"
+        status: pending
+        files: ["audits/core/modal.audit.md"]
+      A3:
+        name: "Button audit"
+        status: pending
+        files: ["audits/core/button.audit.md"]
+      A4:
+        name: "Form audit"
+        status: pending
+        files: ["audits/core/form.audit.md"]
+      A5:
+        name: "Table audit"
+        status: pending
+        files: ["audits/core/table.audit.md"]
+      A6:
+        name: "Tabs audit"
+        status: pending
+        files: ["audits/core/tabs.audit.md"]
+
+  wave_2:
+    name: "Form Controls"
+    status: pending
+    tasks:
+      A7:
+        name: "Input audit"
+        status: pending
+        files: ["audits/forms/input.audit.md"]
+      A8:
+        name: "Select audit"
+        status: pending
+        files: ["audits/forms/select.audit.md"]
+      A9:
+        name: "Checkbox audit"
+        status: pending
+        files: ["audits/forms/checkbox.audit.md"]
+      A10:
+        name: "Switch audit"
+        status: pending
+        files: ["audits/forms/switch.audit.md"]
+      A11:
+        name: "Range audit"
+        status: pending
+        files: ["audits/forms/range.audit.md"]
+      A12:
+        name: "Radio audit"
+        status: pending
+        files: ["audits/forms/radio.audit.md"]
+
+  wave_3:
+    name: "Layout/Navigation"
+    status: pending
+    tasks:
+      A13:
+        name: "Drawer audit"
+        status: pending
+        files: ["audits/layout/drawer.audit.md"]
+      A14:
+        name: "Popover audit"
+        status: pending
+        files: ["audits/layout/popover.audit.md"]
+      A15:
+        name: "Tooltip audit"
+        status: pending
+        files: ["audits/layout/tooltip.audit.md"]
+      A16:
+        name: "Accordion audit"
+        status: pending
+        files: ["audits/layout/accordion.audit.md"]
+      A17:
+        name: "Sidebar audit"
+        status: pending
+        files: ["audits/layout/sidebar.audit.md"]
+      A18:
+        name: "Breadcrumb audit"
+        status: pending
+        files: ["audits/layout/breadcrumb.audit.md"]
+
+  wave_4:
+    name: "Data Display/Charts"
+    status: pending
+    tasks:
+      A19:
+        name: "Avatar audit"
+        status: pending
+        files: ["audits/data/avatar.audit.md"]
+      A20:
+        name: "Badge audit"
+        status: pending
+        files: ["audits/data/badge.audit.md"]
+      A21:
+        name: "Progress audit"
+        status: pending
+        files: ["audits/data/progress.audit.md"]
+      A22:
+        name: "LineChart audit"
+        status: pending
+        files: ["audits/data/line-chart.audit.md"]
+      A23:
+        name: "BarChart audit"
+        status: pending
+        files: ["audits/data/bar-chart.audit.md"]
+      A24:
+        name: "PieChart audit"
+        status: pending
+        files: ["audits/data/pie-chart.audit.md"]
+
+  wave_5:
+    name: "Synthesis"
+    status: pending
+    tasks:
+      S1:
+        name: "Generate final report"
+        status: pending
+        files: ["AUDIT-REPORT.md"]
+
+errors: []
+
+checkpoints: []

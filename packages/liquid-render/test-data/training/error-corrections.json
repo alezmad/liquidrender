@@ -1,0 +1,304 @@
+{
+  "corrections": [
+    {
+      "id": "err-001",
+      "error": "Kp revenue",
+      "correction": "Kp :revenue",
+      "explanation": "Field bindings require : prefix"
+    },
+    {
+      "id": "err-002",
+      "error": "Bt Submit >click",
+      "correction": "Bt \"Submit\" >click",
+      "explanation": "Labels must be quoted strings"
+    },
+    {
+      "id": "err-003",
+      "error": "Tx Hello World",
+      "correction": "Tx \"Hello World\"",
+      "explanation": "Static text must be quoted"
+    },
+    {
+      "id": "err-004",
+      "error": "Kp :revenue blue",
+      "correction": "Kp :revenue #blue",
+      "explanation": "Color modifiers require # prefix"
+    },
+    {
+      "id": "err-005",
+      "error": "Kp :revenue high",
+      "correction": "Kp :revenue !high",
+      "explanation": "Priority modifiers require ! prefix"
+    },
+    {
+      "id": "err-006",
+      "error": "Kp :revenue active",
+      "correction": "Kp :revenue @active",
+      "explanation": "Signal bindings require @ prefix"
+    },
+    {
+      "id": "err-007",
+      "error": "Bt \"Submit\" click",
+      "correction": "Bt \"Submit\" >click",
+      "explanation": "Emit signals require > prefix"
+    },
+    {
+      "id": "err-008",
+      "error": "Tb :users update",
+      "correction": "Tb :users <update",
+      "explanation": "Receive signals require < prefix"
+    },
+    {
+      "id": "err-009",
+      "error": "Kp :revenue @active=true",
+      "correction": "Kp :revenue ?@active=true",
+      "explanation": "Conditionals require ? prefix"
+    },
+    {
+      "id": "err-010",
+      "error": "[Kp :revenue Kp :orders]",
+      "correction": "[Kp :revenue, Kp :orders]",
+      "explanation": "Block children must be comma-separated"
+    },
+    {
+      "id": "err-011",
+      "error": "Kp :revenue, Kp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Top-level components are correctly comma-separated"
+    },
+    {
+      "id": "err-012",
+      "error": "Fm email",
+      "correction": "Fm :email",
+      "explanation": "Form fields must bind to data with : prefix"
+    },
+    {
+      "id": "err-013",
+      "error": "Ln salesData",
+      "correction": "Ln :salesData",
+      "explanation": "Chart data must bind to field with : prefix"
+    },
+    {
+      "id": "err-014",
+      "error": "Pi :data \"Chart\"",
+      "correction": "Pi :data \"Chart\"",
+      "explanation": "Correct: field binding followed by optional label"
+    },
+    {
+      "id": "err-015",
+      "error": "Br data #blue",
+      "correction": "Br :data #blue",
+      "explanation": "Missing : prefix for field binding"
+    },
+    {
+      "id": "err-016",
+      "error": "Kp :revenue \"Total Revenue\" blue !high",
+      "correction": "Kp :revenue \"Total Revenue\" #blue !high",
+      "explanation": "Color modifier must have # prefix"
+    },
+    {
+      "id": "err-017",
+      "error": "Bt \"Submit\" @formValid",
+      "correction": "Bt \"Submit\" <formValid",
+      "explanation": "Use < for receive, @ for signal binding/context"
+    },
+    {
+      "id": "err-018",
+      "error": "Fm :email <emailChanged",
+      "correction": "Fm :email >emailChanged",
+      "explanation": "Forms emit changes with >, not receive with <"
+    },
+    {
+      "id": "err-019",
+      "error": "Kp :revenue ?active=true",
+      "correction": "Kp :revenue ?@active=true",
+      "explanation": "Conditionals must reference signal with @ after ?"
+    },
+    {
+      "id": "err-020",
+      "error": "Kp :revenue \"Total\" #blue #green",
+      "correction": "Kp :revenue \"Total\" #blue",
+      "explanation": "Only one color modifier allowed per component"
+    },
+    {
+      "id": "err-021",
+      "error": "Kp :revenue !high !critical",
+      "correction": "Kp :revenue !critical",
+      "explanation": "Only one priority modifier allowed per component"
+    },
+    {
+      "id": "err-022",
+      "error": "Kp :revenue @status @mode",
+      "correction": "Kp :revenue @status",
+      "explanation": "Only one signal binding allowed per component"
+    },
+    {
+      "id": "err-023",
+      "error": "Bt \"Click\" >click1 >click2",
+      "correction": "Bt \"Click\" >click1",
+      "explanation": "Only one emit signal allowed per component"
+    },
+    {
+      "id": "err-024",
+      "error": "Tb :users <update1 <update2",
+      "correction": "Tb :users <update1",
+      "explanation": "Only one receive signal allowed per component"
+    },
+    {
+      "id": "err-025",
+      "error": "Kp :revenue ?@active=true ?@enabled=true",
+      "correction": "Kp :revenue ?@active=true",
+      "explanation": "Only one conditional allowed per component"
+    },
+    {
+      "id": "err-026",
+      "error": "Kp revenue \"Total\"",
+      "correction": "Kp :revenue \"Total\"",
+      "explanation": "Field must have : prefix even with label"
+    },
+    {
+      "id": "err-027",
+      "error": "Tx :username \"Name\"",
+      "correction": "Tx :username",
+      "explanation": "Text displays field value OR label, not both"
+    },
+    {
+      "id": "err-028",
+      "error": "Kp :revenue \"Total\" \"Revenue\"",
+      "correction": "Kp :revenue \"Total\"",
+      "explanation": "Only one label allowed per component"
+    },
+    {
+      "id": "err-029",
+      "error": "[Kp :revenue]",
+      "correction": "Kp :revenue",
+      "explanation": "No need for block around single component"
+    },
+    {
+      "id": "err-030",
+      "error": "Kp(:revenue)",
+      "correction": "Kp :revenue",
+      "explanation": "No parentheses in LiquidCode syntax"
+    },
+    {
+      "id": "err-031",
+      "error": "Kp {:revenue}",
+      "correction": "Kp :revenue",
+      "explanation": "No curly braces around field bindings"
+    },
+    {
+      "id": "err-032",
+      "error": "Kp $revenue",
+      "correction": "Kp :revenue",
+      "explanation": "Use : not $ for field bindings"
+    },
+    {
+      "id": "err-033",
+      "error": "Kp @revenue",
+      "correction": "Kp :revenue",
+      "explanation": "Use : for fields, @ is for signal context"
+    },
+    {
+      "id": "err-034",
+      "error": "Kp revenue:",
+      "correction": "Kp :revenue",
+      "explanation": "Prefix goes before field name, not after"
+    },
+    {
+      "id": "err-035",
+      "error": "Kp :revenue color=blue",
+      "correction": "Kp :revenue #blue",
+      "explanation": "Use modifier syntax, not attribute syntax"
+    },
+    {
+      "id": "err-036",
+      "error": "Kp :revenue priority=\"high\"",
+      "correction": "Kp :revenue !high",
+      "explanation": "Use modifier syntax, not attribute syntax"
+    },
+    {
+      "id": "err-037",
+      "error": "Bt label=\"Submit\"",
+      "correction": "Bt \"Submit\"",
+      "explanation": "Labels are direct quoted strings, not attributes"
+    },
+    {
+      "id": "err-038",
+      "error": "Kp field=revenue",
+      "correction": "Kp :revenue",
+      "explanation": "Fields are prefixed bindings, not attributes"
+    },
+    {
+      "id": "err-039",
+      "error": "Kp :revenue if @active",
+      "correction": "Kp :revenue ?@active=true",
+      "explanation": "Conditionals use ? prefix and = comparison"
+    },
+    {
+      "id": "err-040",
+      "error": "Kp :revenue when @active",
+      "correction": "Kp :revenue ?@active=true",
+      "explanation": "Use ? for conditionals, not 'when' keyword"
+    },
+    {
+      "id": "err-041",
+      "error": "Kp :revenue; Kp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Use comma separator, not semicolon"
+    },
+    {
+      "id": "err-042",
+      "error": "Kp :revenue | Kp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Use comma separator, not pipe"
+    },
+    {
+      "id": "err-043",
+      "error": "Kp :revenue and Kp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Use comma separator, not 'and' keyword"
+    },
+    {
+      "id": "err-044",
+      "error": "Kp :revenue then Kp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Use comma separator, not 'then' keyword"
+    },
+    {
+      "id": "err-045",
+      "error": "Kp :revenue\nKp :orders",
+      "correction": "Kp :revenue, Kp :orders",
+      "explanation": "Use comma separator, newlines ignored in parsing"
+    },
+    {
+      "id": "err-046",
+      "error": "KPI :revenue",
+      "correction": "Kp :revenue",
+      "explanation": "Component type is 'Kp' not 'KPI'"
+    },
+    {
+      "id": "err-047",
+      "error": "Button \"Submit\"",
+      "correction": "Bt \"Submit\"",
+      "explanation": "Component type is 'Bt' not 'Button'"
+    },
+    {
+      "id": "err-048",
+      "error": "Text \"Hello\"",
+      "correction": "Tx \"Hello\"",
+      "explanation": "Component type is 'Tx' not 'Text'"
+    },
+    {
+      "id": "err-049",
+      "error": "Line :data",
+      "correction": "Ln :data",
+      "explanation": "Component type is 'Ln' not 'Line'"
+    },
+    {
+      "id": "err-050",
+      "error": "Bar :data",
+      "correction": "Br :data",
+      "explanation": "Component type is 'Br' not 'Bar'"
+    }
+  ]
+}

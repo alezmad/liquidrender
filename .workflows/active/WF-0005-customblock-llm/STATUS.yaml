@@ -1,0 +1,65 @@
+id: WF-0005
+name: CustomBlock LLM Integration
+status: in_progress
+started: 2024-12-25T00:00:00Z
+spec: packages/liquid-render/specs/LLM-REACT-CODE-ARCHITECTURE.md
+
+waves:
+  - id: 0
+    name: Bootstrap
+    status: in_progress
+    tasks:
+      - id: T1
+        name: CustomBlock types
+        file: src/types/custom-component.ts
+        status: pending
+      - id: T2
+        name: Add Custom constant
+        file: src/compiler/constants.ts
+        status: pending
+
+  - id: 1
+    name: Parser + Emitter
+    status: pending
+    parallel: true
+    tasks:
+      - id: T3
+        name: Parser Custom block
+        file: src/compiler/ui-parser.ts
+        status: pending
+      - id: T4
+        name: Emitter CustomBlock
+        file: src/compiler/ui-emitter.ts
+        status: pending
+
+  - id: 2
+    name: Renderer + Registry
+    status: pending
+    parallel: true
+    tasks:
+      - id: T5
+        name: LiquidUI customComponents prop
+        file: src/renderer/LiquidUI.tsx
+        status: pending
+      - id: T6
+        name: Registry custom handling
+        file: src/renderer/component-registry.ts
+        status: pending
+
+  - id: 3
+    name: Integration
+    status: pending
+    tasks:
+      - id: T7
+        name: Example sparkline component
+        file: src/custom/sparkline/
+        status: pending
+      - id: T8
+        name: Tests
+        file: tests/custom-component.test.ts
+        status: pending
+
+validation:
+  typecheck: pending
+  tests: pending
+  build: pending

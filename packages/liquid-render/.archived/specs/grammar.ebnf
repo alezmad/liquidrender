@@ -1,0 +1,265 @@
+(* ============================================================================
+   LiquidCode Formal Grammar (EBNF)
+   Version: 1.0
+
+   A compact UI description language optimized for LLM generation.
+   Designed for: low latency, high specificity, streaming partial render.
+   ============================================================================ *)
+
+(* ============================================================================
+   TOP LEVEL
+   ============================================================================ *)
+
+program = { statement } ;
+
+statement = [ condition ] block { modifier } [ children ]
+          | signal_declaration
+          | layer_definition
+          | comment
+          ;
+
+(* ============================================================================
+   BLOCKS (UI Components)
+   ============================================================================ *)
+
+block = type_code | type_index ;
+
+type_index = digit ;                        (* 0-9: core types *)
+
+type_code = uppercase_letter lowercase_letter [ lowercase_letter ] ;
+                                            (* Kp, Bt, Tx, Ln, Br, etc. *)
+
+(* Core type indices:
+   0 = container, 1 = kpi, 2 = bar, 3 = line, 4 = pie,
+   5 = table, 6 = form, 7 = list, 8 = card, 9 = modal *)
+
+(* ============================================================================
+   MODIFIERS
+   ============================================================================ *)
+
+modifier = field_binding
+         | label
+         | color
+         | priority
+         | signal_emit
+         | signal_receive
+         | signal_both
+         | stream
+         | fidelity
+         | flex
+         | span
+         | size
+         | expression
+         ;
+
+(* Canonical modifier order for emitter:
+   condition TYPE field label color priority signal stream fidelity layout span [children] *)
+
+(* --- Bindings --- *)
+
+field_binding = ":" identifier { "." identifier } ;    (* :revenue, :data.value *)
+
+iterator_binding = ":." [ identifier ] ;               (* :. or :.field *)
+
+index_ref = ":#" ;                                     (* Current iterator index *)
+
+expression = "=" expression_content ;                  (* =revenue/orders *)
+
+expression_content = { expression_char } ;
+
+expression_char = alphanumeric | "." | "/" | "*" | "+" | "-" | "%" | "(" | ")" ;
+
+label = string ;                                       (* "Total Revenue" *)
+
+(* --- Style --- *)
+
+color = "#" ( color_name | color_alias | conditional_color ) ;
+
+color_name = identifier ;                              (* #green, #blue *)
+
+color_alias = "r" | "g" | "b" | "y" | "o" | "p" | "w" | "k" | "gy" | "cy" | "mg" ;
+              (* red, green, blue, yellow, orange, purple, white, black, gray, cyan, magenta *)
+
+conditional_color = "?" condition_expr ":" color_name { "," condition_expr ":" color_name } ;
+                                                       (* #?>=80:green,<80:red *)
+
+size = "%" size_value ;                                (* %lg, %sm, %md *)
+
+size_value = "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" ;
+
+(* --- Layout --- *)
+
+priority = "!" priority_value ;                        (* !h, !p, !s, !0-9 *)
+
+priority_value = "h"                                   (* hero = 100 *)
+               | "p"                                   (* primary = 75 *)
+               | "s"                                   (* secondary = 50 *)
+               | digit                                 (* explicit 0-9 *)
+               | identifier                            (* action name: !submit *)
+               ;
+
+flex = "^" flex_value ;                                (* ^f, ^g, ^row *)
+
+flex_value = "f" | "s" | "g" | "c"                    (* fixed, shrink, grow, collapse *)
+           | "r" | "row"                              (* row direction *)
+           | "col" | "column"                         (* column direction *)
+           ;
+
+span = "*" span_value ;                                (* *3, *f, *h *)
+
+span_value = digit { digit }                           (* *1, *2, ..., *12 *)
+           | "f"                                       (* full *)
+           | "h"                                       (* half *)
+           | "t"                                       (* third *)
+           | "q"                                       (* quarter *)
+           ;
+
+(* --- Signals --- *)
+
+signal_declaration = "@" identifier ;                  (* @dateRange *)
+
+signal_emit = ">" ( identifier [ "=" value ] | layer_trigger ) ;
+                                                       (* >submit, >tab=1, >/1 *)
+
+layer_trigger = "/" digit { digit } ;                  (* >/1 opens layer 1 *)
+
+signal_receive = "<" identifier ;                      (* <dateRange *)
+
+signal_both = "<>" identifier ;                        (* <>filter (bidirectional) *)
+
+(* --- Streaming & Fidelity --- *)
+
+stream = "~" stream_value ;                            (* ~5s, ~ws://url *)
+
+stream_value = interval | url | "poll" ;
+
+interval = digit { digit } ( "s" | "m" | "h" ) ;       (* 5s, 1m, 24h *)
+
+url = "ws://" { url_char } | "wss://" { url_char } | "sse://" { url_char } ;
+
+fidelity = "$" fidelity_value ;                        (* $lo, $hi, $auto *)
+
+fidelity_value = "lo" | "hi" | "auto" | "skeleton" | "defer" ;
+
+(* ============================================================================
+   STRUCTURE
+   ============================================================================ *)
+
+children = "[" [ block_list ] "]" ;
+
+block_list = statement { "," statement } [ "," ] ;     (* trailing comma allowed *)
+
+(* ============================================================================
+   CONDITIONALS
+   ============================================================================ *)
+
+condition = "?" "@" identifier [ condition_operator value ] ;
+                                                       (* ?@tab=1, ?@active *)
+
+condition_operator = "=" | "!=" | ">" | "<" | ">=" | "<=" ;
+
+value = string | number | identifier | "true" | "false" ;
+
+(* ============================================================================
+   LAYERS (Overlays)
+   ============================================================================ *)
+
+layer_definition = "/" digit { digit } block { modifier } [ children ] ;
+                                                       (* /1 Md "Title" [...] *)
+
+layer_close = "/<" ;                                   (* Close current layer *)
+
+(* ============================================================================
+   LITERALS
+   ============================================================================ *)
+
+string = '"' { string_char | escape_sequence } '"' ;
+
+string_char = ? any character except '"' and '\' ? ;
+
+escape_sequence = "\" ( '"' | "\" | "n" | "t" | "r" | "u" hex hex hex hex ) ;
+
+number = [ "-" ] digit { digit } [ "." digit { digit } ] ;
+
+identifier = ( letter | "_" ) { letter | digit | "_" | "-" } ;
+
+(* ============================================================================
+   COMMENTS
+   ============================================================================ *)
+
+comment = "//" { ? any character except newline ? } newline ;
+
+(* ============================================================================
+   LEXICAL ELEMENTS
+   ============================================================================ *)
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+hex = digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
+
+letter = lowercase_letter | uppercase_letter ;
+
+lowercase_letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+                 | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+uppercase_letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
+                 | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+alphanumeric = letter | digit ;
+
+whitespace = " " | "\t" | "\r" | "\n" ;
+
+newline = "\n" | "\r\n" ;
+
+(* ============================================================================
+   NOTES ON LLM ALIGNMENT
+   ============================================================================ *)
+
+(*
+   LiquidCode grammar is designed for LLM reliability:
+
+   1. UNAMBIGUOUS PREFIXES
+      Every modifier starts with a unique character:
+      : (field), " (label), # (color), ! (priority), @ (declare),
+      > (emit), < (receive), ~ (stream), $ (fidelity), ^ (flex), * (span)
+
+   2. PREDICTABLE STRUCTURE
+      type [modifiers] [children]
+      No context-dependent meanings.
+
+   3. WHITESPACE OPTIONAL
+      Modifiers can be concatenated: Kp:revenue#green!h
+      Or separated: Kp :revenue #green !h
+      Both are valid and equivalent.
+
+   4. CANONICAL OUTPUT
+      Emitter always produces canonical order for consistency in training:
+      ?condition TYPE :field "label" #color !priority @signal >emit <receive
+
+   5. ERROR RESILIENCE
+      Partial input is valid: "Kp" alone is a valid empty KPI.
+      Streaming parser handles incomplete tokens gracefully.
+*)
+
+(* ============================================================================
+   EXAMPLES
+   ============================================================================ *)
+
+(* Simple:
+   Kp :revenue
+   Bt "Submit" !submit
+   Tx "Hello World"
+*)
+
+(* Medium:
+   0 ^row [Kp :revenue #green, Kp :orders #blue, Kp :customers #purple]
+   Fm [In :name "Name", In :email "Email", Bt "Submit" !submit]
+*)
+
+(* Complex:
+   @dateRange
+   0 ^row [Kp :revenue #green !h, Kp :orders #blue !p, Kp :customers #purple !s]
+   Ln :trend <dateRange
+   Tb :transactions [:date, :customer, :amount, :status] <search <dateRange
+   /1 Md "Details" [Tx :info, Bt "Close" /<]
+*)

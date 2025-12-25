@@ -249,6 +249,15 @@ Single digit for the 10 most common types:
 | `Pp` | popover | Popover/dropdown |
 | `Tl` | tooltip | Tooltip |
 | `Ac` | accordion | Collapsible sections |
+| `Sd` | sidebar | Sidebar layout |
+
+**Navigation:**
+| Code | Type | Description |
+|------|------|-------------|
+| `Hr` | header | Page header |
+| `Ts` | tabs | Tab container |
+| `Bc` | breadcrumb | Breadcrumb trail |
+| `Nv` | nav | Navigation menu |
 
 **Data Display:**
 | Code | Type | Description |
@@ -258,7 +267,8 @@ Single digit for the 10 most common types:
 | `Ic` | icon | Icon |
 | `Im` | image | Image |
 | `Av` | avatar | User avatar |
-| `Tg` | tag | Tag/badge/chip |
+| `Tg` | tag | Tag/chip |
+| `Bg` | badge | Badge/label |
 | `Pg` | progress | Progress bar |
 | `Gn` | gauge | Gauge/meter |
 | `Rt` | rating | Star rating |
@@ -269,6 +279,7 @@ Single digit for the 10 most common types:
 |------|------|-------------|
 | `Bt` | button | Button |
 | `In` | input | Text input |
+| `Ta` | textarea | Multi-line text input |
 | `Se` | select | Dropdown select |
 | `Sw` | switch | Toggle switch |
 | `Ck` | checkbox | Checkbox |
@@ -276,6 +287,7 @@ Single digit for the 10 most common types:
 | `Rg` | range | Slider/range |
 | `Cl` | color | Color picker |
 | `Dt` | date | Date picker |
+| `Dr` | daterange | Date range picker |
 | `Tm` | time | Time picker |
 | `Up` | upload | File upload |
 | `Ot` | otp | OTP input |
@@ -283,6 +295,8 @@ Single digit for the 10 most common types:
 **Charts:**
 | Code | Type | Description |
 |------|------|-------------|
+| `Ar` | area | Area chart |
+| `Sc` | scatter | Scatter plot |
 | `Hm` | heatmap | Heatmap |
 | `Sn` | sankey | Sankey diagram |
 | `Tr` | tree | Tree view |
@@ -305,6 +319,21 @@ Single digit for the 10 most common types:
 | `Kb` | kanban | Kanban board |
 | `Ca` | calendar | Calendar view |
 | `Ti` | timeline | Timeline |
+
+**Child Types (used within parent components):**
+| Code | Type | Parent | Description |
+|------|------|--------|-------------|
+| `opt` | option | Select, Radio | Dropdown/radio option |
+| `preset` | preset | DateRange | Date range preset |
+| `step` | step | Stepper | Step definition |
+| `tab` | tab | Tabs | Tab item |
+| `crumb` | crumb | Breadcrumb | Breadcrumb item |
+| `nav` | nav | Sidebar | Navigation item |
+
+**Custom Components:**
+| Code | Type | Description |
+|------|------|-------------|
+| `Custom` | custom | LLM-generated component (requires componentId) |
 
 ---
 
@@ -361,6 +390,10 @@ Bt "Submit"                 # Button label
 ^s    # Shrink
 ^g    # Grow
 ^c    # Collapse
+^r    # Row direction (alias: ^row)
+^row  # Row direction (flex-direction: row)
+^col  # Column direction (alias: ^column)
+^column  # Column direction (flex-direction: column)
 ```
 
 **Span:** `*` controls width
@@ -406,6 +439,21 @@ Tx "Error" #red             # Red text
 1 :value #?>=80:green,<80:red   # Conditional color
 ```
 
+**Color Aliases:**
+| Alias | Expands To |
+|-------|------------|
+| `#r` | red |
+| `#g` | green |
+| `#b` | blue |
+| `#y` | yellow |
+| `#o` | orange |
+| `#p` | purple |
+| `#w` | white |
+| `#k` | black |
+| `#gy` | gray |
+| `#cy` | cyan |
+| `#mg` | magenta |
+
 **Size:** `%`
 ```liquid
 Tx "Title" %lg              # Large text
@@ -428,7 +476,19 @@ Bt "Reset" !reset           # Form reset
 Bt "Close" !close           # Close modal
 ```
 
-### §4.6 Streaming Modifiers
+### §4.6 Range Parameters
+
+Range/slider components accept numeric parameters for min, max, and optional step:
+
+```liquid
+Rg :volume "Volume" 0 100       # min=0, max=100
+Rg :rating "Rating" 1 5 1       # min=1, max=5, step=1
+Rg :temperature 0 100 0.5       # min=0, max=100, step=0.5
+```
+
+Format: `Rg :binding ["Label"] min max [step]`
+
+### §4.7 Streaming Modifiers
 
 Real-time data source bindings with `~` prefix:
 
@@ -451,7 +511,7 @@ Kp :cpu ~5s, Kp :memory ~5s, Kp :disk ~5s
 Tb :events ~sse://logs.example.com/stream
 ```
 
-### §4.7 Fidelity Modifiers
+### §4.8 Fidelity Modifiers
 
 Adaptive rendering fidelity with `$` prefix:
 
@@ -478,6 +538,19 @@ Tb :data $skeleton
 ```
 
 **LLM Token Efficiency:** Use `$lo` for rapid iteration (fewer tokens for preview), switch to `$hi` for production.
+
+### §4.9 Custom Components
+
+LLM-generated components are referenced by componentId:
+
+```liquid
+Custom "sparkline" :data #green        # Custom sparkline with data binding
+Custom "map-view" :locations           # Custom map component
+```
+
+Format: `Custom "componentId" [bindings] [modifiers]`
+
+Custom components are registered at runtime via `customComponents` prop. See `LLM-REACT-CODE-ARCHITECTURE.md` for implementation details.
 
 ---
 
@@ -1028,10 +1101,14 @@ interface RenderOptions {
 | Survey Schema Types | ✅ Done | `@repo/liquid-render` |
 | Survey Validator | ✅ Done | `@repo/liquid-render` |
 | Survey Engine | ✅ Done | `@repo/liquid-render` |
-| LiquidCode Compiler | 📋 Planned | TCS Phase 1 |
-| Hybrid Parser | 📋 Planned | TCS Phase 1 |
-| React Renderer | 📋 Planned | TCS Phase 2 |
-| Analytics Charts | 📋 Planned | TCS Phase 3 |
+| LiquidCode Scanner | ✅ Done | `@repo/liquid-render` |
+| LiquidCode Parser | ✅ Done | `@repo/liquid-render` |
+| LiquidCode Emitter | ✅ Done | `@repo/liquid-render` |
+| Streaming Parser | ✅ Done | `@repo/liquid-render` |
+| Hybrid Parser | ✅ Done | `@repo/liquid-render` |
+| React Renderer | ✅ Done | `@repo/liquid-render` |
+| Custom Components | ✅ Done | `@repo/liquid-render` |
+| Analytics Charts | 📋 Planned | recharts integration |
 
 ---
 

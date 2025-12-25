@@ -198,5 +198,5 @@ function compareBlocks(
 
 // Re-export types and classes
 export type { LiquidSchema, Block, Layer, Signal, Binding, Layout, SignalBinding, Style } from './ui-emitter';
-export type { UIAST, BlockAST, LayerAST, ModifierAST, BindingAST } from './ui-parser';
+export type { UIAST, BlockAST, LayerAST, ModifierAST, BindingAST, ParserWarning } from './ui-parser';
 export { LiquidCodeError } from './ui-scanner';

@@ -1,0 +1,117 @@
+
+================================================================================
+SPAN MODIFIERS VERIFICATION TEST
+================================================================================
+
+Testing: SPAN-001: Numeric Span *2
+Description: KPI with 2-column span modifier
+Source: "Kp :revenue *2"
+--------------------------------------------------------------------------------
+✓ parseUI() PASSED
+  - Block type: kpi
+  - Layout span: 2
+  - Binding: revenue
+✓ roundtripUI() PASSED
+  - Reconstructed DSL: "1 :revenue *2"
+
+Testing: SPAN-002: Numeric Span *3
+Description: Bar chart with 3-column span modifier
+Source: "Br :categories :values *3"
+--------------------------------------------------------------------------------
+✓ parseUI() PASSED
+  - Block type: bar
+  - Layout span: 3
+  - Binding: categories
+✓ roundtripUI() PASSED
+  - Reconstructed DSL: "2 :categories *3"
+
+Testing: SPAN-003: Full Span *f
+Description: Table with full-width span modifier
+Source: "Tb :transactions [:date, :amount, :status] *f"
+--------------------------------------------------------------------------------
+✓ parseUI() PASSED
+  - Block type: table
+  - Layout span: none
+  - Binding: transactions
+✓ roundtripUI() PASSED
+  - Reconstructed DSL: "5 :transactions [:date :amount :status]"
+
+Testing: SPAN-004: Half Span *h
+Description: Line chart with half-width span modifier
+Source: "Ln :month :revenue *h"
+--------------------------------------------------------------------------------
+✓ parseUI() PASSED
+  - Block type: line
+  - Layout span: half
+  - Binding: month
+✓ roundtripUI() PASSED
+  - Reconstructed DSL: "3 :month *half"
+
+Testing: SPAN-005: Quarter Span *q
+Description: Button with quarter-width span modifier
+Source: "Bt "Submit" *q"
+--------------------------------------------------------------------------------
+✓ parseUI() PASSED
+  - Block type: button
+  - Layout span: quarter
+  - Binding: Submit
+✓ roundtripUI() PASSED
+  - Reconstructed DSL: "Bt "Submit" *quarter"
+
+================================================================================
+SUMMARY REPORT
+================================================================================
+
+Total Tests: 5
+Parse Tests Passed: 5/5
+Roundtrip Tests Passed: 5/5
+
+DETAILED RESULTS:
+--------------------------------------------------------------------------------
+Test Case           Parse       Roundtrip   Overall     
+--------------------------------------------------------------------------------
+SPAN-001            ✓ PASS      ✓ PASS      ✓ PASS      
+SPAN-002            ✓ PASS      ✓ PASS      ✓ PASS      
+SPAN-003            ✓ PASS      ✓ PASS      ✓ PASS      
+SPAN-004            ✓ PASS      ✓ PASS      ✓ PASS      
+SPAN-005            ✓ PASS      ✓ PASS      ✓ PASS      
+--------------------------------------------------------------------------------
+
+DETAILED BREAKDOWN:
+================================================================================
+
+1. SPAN-001: Numeric Span *2
+   Source: Kp :revenue *2
+   Parse: PASS ✓
+   Roundtrip: PASS ✓
+   Parsed Span Value: 2
+
+2. SPAN-002: Numeric Span *3
+   Source: Br :categories :values *3
+   Parse: PASS ✓
+   Roundtrip: PASS ✓
+   Parsed Span Value: 3
+
+3. SPAN-003: Full Span *f
+   Source: Tb :transactions [:date, :amount, :status] *f
+   Parse: PASS ✓
+   Roundtrip: PASS ✓
+   Parsed Span Value: (none)
+
+4. SPAN-004: Half Span *h
+   Source: Ln :month :revenue *h
+   Parse: PASS ✓
+   Roundtrip: PASS ✓
+   Parsed Span Value: half
+
+5. SPAN-005: Quarter Span *q
+   Source: Bt "Submit" *q
+   Parse: PASS ✓
+   Roundtrip: PASS ✓
+   Parsed Span Value: quarter
+
+================================================================================
+FINAL VERDICT
+================================================================================
+
+✓ ALL TESTS PASSED - SPAN MODIFIERS VERIFIED

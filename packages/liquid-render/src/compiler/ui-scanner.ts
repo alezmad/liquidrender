@@ -324,6 +324,14 @@ export class UIScanner {
         // Ignore whitespace
         break;
 
+      case '-':
+        // Negative number (for range parameters like Rg :temp -10 50)
+        if (this.isDigit(this.peek())) {
+          this.negativeNumber();
+        }
+        // Otherwise ignore standalone minus (not valid in DSL)
+        break;
+
       default:
         if (this.isDigit(c)) {
           this.numberOrType(c);
@@ -446,6 +454,18 @@ export class UIScanner {
       if (c !== ':' && this.isPrefixChar(c)) break;
       value += this.advance();
     }
+
+    // Normalize double-protocol edge case:
+    // ~sse://https://example.com -> ~sse:https://example.com (strip redundant //)
+    // ~ws://wss://example.com -> ~ws:wss://example.com (strip redundant //)
+    // The DSL protocol prefix (sse://, ws://) should not duplicate the URL's protocol
+    const doubleProtocolMatch = value.match(/^~(sse|ws):\/\/(https?|wss?):\/\/(.+)$/);
+    if (doubleProtocolMatch) {
+      const [, dslProtocol, urlProtocol, rest] = doubleProtocolMatch;
+      // Reconstruct with just the actual URL (strip DSL protocol prefix's //)
+      value = `~${dslProtocol}:${urlProtocol}://${rest}`;
+    }
+
     this.addToken('STREAM', value);
   }
 
@@ -573,6 +593,35 @@ export class UIScanner {
 
     this.tokens.push({
       type: 'STRING',
+      value,
+      line: this.line,
+      column: startColumn,
+    });
+  }
+
+  /**
+   * Handle negative numbers (for range parameters like Rg :temp -10 50)
+   * Called when we've seen a '-' followed by a digit
+   */
+  private negativeNumber(): void {
+    const startColumn = this.column - 1; // Account for the '-' we already consumed
+    let value = '-';
+
+    // Consume integer part
+    while (this.isDigit(this.peek())) {
+      value += this.advance();
+    }
+
+    // Handle decimal part
+    if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+      value += this.advance(); // consume '.'
+      while (this.isDigit(this.peek())) {
+        value += this.advance();
+      }
+    }
+
+    this.tokens.push({
+      type: 'NUMBER',
       value,
       line: this.line,
       column: startColumn,

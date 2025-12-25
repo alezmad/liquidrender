@@ -1,7 +1,7 @@
 // LiquidCode UI Emitter - Code Generation
 // Converts AST to LiquidSchema or back to LiquidCode DSL
 
-import type { UIAST, BlockAST, LayerAST, ModifierAST, BindingAST, SignalDeclaration } from './ui-parser';
+import type { UIAST, BlockAST, LayerAST, ModifierAST, BindingAST, SignalDeclaration, EmbeddedSurveyAST } from './ui-parser';
 import { UI_TYPE_TO_CODE, UI_TYPE_TO_INDEX } from './constants';
 
 // ============================================================================
@@ -39,11 +39,14 @@ export interface Block {
   action?: string;
   children?: Block[];
   columns?: string[];  // For tables: column field names
-  survey?: unknown; // GraphSurvey when parsed
+  survey?: EmbeddedSurveyAST;
   // Range/numeric input properties
   min?: number;
   max?: number;
   step?: number;
+  // Custom component (LLM-generated)
+  componentId?: string;  // For type='custom': registered component identifier
+  props?: Record<string, unknown>;  // Additional serializable props
 }
 
 export interface Binding {
@@ -379,6 +382,16 @@ export class UIEmitter {
       };
     }
 
+    // Custom component
+    if (astBlock.componentId) {
+      block.componentId = astBlock.componentId;
+    }
+
+    // Custom component props (for roundtrip preservation)
+    if ((astBlock as any).props) {
+      block.props = (astBlock as any).props;
+    }
+
     return block;
   }
 
@@ -551,6 +564,13 @@ export class UIEmitter {
     } else {
       const typeCode = UI_TYPE_TO_CODE[block.type] || block.typeCode || 'Cn';
       parts.push(typeCode);
+    }
+
+    // Custom componentId (after type)
+    if (block.type === 'custom' && block.componentId) {
+      // componentId is from BlockAST which has string componentId
+      const componentIdValue = (block as unknown as { componentId: string }).componentId;
+      parts.push(`"${this.escapeString(componentIdValue)}"`);
     }
 
     // Bindings
@@ -925,7 +945,7 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
 
     // Survey
     if (block.survey) {
-      astBlock.survey = block.survey as any;
+      astBlock.survey = block.survey;
     }
 
     // Range parameters
@@ -937,6 +957,16 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
     }
     if (block.step !== undefined) {
       astBlock.step = block.step;
+    }
+
+    // Custom component
+    if (block.componentId) {
+      astBlock.componentId = block.componentId;
+    }
+
+    // Custom component props (for roundtrip preservation)
+    if (block.props) {
+      (astBlock as any).props = block.props;
     }
 
     return astBlock;

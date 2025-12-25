@@ -37,6 +37,7 @@ const styles = {
   wrapper: mergeStyles(cardStyles(), {
     padding: tokens.spacing.md,
     minHeight: '280px',
+    outline: 'none',
   }),
 
   header: {
@@ -54,6 +55,18 @@ const styles = {
     color: tokens.colors.mutedForeground,
     fontSize: tokens.fontSize.sm,
     textAlign: 'center',
+  } as React.CSSProperties,
+
+  srOnly: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
   } as React.CSSProperties,
 };
 
@@ -93,6 +106,25 @@ function detectAllNumericFields(data: ChartDataPoint[], xField: string): string[
   );
 }
 
+function generateChartDescription(
+  data: ChartDataPoint[],
+  xKey: string,
+  yKeys: string[],
+  label?: string
+): string {
+  const count = data.length;
+  const seriesCount = yKeys.length;
+  const baseDesc = label ? `${label}: ` : '';
+
+  if (count === 0) return `${baseDesc}Empty bar chart`;
+
+  const seriesInfo = seriesCount > 1
+    ? `${seriesCount} data series`
+    : `showing ${fieldToLabel(yKeys[0] || 'values')}`;
+
+  return `${baseDesc}Bar chart with ${count} categories, ${seriesInfo}`;
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -101,6 +133,7 @@ export function BarChartComponent({ block, data: context }: LiquidComponentProps
   const rawData = resolveBinding(block.binding, context);
   const chartData = Array.isArray(rawData) ? rawData as ChartDataPoint[] : [];
   const label = block.label;
+  const chartId = useMemo(() => `bar-chart-${Math.random().toString(36).slice(2, 9)}`, []);
 
   const { x: xKey, y: yKey } = useMemo(() => {
     const explicitX = block.binding?.x;
@@ -116,10 +149,21 @@ export function BarChartComponent({ block, data: context }: LiquidComponentProps
     [chartData, xKey]
   );
 
+  // Generate accessibility description
+  const chartDescription = useMemo(
+    () => generateChartDescription(chartData, xKey, numericFields.length > 0 ? numericFields : [yKey], label),
+    [chartData, xKey, numericFields, yKey, label]
+  );
+
   // SSR fallback
   if (!isBrowser) {
     return (
-      <div data-liquid-type="bar" style={styles.wrapper}>
+      <div
+        data-liquid-type="bar"
+        style={styles.wrapper}
+        role="img"
+        aria-label={chartDescription}
+      >
         {label && <div style={styles.header}>{label}</div>}
         <div style={styles.placeholder}>
           [Bar chart • {chartData.length} items • x: {xKey}, y: {yKey}]
@@ -130,7 +174,12 @@ export function BarChartComponent({ block, data: context }: LiquidComponentProps
 
   if (chartData.length === 0) {
     return (
-      <div data-liquid-type="bar" style={styles.wrapper}>
+      <div
+        data-liquid-type="bar"
+        style={styles.wrapper}
+        role="img"
+        aria-label={`${label ? label + ': ' : ''}Empty bar chart - no data available`}
+      >
         {label && <div style={styles.header}>{label}</div>}
         <div style={styles.placeholder}>No data available</div>
       </div>
@@ -138,8 +187,40 @@ export function BarChartComponent({ block, data: context }: LiquidComponentProps
   }
 
   return (
-    <div data-liquid-type="bar" style={styles.wrapper}>
-      {label && <div style={styles.header}>{label}</div>}
+    <div
+      data-liquid-type="bar"
+      style={styles.wrapper}
+      role="img"
+      aria-label={chartDescription}
+      tabIndex={0}
+      aria-describedby={`${chartId}-desc`}
+    >
+      {label && <div id={`${chartId}-title`} style={styles.header}>{label}</div>}
+      {/* Screen reader accessible data table */}
+      <table id={`${chartId}-desc`} style={styles.srOnly}>
+        <caption>{chartDescription}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{fieldToLabel(xKey)}</th>
+            {(numericFields.length > 0 ? numericFields : [yKey]).map(field => (
+              <th key={field} scope="col">{fieldToLabel(field)}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {chartData.slice(0, 10).map((row, i) => (
+            <tr key={i}>
+              <td>{String(row[xKey] ?? '')}</td>
+              {(numericFields.length > 0 ? numericFields : [yKey]).map(field => (
+                <td key={field}>{String(row[field] ?? '')}</td>
+              ))}
+            </tr>
+          ))}
+          {chartData.length > 10 && (
+            <tr><td colSpan={numericFields.length + 1}>...and {chartData.length - 10} more rows</td></tr>
+          )}
+        </tbody>
+      </table>
       <ResponsiveContainer width="100%" height={220}>
         <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={tokens.colors.border} />

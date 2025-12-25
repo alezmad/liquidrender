@@ -60,8 +60,14 @@ export interface LiquidUIProps {
   schema: LiquidSchema;
   /** Data for binding resolution */
   data: DataContext;
-  /** Optional custom components to override defaults */
+  /** Optional custom components to override defaults by type */
   components?: Record<string, React.ComponentType<LiquidComponentProps>>;
+  /**
+   * Custom components registered by componentId (for type='custom' blocks)
+   * Used by LLM-generated components
+   * @example { 'sparkline': SparklineComponent, 'map-view': MapComponent }
+   */
+  customComponents?: Record<string, React.ComponentType<LiquidComponentProps>>;
   /** Optional className for the root element */
   className?: string;
   /** Optional initial signal values */
@@ -74,6 +80,7 @@ export function LiquidUI({
   schema,
   data,
   components,
+  customComponents,
   className,
   initialSignals = {},
   onSignalChange
@@ -117,7 +124,8 @@ export function LiquidUI({
           <BlockRenderer
             block={schema.layers[0].root}
             data={data}
-            customComponents={components}
+            typeComponents={components}
+            customComponents={customComponents}
           />
         )}
       </div>
@@ -132,10 +140,13 @@ export function LiquidUI({
 interface BlockRendererProps {
   block: Block;
   data: DataContext;
+  /** Override built-in components by type (e.g., 'kpi', 'button') */
+  typeComponents?: Record<string, React.ComponentType<LiquidComponentProps>>;
+  /** Custom components by componentId (for type='custom' blocks) */
   customComponents?: Record<string, React.ComponentType<LiquidComponentProps>>;
 }
 
-function BlockRenderer({ block, data, customComponents }: BlockRendererProps): React.ReactElement | null {
+function BlockRenderer({ block, data, typeComponents, customComponents }: BlockRendererProps): React.ReactElement | null {
   const { signals } = useLiquidContext();
 
   // Check signal condition - skip rendering if condition not met
@@ -145,6 +156,48 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
     if (currentValue !== requiredValue) {
       return null; // Don't render - condition not met
     }
+  }
+
+  // Handle custom components (type='custom' with componentId)
+  if (block.type === 'custom' && block.componentId) {
+    const CustomComponent = customComponents?.[block.componentId];
+    if (!CustomComponent) {
+      // Render warning for unregistered custom component
+      return (
+        <div
+          data-liquid-type="custom"
+          data-component-id={block.componentId}
+          style={{
+            padding: '1rem',
+            border: '2px dashed #f59e0b',
+            borderRadius: '0.5rem',
+            backgroundColor: '#fffbeb',
+            color: '#92400e',
+            fontSize: '0.875rem',
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+            Custom component not registered
+          </div>
+          <code style={{ fontSize: '0.75rem' }}>
+            componentId: &quot;{block.componentId}&quot;
+          </code>
+        </div>
+      );
+    }
+    return (
+      <CustomComponent block={block} data={data}>
+        {block.children?.map((child, i) => (
+          <BlockRenderer
+            key={child.uid || i}
+            block={child}
+            data={data}
+            typeComponents={typeComponents}
+            customComponents={customComponents}
+          />
+        ))}
+      </CustomComponent>
+    );
   }
 
   // List/Repeater handling: Check if this is a list block with iterator binding
@@ -198,6 +251,7 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
                   key={child.uid || i}
                   block={child}
                   data={itemContext}
+                  typeComponents={typeComponents}
                   customComponents={customComponents}
                 />
               ))}
@@ -208,21 +262,22 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
     );
   }
 
-  // Check for custom component first
-  const CustomComponent = customComponents?.[block.type] ?? getComponent(block.type);
+  // Check for type override or registered component
+  const TypeComponent = typeComponents?.[block.type] ?? getComponent(block.type);
 
-  if (CustomComponent) {
+  if (TypeComponent) {
     return (
-      <CustomComponent block={block} data={data}>
+      <TypeComponent block={block} data={data}>
         {block.children?.map((child, i) => (
           <BlockRenderer
             key={child.uid || i}
             block={child}
             data={data}
+            typeComponents={typeComponents}
             customComponents={customComponents}
           />
         ))}
-      </CustomComponent>
+      </TypeComponent>
     );
   }
 
@@ -234,6 +289,7 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
           key={child.uid || i}
           block={child}
           data={data}
+          typeComponents={typeComponents}
           customComponents={customComponents}
         />
       ))}
@@ -261,7 +317,7 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
     case 'button':
       return <Button block={block} data={data} />;
     default:
-      return <FallbackBlock block={block} data={data} customComponents={customComponents} />;
+      return <FallbackBlock block={block} data={data} typeComponents={typeComponents} customComponents={customComponents} />;
   }
 }
 
@@ -269,7 +325,7 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
 // Fallback Component (for unknown block types)
 // ============================================================================
 
-function FallbackBlock({ block, data, customComponents }: BlockRendererProps): React.ReactElement {
+function FallbackBlock({ block, data, typeComponents, customComponents }: BlockRendererProps): React.ReactElement {
   return (
     <div
       data-liquid-type={block.type}
@@ -288,6 +344,7 @@ function FallbackBlock({ block, data, customComponents }: BlockRendererProps): R
           key={child.uid || i}
           block={child}
           data={data}
+          typeComponents={typeComponents}
           customComponents={customComponents}
         />
       ))}

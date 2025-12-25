@@ -5,6 +5,253 @@
 
 ---
 
+## PRE-FLIGHT PROTOCOL (Before Any Workflow)
+
+**Every workflow execution MUST complete pre-flight checks before Wave 0:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PRE-FLIGHT PROTOCOL                                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. GIT STATE CHECK                                             │
+│     ├── Run: python .context/workflows/scripts/preflight-check.py WF-[ID]
+│     ├── If dirty: Suggest commit message                        │
+│     ├── User decides: [C]ommit / [P]roceed / [X] Abort          │
+│     └── Tag starting point: git tag WF-[ID]-start               │
+│                                                                 │
+│  2. CONTEXT GATHERING                                           │
+│     ├── Run: python .context/workflows/scripts/gather-context.py <dir>
+│     ├── Analyze required_reading from WORKFLOW.md               │
+│     ├── Estimate token counts                                   │
+│     ├── Apply budget constraints (default 20k tokens)           │
+│     └── Generate CONTEXT-LIBRARY.yaml                           │
+│                                                                 │
+│  3. CONTEXT SUMMARY DISPLAY                                     │
+│     ├── Show user what files will be loaded                     │
+│     ├── Show budget utilization                                 │
+│     ├── List deferred files (over budget)                       │
+│     └── User confirms or edits before proceeding                │
+│                                                                 │
+│  4. RESUME CHECK (if resuming paused workflow)                  │
+│     ├── Run: python .context/workflows/scripts/verify-context.py <dir>
+│     ├── Compare current file hashes against stored              │
+│     ├── Report drift (changed/deleted files)                    │
+│     └── User decides: [R]esume / [U]pdate / [S]tart fresh       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Why Pre-Flight Matters
+
+| Problem | Solution |
+|---------|----------|
+| **Context blindness** | CONTEXT-LIBRARY.yaml records what agent "knows" |
+| **Context overflow** | Token budget prevents compaction spiral |
+| **Dirty git state** | Commit suggestion enables clean rollback |
+| **Resume ambiguity** | Hash verification detects drift |
+
+### Pre-Flight Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `preflight-check.py` | Git state analysis, commit suggestion |
+| `gather-context.py` | Build CONTEXT-LIBRARY.yaml with budget |
+| `verify-context.py` | Check file integrity for resume |
+| `estimate-tokens.py` | Token counting utility |
+
+### Context Budget System
+
+The workflow uses tiered context loading to prevent overflow:
+
+```yaml
+budget:
+  total: 20000          # Total tokens for context
+  core: 8000            # Always loaded, entire workflow
+  wave_specific: 8000   # Loaded per-wave, dropped after checkpoint
+  on_demand: 4000       # Reserved for agent-requested files
+```
+
+**Loading Strategy:**
+- **Core**: Essential specs/guides - loaded at start, never dropped
+- **Wave-specific**: Task-relevant files - loaded per wave, dropped after
+- **On-demand**: Agent requests during execution - auto-dropped after use
+
+This prevents the death spiral: load everything → overflow → compact → lose context → mistakes → re-read → overflow again.
+
+### User Confirmation Before Wave 0
+
+**ALWAYS ask the user before starting Wave 0:**
+
+```
+╔═══════════════════════════════════════════════════════════════╗
+║  READY TO START: WF-[ID]                                      ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  ✓ Git checkpoint: [commit] (tagged: WF-[ID]-start)           ║
+║  ✓ Context gathered: X,XXX tokens (Y files)                   ║
+║  ✓ Workflow directory created                                 ║
+║                                                               ║
+║  Wave 0 will create shared types and structure.               ║
+║  Waves 1-N will launch PARALLEL SUBTASKS for speed.           ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+**Start Wave 0?** [Y/n]
+```
+
+### CRITICAL: Parallel Subtask Execution
+
+**For maximum speed, ALWAYS launch non-conflicting tasks as parallel subtasks:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PARALLEL EXECUTION RULE                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  IF tasks write to DIFFERENT files:                             │
+│     → Launch ALL as PARALLEL SUBTASKS in ONE message            │
+│     → 3 tasks in parallel = 3x faster than sequential           │
+│                                                                 │
+│  IF tasks write to SAME file:                                   │
+│     → Run SEQUENTIALLY to avoid conflicts                       │
+│                                                                 │
+│  BARREL/INDEX files:                                            │
+│     → Update AFTER wave completes (orchestrator handles)        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Pattern:
+  # In ONE message, launch all parallel tasks:
+  [Task: T1, run_in_background=true]
+  [Task: T2, run_in_background=true]
+  [Task: T3, run_in_background=true]
+
+  # Then collect results:
+  [TaskOutput: T1, block=true]
+  [TaskOutput: T2, block=true]
+  [TaskOutput: T3, block=true]
+```
+
+### CONTEXT-LIBRARY.yaml Schema
+
+See `.context/workflows/schemas/CONTEXT-LIBRARY.schema.yaml` for full schema.
+
+```yaml
+workflow_id: WF-0006
+created_at: 2025-12-25T10:00:00Z
+context_mode: fresh  # fresh | resume | minimal
+
+git_checkpoint:
+  branch: main
+  commit: 9ae2f2f
+  tag: WF-0006-start
+  was_clean: true
+
+budget:
+  total: 20000
+  core: 8000
+  wave_specific: 8000
+  on_demand: 4000
+
+sources:
+  core:
+    - path: specs/LIQUID-RENDER-SPEC.md
+      hash: sha256:a1b2c3d4e5f6
+      tokens: 4200
+      purpose: "DSL grammar and syntax"
+
+deferred:
+  - path: _bmad-output/architecture.md
+    tokens: 8500
+    reason: "Exceeds core budget"
+
+integrity:
+  last_verified: 2025-12-25T10:00:00Z
+  files_changed: 0
+```
+
+### WORKFLOW-LAUNCHER.md Template
+
+Generate this file for fresh session resume capability:
+
+```markdown
+# Workflow Launcher: WF-[ID] - [NAME]
+
+> Copy this entire file content and paste into a fresh Claude Code session,
+> or run: `/workflow:launch WF-[ID]`
+
+## Quick Resume
+
+\`\`\`
+/workflow:launch WF-[ID]
+\`\`\`
+
+## Context Summary
+
+Files from CONTEXT-LIBRARY.yaml (X,XXX tokens):
+- `path/to/file1.md` - Purpose (~N,NNN tokens)
+- `path/to/file2.md` - Purpose (~N,NNN tokens)
+
+## Workflow State
+
+- **ID**: WF-[ID]
+- **Name**: [NAME]
+- **Status**: [approved | in_progress | paused]
+- **Current Wave**: [N]
+- **Git Tag**: WF-[ID]-start (commit: [hash])
+
+## Key Decisions Made
+
+<!-- Captured from approval conversation -->
+- [Decision 1 from conversation]
+- [Decision 2 from conversation]
+- [Any user preferences noted]
+
+## User Notes
+
+<!-- Add anything important to remember across sessions -->
+
+
+## Launch Instructions
+
+1. Paste this file into a fresh Claude Code session, OR
+2. Run: `/workflow:launch WF-[ID]`
+
+The launcher will:
+- Load context files listed above
+- Read STATUS.yaml for current position
+- Resume from the current wave
+```
+
+### Context Clear Suggestion
+
+After generating WORKFLOW-LAUNCHER.md, if conversation is heavy (>15k tokens):
+
+```
+╔═══════════════════════════════════════════════════════════════╗
+║  SUGGESTION: Clear Context Before Wave 0                      ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  Current conversation: ~18k tokens (heavy)                    ║
+║  CONTEXT-LIBRARY.yaml: 8k tokens (ready)                      ║
+║                                                               ║
+║  Clearing will:                                               ║
+║  • Reset conversation                                         ║
+║  • Workflow state preserved in STATUS.yaml                    ║
+║  • WORKFLOW-LAUNCHER.md ready for fresh start                 ║
+║  • Free ~10k tokens for agent execution                       ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+[C] Clear and run /workflow:launch WF-[ID]
+[S] Skip (continue with current context)
+```
+
+This is **optional** - only suggest when context is genuinely heavy.
+
+---
+
 ## CRITICAL: ITERATIVE PROPOSAL REFINEMENT
 
 **Every workflow MUST follow this iterative approval cycle:**

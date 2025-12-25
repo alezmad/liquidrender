@@ -58,34 +58,56 @@ Set up the workflow directory structure.
    #     accuracy: "92%"
    ```
 
-4. Verify scripts exist:
+4. Create schemas directory:
+   ```bash
+   mkdir -p .context/workflows/schemas
+   ```
+
+5. Verify scripts exist:
    ```bash
    ls .context/workflows/scripts/
    ```
 
    Required scripts:
+
+   **Validation:**
    - validate-wave.sh
    - validate-typescript.sh
    - run-tests.sh
+
+   **Code Generation:**
    - check-exports.py
    - generate-barrel.py
+
+   **Workflow Management:**
    - init-workflow.py
+
+   **Documentation:**
    - validate-frontmatter.py
    - collect-docs.py
    - aggregate-module.py
    - aggregate-overview.py
 
-5. Install Python dependency:
+   **Context Management (NEW):**
+   - preflight-check.py     ← Git state + commit suggestion
+   - gather-context.py      ← Build CONTEXT-LIBRARY.yaml
+   - verify-context.py      ← Check integrity for resume
+   - estimate-tokens.py     ← Token counting utility
+
+   **Schema:**
+   - `.context/workflows/schemas/CONTEXT-LIBRARY.schema.yaml`
+
+6. Install Python dependency:
    ```bash
    pip install pyyaml --quiet
    ```
 
-6. Make shell scripts executable:
+7. Make shell scripts executable:
    ```bash
    chmod +x .context/workflows/scripts/*.sh
    ```
 
-7. Confirm setup:
+8. Confirm setup:
    ```
    ## Workflow System Initialized
 
@@ -102,7 +124,7 @@ Set up the workflow directory structure.
    Scripts verified: 10/10
    ```
 
-8. Show available commands:
+9. Show available commands:
    ```
    ## Available Commands
 
@@ -112,6 +134,7 @@ Set up the workflow directory structure.
    | `/workflow:create [task]` | Create a new workflow proposal |
    | `/workflow:status` | Check current workflow progress |
    | `/workflow:resume [ID]` | Resume an interrupted workflow |
+   | `/workflow:launch [ID]` | Launch workflow in fresh session |
    | `/workflow:complete [ID]` | Finalize and archive a workflow |
    | `/workflow:rollback [ID]` | Revert a failed workflow |
    | `/workflow:list` | List all workflows by status |

@@ -74,9 +74,42 @@ Present this structure for approval:
 
 ### 3. Wave Rules
 
-- **Wave 0**: Bootstrap (types, barrel skeleton, dirs)
-- **Wave 1-N**: Parallel tasks with exclusive file ownership
-- **Final Wave**: Integration (wire exports, final validation)
+- **Wave 0**: Bootstrap (types, barrel skeleton, dirs) - SEQUENTIAL
+- **Wave 1-N**: Parallel tasks with exclusive file ownership - **USE SUBTASKS**
+- **Final Wave**: Integration (wire exports, final validation) - SEQUENTIAL
+
+### 3.1 CRITICAL: Parallel Execution with Subtasks
+
+**When tasks have NO file conflicts, ALWAYS launch them as parallel subtasks:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  WAVE EXECUTION STRATEGY                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Wave has conflicts?                                            │
+│  ├── YES → Run tasks SEQUENTIALLY                               │
+│  └── NO  → Launch ALL tasks as PARALLEL SUBTASKS                │
+│                                                                 │
+│  Parallel Launch Pattern:                                       │
+│  ─────────────────────────                                      │
+│  Use Task tool MULTIPLE TIMES in a SINGLE message:              │
+│                                                                 │
+│  [Task tool: T1 - Button component, run_in_background=true]     │
+│  [Task tool: T2 - Input component, run_in_background=true]      │
+│  [Task tool: T3 - Modal component, run_in_background=true]      │
+│                                                                 │
+│  Then wait for ALL with TaskOutput(block=true)                  │
+│                                                                 │
+│  ⚡ This is 3x faster than sequential execution!                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Conflict Detection:**
+- Same file written by multiple tasks = CONFLICT
+- Same barrel/index file = Run barrel update AFTER wave completes
+- Different files = NO CONFLICT → PARALLELIZE
 
 ### 4. Validation Scripts
 
@@ -85,14 +118,170 @@ After each wave, run:
 .context/workflows/scripts/validate-wave.sh @repo/liquid-render
 ```
 
-### 5. On Approval
+### 5. On Approval - Pre-Flight Protocol
 
-1. Create `.workflows/active/WF-[ID]-[name]/`
-2. Create STATUS.yaml
-3. Begin Wave 0 bootstrap
-4. Launch parallel agents for Wave 1
+**Before creating any files, run pre-flight checks:**
 
-### 6. Show Available Commands
+1. **Git State Check**:
+   ```bash
+   python .context/workflows/scripts/preflight-check.py WF-[ID]
+   ```
+   - If dirty: Show suggested commit message
+   - User decides: [C]ommit / [P]roceed / [X] Abort
+   - On commit: `git add -A && git commit -m "chore: pre-WF-[ID] checkpoint"`
+
+2. **Tag Starting Point** (for clean rollback):
+   ```bash
+   git tag "WF-[ID]-start" -m "Pre-workflow checkpoint"
+   ```
+
+3. **Create Workflow Directory**:
+   ```bash
+   mkdir -p .workflows/active/WF-[ID]-[name]/{docs,agents,checkpoints}
+   ```
+
+4. **Gather Context** (with budget management):
+   ```bash
+   python .context/workflows/scripts/gather-context.py .workflows/active/WF-[ID]-[name]
+   ```
+   - Generates CONTEXT-LIBRARY.yaml
+   - Applies token budget (default 20k)
+   - Shows context summary to user
+
+5. **Display Context Summary**:
+   ```
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║  CONTEXT: WF-[ID]                        X,XXX / 20,000 tokens║
+   ╠═══════════════════════════════════════════════════════════════╣
+   ║  [SPEC]  LIQUID-RENDER-SPEC.md   ~4,200 tokens                ║
+   ║  [GUIDE] COMPONENT-GUIDE.md      ~1,800 tokens                ║
+   ║  [DEFER] architecture.md         ~8,500 tokens (over budget)  ║
+   ╚═══════════════════════════════════════════════════════════════╝
+   ```
+
+6. **Create STATUS.yaml** with git checkpoint info
+
+7. **Generate WORKFLOW-LAUNCHER.md** (for fresh session resume):
+
+   Create `.workflows/active/WF-[ID]-[name]/WORKFLOW-LAUNCHER.md`:
+
+   ```markdown
+   # Workflow Launcher: WF-[ID] - [NAME]
+
+   > Copy this entire file content and paste into a fresh Claude Code session,
+   > or run: `/workflow:launch WF-[ID]`
+
+   ## Quick Resume
+
+   ```
+   /workflow:launch WF-[ID]
+   ```
+
+   ## Context Summary
+
+   Files from CONTEXT-LIBRARY.yaml (X,XXX tokens):
+   - `specs/LIQUID-RENDER-SPEC.md` - DSL grammar (~4,200 tokens)
+   - `docs/COMPONENT-GUIDE.md` - Design tokens (~1,800 tokens)
+
+   ## Workflow State
+
+   - **ID**: WF-[ID]
+   - **Name**: [NAME]
+   - **Status**: approved
+   - **Current Wave**: 0
+   - **Git Tag**: WF-[ID]-start (commit: [hash])
+
+   ## Key Decisions Made
+
+   <!-- Captured from approval conversation -->
+   - [Decision 1 from conversation]
+   - [Decision 2 from conversation]
+   - [Any user preferences noted]
+
+   ## User Notes
+
+   <!-- Add anything important to remember across sessions -->
+
+
+   ## Launch Instructions
+
+   1. Paste this file into a fresh Claude Code session, OR
+   2. Run: `/workflow:launch WF-[ID]`
+
+   The launcher will:
+   - Load context files listed above
+   - Read STATUS.yaml for current position
+   - Resume from the current wave
+   ```
+
+8. **Offer Context Clear** (Optional):
+
+   If conversation is heavy (>15k tokens accumulated):
+   ```
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║  SUGGESTION: Clear Context Before Wave 0                      ║
+   ╠═══════════════════════════════════════════════════════════════╣
+   ║                                                               ║
+   ║  Current conversation: ~18k tokens (heavy)                    ║
+   ║  CONTEXT-LIBRARY.yaml: 8k tokens (ready)                      ║
+   ║                                                               ║
+   ║  Clearing will:                                               ║
+   ║  • Reset conversation                                         ║
+   ║  • Workflow state preserved in STATUS.yaml                    ║
+   ║  • WORKFLOW-LAUNCHER.md ready for fresh start                 ║
+   ║  • Free ~10k tokens for agent execution                       ║
+   ║                                                               ║
+   ╚═══════════════════════════════════════════════════════════════╝
+
+   [C] Clear and run /workflow:launch WF-[ID]
+   [S] Skip (continue with current context)
+   ```
+
+   - On "C": Instruct user to run `/clear` then `/workflow:launch WF-[ID]`
+   - On "S": Continue with current context
+
+9. **ASK USER BEFORE WAVE 0** (Required Confirmation):
+   ```
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║  READY TO START: WF-[ID]                                      ║
+   ╠═══════════════════════════════════════════════════════════════╣
+   ║                                                               ║
+   ║  ✓ Git checkpoint: [commit] (tagged: WF-[ID]-start)           ║
+   ║  ✓ Context gathered: X,XXX tokens (Y files)                   ║
+   ║  ✓ Workflow directory created                                 ║
+   ║                                                               ║
+   ║  Wave 0 will:                                                 ║
+   ║  • Create shared types                                        ║
+   ║  • Set up directory structure                                 ║
+   ║  • Initialize barrel exports                                  ║
+   ║                                                               ║
+   ║  Waves 1-N will launch PARALLEL SUBTASKS for speed.           ║
+   ║                                                               ║
+   ╚═══════════════════════════════════════════════════════════════╝
+
+   **Start Wave 0?** [Y/n]
+   ```
+
+   - On "Y" or "yes": Proceed with Wave 0
+   - On "n" or "no": Pause workflow, save state
+   - On other input: Clarify and re-ask
+
+10. **Begin Wave 0** bootstrap (sequential)
+
+11. **Launch PARALLEL subtasks** for Wave 1:
+   ```
+   # In a SINGLE message, launch all Wave 1 tasks:
+   [Task: T1, run_in_background=true]
+   [Task: T2, run_in_background=true]
+   [Task: T3, run_in_background=true]
+
+   # Wait for completion:
+   [TaskOutput: T1, block=true]
+   [TaskOutput: T2, block=true]
+   [TaskOutput: T3, block=true]
+   ```
+
+### 12. Show Available Commands
 
 ```
 ## Workflow Commands
@@ -101,6 +290,7 @@ After each wave, run:
 |---------|---------|
 | `/workflow:status` | Check current workflow progress |
 | `/workflow:resume [ID]` | Resume an interrupted workflow |
+| `/workflow:launch [ID]` | Launch workflow in fresh session |
 | `/workflow:complete [ID]` | Finalize and archive a workflow |
 | `/workflow:rollback [ID]` | Revert a failed workflow |
 | `/workflow:list` | List all workflows by status |

@@ -56,4 +56,5 @@ Show all workflows by status.
    /workflow:create [task]   Create new workflow
    /workflow:status          Check active workflow
    /workflow:resume [ID]     Resume interrupted workflow
+   /workflow:launch [ID]     Launch in fresh session
    ```

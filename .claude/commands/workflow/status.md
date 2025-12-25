@@ -69,6 +69,7 @@ Show current workflow progress.
    No active workflow.
 
    Run `/workflow:create [task]` to create one.
+   Run `/workflow:launch [ID]` to resume from fresh session.
    ```
 
 5. Generate overview (ephemeral):

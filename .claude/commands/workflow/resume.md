@@ -15,9 +15,38 @@ Continue an interrupted workflow.
    - If $ARGUMENTS provided, use that ID
    - Otherwise, find most recent in `.workflows/active/`
 
-2. Read STATUS.yaml to determine state
+2. **Verify Context Integrity** (CRITICAL):
+   ```bash
+   python .context/workflows/scripts/verify-context.py .workflows/active/WF-[ID]-[name]
+   ```
 
-3. Identify resume point:
+   This checks if context files have changed since workflow started.
+
+   **If drift detected**, present options:
+   ```
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║  CONTEXT DRIFT DETECTED                                       ║
+   ╠═══════════════════════════════════════════════════════════════╣
+   ║                                                               ║
+   ║  [CHANGED]  specs/LIQUID-RENDER-SPEC.md (modified 2h ago)     ║
+   ║  [SAME]     docs/COMPONENT-GUIDE.md              ✓            ║
+   ║                                                               ║
+   ║  Options:                                                     ║
+   ║  [R] RESUME  - Use original context (ignore changes)          ║
+   ║  [U] UPDATE  - Re-read changed files into context             ║
+   ║  [S] RESTART - Reset to Wave 0 with fresh context             ║
+   ║  [X] ABORT   - Cancel resume                                  ║
+   ║                                                               ║
+   ╚═══════════════════════════════════════════════════════════════╝
+   ```
+
+   - **RESUME**: Continue with stale context (fast, but may miss spec changes)
+   - **UPDATE**: Re-gather context, update CONTEXT-LIBRARY.yaml
+   - **RESTART**: Full reset, re-run from Wave 0
+
+3. Read STATUS.yaml to determine task state
+
+4. Identify resume point:
    - Current wave number
    - Pending/failed tasks in wave
    - Last successful checkpoint
@@ -54,13 +83,38 @@ Continue an interrupted workflow.
    **Continue?** Reply "yes" or describe changes.
    ```
 
-5. On approval:
+5. **ASK USER BEFORE RESUMING**:
+   ```
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║  RESUME: WF-[ID] from Wave [N]                                ║
+   ╠═══════════════════════════════════════════════════════════════╣
+   ║                                                               ║
+   ║  Context: [verified/updated/stale]                            ║
+   ║  Pending tasks: [list]                                        ║
+   ║                                                               ║
+   ║  Will launch [X] PARALLEL SUBTASKS for remaining work.        ║
+   ║                                                               ║
+   ╚═══════════════════════════════════════════════════════════════╝
+
+   **Resume now?** [Y/n]
+   ```
+
+6. On approval:
    - Skip completed waves
    - Re-launch failed tasks (up to max 3 attempts)
-   - Launch pending tasks in parallel
+   - **Launch pending tasks as PARALLEL SUBTASKS** (if no conflicts):
+     ```
+     # In a SINGLE message:
+     [Task: T4, run_in_background=true]
+     [Task: T5, run_in_background=true]
+
+     # Then wait:
+     [TaskOutput: T4, block=true]
+     [TaskOutput: T5, block=true]
+     ```
    - Update STATUS.yaml with agent assignments
 
-6. After each wave:
+7. After each wave:
    ```bash
    .context/workflows/scripts/validate-wave.sh @repo/liquid-render
    ```

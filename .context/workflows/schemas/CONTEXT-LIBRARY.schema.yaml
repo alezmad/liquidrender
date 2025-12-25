@@ -1,0 +1,215 @@
+# CONTEXT-LIBRARY.yaml Schema
+# Defines the structure for workflow context tracking
+#
+# This schema enables:
+# - Visibility into what files the agent reads before execution
+# - Token budget management to prevent context overflow
+# - Resume with drift detection
+# - Git checkpoint tracking for clean rollback
+
+schema_version: "1.0"
+
+# Required fields
+required:
+  - workflow_id
+  - created_at
+  - context_mode
+  - git_checkpoint
+  - budget
+  - sources
+
+# Field definitions
+fields:
+  workflow_id:
+    type: string
+    pattern: "^WF-\\d{4}$"
+    description: "Unique workflow identifier"
+    example: "WF-0006"
+
+  created_at:
+    type: string
+    format: iso8601
+    description: "When context was gathered"
+
+  context_mode:
+    type: string
+    enum: [fresh, resume, minimal]
+    description: |
+      - fresh: All context gathered from current file state
+      - resume: Loaded from previous session, verified for drift
+      - minimal: Only essential files, on-demand loading
+
+  # Git state at workflow start
+  git_checkpoint:
+    type: object
+    required: [branch, commit, was_clean]
+    properties:
+      branch:
+        type: string
+        description: "Git branch name"
+      commit:
+        type: string
+        description: "Short commit hash (7-12 chars)"
+      tag:
+        type: string
+        description: "Optional tag marking workflow start (WF-XXXX-start)"
+      was_clean:
+        type: boolean
+        description: "Was working tree clean before workflow?"
+
+  # Token budget allocation
+  budget:
+    type: object
+    required: [total, core, wave_specific, on_demand]
+    properties:
+      total:
+        type: integer
+        default: 20000
+        description: "Total tokens allocated for context"
+      core:
+        type: integer
+        default: 8000
+        description: "Tokens for always-loaded context"
+      wave_specific:
+        type: integer
+        default: 8000
+        description: "Tokens for per-wave context (dropped after wave)"
+      on_demand:
+        type: integer
+        default: 4000
+        description: "Reserve for agent-requested files"
+
+  # Loaded context sources
+  sources:
+    type: object
+    properties:
+      core:
+        type: array
+        description: "Always loaded, retained entire workflow"
+        items:
+          $ref: "#/definitions/context_file"
+      wave_0:
+        type: array
+        items:
+          $ref: "#/definitions/context_file"
+      wave_1:
+        type: array
+        items:
+          $ref: "#/definitions/context_file"
+      wave_2:
+        type: array
+        items:
+          $ref: "#/definitions/context_file"
+      wave_3:
+        type: array
+        items:
+          $ref: "#/definitions/context_file"
+
+  # Files explicitly not loaded (transparency)
+  deferred:
+    type: array
+    description: "Files that exceeded budget, available on-demand"
+    items:
+      type: object
+      properties:
+        path:
+          type: string
+        tokens:
+          type: integer
+        reason:
+          type: string
+
+  # Resume integrity verification
+  integrity:
+    type: object
+    properties:
+      last_verified:
+        type: string
+        format: iso8601
+      files_changed:
+        type: integer
+        description: "Count of files changed since context was gathered"
+      drift_details:
+        type: array
+        items:
+          type: object
+          properties:
+            path:
+              type: string
+            status:
+              type: string
+              enum: [changed, deleted, same]
+            original_hash:
+              type: string
+            current_hash:
+              type: string
+
+# Reusable definitions
+definitions:
+  context_file:
+    type: object
+    required: [path, hash, tokens, purpose]
+    properties:
+      path:
+        type: string
+        description: "Relative path from project root"
+      hash:
+        type: string
+        pattern: "^sha256:[a-f0-9]{12}$"
+        description: "Truncated SHA-256 hash for drift detection"
+      tokens:
+        type: integer
+        description: "Estimated token count"
+      loaded_at:
+        type: string
+        format: iso8601
+        description: "When file was read into context"
+      purpose:
+        type: string
+        description: "Why this file is needed (for user display)"
+
+# Example CONTEXT-LIBRARY.yaml
+example: |
+  workflow_id: WF-0006
+  created_at: 2025-12-25T10:00:00Z
+  context_mode: fresh
+
+  git_checkpoint:
+    branch: main
+    commit: 9ae2f2f
+    tag: WF-0006-start
+    was_clean: true
+
+  budget:
+    total: 20000
+    core: 8000
+    wave_specific: 8000
+    on_demand: 4000
+
+  sources:
+    core:
+      - path: specs/LIQUID-RENDER-SPEC.md
+        hash: sha256:a1b2c3d4e5f6
+        tokens: 4200
+        loaded_at: 2025-12-25T10:00:00Z
+        purpose: "DSL grammar and component syntax"
+
+      - path: docs/COMPONENT-GUIDE.md
+        hash: sha256:b2c3d4e5f6a1
+        tokens: 1800
+        purpose: "Design tokens and file conventions"
+
+    wave_0:
+      - path: src/types/index.ts
+        hash: sha256:c3d4e5f6a1b2
+        tokens: 400
+        purpose: "Type definitions to extend"
+
+  deferred:
+    - path: _bmad-output/architecture.md
+      tokens: 8500
+      reason: "Exceeds budget, load on-demand"
+
+  integrity:
+    last_verified: 2025-12-25T10:00:00Z
+    files_changed: 0

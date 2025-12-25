@@ -24,6 +24,15 @@ import { Header } from './components/header';
 import { Badge } from './components/badge';
 import { Breadcrumb } from './components/breadcrumb';
 import { Nav } from './components/nav';
+import { List } from './components/list';
+import { Image } from './components/image';
+import { Sheet } from './components/sheet';
+import { Grid } from './components/grid';
+import { Stack, VStack, HStack } from './components/stack';
+import { AreaChartComponent } from './components/area-chart';
+import { Heading } from './components/heading';
+import { Textarea } from './components/textarea';
+import { DatePicker } from './components/date';
 
 /**
  * Props passed to all Liquid components
@@ -73,6 +82,19 @@ export const componentRegistry: ComponentRegistry = {
   badge: Badge,
   breadcrumb: Breadcrumb,
   nav: Nav,
+  list: List,
+  heading: Heading,
+  textarea: Textarea,
+  date: DatePicker,
+
+  // Wave 2 components (WF-0003)
+  image: Image,
+  sheet: Sheet,
+  grid: Grid,
+  stack: Stack,
+  vstack: VStack,
+  hstack: HStack,
+  area: AreaChartComponent,
 };
 
 /**

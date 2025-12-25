@@ -15,11 +15,26 @@ Revert changes from a workflow.
 
 2. Read CHANGELOG.md for affected files
 
-3. Present rollback plan:
+3. Check for workflow start tag:
+   ```bash
+   git tag -l "WF-[ID]-start"
+   ```
+   If tag exists, rollback is simplified using git reset.
+
+4. Present rollback plan:
    ```
    ## Rollback Plan: WF-[ID] - [NAME]
 
-   ### Files to Revert
+   ### Git Checkpoint
+   - Start tag: WF-[ID]-start (commit: abc123)
+   - Current: def456
+   - Commits to revert: 3
+
+   ### Quick Rollback (if tag exists)
+   git reset --hard WF-[ID]-start
+
+   ### Manual Rollback (if no tag)
+   Files to Revert:
    - src/components/button.tsx (modified)
    - src/components/input.tsx (created - will delete)
 
@@ -29,11 +44,20 @@ Revert changes from a workflow.
    ### Safety Checks
    - [ ] No uncommitted changes outside workflow
    - [ ] Git history available
+   - [ ] WF-[ID]-start tag exists
 
    **Confirm rollback?** Reply "yes" or "cancel"
    ```
 
-4. On approval:
+5. On approval:
+
+   **If WF-[ID]-start tag exists (preferred):**
+   ```bash
+   git reset --hard WF-[ID]-start
+   git tag -d WF-[ID]-start  # Clean up tag
+   ```
+
+   **If no tag (manual rollback):**
 
    For modified files:
    ```bash
@@ -50,17 +74,17 @@ Revert changes from a workflow.
    python .context/workflows/scripts/generate-barrel.py src/components/
    ```
 
-5. Validate rollback:
+6. Validate rollback:
    ```bash
    .context/workflows/scripts/validate-wave.sh @repo/liquid-render
    ```
 
-6. Move workflow:
+7. Move workflow:
    ```bash
    mv .workflows/[location]/WF-[ID]-[name] .workflows/failed/
    ```
 
-7. Update STATUS.yaml:
+8. Update STATUS.yaml:
    ```yaml
    overall_status: rolled_back
    rolled_back_at: [ISO timestamp]

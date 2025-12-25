@@ -55,6 +55,9 @@ export { BarChart, BarChartComponent, StaticBarChart } from './bar-chart';
 // PieChart
 export { PieChart, PieChartComponent, StaticPieChart, DonutChart } from './pie-chart';
 
+// AreaChart
+export { AreaChart, AreaChartComponent, StaticAreaChart } from './area-chart';
+
 // ============================================================================
 // Interactive Components
 // ============================================================================
@@ -63,7 +66,10 @@ export { PieChart, PieChartComponent, StaticPieChart, DonutChart } from './pie-c
 export { Modal, ControlledModal, useModal } from './modal';
 
 // Input
-export { Input, ControlledInput, Textarea, SearchInput } from './input';
+export { Input, ControlledInput, SearchInput } from './input';
+
+// Textarea
+export { Textarea, StaticTextarea } from './textarea';
 
 // Form
 export {
@@ -115,6 +121,9 @@ export { Accordion, StaticAccordion } from './accordion';
 // Drawer
 export { Drawer, StaticDrawer } from './drawer';
 
+// Sheet
+export { Sheet, StaticSheet, useSheet, useSheetContext } from './sheet';
+
 // Sidebar
 export { Sidebar, StaticSidebar } from './sidebar';
 
@@ -130,8 +139,23 @@ export { Breadcrumb, StaticBreadcrumb } from './breadcrumb';
 // DateRange
 export { DateRange, StaticDateRange } from './daterange';
 
+// DatePicker
+export { DatePicker, NativeDatePicker, StaticDatePicker } from './date';
+
 // Nav
 export { Nav, StaticNav } from './nav';
+
+// List/Repeater
+export { List, StaticList, GridList } from './list';
+
+// Image
+export { Image, StaticImage } from './image';
+
+// Stack
+export { Stack, VStack, HStack, StaticStack, StaticVStack, StaticHStack } from './stack';
+
+// Grid
+export { Grid, StaticGrid, GridItem, ResponsiveGrid } from './grid';
 
 // ============================================================================
 // Component Map for Registry
@@ -147,8 +171,10 @@ import { DataTable } from './data-table';
 import { LineChartComponent } from './line-chart';
 import { BarChartComponent } from './bar-chart';
 import { PieChartComponent } from './pie-chart';
+import { AreaChartComponent } from './area-chart';
 import { Modal } from './modal';
 import { Input } from './input';
+import { Textarea } from './textarea';
 import { Form } from './form';
 import { Progress } from './progress';
 import { Tag } from './tag';
@@ -164,11 +190,17 @@ import { Tooltip } from './tooltip';
 import { Popover } from './popover';
 import { Accordion } from './accordion';
 import { Drawer } from './drawer';
+import { Sheet } from './sheet';
 import { Sidebar } from './sidebar';
 import { Tabs } from './tabs';
 import { Breadcrumb } from './breadcrumb';
 import { DateRange } from './daterange';
+import { DatePicker } from './date';
 import { Nav } from './nav';
+import { List } from './list';
+import { Image } from './image';
+import { Stack, VStack, HStack } from './stack';
+import { Grid } from './grid';
 
 import type { LiquidComponentProps } from './utils';
 import type { ComponentType } from 'react';
@@ -188,8 +220,10 @@ export const liquidComponents: Record<string, ComponentType<LiquidComponentProps
   line: LineChartComponent,
   bar: BarChartComponent,
   pie: PieChartComponent,
+  area: AreaChartComponent,
   modal: Modal,
   input: Input,
+  textarea: Textarea,
   form: Form,
   progress: Progress,
   tag: Tag,
@@ -204,10 +238,18 @@ export const liquidComponents: Record<string, ComponentType<LiquidComponentProps
   popover: Popover,
   accordion: Accordion,
   drawer: Drawer,
+  sheet: Sheet,
   sidebar: Sidebar,
   tabs: Tabs,
   breadcrumb: Breadcrumb,
   daterange: DateRange,
+  date: DatePicker,
   nav: Nav,
   header: Header,
+  list: List,
+  image: Image,
+  stack: Stack,
+  vstack: VStack,
+  hstack: HStack,
+  grid: Grid,
 };

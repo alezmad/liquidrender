@@ -58,7 +58,13 @@ const levelStyles: Record<HeadingLevel, React.CSSProperties> = {
 // ============================================================================
 
 function getLevelFromBlock(block: LiquidComponentProps['block']): HeadingLevel {
-  // Check for explicit level in style.size (e.g., "1", "2", etc.) or color
+  // Check for explicit level property first
+  const explicitLevel = (block.style as Record<string, unknown> | undefined)?.level;
+  if (typeof explicitLevel === 'number' && explicitLevel >= 1 && explicitLevel <= 6) {
+    return explicitLevel as HeadingLevel;
+  }
+
+  // Check for level in style.size (e.g., "1", "2", etc.) or color
   const sizeLevel = block.style?.size;
   const colorLevel = block.style?.color;
 

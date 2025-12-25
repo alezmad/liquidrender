@@ -1,0 +1,61 @@
+workflow: Context Management System
+workflow_id: WF-0006
+started_at: 2025-12-25T10:00:00Z
+completed_at: 2025-12-25T10:15:00Z
+current_wave: 3
+overall_status: completed
+
+git_checkpoint:
+  commit: 9ae2f2f
+  tag: WF-0006-start
+  branch: main
+
+dependencies_installed: true  # Python stdlib only
+
+waves:
+  wave_0:
+    name: "Bootstrap"
+    status: completed
+    tasks:
+      T1:
+        name: "CONTEXT-LIBRARY schema"
+        status: completed
+        file: .context/workflows/schemas/CONTEXT-LIBRARY.schema.yaml
+      T2:
+        name: "estimate-tokens.py"
+        status: completed
+        file: .context/workflows/scripts/estimate-tokens.py
+
+  wave_1:
+    name: "Core Scripts"
+    status: completed
+    tasks:
+      T3:
+        name: "preflight-check.py"
+        status: completed
+        file: .context/workflows/scripts/preflight-check.py
+      T4:
+        name: "gather-context.py"
+        status: completed
+        file: .context/workflows/scripts/gather-context.py
+
+  wave_2:
+    name: "Verification"
+    status: completed
+    tasks:
+      T5:
+        name: "verify-context.py"
+        status: completed
+        file: .context/workflows/scripts/verify-context.py
+
+  wave_3:
+    name: "Documentation"
+    status: completed
+    tasks:
+      T6:
+        name: "Update MASTER-WORKFLOW-GENERATOR.md"
+        status: completed
+        file: .context/workflows/MASTER-WORKFLOW-GENERATOR.md
+
+errors: []
+checkpoints: []

@@ -7,6 +7,7 @@ const pkgNodeModules = path.resolve(__dirname, '../node_modules');
 const rootNodeModules = path.resolve(__dirname, '../../../node_modules');
 
 export default defineConfig({
+  root: __dirname,
   plugins: [react()],
   server: {
     port: 3456,
@@ -17,7 +18,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Use matching 19.2.3 versions
-      react: path.join(pkgNodeModules, 'react'),
+      react: path.join(rootNodeModules, 'react'),
       'react-dom': path.join(rootNodeModules, 'react-dom'),
     },
     dedupe: ['react', 'react-dom'],

@@ -11,9 +11,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Ensure single React instance
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      // Ensure single React instance (hoisted to monorepo root)
+      react: path.resolve(__dirname, '../../node_modules/react'),
+      'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
     },
   },
 });

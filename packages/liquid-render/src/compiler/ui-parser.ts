@@ -40,6 +40,10 @@ export interface BlockAST {
   survey?: EmbeddedSurveyAST;
   condition?: ConditionAST;  // Conditional rendering
   line: number;
+  // Range/numeric input parameters
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 export interface ConditionAST {
@@ -202,6 +206,11 @@ export class UIParser {
     // Parse bindings and modifiers
     this.parseBindingsAndModifiers(block);
 
+    // Parse numeric parameters for range component
+    if (block.type === 'range') {
+      this.parseRangeParameters(block);
+    }
+
     // Parse children [...] or columns for tables
     if (this.check('LBRACKET')) {
       if (block.type === 'table') {
@@ -255,6 +264,13 @@ export class UIParser {
     while (!this.isAtEnd()) {
       // Bindings
       if (this.check('NUMBER')) {
+        // For range components, stop parsing if we've already seen a label
+        // Numbers after the label are range parameters (min, max, step)
+        const hasLabel = block.bindings.some(b => b.kind === 'literal');
+        if (block.type === 'range' && hasLabel) {
+          break;
+        }
+
         const token = this.advance();
         const indices = token.value.split('').map(d => parseInt(d, 10));
         block.bindings.push({
@@ -492,6 +508,42 @@ export class UIParser {
 
       // Skip unknown tokens
       this.advance();
+    }
+  }
+
+  private parseRangeParameters(block: BlockAST): void {
+    // Parse numeric parameters for range: min max [step]
+    // Format: Rg :binding "Label" min max [step]
+    // Note: Single digits (0-9) are tokenized as UI_TYPE_INDEX, not NUMBER
+    const params: number[] = [];
+
+    while (params.length < 3) {
+      // Accept both NUMBER and UI_TYPE_INDEX as numeric values for range
+      if (this.check('NUMBER')) {
+        const token = this.advance();
+        const value = parseFloat(token.value);
+        if (!isNaN(value)) {
+          params.push(value);
+        }
+      } else if (this.check('UI_TYPE_INDEX')) {
+        // Single digits 0-9 are tokenized as UI_TYPE_INDEX
+        const token = this.advance();
+        const value = parseInt(token.value, 10);
+        if (!isNaN(value)) {
+          params.push(value);
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Assign parameters: min, max, optional step
+    if (params.length >= 2) {
+      block.min = params[0];
+      block.max = params[1];
+      if (params.length >= 3) {
+        block.step = params[2];
+      }
     }
   }
 

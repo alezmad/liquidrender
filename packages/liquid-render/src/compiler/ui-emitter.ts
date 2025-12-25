@@ -40,6 +40,10 @@ export interface Block {
   children?: Block[];
   columns?: string[];  // For tables: column field names
   survey?: unknown; // GraphSurvey when parsed
+  // Range/numeric input properties
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 export interface Binding {
@@ -350,6 +354,17 @@ export class UIEmitter {
       block.columns = astBlock.columns;
     }
 
+    // Range parameters
+    if (astBlock.min !== undefined) {
+      block.min = astBlock.min;
+    }
+    if (astBlock.max !== undefined) {
+      block.max = astBlock.max;
+    }
+    if (astBlock.step !== undefined) {
+      block.step = astBlock.step;
+    }
+
     // Children (with expansion support)
     if (astBlock.children && astBlock.children.length > 0) {
       block.children = astBlock.children.flatMap(c => this.emitBlockWithExpansion(c));
@@ -546,6 +561,17 @@ export class UIEmitter {
     // Modifiers
     for (const mod of block.modifiers) {
       parts.push(this.emitModifierDSL(mod));
+    }
+
+    // Range parameters
+    if (block.min !== undefined) {
+      parts.push(String(block.min));
+    }
+    if (block.max !== undefined) {
+      parts.push(String(block.max));
+    }
+    if (block.step !== undefined) {
+      parts.push(String(block.step));
     }
 
     // Columns (for tables)
@@ -900,6 +926,17 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
     // Survey
     if (block.survey) {
       astBlock.survey = block.survey as any;
+    }
+
+    // Range parameters
+    if (block.min !== undefined) {
+      astBlock.min = block.min;
+    }
+    if (block.max !== undefined) {
+      astBlock.max = block.max;
+    }
+    if (block.step !== undefined) {
+      astBlock.step = block.step;
     }
 
     return astBlock;

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, type ReactElement } from 'react';
 import type { LiquidSchema, Block, Layer } from '../compiler/ui-emitter';
 import type { DataContext } from './data-context';
+import { resolveBinding } from './data-context';
 import { getComponent, type LiquidComponentProps } from './component-registry';
 
 // Import built-in components for fallback rendering
@@ -144,6 +145,67 @@ function BlockRenderer({ block, data, customComponents }: BlockRendererProps): R
     if (currentValue !== requiredValue) {
       return null; // Don't render - condition not met
     }
+  }
+
+  // List/Repeater handling: Check if this is a list block with iterator binding
+  const isList = block.type === 'list' || block.type === '7';
+  const hasIterator = block.binding?.kind === 'iterator';
+
+  if (isList || hasIterator) {
+    // Resolve the binding to get the array
+    const arrayData = resolveBinding(block.binding, data);
+
+    // Handle empty/null array
+    if (!Array.isArray(arrayData) || arrayData.length === 0) {
+      return (
+        <div data-liquid-type="list" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}>
+          <div style={{
+            color: 'var(--muted-foreground, #6b7280)',
+            fontSize: '0.875rem',
+            padding: '1rem',
+            textAlign: 'center',
+          }}>
+            No items
+          </div>
+        </div>
+      );
+    }
+
+    // Render children template for each item in the array
+    return (
+      <div data-liquid-type="list" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+      }}>
+        {arrayData.map((item, index) => {
+          // Create new data context with $ = current item and # = current index
+          const itemContext: DataContext = {
+            ...data,
+            $: item,
+            '#': index,
+          };
+
+          // Render children with item context
+          return (
+            <div key={index} data-list-item-index={index}>
+              {block.children?.map((child, i) => (
+                <BlockRenderer
+                  key={child.uid || i}
+                  block={child}
+                  data={itemContext}
+                  customComponents={customComponents}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   // Check for custom component first

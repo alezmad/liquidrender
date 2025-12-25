@@ -1,8 +1,9 @@
-// Container Component - Flex/Grid layout wrapper
+// Container Component - Flex/Grid layout wrapper with list/repeater support
 import React from 'react';
 import type { LiquidComponentProps } from './utils';
 import { tokens, baseStyles, mergeStyles, getLayoutStyles } from './utils';
 import type { Block } from '../../compiler/ui-emitter';
+import { resolveBinding, type DataContext } from '../data-context';
 
 // ============================================================================
 // Types
@@ -16,6 +17,21 @@ type Gap = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 // ============================================================================
 // Helpers
 // ============================================================================
+
+/**
+ * Check if a block is a list/repeater (type 7 or 'list')
+ * Lists render their children template once per array item
+ */
+function isListBlock(block: Block): boolean {
+  return block.type === 'list' || block.type === '7';
+}
+
+/**
+ * Check if a binding has an iterator (:.field or :.)
+ */
+function hasIteratorBinding(block: Block): boolean {
+  return block.binding?.kind === 'iterator';
+}
 
 function getFlexDirection(block: Block): FlexDirection {
   const flex = block.layout?.flex;
@@ -88,6 +104,7 @@ function getContainerStyles(block: Block): React.CSSProperties {
 export function Container({ block, data, children }: LiquidComponentProps): React.ReactElement {
   const style = getContainerStyles(block);
 
+  // Normal container mode - children are pre-rendered by LiquidUI
   return (
     <div data-liquid-type="container" style={style}>
       {children}

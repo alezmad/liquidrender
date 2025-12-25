@@ -38,12 +38,32 @@ export function resolveBinding(
       return binding.value;
 
     case 'indexRef':
-      // # - current iteration index
+      // :# - current iteration index
+      // Check if # is in data context (set by list iteration)
+      if ('#' in data) {
+        return data['#'];
+      }
       return index ?? 0;
 
     case 'iterator':
-      // :.field - iterate over array field
-      return getNestedValue(data, typeof binding.value === 'string' ? binding.value : '');
+      // :. or :.field - current item in list iteration
+      // When used on container: resolves to array (for iteration)
+      // When used in children: resolves from $ context (current item)
+      const iteratorField = typeof binding.value === 'string' ? binding.value : '';
+
+      // If there's a $ in data context, we're inside a list iteration
+      if ('$' in data) {
+        // Resolve from current item context
+        if (iteratorField === '') {
+          // :. alone = whole current item
+          return data.$;
+        }
+        // :.field = field of current item
+        return getNestedValue(data, `$.${iteratorField}`);
+      }
+
+      // No $ context - resolve normally (for container binding)
+      return getNestedValue(data, iteratorField);
 
     default:
       return undefined;
@@ -52,8 +72,22 @@ export function resolveBinding(
 
 /**
  * Get nested value from object using dot notation
+ * Supports $ for current item context (e.g., $.field)
  */
 function getNestedValue(obj: DataContext, path: string): unknown {
+  // Handle special $ context (current item in list iteration)
+  if (path.startsWith('$.')) {
+    const fieldPath = path.slice(2); // Remove '$.'' prefix
+    const currentItem = obj.$;
+    if (currentItem === null || currentItem === undefined) return undefined;
+    if (typeof currentItem !== 'object') return currentItem;
+    return getNestedValue(currentItem as DataContext, fieldPath);
+  }
+
+  if (path === '$') {
+    return obj.$;
+  }
+
   const parts = path.split('.');
   let current: unknown = obj;
 

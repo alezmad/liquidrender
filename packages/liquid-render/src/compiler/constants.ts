@@ -36,6 +36,7 @@ export const UI_TYPE_CODES: Record<string, string> = {
   Gd: 'grid',
   Sk: 'stack',
   Sp: 'split',
+  Sd: 'sidebar',
   Dw: 'drawer',
   Sh: 'sheet',
   Pp: 'popover',
@@ -48,6 +49,7 @@ export const UI_TYPE_CODES: Record<string, string> = {
   Im: 'image',
   Av: 'avatar',
   Tg: 'tag',
+  Bg: 'badge',
   Pg: 'progress',
   Gn: 'gauge',
   Rt: 'rating',
@@ -63,9 +65,22 @@ export const UI_TYPE_CODES: Record<string, string> = {
   Rg: 'range',
   Cl: 'color',
   Dt: 'date',
+  Dr: 'daterange',
   Tm: 'time',
   Up: 'upload',
   Ot: 'otp',
+  // Form Helpers
+  opt: 'option',  // Select/Radio option (used in children)
+  preset: 'preset',  // DateRange preset (used in children)
+  step: 'step',   // Stepper step (used in children)
+  tab: 'tab',     // Tab item (used in Tabs children)
+  crumb: 'crumb', // Breadcrumb item (used in children)
+  // Navigation
+  Hr: 'header',
+  Ts: 'tabs',
+  Bc: 'breadcrumb',
+  Nv: 'nav',
+  nav: 'nav',     // Lowercase alias for Sidebar children
   // Charts
   Hm: 'heatmap',
   Sn: 'sankey',

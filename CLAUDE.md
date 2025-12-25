@@ -12,6 +12,8 @@ All project context lives in `.context/` and `_bmad-output/`:
 .context/
 ├── CLAUDE.md                          ← Context hub (read this next)
 ├── skills/                            ← Project-specific Agent Skills
+├── workflows/                         ← Dev workflow templates
+│   └── MASTER-WORKFLOW-GENERATOR.md   ← Generate workflows on demand
 └── turbostarter-framework-context/    ← Framework we build ON TOP OF
 
 _bmad-output/                          ← Project decisions (WHAT + HOW)
@@ -19,6 +21,24 @@ _bmad-output/                          ← Project decisions (WHAT + HOW)
 ```
 
 **Both are essential:** BMAD defines the project; framework docs show what's already available.
+
+## LiquidCode Components
+
+When creating or modifying LiquidCode renderer components:
+
+**Read first:** `packages/liquid-render/docs/COMPONENT-GUIDE.md`
+
+Key requirements:
+- Use design tokens from `utils.ts` (never hardcode colors, spacing, etc.)
+- Follow file structure: Types → Styles → Helpers → Sub-components → Main → Static
+- Include `data-liquid-type` attribute on root element
+- Handle empty/null states gracefully
+- Provide both dynamic (`ComponentName`) and static (`StaticComponent`) variants
+- Use `formatDisplayValue()` and `fieldToLabel()` for consistent display
+
+Reference files:
+- `packages/liquid-render/src/renderer/components/utils.ts` - Design tokens & utilities
+- `packages/liquid-render/specs/LIQUID-RENDER-SPEC.md` - DSL specification
 
 ## Special Folders
 

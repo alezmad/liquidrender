@@ -31,6 +31,8 @@ flowchart TD
 ├── mcp-servers.md                     ← MCP vs TurboStarter decision guide
 ├── skills/                            ← Project-specific Agent Skills
 │   └── [skill-name]/SKILL.md          ← Model-invoked capabilities
+├── workflows/                         ← Development workflow templates
+│   └── MASTER-WORKFLOW-GENERATOR.md   ← How to create dev workflows
 └── turbostarter-framework-context/    ← Framework we build on top of
     ├── CLAUDE.md                      ← Navigation guide
     ├── framework.md                   ← Commands & patterns
@@ -48,6 +50,7 @@ _bmad-output/                          ← Project decisions (WHAT + HOW)
 | **WHAT + HOW** (project) | `_bmad-output/` |
 | **FOUNDATION** (framework) | `turbostarter-framework-context/` |
 | **TOOLS** (extended capabilities) | `mcp-servers.md` |
+| **DEV WORKFLOWS** (task orchestration) | `workflows/` |
 
 ### `_bmad-output/` - Project Decisions
 Contains BMAD workflow outputs: requirements, architecture, implementation scope.
@@ -63,6 +66,11 @@ TurboStarter APIs, commands, and conventions we build on top of.
 MCP servers available for extended capabilities (charts, AI agents, testing, etc.).
 
 **Read when:** Need capabilities beyond TurboStarter foundation. Cross-references when to use MCP vs built-in features.
+
+### `workflows/` - Development Workflows
+Templates and generators for structured development tasks.
+
+**Read when:** User requests a workflow, asks to create a batch development process, or needs orchestrated multi-step implementation. The `MASTER-WORKFLOW-GENERATOR.md` contains the complete template for generating new workflows.
 
 ## Conflict Resolution
 

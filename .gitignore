@@ -56,4 +56,7 @@ dist/
 .turbo
 
 # content collections
-.content-collections.claude/audio/
+.content-collections
+
+# TTS audio cache
+.claude/audio/

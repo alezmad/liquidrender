@@ -732,6 +732,7 @@ export function liquidSchemaToAST(schema: LiquidSchema): UIAST {
     mainBlocksSeparator: 'newline',
     surveys: [],
     comments: [],
+    warnings: [],
   };
 
   let uidCounter = 0;

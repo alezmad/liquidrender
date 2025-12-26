@@ -92,31 +92,48 @@ Finalize a workflow and move to completed.
    - ⚠️ slow if actual > estimated max by <50%
    - ❌ over if actual > estimated max by >=50%
 
-7. Append to metrics history:
+7. Show timing report to user and confirm before proceeding.
 
-   Update `.workflows/metrics.yaml`:
-   ```yaml
-   # Append to history array:
-   - workflow_id: WF-XXX
-     name: "Workflow Name"
-     started_at: "..."
-     completed_at: "..."
-     duration: "Xm Ys"
-     duration_s: NNN
-     accuracy: "XX%"  # % of agents within estimate
-   ```
-
-8. Show timing report to user and confirm before proceeding.
-
-9. Move to completed:
+8. Move to completed:
    ```bash
    mv .workflows/active/WF-[ID]-[name] .workflows/completed/
    ```
 
-10. Update STATUS.yaml:
-    ```yaml
-    overall_status: complete
-    completed_at: [ISO timestamp]
+9. Update STATUS.yaml:
+   ```yaml
+   overall_status: complete
+   completed_at: [ISO timestamp]
+   ```
+
+10. **Update Central Registry and Metrics**:
+    ```bash
+    python .context/workflows/scripts/update-registry.py complete WF-[ID]
+    ```
+    This automatically:
+    - Marks workflow as completed in registry.yaml
+    - Updates location to "completed"
+    - Calculates duration
+    - Adds entry to metrics.yaml history
+
+11. Verify registry update:
+    ```bash
+    python .context/workflows/scripts/sync-registry.py
     ```
 
-11. Present completion report to user
+12. Present completion report to user:
+    ```
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  WORKFLOW COMPLETE: WF-[ID]                                   ║
+    ╠═══════════════════════════════════════════════════════════════╣
+    ║                                                               ║
+    ║  Name: [NAME]                                                 ║
+    ║  Duration: [Xh Ym]                                            ║
+    ║  Tasks: [N]/[N] completed                                     ║
+    ║  Waves: [M]                                                   ║
+    ║                                                               ║
+    ║  Location: .workflows/completed/WF-[ID]-[name]/               ║
+    ║  Registry: Updated ✓                                          ║
+    ║  Metrics: Added to history ✓                                  ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    ```

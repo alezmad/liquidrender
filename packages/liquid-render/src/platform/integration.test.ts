@@ -43,20 +43,20 @@ describe('Platform Integration', () => {
 
       // Check metrics
       expect(catalog.bindings.revenue).toBeDefined();
-      expect(catalog.bindings.revenue.type).toBe('number');
+      expect(catalog.bindings.revenue!.type).toBe('number');
       expect(catalog.bindings.orders).toBeDefined();
       expect(catalog.bindings.customers).toBeDefined();
       expect(catalog.bindings.growth).toBeDefined();
 
       // Check arrays
       expect(catalog.bindings.monthlyData).toBeDefined();
-      expect(catalog.bindings.monthlyData.type).toBe('array');
+      expect(catalog.bindings.monthlyData!.type).toBe('array');
       expect(catalog.bindings.salesByRegion).toBeDefined();
       expect(catalog.bindings.recentOrders).toBeDefined();
 
       // Check real-time
-      expect(catalog.bindings.liveUsers.realtime).toBe(true);
-      expect(catalog.bindings.liveRevenue.realtime).toBe(true);
+      expect(catalog.bindings.liveUsers!.realtime).toBe(true);
+      expect(catalog.bindings.liveRevenue!.realtime).toBe(true);
     });
 
     it('should resolve bindings from DSL', async () => {
@@ -131,10 +131,10 @@ describe('Platform Integration', () => {
 
       const catalog = await platform.catalog.getCatalog();
 
-      expect(catalog.bindings.totalSales.type).toBe('number');
-      expect(catalog.bindings.activeUsers.type).toBe('number');
-      expect(catalog.bindings.topProducts.type).toBe('array');
-      expect(catalog.bindings.settings.type).toBe('object');
+      expect(catalog.bindings.totalSales!.type).toBe('number');
+      expect(catalog.bindings.activeUsers!.type).toBe('number');
+      expect(catalog.bindings.topProducts!.type).toBe('array');
+      expect(catalog.bindings.settings!.type).toBe('object');
     });
 
     it('should resolve custom bindings', async () => {
@@ -174,10 +174,10 @@ describe('Platform Integration', () => {
       const catalog = await platform.catalog.getCatalog();
 
       // Should have bindings from both
-      expect(catalog.bindings.revenue.connector).toBe('sales');
-      expect(catalog.bindings.orders.connector).toBe('sales');
-      expect(catalog.bindings.leads.connector).toBe('marketing');
-      expect(catalog.bindings.campaigns.connector).toBe('marketing');
+      expect(catalog.bindings.revenue!.connector).toBe('sales');
+      expect(catalog.bindings.orders!.connector).toBe('sales');
+      expect(catalog.bindings.leads!.connector).toBe('marketing');
+      expect(catalog.bindings.campaigns!.connector).toBe('marketing');
     });
 
     it('should resolve from correct connectors', async () => {
@@ -214,7 +214,7 @@ describe('Platform Integration', () => {
       const catalog = await platform.catalog.getCatalog();
 
       // First connector's binding should win
-      expect(catalog.bindings.revenue.connector).toBe('first');
+      expect(catalog.bindings.revenue!.connector).toBe('first');
     });
   });
 

@@ -1,0 +1,39 @@
+estimates:
+  S: 30s-1min
+  M: 1-3min
+  L: 3-10min
+  S_seconds:
+    min: 30
+    max: 60
+    avg: 45
+  M_seconds:
+    min: 60
+    max: 180
+    avg: 120
+  L_seconds:
+    min: 180
+    max: 600
+    avg: 300
+history:
+- workflow_id: WF-0007
+  name: TypeScript Error Remediation
+  started_at: '2025-12-26T07:25:00Z'
+  completed_at: '2025-12-26T07:30:00Z'
+  duration: 5m
+  duration_s: 300
+  tasks_completed: 5
+- workflow_id: WF-0003
+  name: Missing Components Implementation
+  started_at: '2025-12-25T23:22:00Z'
+  completed_at: '2025-12-26T07:18:00Z'
+  duration: 7h 56m
+  duration_s: 28560
+  tasks_completed: 10
+- workflow_id: WF-0006
+  name: Context Management System
+  started_at: 2025-12-25 10:00:00+00:00
+  completed_at: 2025-12-25 10:15:00+00:00
+  duration: ''
+  duration_s: 0
+  tasks_completed: 6
+last_updated: '2025-12-25T23:52:05.896865'

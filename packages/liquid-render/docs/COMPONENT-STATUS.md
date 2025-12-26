@@ -1,7 +1,16 @@
 # LiquidRender Component Status
 
-**Generated:** 2025-12-25
-**Coverage:** 34/65 spec types implemented (52%)
+**Generated:** 2025-12-26
+**Coverage:** 42/65 spec types implemented (65%)
+
+---
+
+## Recent Updates
+
+| Date | Workflow | Components Added |
+|------|----------|------------------|
+| 2025-12-26 | WF-0003 | Textarea, Date, List, Image, Sheet, Grid, Stack, AreaChart |
+| 2025-12-26 | WF-0007 | TypeScript error remediation (0 errors) |
 
 ---
 
@@ -20,9 +29,9 @@ This analysis is based on the following sources:
 
 ---
 
-## Implemented Components (34)
+## Implemented Components (42)
 
-### Core Types (9/10)
+### Core Types (10/10) ✅
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
@@ -33,25 +42,25 @@ This analysis is based on the following sources:
 | `Pi` | pie | `pie-chart.tsx` | recharts `<PieChart>` | Done |
 | `Tb` | table | `data-table.tsx` | `<Table>` | Done |
 | `Fm` | form | `form.tsx` | `<Form>` | Done |
-| `Ls` | list | — | mapped children | **Missing** |
+| `Ls` | list | `list.tsx` | mapped children | Done ✨ |
 | `Cd` | card | `card.tsx` | `<Card>` | Done |
 | `Md` | modal | `modal.tsx` | `<Dialog>` | Done |
 
-### Layout & Structure (5/9)
+### Layout & Structure (8/9)
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
-| `Gd` | grid | — | CSS grid | **Missing** |
-| `Sk` | stack | — | flex layout | **Missing** |
+| `Gd` | grid | `grid.tsx` | CSS grid | Done ✨ |
+| `Sk` | stack | `stack.tsx` | flex layout | Done ✨ |
 | `Sp` | split | — | `<Resizable>` | **Missing** |
 | `Dw` | drawer | `drawer.tsx` | `<Drawer>` | Done |
-| `Sh` | sheet | — | `<Sheet>` | **Missing** |
+| `Sh` | sheet | `sheet.tsx` | `<Sheet>` | Done ✨ |
 | `Pp` | popover | `popover.tsx` | `<Popover>` | Done |
 | `Tl` | tooltip | `tooltip.tsx` | `<Tooltip>` | Done |
 | `Ac` | accordion | `accordion.tsx` | `<Accordion>` | Done |
 | `Sd` | sidebar | `sidebar.tsx` | `<Sidebar>` | Done |
 
-### Navigation (4/4)
+### Navigation (4/4) ✅
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
@@ -60,14 +69,14 @@ This analysis is based on the following sources:
 | `Bc` | breadcrumb | `breadcrumb.tsx` | `<Breadcrumb>` | Done |
 | `Nv` | nav | `nav.tsx` | `<NavigationMenu>` | Done |
 
-### Data Display (8/12)
+### Data Display (9/12)
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
 | `Tx` | text | `text.tsx` | `<p>` | Done |
 | `Hd` | heading | `heading.tsx` | `<h1>`-`<h6>` | Done |
 | `Ic` | icon | `icon.tsx` | Lucide icons | Done |
-| `Im` | image | — | `<AspectRatio>` | **Missing** |
+| `Im` | image | `image.tsx` | `<AspectRatio>` | Done ✨ |
 | `Av` | avatar | `avatar.tsx` | `<Avatar>` | Done |
 | `Tg` | tag | `tag.tsx` | `<Badge>` variant | Done |
 | `Bg` | badge | `badge.tsx` | `<Badge>` | Done |
@@ -76,33 +85,33 @@ This analysis is based on the following sources:
 | `Rt` | rating | — | Custom | **Missing** |
 | `Sl` | sparkline | — | recharts | **Missing** |
 
-### Form Controls (8/14)
+### Form Controls (10/14)
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
 | `Bt` | button | `button.tsx` | `<Button>` | Done |
 | `In` | input | `input.tsx` | `<Input>` | Done |
-| `Ta` | textarea | — | `<Textarea>` | **Missing** |
+| `Ta` | textarea | `textarea.tsx` | `<Textarea>` | Done ✨ |
 | `Se` | select | `select.tsx` | `<Select>` | Done |
 | `Sw` | switch | `switch.tsx` | `<Switch>` | Done |
 | `Ck` | checkbox | `checkbox.tsx` | `<Checkbox>` | Done |
 | `Rd` | radio | `radio.tsx` | `<RadioGroup>` | Done |
 | `Rg` | range | `range.tsx` | `<Slider>` | Done |
 | `Cl` | color | — | Custom | **Missing** |
-| `Dt` | date | — | `<Calendar>` | **Missing** |
+| `Dt` | date | `date.tsx` | `<Calendar>` | Done ✨ |
 | `Dr` | daterange | `daterange.tsx` | `<Calendar>` | Done |
 | `Tm` | time | — | Custom | **Missing** |
 | `Up` | upload | — | Custom | **Missing** |
 | `Ot` | otp | — | `<InputOTP>` | **Missing** |
 
-### Charts (3/11)
+### Charts (4/11)
 
 | Code | Type | File | shadcn Mapping | Status |
 |------|------|------|----------------|--------|
 | `Br` | bar | `bar-chart.tsx` | recharts | Done |
 | `Ln` | line | `line-chart.tsx` | recharts | Done |
 | `Pi` | pie | `pie-chart.tsx` | recharts | Done |
-| `Ar` | area | — | recharts | **Missing** |
+| `Ar` | area | `area-chart.tsx` | recharts | Done ✨ |
 | `Sc` | scatter | — | recharts | **Missing** |
 | `Hm` | heatmap | — | recharts | **Missing** |
 | `Sn` | sankey | — | recharts | **Missing** |
@@ -133,23 +142,13 @@ This analysis is based on the following sources:
 
 ## Missing Components by Priority
 
-### P0 - Critical (common use cases)
+### P0 - Critical (common use cases) ✅ COMPLETE
 
-| Code | Type | shadcn | Effort | Notes |
-|------|------|--------|--------|-------|
-| `Ta` | textarea | `<Textarea>` | Low | Simple, mirrors Input |
-| `Dt` | date | `<Calendar>` | Medium | Use shadcn Calendar |
-| `Ls` | list | mapped children | Low | Core type 7, just iteration |
+All P0 components have been implemented in WF-0003.
 
-### P1 - High (frequently needed)
+### P1 - High (frequently needed) ✅ COMPLETE
 
-| Code | Type | shadcn | Effort | Notes |
-|------|------|--------|--------|-------|
-| `Im` | image | `<AspectRatio>` | Low | Wrapper for `<img>` |
-| `Sh` | sheet | `<Sheet>` | Low | Similar to Drawer |
-| `Gd` | grid | CSS grid | Low | Layout container |
-| `Sk` | stack | flex layout | Low | Layout container |
-| `Ar` | area | recharts | Low | Similar to LineChart |
+All P1 components have been implemented in WF-0003.
 
 ### P2 - Medium (useful additions)
 
@@ -171,7 +170,7 @@ This analysis is based on the following sources:
 |------|------|-------|
 | `Sc` | scatter | Scatter plot chart |
 | `Hm` | heatmap | Data heatmap |
-| `Sl` | sparkline | Inline mini chart |
+| `Sl` | sparkline | Inline mini chart (custom impl exists) |
 | `Kb` | kanban | Kanban board |
 | `Ti` | timeline | Timeline display |
 | `Vd` | video | Video player |
@@ -198,8 +197,8 @@ These exist in **shadcn/ui v4** but are not in the current spec. Consider adding
 |------------|------------------|---------------|----------|
 | **Alert** | `<Alert>` | `Al` | Status messages, warnings |
 | **AlertDialog** | `<AlertDialog>` | `Ad` | Confirmation dialogs |
-| **Skeleton** | `<Skeleton>` | `Sk` | Loading states (conflicts with stack) |
-| **Spinner** | `<Spinner>` | `Sp` | Loading indicator (conflicts with split) |
+| **Skeleton** | `<Skeleton>` | `Sn` | Loading states |
+| **Spinner** | `<Spinner>` | `Lr` | Loading indicator |
 | **Toast** | `<Sonner>` | `To` | Notifications |
 | **Separator** | `<Separator>` | `Sr` | Visual dividers |
 | **Collapsible** | `<Collapsible>` | `Co` | Expand/collapse sections |
@@ -253,17 +252,64 @@ Key requirements:
 
 | Category | Implemented | Missing | Total |
 |----------|-------------|---------|-------|
-| Core (0-9) | 9 | 1 | 10 |
-| Layout | 5 | 4 | 9 |
+| Core (0-9) | 10 | 0 | 10 |
+| Layout | 8 | 1 | 9 |
 | Navigation | 4 | 0 | 4 |
-| Data Display | 8 | 4 | 12 |
-| Form Controls | 8 | 6 | 14 |
-| Charts | 3 | 8 | 11 |
+| Data Display | 9 | 3 | 12 |
+| Form Controls | 10 | 4 | 14 |
+| Charts | 4 | 7 | 11 |
 | Media | 0 | 4 | 4 |
 | Interactive | 1 | 4 | 5 |
-| **TOTAL** | **34** | **31** | **65** |
+| **TOTAL** | **42** | **23** | **65** |
 
-**Next Steps:**
-1. Implement P0 components (Ta, Dt, Ls) - 3 components
-2. Implement P1 components (Im, Sh, Gd, Sk, Ar) - 5 components
-3. Review suggested new components for spec additions
+**Progress:** 52% → **65%** (+8 components from WF-0003)
+
+---
+
+## Next Steps
+
+### Immediate (P2 Components)
+
+| Priority | Code | Component | Effort | Suggested Approach |
+|----------|------|-----------|--------|-------------------|
+| 1 | `Ca` | Calendar | Low | Wrap shadcn `<Calendar>`, full month view |
+| 2 | `Sp` | Split | Medium | Use shadcn `<Resizable>` panels |
+| 3 | `Cr` | Carousel | Medium | Use shadcn `<Carousel>` |
+| 4 | `Ot` | OTP Input | Medium | Use shadcn `<InputOTP>` |
+| 5 | `Up` | Upload | Medium | Drag-drop zone with file list |
+| 6 | `Gn` | Gauge | Medium | Recharts radial bar chart |
+| 7 | `Rt` | Rating | Medium | Star icons with click handlers |
+| 8 | `Cl` | Color | Medium | Color picker with presets |
+| 9 | `Tm` | Time | Medium | Hour/minute select or input |
+
+### Technical Debt
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| Sparkline registration | Register existing `custom/sparkline` in component registry | High |
+| Component tests | Add unit tests for WF-0003 components | Medium |
+| Storybook stories | Document new components in Storybook | Medium |
+| Accessibility audit | Verify ARIA attributes on all components | Medium |
+
+### Spec Enhancements
+
+| Proposal | Rationale |
+|----------|-----------|
+| Add `Al` (Alert) | Common for status messages, warnings |
+| Add `To` (Toast) | Notifications via shadcn Sonner |
+| Add `Cm` (Command) | Command palette (Cmd+K) pattern |
+| Add `Pn` (Pagination) | Table/list pagination |
+| Add `Em` (EmptyState) | Empty state placeholders |
+
+### Workflow Commands
+
+```bash
+# Create workflow for P2 components
+/workflow:create implement P2 components (Calendar, Split, Carousel)
+
+# Check current workflow status
+/workflow:status
+
+# List all workflows
+/workflow:list
+```

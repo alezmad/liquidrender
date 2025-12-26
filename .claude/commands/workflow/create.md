@@ -161,7 +161,17 @@ After each wave, run:
 
 6. **Create STATUS.yaml** with git checkpoint info
 
-7. **Generate WORKFLOW-LAUNCHER.md** (for fresh session resume):
+7. **Register in Central Registry**:
+   ```bash
+   python .context/workflows/scripts/update-registry.py create WF-[ID] \
+     --name "[NAME]" \
+     --dirname "WF-[ID]-[name]" \
+     --location active \
+     --tasks [N]
+   ```
+   This adds the workflow to `.workflows/registry.yaml` for tracking.
+
+8. **Generate WORKFLOW-LAUNCHER.md** (for fresh session resume):
 
    Create `.workflows/active/WF-[ID]-[name]/WORKFLOW-LAUNCHER.md`:
 
@@ -214,7 +224,7 @@ After each wave, run:
    - Resume from the current wave
    ```
 
-8. **Offer Context Clear** (Optional):
+9. **Offer Context Clear** (Optional):
 
    If conversation is heavy (>15k tokens accumulated):
    ```
@@ -240,7 +250,7 @@ After each wave, run:
    - On "C": Instruct user to run `/clear` then `/workflow:launch WF-[ID]`
    - On "S": Continue with current context
 
-9. **ASK USER BEFORE WAVE 0** (Required Confirmation):
+10. **ASK USER BEFORE WAVE 0** (Required Confirmation):
    ```
    ╔═══════════════════════════════════════════════════════════════╗
    ║  READY TO START: WF-[ID]                                      ║
@@ -266,9 +276,9 @@ After each wave, run:
    - On "n" or "no": Pause workflow, save state
    - On other input: Clarify and re-ask
 
-10. **Begin Wave 0** bootstrap (sequential)
+11. **Begin Wave 0** bootstrap (sequential)
 
-11. **Launch PARALLEL subtasks** for Wave 1:
+12. **Launch PARALLEL subtasks** for Wave 1:
    ```
    # In a SINGLE message, launch all Wave 1 tasks:
    [Task: T1, run_in_background=true]
@@ -281,7 +291,7 @@ After each wave, run:
    [TaskOutput: T3, block=true]
    ```
 
-### 12. Show Available Commands
+### 13. Show Available Commands
 
 ```
 ## Workflow Commands

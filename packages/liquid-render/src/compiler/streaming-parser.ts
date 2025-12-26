@@ -343,6 +343,7 @@ export class StreamingParser {
       signals: [],
       surveys: [],
       comments: [],
+      warnings: [],
     };
   }
 

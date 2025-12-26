@@ -11,7 +11,7 @@
 
 import React from 'react';
 import type { CustomComponentProps, CustomComponentContract } from '../../types/custom-component';
-import { resolveBinding } from '../../renderer/data-context';
+import { resolveBinding, type DataContext } from '../../renderer/data-context';
 
 // ============================================================================
 // Contract (for LLM context)
@@ -38,13 +38,13 @@ export const sparklineContract: CustomComponentContract = {
 
 export function Sparkline({ block, data }: CustomComponentProps): React.ReactElement {
   // Resolve binding to get data array
-  const values = resolveBinding(block.binding, data);
+  const values = resolveBinding(block.binding, data as DataContext);
 
   // Extract props with defaults
   const width = (block.props?.width as number) ?? 100;
   const height = (block.props?.height as number) ?? 24;
   const strokeWidth = (block.props?.strokeWidth as number) ?? 1.5;
-  const color = block.color ?? 'currentColor';
+  const color = block.style?.color ?? 'currentColor';
 
   // Handle non-array or empty data
   if (!Array.isArray(values) || values.length === 0) {

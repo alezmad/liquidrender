@@ -123,11 +123,14 @@ export class CatalogRegistry {
       now - this.catalogTimestamp > this.catalogTtl;
 
     if (needsRefresh) {
-      this.cachedCatalog = await this.buildCatalog(options);
+      const catalog = await this.buildCatalog(options);
+      this.cachedCatalog = catalog;
       this.catalogTimestamp = now;
+      return catalog;
     }
 
-    return this.cachedCatalog;
+    // If we reach here, needsRefresh was false, meaning cachedCatalog exists
+    return this.cachedCatalog!;
   }
 
   /**

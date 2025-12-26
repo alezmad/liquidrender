@@ -187,7 +187,7 @@ export class MemoryConnector implements Connector {
     if (this.bindings.has(name)) {
       throw new Error(`Binding '${name}' already exists`);
     }
-    this.bindings.set(name, binding);
+    this.bindings.set(name, binding as MemoryBinding<unknown>);
   }
 
   /**
@@ -385,11 +385,11 @@ export function createDemoConnector(): MemoryConnector {
           description: 'Current active users (real-time)',
           suggestedComponent: 'Kp',
         },
-        simulator: (current: number) => {
+        simulator: ((current: number) => {
           // Random walk simulation
           const change = Math.floor(Math.random() * 50) - 25;
           return Math.max(0, current + change);
-        },
+        }) as (current: unknown) => unknown,
         simulationInterval: 2000,
       },
 
@@ -400,11 +400,11 @@ export function createDemoConnector(): MemoryConnector {
           description: 'Today\'s revenue (real-time)',
           suggestedComponent: 'Kp',
         },
-        simulator: (current: number) => {
+        simulator: ((current: number) => {
           // Accumulating revenue
           const sale = Math.floor(Math.random() * 500);
           return current + sale;
-        },
+        }) as (current: unknown) => unknown,
         simulationInterval: 3000,
       },
     },

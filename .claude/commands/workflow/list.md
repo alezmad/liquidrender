@@ -4,57 +4,99 @@ description: 'List all workflows (queued, active, completed, failed)'
 
 # Workflow List
 
-Show all workflows by status.
+Show all workflows by status from the central registry.
 
 ## Instructions
 
-1. Read registry if exists:
-   ```bash
-   cat .workflows/registry.yaml 2>/dev/null
-   ```
+### 1. Read Registry
 
-2. Scan directories:
-   ```bash
-   ls -la .workflows/queue/ 2>/dev/null
-   ls -la .workflows/active/ 2>/dev/null
-   ls -la .workflows/completed/ 2>/dev/null
-   ls -la .workflows/failed/ 2>/dev/null
-   ```
+Read `.workflows/registry.yaml` which contains the central workflow index.
 
-3. Present summary:
-   ```
-   ## Workflows
+If registry doesn't exist or is stale, sync it first:
+```bash
+python .context/workflows/scripts/sync-registry.py
+```
 
-   ### Active (1)
-   | ID | Name | Wave | Progress |
-   |----|------|------|----------|
-   | WF-0041 | UI Components | 2/4 | 8/12 tasks |
+### 2. Parse and Display
 
-   ### Queued (1)
-   | ID | Name | Created |
-   |----|------|---------|
-   | WF-0042 | Feature XYZ | 2024-12-24 |
+From registry.yaml, group workflows by location and present:
 
-   ### Completed (38)
-   | ID | Name | Completed | Duration |
-   |----|------|-----------|----------|
-   | WF-0040 | Database Setup | 2024-12-23 | 2h 30m |
-   | WF-0039 | Auth System | 2024-12-22 | 1h 45m |
-   [show last 5]
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  WORKFLOW REGISTRY                                    Last sync: [timestamp]  ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║  Total: [N] workflows | Active: [X] | Completed: [Y] | Queued: [Z] | Failed: [F] ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
 
-   ### Failed (2)
-   | ID | Name | Reason |
-   |----|------|--------|
-   | WF-0038 | Broken Feature | Dependency conflict |
+### Active ([N])
 
-   ---
-   Total: 42 workflows (38 completed, 2 failed, 1 active, 1 queued)
-   ```
+| ID | Name | Status | Wave | Tasks | Updated |
+|----|------|--------|------|-------|---------|
+| WF-0007 | TypeScript Error Remediation | in_progress | 0 | 0/5 | 2h ago |
+| WF-0005 | CustomBlock LLM Integration | in_progress | 0 | 0/8 | 4h ago |
+| WF-0002 | Quality Remediation | pending | 0 | 0/31 | 1h ago |
+| WF-0001 | Quality Audit | in_progress | 0 | 0/27 | 2h ago |
 
-4. Quick commands:
-   ```
-   /workflow:create [task]   Create new workflow
-   /workflow:status          Check active workflow
-   /workflow:resume [ID]     Resume interrupted workflow
-   /workflow:launch [ID]     Launch in fresh session
-   ```
+### Completed ([N])
+
+| ID | Name | Duration | Tasks | Completed |
+|----|------|----------|-------|-----------|
+| WF-0006 | Context Management System | 15m | 6/6 | Dec 25 |
+| WF-0003 | Missing Components | 7h 56m | 10/10 | Dec 26 |
+
+### Queued ([N])
+(none)
+
+### Failed ([N])
+(none)
+```
+
+### 3. Time Formatting
+
+Format timestamps relative to now:
+- Less than 1 hour: "Xm ago"
+- Less than 24 hours: "Xh ago"
+- Less than 7 days: "Mon", "Tue", etc.
+- Older: "Dec 25", "Nov 12", etc.
+
+### 4. Quick Commands
+
+```
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/workflow:create [task]` | Create new workflow |
+| `/workflow:status` | Check active workflow details |
+| `/workflow:resume [ID]` | Resume interrupted workflow |
+| `/workflow:launch [ID]` | Launch in fresh session |
+| `/workflow:complete [ID]` | Finalize completed workflow |
+| `/workflow:rollback [ID]` | Revert failed workflow |
+```
+
+### 5. Sync if Needed
+
+If registry seems out of date (mismatch between registry and directories):
+```bash
+python .context/workflows/scripts/sync-registry.py
+```
+
+Then re-read and display updated data.
+
+### 6. Metrics Summary (Optional)
+
+If user asks for metrics or history, also read `.workflows/metrics.yaml`:
+
+```
+## Recent History
+
+| Workflow | Duration | Tasks | When |
+|----------|----------|-------|------|
+| WF-0006 | 15m | 6 | Dec 25 |
+| WF-0003 | 7h 56m | 10 | Dec 26 |
+
+## Averages
+- Avg workflow duration: 4h 5m
+- Avg tasks per workflow: 8
+- Completion rate: 92%
+```

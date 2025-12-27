@@ -1,0 +1,5553 @@
+{
+  "generated": "2025-12-27T09:51:55.620967",
+  "project": "core",
+  "entities": {
+    "components": {
+      "Index": {
+        "path": "apps/mobile/src/app/index.tsx",
+        "exports": [
+          "Index"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router"
+        ]
+      },
+      "NotFound": {
+        "path": "apps/mobile/src/app/+not-found.tsx",
+        "exports": [
+          "NotFound"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "ErrorBoundary": {
+        "path": "apps/mobile/src/app/_layout.tsx",
+        "exports": [
+          "ErrorBoundary"
+        ],
+        "props": [],
+        "dependencies": [
+          "@dev-plugins/react-navigation",
+          "@expo-google-fonts/geist-mono",
+          "expo-router",
+          "expo-splash-screen",
+          "react-native"
+        ]
+      },
+      "QueryClientProvider": {
+        "path": "apps/web/src/lib/query/client.tsx",
+        "exports": [
+          "QueryClientProvider",
+          "getQueryClient"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@tanstack/react-query-devtools",
+          "@tanstack/react-query"
+        ]
+      },
+      "CreateOrganizationBottomSheet": {
+        "path": "apps/mobile/src/modules/organization/create-organization.tsx",
+        "exports": [
+          "CreateOrganizationBottomSheet"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "expo-router",
+          "react-hook-form",
+          "react-native"
+        ]
+      },
+      "AccountSwitcher": {
+        "path": "apps/web/src/modules/organization/account-switcher.tsx",
+        "exports": [
+          "AccountSwitcher"
+        ],
+        "props": [
+          "user"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/billing",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/auth"
+        ]
+      },
+      "OrganizationPicker": {
+        "path": "apps/web/src/modules/organization/organization-picker.tsx",
+        "exports": [
+          "OrganizationPicker"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/skeleton"
+        ]
+      },
+      "LoginFlow": {
+        "path": "apps/web/src/modules/auth/login.tsx",
+        "exports": [
+          "LoginFlow"
+        ],
+        "props": [
+          "redirectTo",
+          "invitationId",
+          "email"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "Verification": {
+        "path": "apps/mobile/src/modules/auth/verification.tsx",
+        "exports": [
+          "Verification"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "expo-router",
+          "react",
+          "@turbostarter/auth",
+          "expo-router"
+        ]
+      },
+      "KeyboardAvoidingView": {
+        "path": "apps/mobile/src/modules/common/styled.tsx",
+        "exports": [
+          "KeyboardAvoidingView",
+          "Link",
+          "ScrollView",
+          "SafeAreaView",
+          "BlurView",
+          "GlassView",
+          "TabBarLabel"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-blur",
+          "expo-glass-effect",
+          "expo-router",
+          "react-native-gesture-handler",
+          "react-native-keyboard-controller"
+        ]
+      },
+      "SettingsTile": {
+        "path": "apps/mobile/src/modules/common/settings-tile.tsx",
+        "exports": [
+          "SettingsTile"
+        ],
+        "props": [
+          "icon",
+          "children",
+          "onPress",
+          "destructive",
+          "loading",
+          "disabled"
+        ],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/ui",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/spin",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "Updates": {
+        "path": "apps/mobile/src/modules/common/updates.tsx",
+        "exports": [
+          "Updates"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-glass-effect",
+          "react",
+          "react-native",
+          "react-native-gesture-handler",
+          "react-native-safe-area-context"
+        ]
+      },
+      "Spinner": {
+        "path": "apps/mobile/src/modules/common/spinner.tsx",
+        "exports": [
+          "Spinner"
+        ],
+        "props": [
+          "modal"
+        ],
+        "dependencies": [
+          "@rn-primitives/portal",
+          "react",
+          "react-native",
+          "react-native-screens"
+        ]
+      },
+      "BaseHeader": {
+        "path": "apps/mobile/src/modules/common/layout/header.tsx",
+        "exports": [
+          "BaseHeader",
+          "UserHeader"
+        ],
+        "props": [
+          "onBack",
+          "title"
+        ],
+        "dependencies": [
+          "react-native",
+          "react-native-safe-area-context",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "ThemeSettings": {
+        "path": "apps/mobile/src/modules/user/settings/theme.tsx",
+        "exports": [
+          "ThemeSettings"
+        ],
+        "props": [],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "I18nSettings": {
+        "path": "apps/mobile/src/modules/user/settings/i18n.tsx",
+        "exports": [
+          "I18nSettings"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/i18n",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "Logout": {
+        "path": "apps/mobile/src/modules/user/settings/account/logout.tsx",
+        "exports": [
+          "Logout"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "AccountInfo": {
+        "path": "apps/mobile/src/modules/user/settings/account/account-info.tsx",
+        "exports": [
+          "AccountInfo"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "expo-router",
+          "react-native",
+          "@turbostarter/ui-mobile/skeleton",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "DeleteAccount": {
+        "path": "packages/email/src/templates/auth/delete-account.tsx",
+        "exports": [
+          "DeleteAccount"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "RequirePassword": {
+        "path": "apps/web/src/modules/user/settings/security/require-password.tsx",
+        "exports": [
+          "RequirePassword"
+        ],
+        "props": [
+          "form",
+          "onSubmit",
+          "data",
+          "children"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "react",
+          "react-hook-form",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "BackupCodesSheet": {
+        "path": "apps/mobile/src/modules/user/settings/account/two-factor/backup-codes/backup-codes.tsx",
+        "exports": [
+          "BackupCodesSheet",
+          "BackupCodesTile"
+        ],
+        "props": [
+          "ref"
+        ],
+        "dependencies": [
+          "react",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/logger",
+          "@turbostarter/ui-mobile/button"
+        ]
+      },
+      "TotpSheet": {
+        "path": "apps/mobile/src/modules/user/settings/account/two-factor/totp/totp.tsx",
+        "exports": [
+          "TotpSheet",
+          "TotpTile"
+        ],
+        "props": [
+          "ref"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "react",
+          "react-hook-form",
+          "react-native",
+          "react-qr-code"
+        ]
+      },
+      "RegisterForm": {
+        "path": "apps/web/src/modules/auth/form/register-form.tsx",
+        "exports": [
+          "RegisterForm",
+          "RegisterCta"
+        ],
+        "props": [
+          "redirectTo",
+          "email"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "@turbostarter/auth"
+        ]
+      },
+      "SocialIcons": {
+        "path": "apps/web/src/modules/auth/form/social-providers.tsx",
+        "exports": [
+          "SocialIcons",
+          "SocialProviders"
+        ],
+        "props": [
+          "providers",
+          "redirectTo"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "AnonymousLogin": {
+        "path": "apps/web/src/modules/auth/form/anonymous.tsx",
+        "exports": [
+          "AnonymousLogin"
+        ],
+        "props": [
+          "redirectTo"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "AuthDivider": {
+        "path": "apps/web/src/modules/auth/layout/divider.tsx",
+        "exports": [
+          "AuthDivider"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n"
+        ]
+      },
+      "AuthLayout": {
+        "path": "apps/mobile/src/app/(setup)/auth/_layout.tsx",
+        "exports": [
+          "AuthLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router"
+        ]
+      },
+      "InvitationDisclaimer": {
+        "path": "apps/web/src/modules/auth/layout/invitation-disclaimer.tsx",
+        "exports": [
+          "InvitationDisclaimer"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "AuthHeader": {
+        "path": "apps/web/src/modules/auth/layout/header.tsx",
+        "exports": [
+          "AuthHeader"
+        ],
+        "props": [
+          "title",
+          "description"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "UpdatePasswordForm": {
+        "path": "apps/web/src/modules/auth/form/password/update.tsx",
+        "exports": [
+          "UpdatePasswordForm"
+        ],
+        "props": [
+          "token"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "@turbostarter/auth"
+        ]
+      },
+      "ForgotPasswordForm": {
+        "path": "apps/web/src/modules/auth/form/password/forgot.tsx",
+        "exports": [
+          "ForgotPasswordForm"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "MagicLinkLoginForm": {
+        "path": "apps/web/src/modules/auth/form/login/magic-link.tsx",
+        "exports": [
+          "MagicLinkLoginForm"
+        ],
+        "props": [
+          "redirectTo",
+          "email"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "@turbostarter/i18n"
+        ]
+      },
+      "PasswordLoginForm": {
+        "path": "apps/web/src/modules/auth/form/login/password.tsx",
+        "exports": [
+          "PasswordLoginForm"
+        ],
+        "props": [
+          "redirectTo",
+          "email",
+          "onTwoFactorRedirect"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "@turbostarter/auth"
+        ]
+      },
+      "LoginForm": {
+        "path": "apps/web/src/modules/auth/form/login/form.tsx",
+        "exports": [
+          "LoginForm",
+          "LoginCta"
+        ],
+        "props": [
+          "options",
+          "redirectTo",
+          "email",
+          "onTwoFactorRedirect"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "AreaChart": {
+        "path": "apps/web/src/modules/organization/home/charts/area.tsx",
+        "exports": [
+          "AreaChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "BarChart": {
+        "path": "apps/web/src/modules/organization/home/charts/bar.tsx",
+        "exports": [
+          "BarChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "PieChart": {
+        "path": "apps/web/src/modules/organization/home/charts/pie.tsx",
+        "exports": [
+          "PieChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "dayjs",
+          "react",
+          "recharts",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "OrganizationInfo": {
+        "path": "apps/mobile/src/modules/organization/settings/organization-info.tsx",
+        "exports": [
+          "OrganizationInfo"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/badge",
+          "@turbostarter/ui-mobile/skeleton"
+        ]
+      },
+      "DeleteOrganization": {
+        "path": "apps/web/src/modules/organization/settings/delete-organization.tsx",
+        "exports": [
+          "DeleteOrganization"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "LeaveOrganization": {
+        "path": "apps/web/src/modules/organization/settings/leave-organization.tsx",
+        "exports": [
+          "LeaveOrganization"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "InviteMemberBottomSheet": {
+        "path": "apps/mobile/src/modules/organization/members/invite-member.tsx",
+        "exports": [
+          "InviteMemberBottomSheet"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "react-native",
+          "zod"
+        ]
+      },
+      "InvitationSummaryCard": {
+        "path": "apps/web/src/modules/organization/invitations/invitation-summary-card.tsx",
+        "exports": [
+          "InvitationSummaryCard"
+        ],
+        "props": [
+          "invitation",
+          "organization",
+          "slug",
+          "name",
+          "logo"
+        ],
+        "dependencies": [
+          "dayjs",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge",
+          "@turbostarter/ui-web/card",
+          "@turbostarter/auth"
+        ]
+      },
+      "InvitationEmailMismatch": {
+        "path": "apps/web/src/modules/organization/invitations/invitation-email-mismatch.tsx",
+        "exports": [
+          "InvitationEmailMismatch"
+        ],
+        "props": [
+          "invitationId",
+          "email"
+        ],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "InvitationExpired": {
+        "path": "apps/web/src/modules/organization/invitations/invitation-expired.tsx",
+        "exports": [
+          "InvitationExpired"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "Invitation": {
+        "path": "apps/web/src/modules/organization/invitations/invitation.tsx",
+        "exports": [
+          "Invitation"
+        ],
+        "props": [
+          "invitation",
+          "inviterEmail"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "dayjs",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "UserOrganizationInvitationsBanner": {
+        "path": "apps/web/src/modules/organization/invitations/user/user-organization-invitations.tsx",
+        "exports": [
+          "UserOrganizationInvitationsBanner",
+          "UserOrganizationInvitationsListModal"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "dayjs",
+          "react",
+          "sonner",
+          "@turbostarter/api/utils"
+        ]
+      },
+      "InvitationsListFilters": {
+        "path": "apps/mobile/src/modules/organization/invitations/list/invitations-list-filters.tsx",
+        "exports": [
+          "InvitationsListFilters"
+        ],
+        "props": [
+          "onFiltersChange",
+          "filters"
+        ],
+        "dependencies": [
+          "react",
+          "react-native",
+          "zustand",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "InvitationsList": {
+        "path": "apps/mobile/src/modules/organization/invitations/list/invitations-list.tsx",
+        "exports": [
+          "InvitationsList"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "react-native",
+          "react-native-gesture-handler",
+          "@turbostarter/i18n"
+        ]
+      },
+      "InvitationListItem": {
+        "path": "apps/mobile/src/modules/organization/invitations/list/invitations-list-item.tsx",
+        "exports": [
+          "InvitationListItem",
+          "InvitationListItemSkeleton"
+        ],
+        "props": [],
+        "dependencies": [
+          "dayjs",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-mobile/badge"
+        ]
+      },
+      "MembersList": {
+        "path": "apps/mobile/src/modules/organization/members/list/members-list.tsx",
+        "exports": [
+          "MembersList"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "react-native",
+          "react-native-gesture-handler",
+          "@turbostarter/i18n"
+        ]
+      },
+      "MembersListFilters": {
+        "path": "apps/mobile/src/modules/organization/members/list/members-list-filters.tsx",
+        "exports": [
+          "MembersListFilters"
+        ],
+        "props": [
+          "onFiltersChange",
+          "filters"
+        ],
+        "dependencies": [
+          "react",
+          "react-native",
+          "zustand",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "MembersListItem": {
+        "path": "apps/mobile/src/modules/organization/members/list/members-list-item.tsx",
+        "exports": [
+          "MembersListItem",
+          "MembersListItemSkeleton"
+        ],
+        "props": [],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/badge",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/skeleton"
+        ]
+      },
+      "MonitoringProvider": {
+        "path": "apps/web/src/lib/providers/monitoring.tsx",
+        "exports": [
+          "MonitoringProvider"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/monitoring-web"
+        ]
+      },
+      "ThemeProvider": {
+        "path": "apps/mobile/src/lib/providers/theme.tsx",
+        "exports": [
+          "ThemeProvider"
+        ],
+        "props": [
+          "children"
+        ],
+        "dependencies": [
+          "expo-navigation-bar",
+          "react",
+          "react-native",
+          "@turbostarter/ui"
+        ]
+      },
+      "AnalyticsProvider": {
+        "path": "apps/web/src/lib/providers/analytics.tsx",
+        "exports": [
+          "AnalyticsProvider"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/analytics-web"
+        ]
+      },
+      "Providers": {
+        "path": "apps/web/src/lib/providers/providers.tsx",
+        "exports": [
+          "Providers"
+        ],
+        "props": [
+          "children",
+          "locale"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n"
+        ]
+      },
+      "SetupLayout": {
+        "path": "apps/mobile/src/app/(setup)/_layout.tsx",
+        "exports": [
+          "SetupLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router"
+        ]
+      },
+      "DashboardLayout": {
+        "path": "apps/mobile/src/app/dashboard/_layout.tsx",
+        "exports": [
+          "DashboardLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router"
+        ]
+      },
+      "Home": {
+        "path": "apps/mobile/src/app/dashboard/(user)/index.tsx",
+        "exports": [
+          "Home"
+        ],
+        "props": [],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/ui-mobile/built-with"
+        ]
+      },
+      "Members": {
+        "path": "apps/mobile/src/app/dashboard/organization/members.tsx",
+        "exports": [
+          "Members"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "OrganizationLayout": {
+        "path": "apps/mobile/src/app/dashboard/organization/_layout.tsx",
+        "exports": [
+          "OrganizationLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "UserLayout": {
+        "path": "apps/mobile/src/app/dashboard/(user)/_layout.tsx",
+        "exports": [
+          "UserLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "AI": {
+        "path": "apps/mobile/src/app/dashboard/(user)/ai.tsx",
+        "exports": [
+          "AI"
+        ],
+        "props": [],
+        "dependencies": [
+          "@ai-sdk/react",
+          "ai",
+          "react",
+          "react-native",
+          "react-native-gesture-handler"
+        ]
+      },
+      "Settings": {
+        "path": "apps/mobile/src/app/dashboard/organization/settings/index.tsx",
+        "exports": [
+          "Settings"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-constants",
+          "expo-linking",
+          "expo-router",
+          "expo-store-review",
+          "react-native"
+        ]
+      },
+      "SettingsLayout": {
+        "path": "apps/mobile/src/app/dashboard/organization/settings/_layout.tsx",
+        "exports": [
+          "SettingsLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router"
+        ]
+      },
+      "Billing": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/billing.tsx",
+        "exports": [
+          "Billing"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-linking",
+          "react-native",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "General": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/general/index.tsx",
+        "exports": [
+          "General"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "expo-updates",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "Notifications": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/general/notifications.tsx",
+        "exports": [
+          "Notifications"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-linking",
+          "react-native",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "GeneralLayout": {
+        "path": "apps/mobile/src/app/dashboard/organization/settings/organization/_layout.tsx",
+        "exports": [
+          "GeneralLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "@turbostarter/i18n",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "Account": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/account/index.tsx",
+        "exports": [
+          "Account"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/icons"
+        ]
+      },
+      "TwoFactor": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/account/two-factor.tsx",
+        "exports": [
+          "TwoFactor"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/bottom-sheet",
+          "@turbostarter/ui-mobile/switch"
+        ]
+      },
+      "Sessions": {
+        "path": "apps/web/src/modules/user/settings/security/sessions.tsx",
+        "exports": [
+          "Sessions"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "AccountLayout": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/account/_layout.tsx",
+        "exports": [
+          "AccountLayout"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "AccountsScreen": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/account/accounts.tsx",
+        "exports": [
+          "AccountsScreen"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react-native",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "Password": {
+        "path": "apps/mobile/src/app/dashboard/(user)/settings/account/password.tsx",
+        "exports": [
+          "Password"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "expo-router",
+          "react-hook-form",
+          "react-native"
+        ]
+      },
+      "Organization": {
+        "path": "apps/mobile/src/app/dashboard/organization/settings/organization/index.tsx",
+        "exports": [
+          "Organization"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/icons",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "Join": {
+        "path": "apps/mobile/src/app/(setup)/auth/join.tsx",
+        "exports": [
+          "Join"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "expo-router",
+          "react-native",
+          "@turbostarter/api/utils"
+        ]
+      },
+      "FinalStep": {
+        "path": "apps/mobile/src/app/(setup)/steps/final.tsx",
+        "exports": [
+          "FinalStep"
+        ],
+        "props": [],
+        "dependencies": [
+          "expo-router",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "SkipStep": {
+        "path": "apps/mobile/src/app/(setup)/steps/skip.tsx",
+        "exports": [
+          "SkipStep"
+        ],
+        "props": [],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "StartStep": {
+        "path": "apps/mobile/src/app/(setup)/steps/start.tsx",
+        "exports": [
+          "StartStep"
+        ],
+        "props": [],
+        "dependencies": [
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-mobile/button",
+          "@turbostarter/ui-mobile/text"
+        ]
+      },
+      "RequiredStep": {
+        "path": "apps/mobile/src/app/(setup)/steps/required.tsx",
+        "exports": [
+          "RequiredStep"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "expo-linking",
+          "react-hook-form",
+          "react-native",
+          "zod"
+        ]
+      },
+      "GlobalError": {
+        "path": "apps/web/src/app/global-error.tsx",
+        "exports": [
+          "GlobalError"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/monitoring-web"
+        ]
+      },
+      "CreateOrganizationModal": {
+        "path": "apps/web/src/modules/organization/create-organization.tsx",
+        "exports": [
+          "CreateOrganizationModal"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "UserNavigation": {
+        "path": "apps/web/src/modules/user/user-navigation.tsx",
+        "exports": [
+          "UserNavigation",
+          "UserNavigationSkeleton"
+        ],
+        "props": [
+          "user"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "Mdx": {
+        "path": "apps/web/src/modules/common/mdx.tsx",
+        "exports": [
+          "Mdx"
+        ],
+        "props": [
+          "mdx"
+        ],
+        "dependencies": [
+          "@content-collections/mdx/react"
+        ]
+      },
+      "ThemedImage": {
+        "path": "apps/web/src/modules/common/themed-image.tsx",
+        "exports": [
+          "ThemedImage"
+        ],
+        "props": [],
+        "dependencies": [
+          "next-themes",
+          "react-dom",
+          "react"
+        ]
+      },
+      "ThemeControlsProvider": {
+        "path": "apps/web/src/modules/common/theme.tsx",
+        "exports": [
+          "ThemeControlsProvider",
+          "ThemeControls"
+        ],
+        "props": [],
+        "dependencies": [
+          "next-themes",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "TurboLink": {
+        "path": "apps/web/src/modules/common/turbo-link.tsx",
+        "exports": [
+          "TurboLink"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "AIDemo": {
+        "path": "packages/liquid-render/dev/AIDemo.tsx",
+        "exports": [
+          "AIDemo"
+        ],
+        "props": [
+          "apiKey"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Pricing": {
+        "path": "apps/web/src/modules/billing/pricing/pricing.tsx",
+        "exports": [
+          "Pricing"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@turbostarter/api/utils",
+          "@turbostarter/billing/env"
+        ]
+      },
+      "PricingSection": {
+        "path": "apps/web/src/modules/billing/pricing/section.tsx",
+        "exports": [
+          "PricingSection",
+          "PricingSectionSkeleton"
+        ],
+        "props": [
+          "user",
+          "model"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/skeleton",
+          "@turbostarter/auth",
+          "@turbostarter/billing"
+        ]
+      },
+      "Plans": {
+        "path": "apps/web/src/modules/billing/pricing/plans/plans.tsx",
+        "exports": [
+          "Plans",
+          "PlansSkeleton"
+        ],
+        "props": [
+          "plans",
+          "discounts",
+          "user",
+          "interval",
+          "model",
+          "currency"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui-web/skeleton",
+          "@turbostarter/auth"
+        ]
+      },
+      "Discount": {
+        "path": "apps/web/src/modules/billing/pricing/layout/discount.tsx",
+        "exports": [
+          "Discount"
+        ],
+        "props": [
+          "currency",
+          "priceWithDiscount",
+          "discount"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "PricingHeader": {
+        "path": "apps/web/src/modules/billing/pricing/layout/header.tsx",
+        "exports": [
+          "PricingHeader"
+        ],
+        "props": [
+          "currency",
+          "model",
+          "intervals",
+          "activeInterval",
+          "onIntervalChange",
+          "billing",
+          "priceWithDiscount",
+          "discount"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/billing",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/tabs"
+        ]
+      },
+      "PLAN_FEATURES": {
+        "path": "apps/web/src/modules/billing/pricing/constants/features.tsx",
+        "exports": [
+          "PLAN_FEATURES"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/billing"
+        ]
+      },
+      "Plan": {
+        "path": "apps/web/src/modules/billing/pricing/plans/plan/plan.tsx",
+        "exports": [
+          "Plan"
+        ],
+        "props": [
+          "plan",
+          "user",
+          "interval",
+          "model",
+          "currency",
+          "discounts"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/billing",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "Hero": {
+        "path": "apps/web/src/modules/marketing/home/hero.tsx",
+        "exports": [
+          "Hero"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/marquee"
+        ]
+      },
+      "Banner": {
+        "path": "apps/web/src/modules/marketing/home/banner.tsx",
+        "exports": [
+          "Banner"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "Features": {
+        "path": "apps/web/src/modules/marketing/home/features.tsx",
+        "exports": [
+          "Features"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui"
+        ]
+      },
+      "Testimonials": {
+        "path": "apps/web/src/modules/marketing/home/testimonials.tsx",
+        "exports": [
+          "Testimonials"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/marquee"
+        ]
+      },
+      "Faq": {
+        "path": "apps/web/src/modules/marketing/home/faq.tsx",
+        "exports": [
+          "Faq"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "ContactForm": {
+        "path": "packages/email/src/templates/contact-form.tsx",
+        "exports": [
+          "ContactForm"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n/server"
+        ]
+      },
+      "Section": {
+        "path": "apps/web/src/modules/marketing/layout/section.tsx",
+        "exports": [
+          "Section",
+          "SectionHeader",
+          "SectionBadge",
+          "SectionTitle",
+          "SectionDescription"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui",
+          "react"
+        ]
+      },
+      "Footer": {
+        "path": "packages/email/src/templates/_components/layout/footer.tsx",
+        "exports": [
+          "Footer"
+        ],
+        "props": [
+          "origin"
+        ],
+        "dependencies": [
+          "@react-email/components"
+        ]
+      },
+      "CtaButton": {
+        "path": "apps/web/src/modules/marketing/layout/cta-button.tsx",
+        "exports": [
+          "CtaButton"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "BuyCtaDialog": {
+        "path": "apps/web/src/modules/marketing/layout/buy-cta-dialog.tsx",
+        "exports": [
+          "BuyCtaDialog"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "TagsPicker": {
+        "path": "apps/web/src/modules/marketing/blog/tags-picker.tsx",
+        "exports": [
+          "TagsPicker"
+        ],
+        "props": [],
+        "dependencies": [
+          "nuqs",
+          "@turbostarter/cms",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "Header": {
+        "path": "packages/liquid-render/src/renderer/components/header.tsx",
+        "exports": [
+          "Header",
+          "StaticHeader"
+        ],
+        "props": [
+          "title",
+          "sticky",
+          "height",
+          "style",
+          "className",
+          "children",
+          "startContent",
+          "endContent"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Hamburger": {
+        "path": "apps/web/src/modules/marketing/layout/header/navigation/hamburger.tsx",
+        "exports": [
+          "Hamburger"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "react"
+        ]
+      },
+      "MobileNavigation": {
+        "path": "apps/web/src/modules/marketing/layout/header/navigation/mobile-navigation.tsx",
+        "exports": [
+          "MobileNavigation"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "Navigation": {
+        "path": "apps/web/src/modules/marketing/layout/header/navigation/navigation.tsx",
+        "exports": [
+          "Navigation",
+          "Item"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "BaseLayout": {
+        "path": "apps/web/src/modules/common/layout/base.tsx",
+        "exports": [
+          "BaseLayout"
+        ],
+        "props": [
+          "locale",
+          "children"
+        ],
+        "dependencies": [
+          "@turbostarter/ui"
+        ]
+      },
+      "I18nControls": {
+        "path": "apps/web/src/modules/common/i18n/controls.tsx",
+        "exports": [
+          "I18nControls"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/i18n",
+          "@turbostarter/i18n"
+        ]
+      },
+      "DashboardInset": {
+        "path": "apps/web/src/modules/common/layout/dashboard/inset.tsx",
+        "exports": [
+          "DashboardInset"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui-web/sidebar"
+        ]
+      },
+      "DashboardActionBar": {
+        "path": "apps/web/src/modules/common/layout/dashboard/action-bar.tsx",
+        "exports": [
+          "DashboardActionBar"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "zod",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "DashboardHeader": {
+        "path": "apps/web/src/modules/common/layout/dashboard/header.tsx",
+        "exports": [
+          "DashboardHeader",
+          "DashboardHeaderTitle",
+          "DashboardHeaderDescription"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui"
+        ]
+      },
+      "DashboardSidebar": {
+        "path": "apps/web/src/modules/common/layout/dashboard/sidebar.tsx",
+        "exports": [
+          "DashboardSidebar"
+        ],
+        "props": [
+          "user",
+          "menu",
+          "label",
+          "items",
+          "title",
+          "href",
+          "icon"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/sidebar"
+        ]
+      },
+      "SidebarLink": {
+        "path": "apps/web/src/modules/common/layout/dashboard/sidebar-link.tsx",
+        "exports": [
+          "SidebarLink"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui-web/sidebar"
+        ]
+      },
+      "Passkeys": {
+        "path": "apps/web/src/modules/user/settings/security/passkeys.tsx",
+        "exports": [
+          "Passkeys"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "Accounts": {
+        "path": "apps/web/src/modules/user/settings/security/accounts.tsx",
+        "exports": [
+          "Accounts"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "EditPassword": {
+        "path": "apps/web/src/modules/user/settings/security/edit-password.tsx",
+        "exports": [
+          "EditPassword"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "sonner",
+          "@turbostarter/auth"
+        ]
+      },
+      "EditEmail": {
+        "path": "apps/web/src/modules/user/settings/general/edit-email.tsx",
+        "exports": [
+          "EditEmail"
+        ],
+        "props": [
+          "user"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "sonner"
+        ]
+      },
+      "EditName": {
+        "path": "apps/web/src/modules/organization/settings/edit-name.tsx",
+        "exports": [
+          "EditName"
+        ],
+        "props": [],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "sonner",
+          "@turbostarter/auth"
+        ]
+      },
+      "EditAvatar": {
+        "path": "apps/web/src/modules/user/settings/general/edit-avatar.tsx",
+        "exports": [
+          "EditAvatar"
+        ],
+        "props": [
+          "user"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/auth"
+        ]
+      },
+      "LanguageSwitcher": {
+        "path": "apps/web/src/modules/user/settings/general/language-switcher.tsx",
+        "exports": [
+          "LanguageSwitcher"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n"
+        ]
+      },
+      "SettingsNav": {
+        "path": "apps/web/src/modules/user/settings/layout/nav.tsx",
+        "exports": [
+          "SettingsNav"
+        ],
+        "props": [
+          "links",
+          "label",
+          "href"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "PlanSummary": {
+        "path": "apps/web/src/modules/user/settings/billing/plan-summary.tsx",
+        "exports": [
+          "PlanSummary"
+        ],
+        "props": [],
+        "dependencies": [
+          "dayjs",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/badge",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "ManagePlan": {
+        "path": "apps/web/src/modules/user/settings/billing/manage-plan.tsx",
+        "exports": [
+          "ManagePlan"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@turbostarter/billing",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "TwoFactorAuthentication": {
+        "path": "apps/web/src/modules/user/settings/security/two-factor/two-factor.tsx",
+        "exports": [
+          "TwoFactorAuthentication"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/switch",
+          "@turbostarter/auth"
+        ]
+      },
+      "BackupCodesModal": {
+        "path": "apps/web/src/modules/user/settings/security/two-factor/backup-codes/backup-codes.tsx",
+        "exports": [
+          "BackupCodesModal",
+          "BackupCodesTile"
+        ],
+        "props": [
+          "open",
+          "onOpenChange",
+          "open"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "TotpModal": {
+        "path": "apps/web/src/modules/user/settings/security/two-factor/totp/totp.tsx",
+        "exports": [
+          "TotpModal",
+          "TotpTile"
+        ],
+        "props": [
+          "open",
+          "onOpenChange",
+          "open"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "next-themes",
+          "react",
+          "react-hook-form",
+          "react-qr-code"
+        ]
+      },
+      "UpdateCustomerPlanModal": {
+        "path": "apps/web/src/modules/admin/customers/update-customer-plan.tsx",
+        "exports": [
+          "UpdateCustomerPlanModal"
+        ],
+        "props": [
+          "customer",
+          "user"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "sonner"
+        ]
+      },
+      "DetailsList": {
+        "path": "apps/web/src/modules/admin/layout/details-list.tsx",
+        "exports": [
+          "DetailsList",
+          "DetailsListItem"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui"
+        ]
+      },
+      "AdminSidebar": {
+        "path": "apps/web/src/modules/admin/layout/sidebar.tsx",
+        "exports": [
+          "AdminSidebar"
+        ],
+        "props": [
+          "user",
+          "menu",
+          "label",
+          "items",
+          "title",
+          "href",
+          "icon"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/i18n/server",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/sidebar"
+        ]
+      },
+      "UserDetails": {
+        "path": "apps/web/src/modules/admin/users/user/details.tsx",
+        "exports": [
+          "UserDetails"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "sonner",
+          "@turbostarter/auth"
+        ]
+      },
+      "ImpersonatingBanner": {
+        "path": "apps/web/src/modules/admin/users/user/impersonating-banner.tsx",
+        "exports": [
+          "ImpersonatingBanner"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "UserHeader": {
+        "path": "apps/web/src/modules/admin/users/user/header.tsx",
+        "exports": [
+          "UserHeader"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@turbostarter/ui-web/badge",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "UsersDataTable": {
+        "path": "apps/web/src/modules/admin/users/data-table/users-data-table.tsx",
+        "exports": [
+          "UsersDataTable"
+        ],
+        "props": [
+          "promise",
+          "perPage"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-toolbar",
+          "@turbostarter/api/schema"
+        ]
+      },
+      "SessionsList": {
+        "path": "apps/web/src/modules/admin/users/user/sessions/sessions-list.tsx",
+        "exports": [
+          "SessionsList"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "SetPasswordModal": {
+        "path": "apps/web/src/modules/admin/users/user/accounts/set-password.tsx",
+        "exports": [
+          "SetPasswordModal"
+        ],
+        "props": [
+          "id",
+          "children"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "sonner"
+        ]
+      },
+      "Ban": {
+        "path": "apps/web/src/modules/admin/users/user/actions/ban.tsx",
+        "exports": [
+          "Ban"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "dayjs",
+          "react-hook-form",
+          "sonner",
+          "@turbostarter/auth"
+        ]
+      },
+      "Delete": {
+        "path": "apps/web/src/modules/admin/organizations/organization/actions/delete.tsx",
+        "exports": [
+          "Delete"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "Impersonate": {
+        "path": "apps/web/src/modules/admin/users/user/actions/impersonate.tsx",
+        "exports": [
+          "Impersonate"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/button",
+          "@turbostarter/ui-web/icons"
+        ]
+      },
+      "InvitationsDataTable": {
+        "path": "apps/web/src/modules/organization/invitations/data-table/invitations-data-table.tsx",
+        "exports": [
+          "InvitationsDataTable"
+        ],
+        "props": [
+          "organizationId"
+        ],
+        "dependencies": [
+          "@turbostarter/auth",
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-skeleton",
+          "@turbostarter/ui-web/data-table/data-table-toolbar"
+        ]
+      },
+      "MembershipsDataTable": {
+        "path": "apps/web/src/modules/admin/users/user/memberships/data-table/memberships-data-table.tsx",
+        "exports": [
+          "MembershipsDataTable"
+        ],
+        "props": [
+          "userId"
+        ],
+        "dependencies": [
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-skeleton",
+          "@turbostarter/ui-web/data-table/data-table-toolbar"
+        ]
+      },
+      "AccountsDataTable": {
+        "path": "apps/web/src/modules/admin/users/user/accounts/data-table/accounts-data-table.tsx",
+        "exports": [
+          "AccountsDataTable"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-skeleton",
+          "@turbostarter/ui-web/data-table/data-table-toolbar"
+        ]
+      },
+      "AccountActions": {
+        "path": "apps/web/src/modules/admin/users/user/accounts/data-table/columns.tsx",
+        "exports": [
+          "AccountActions",
+          "useColumns"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "PlansDataTable": {
+        "path": "apps/web/src/modules/admin/users/user/plans/data-table/plans-data-table.tsx",
+        "exports": [
+          "PlansDataTable"
+        ],
+        "props": [
+          "userId"
+        ],
+        "dependencies": [
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-skeleton",
+          "@turbostarter/ui-web/data-table/data-table-toolbar"
+        ]
+      },
+      "OrganizationDetails": {
+        "path": "apps/web/src/modules/admin/organizations/organization/details.tsx",
+        "exports": [
+          "OrganizationDetails"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "sonner"
+        ]
+      },
+      "OrganizationHeader": {
+        "path": "apps/web/src/modules/admin/organizations/organization/header.tsx",
+        "exports": [
+          "OrganizationHeader"
+        ],
+        "props": [
+          "id"
+        ],
+        "dependencies": [
+          "@tanstack/react-query"
+        ]
+      },
+      "OrganizationsDataTable": {
+        "path": "apps/web/src/modules/admin/organizations/data-table/organizations-data-table.tsx",
+        "exports": [
+          "OrganizationsDataTable"
+        ],
+        "props": [
+          "promise",
+          "perPage"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-toolbar",
+          "@turbostarter/api/schema"
+        ]
+      },
+      "UpdateMemberRoleModal": {
+        "path": "apps/web/src/modules/organization/members/update-member-role.tsx",
+        "exports": [
+          "UpdateMemberRoleModal"
+        ],
+        "props": [
+          "member",
+          "children"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react",
+          "react-hook-form",
+          "sonner"
+        ]
+      },
+      "InvitationActions": {
+        "path": "apps/web/src/modules/admin/organizations/organization/invitations/data-table/columns.tsx",
+        "exports": [
+          "InvitationActions",
+          "useColumns"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "dayjs",
+          "sonner",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "MemberActions": {
+        "path": "apps/web/src/modules/admin/organizations/organization/members/data-table/columns.tsx",
+        "exports": [
+          "MemberActions",
+          "useColumns"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "MembersDataTable": {
+        "path": "apps/web/src/modules/organization/members/data-table/members-data-table.tsx",
+        "exports": [
+          "MembersDataTable"
+        ],
+        "props": [
+          "organizationId"
+        ],
+        "dependencies": [
+          "@turbostarter/shared/utils",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-skeleton",
+          "@turbostarter/ui-web/data-table/data-table-toolbar"
+        ]
+      },
+      "CustomersDataTable": {
+        "path": "apps/web/src/modules/admin/customers/data-table/customers-data-table.tsx",
+        "exports": [
+          "CustomersDataTable"
+        ],
+        "props": [
+          "promise",
+          "perPage"
+        ],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui-web/data-table/data-table",
+          "@turbostarter/ui-web/data-table/data-table-toolbar",
+          "@turbostarter/api/schema"
+        ]
+      },
+      "CustomerActions": {
+        "path": "apps/web/src/modules/admin/customers/data-table/columns.tsx",
+        "exports": [
+          "CustomerActions",
+          "useColumns"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/billing",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "PasskeyLogin": {
+        "path": "apps/web/src/modules/auth/form/login/passkey.tsx",
+        "exports": [
+          "PasskeyLogin"
+        ],
+        "props": [
+          "redirectTo"
+        ],
+        "dependencies": [
+          "@tanstack/react-query",
+          "react",
+          "@turbostarter/auth",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/badge"
+        ]
+      },
+      "EditLogo": {
+        "path": "apps/web/src/modules/organization/settings/edit-logo.tsx",
+        "exports": [
+          "EditLogo"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-query",
+          "sonner",
+          "@turbostarter/auth",
+          "@turbostarter/i18n"
+        ]
+      },
+      "InviteMember": {
+        "path": "apps/web/src/modules/organization/members/invite-member.tsx",
+        "exports": [
+          "InviteMember"
+        ],
+        "props": [
+          "organizationId"
+        ],
+        "dependencies": [
+          "@hookform/resolvers/standard-schema",
+          "@tanstack/react-query",
+          "react-hook-form",
+          "sonner",
+          "zod"
+        ]
+      },
+      "ShapeChart": {
+        "path": "apps/web/src/modules/organization/home/charts/shape.tsx",
+        "exports": [
+          "ShapeChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "lucide-react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/chart",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "RadarChart": {
+        "path": "apps/web/src/modules/organization/home/charts/radar.tsx",
+        "exports": [
+          "RadarChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "dayjs",
+          "lucide-react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "RadialChart": {
+        "path": "apps/web/src/modules/organization/home/charts/radial.tsx",
+        "exports": [
+          "RadialChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "recharts",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/icons",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "LineChart": {
+        "path": "apps/web/src/modules/organization/home/charts/line.tsx",
+        "exports": [
+          "LineChart"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui-web/chart"
+        ]
+      },
+      "Error": {
+        "path": "apps/web/src/app/[locale]/error.tsx",
+        "exports": [
+          "Error"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/monitoring-web",
+          "@turbostarter/ui-web/button"
+        ]
+      },
+      "MainLayout": {
+        "path": "apps/web/src/app/[locale]/(marketing)/layout.tsx",
+        "exports": [
+          "MainLayout"
+        ],
+        "props": [],
+        "dependencies": []
+      },
+      "PageView": {
+        "path": "packages/analytics/web/src/providers/posthog/page-view.tsx",
+        "exports": [
+          "PageView"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "ConfirmEmail": {
+        "path": "packages/email/src/templates/auth/confirm-email.tsx",
+        "exports": [
+          "ConfirmEmail"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "OrganizationInvitation": {
+        "path": "packages/email/src/templates/auth/organization-invitation.tsx",
+        "exports": [
+          "OrganizationInvitation"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "MagicLink": {
+        "path": "packages/email/src/templates/auth/magic-link.tsx",
+        "exports": [
+          "MagicLink"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "ResetPassword": {
+        "path": "packages/email/src/templates/auth/reset-password.tsx",
+        "exports": [
+          "ResetPassword"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "ChangeEmail": {
+        "path": "packages/email/src/templates/auth/change-email.tsx",
+        "exports": [
+          "ChangeEmail"
+        ],
+        "props": [],
+        "dependencies": [
+          "@react-email/components",
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/i18n/server",
+          "@turbostarter/shared/utils"
+        ]
+      },
+      "Layout": {
+        "path": "packages/email/src/templates/_components/layout/layout.tsx",
+        "exports": [
+          "Layout"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "ComponentGallery": {
+        "path": "packages/liquid-render/dev/ComponentGallery.tsx",
+        "exports": [
+          "ComponentGallery"
+        ],
+        "props": [
+          "onBack"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "ComponentTest": {
+        "path": "packages/liquid-render/dev/ComponentTest.tsx",
+        "exports": [
+          "ComponentTest"
+        ],
+        "props": [
+          "component",
+          "dsl",
+          "dataKey"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "DrawerDemo": {
+        "path": "packages/liquid-render/.scratch/demo-drawer.tsx",
+        "exports": [
+          "DrawerDemo"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Sparkline": {
+        "path": "packages/liquid-render/src/custom/sparkline/index.tsx",
+        "exports": [
+          "Sparkline",
+          "sparklineContract"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Nav": {
+        "path": "packages/liquid-render/src/renderer/components/nav.tsx",
+        "exports": [
+          "Nav",
+          "StaticNav"
+        ],
+        "props": [
+          "label",
+          "onClick",
+          "children",
+          "disabled",
+          "active",
+          "defaultExpanded",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "AreaChartComponent": {
+        "path": "packages/liquid-render/src/renderer/components/area-chart.tsx",
+        "exports": [
+          "AreaChartComponent",
+          "StaticAreaChart"
+        ],
+        "props": [
+          "data",
+          "xKey",
+          "areas",
+          "title",
+          "height",
+          "stacked",
+          "gradient",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "BarChartComponent": {
+        "path": "packages/liquid-render/src/renderer/components/bar-chart.tsx",
+        "exports": [
+          "BarChartComponent",
+          "StaticBarChart"
+        ],
+        "props": [
+          "data",
+          "xKey",
+          "bars",
+          "title",
+          "height",
+          "stacked",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "DataTable": {
+        "path": "packages/ui/web/src/components/data-table/data-table.tsx",
+        "exports": [
+          "DataTable"
+        ],
+        "props": [],
+        "dependencies": [
+          "@tanstack/react-table",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table",
+          "react"
+        ]
+      },
+      "Tabs": {
+        "path": "packages/liquid-render/src/renderer/components/tabs.tsx",
+        "exports": [
+          "Tabs",
+          "StaticTabs"
+        ],
+        "props": [
+          "tabs",
+          "activeIndex",
+          "onChange",
+          "index",
+          "variant",
+          "className",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "PieChartComponent": {
+        "path": "packages/liquid-render/src/renderer/components/pie-chart.tsx",
+        "exports": [
+          "PieChartComponent",
+          "StaticPieChart",
+          "DonutChart"
+        ],
+        "props": [
+          "data",
+          "nameKey",
+          "valueKey",
+          "title",
+          "height",
+          "innerRadius",
+          "colors",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Card": {
+        "path": "packages/ui/web/src/components/card.tsx",
+        "exports": [
+          "Card",
+          "CardHeader",
+          "CardTitle",
+          "CardDescription",
+          "CardContent",
+          "CardFooter"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/ui"
+        ]
+      },
+      "Popover": {
+        "path": "packages/liquid-render/src/renderer/components/popover.tsx",
+        "exports": [
+          "Popover",
+          "StaticPopover"
+        ],
+        "props": [
+          "trigger",
+          "children",
+          "placement",
+          "defaultOpen",
+          "onOpenChange",
+          "open",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Radio": {
+        "path": "packages/liquid-render/src/renderer/components/radio.tsx",
+        "exports": [
+          "Radio",
+          "StaticRadio"
+        ],
+        "props": [
+          "name",
+          "options",
+          "value",
+          "onChange",
+          "value",
+          "label",
+          "disabled",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Progress": {
+        "path": "packages/liquid-render/src/renderer/components/progress.tsx",
+        "exports": [
+          "Progress",
+          "StaticProgress"
+        ],
+        "props": [
+          "value",
+          "label",
+          "color",
+          "className"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Icon": {
+        "path": "packages/liquid-render/src/renderer/components/icon.tsx",
+        "exports": [
+          "Icon",
+          "StaticIcon"
+        ],
+        "props": [
+          "name",
+          "size",
+          "color",
+          "className"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Container": {
+        "path": "packages/liquid-render/src/renderer/components/container.tsx",
+        "exports": [
+          "Container",
+          "StaticContainer",
+          "GridContainer"
+        ],
+        "props": [
+          "children",
+          "direction",
+          "align",
+          "justify",
+          "gap",
+          "wrap",
+          "style",
+          "className"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Grid": {
+        "path": "packages/liquid-render/src/renderer/components/grid.tsx",
+        "exports": [
+          "Grid",
+          "StaticGrid",
+          "GridItem",
+          "ResponsiveGrid"
+        ],
+        "props": [
+          "children",
+          "columns",
+          "gap",
+          "align",
+          "justify",
+          "minChildWidth",
+          "style",
+          "className"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "List": {
+        "path": "packages/liquid-render/src/renderer/components/list.tsx",
+        "exports": [
+          "List",
+          "StaticList",
+          "GridList"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "DateRange": {
+        "path": "packages/liquid-render/src/renderer/components/daterange.tsx",
+        "exports": [
+          "DateRange",
+          "StaticDateRange"
+        ],
+        "props": [
+          "label",
+          "value",
+          "onChange",
+          "value",
+          "presets",
+          "wrapperStyle"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Accordion": {
+        "path": "packages/liquid-render/src/renderer/components/accordion.tsx",
+        "exports": [
+          "Accordion",
+          "StaticAccordion"
+        ],
+        "props": [
+          "title",
+          "children",
+          "defaultOpen",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Drawer": {
+        "path": "packages/liquid-render/src/renderer/components/drawer.tsx",
+        "exports": [
+          "Drawer",
+          "StaticDrawer"
+        ],
+        "props": [
+          "title",
+          "children",
+          "isOpen",
+          "onClose",
+          "position",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Tooltip": {
+        "path": "packages/liquid-render/src/renderer/components/tooltip.tsx",
+        "exports": [
+          "Tooltip",
+          "StaticTooltip"
+        ],
+        "props": [
+          "text",
+          "children",
+          "placement",
+          "delay",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Heading": {
+        "path": "packages/liquid-render/src/renderer/components/heading.tsx",
+        "exports": [
+          "Heading",
+          "StaticHeading"
+        ],
+        "props": [
+          "children",
+          "level",
+          "color",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Tag": {
+        "path": "packages/liquid-render/src/renderer/components/tag.tsx",
+        "exports": [
+          "Tag",
+          "StaticTag"
+        ],
+        "props": [
+          "label",
+          "color",
+          "className",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Stack": {
+        "path": "packages/liquid-render/src/renderer/components/stack.tsx",
+        "exports": [
+          "Stack",
+          "VStack",
+          "HStack",
+          "StaticStack",
+          "StaticVStack",
+          "StaticHStack"
+        ],
+        "props": [
+          "isHorizontal"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Switch": {
+        "path": "packages/liquid-render/src/renderer/components/switch.tsx",
+        "exports": [
+          "Switch",
+          "StaticSwitch"
+        ],
+        "props": [
+          "checked",
+          "onChange",
+          "checked",
+          "label",
+          "disabled"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Breadcrumb": {
+        "path": "packages/liquid-render/src/renderer/components/breadcrumb.tsx",
+        "exports": [
+          "Breadcrumb",
+          "StaticBreadcrumb"
+        ],
+        "props": [
+          "items",
+          "label",
+          "onClick"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "LineChartComponent": {
+        "path": "packages/liquid-render/src/renderer/components/line-chart.tsx",
+        "exports": [
+          "LineChartComponent",
+          "StaticLineChart"
+        ],
+        "props": [
+          "data",
+          "xKey",
+          "lines",
+          "title",
+          "height",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Avatar": {
+        "path": "packages/liquid-render/src/renderer/components/avatar.tsx",
+        "exports": [
+          "Avatar",
+          "StaticAvatar"
+        ],
+        "props": [
+          "src",
+          "initials",
+          "size",
+          "alt"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "KPICard": {
+        "path": "packages/liquid-render/src/renderer/components/kpi-card.tsx",
+        "exports": [
+          "KPICard"
+        ],
+        "props": [
+          "kpi",
+          "color"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "DatePicker": {
+        "path": "packages/liquid-render/src/renderer/components/date.tsx",
+        "exports": [
+          "DatePicker",
+          "NativeDatePicker",
+          "StaticDatePicker"
+        ],
+        "props": [
+          "label",
+          "value",
+          "onChange",
+          "value",
+          "useNative",
+          "wrapperStyle"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Badge": {
+        "path": "packages/liquid-render/src/renderer/components/badge.tsx",
+        "exports": [
+          "Badge",
+          "StaticBadge"
+        ],
+        "props": [
+          "value",
+          "max",
+          "dot",
+          "size",
+          "color",
+          "className",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Sidebar": {
+        "path": "packages/liquid-render/src/renderer/components/sidebar.tsx",
+        "exports": [
+          "Sidebar",
+          "StaticSidebar"
+        ],
+        "props": [
+          "item",
+          "isActive",
+          "isCollapsed",
+          "onSelect",
+          "value",
+          "level"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Button": {
+        "path": "packages/liquid-render/src/renderer/components/button.tsx",
+        "exports": [
+          "Button",
+          "StaticButton"
+        ],
+        "props": [
+          "label",
+          "variant",
+          "size",
+          "onClick",
+          "e",
+          "disabled",
+          "className",
+          "style",
+          "children"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Image": {
+        "path": "packages/liquid-render/src/renderer/components/image.tsx",
+        "exports": [
+          "Image",
+          "StaticImage"
+        ],
+        "props": [
+          "aspectRatio",
+          "objectFit",
+          "rounded"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Modal": {
+        "path": "packages/liquid-render/src/renderer/components/modal.tsx",
+        "exports": [
+          "Modal",
+          "ControlledModal",
+          "useModal"
+        ],
+        "props": [
+          "isOpen",
+          "onClose",
+          "title",
+          "size",
+          "showCloseButton",
+          "closeOnOverlayClick",
+          "closeOnEscape",
+          "children",
+          "footer",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Text": {
+        "path": "packages/liquid-render/src/renderer/components/text.tsx",
+        "exports": [
+          "Text",
+          "StaticText"
+        ],
+        "props": [
+          "children",
+          "variant",
+          "size",
+          "color",
+          "as",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Checkbox": {
+        "path": "packages/liquid-render/src/renderer/components/checkbox.tsx",
+        "exports": [
+          "Checkbox",
+          "StaticCheckbox"
+        ],
+        "props": [
+          "checked",
+          "defaultChecked",
+          "disabled",
+          "label",
+          "id",
+          "onChange",
+          "checked",
+          "size",
+          "error",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Stepper": {
+        "path": "packages/liquid-render/src/renderer/components/stepper.tsx",
+        "exports": [
+          "Stepper",
+          "StaticStepper"
+        ],
+        "props": [
+          "steps",
+          "currentStep",
+          "orientation",
+          "style"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Range": {
+        "path": "packages/liquid-render/src/renderer/components/range.tsx",
+        "exports": [
+          "Range",
+          "StaticRange"
+        ],
+        "props": [
+          "value",
+          "onChange",
+          "value",
+          "min",
+          "max",
+          "step",
+          "label",
+          "showValue"
+        ],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Select": {
+        "path": "packages/liquid-render/src/renderer/components/select.tsx",
+        "exports": [
+          "Select",
+          "StaticSelect"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Textarea": {
+        "path": "packages/liquid-render/src/renderer/components/textarea.tsx",
+        "exports": [
+          "Textarea",
+          "StaticTextarea"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Input": {
+        "path": "packages/liquid-render/src/renderer/components/input.tsx",
+        "exports": [
+          "Input",
+          "SearchInput",
+          "ControlledInput",
+          "Textarea"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "BuiltWith": {
+        "path": "packages/ui/web/src/components/built-with.tsx",
+        "exports": [
+          "BuiltWith"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui"
+        ]
+      },
+      "MODE_ICONS": {
+        "path": "packages/ui/mobile/src/components/theme.tsx",
+        "exports": [
+          "MODE_ICONS",
+          "ThemeCustomizer"
+        ],
+        "props": [
+          "config",
+          "onChange",
+          "config",
+          "resolvedTheme"
+        ],
+        "dependencies": [
+          "culori",
+          "react",
+          "react-native",
+          "@turbostarter/i18n",
+          "@turbostarter/ui"
+        ]
+      },
+      "LocaleIcon": {
+        "path": "packages/ui/web/src/components/i18n.tsx",
+        "exports": [
+          "LocaleIcon",
+          "LocaleCustomizer"
+        ],
+        "props": [
+          "onChange",
+          "lang",
+          "variant"
+        ],
+        "dependencies": [
+          "@turbostarter/ui"
+        ]
+      },
+      "Spin": {
+        "path": "packages/ui/mobile/src/components/spin.tsx",
+        "exports": [
+          "Spin"
+        ],
+        "props": [],
+        "dependencies": [
+          "react"
+        ]
+      },
+      "Icons": {
+        "path": "packages/ui/web/src/components/icons.tsx",
+        "exports": [
+          "Icons"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui/assets"
+        ]
+      },
+      "Marquee": {
+        "path": "packages/ui/web/src/components/marquee.tsx",
+        "exports": [
+          "Marquee"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui",
+          "react"
+        ]
+      },
+      "ThemeCustomizer": {
+        "path": "packages/ui/web/src/components/theme.tsx",
+        "exports": [
+          "ThemeCustomizer"
+        ],
+        "props": [
+          "config",
+          "defaultConfig",
+          "onChange",
+          "config"
+        ],
+        "dependencies": [
+          "react",
+          "react",
+          "react-i18next",
+          "@turbostarter/ui",
+          "@turbostarter/ui"
+        ]
+      },
+      "DataTableSliderFilter": {
+        "path": "packages/ui/web/src/components/data-table/data-table-slider-filter.tsx",
+        "exports": [
+          "DataTableSliderFilter"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      },
+      "DataTableSkeleton": {
+        "path": "packages/ui/web/src/components/data-table/data-table-skeleton.tsx",
+        "exports": [
+          "DataTableSkeleton"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/ui"
+        ]
+      },
+      "DataTableColumnHeader": {
+        "path": "packages/ui/web/src/components/data-table/data-table-column-header.tsx",
+        "exports": [
+          "DataTableColumnHeader"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      },
+      "DataTableDateFilter": {
+        "path": "packages/ui/web/src/components/data-table/data-table-date-filter.tsx",
+        "exports": [
+          "DataTableDateFilter"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@tanstack/react-table",
+          "react-day-picker"
+        ]
+      },
+      "DataTableFacetedFilter": {
+        "path": "packages/ui/web/src/components/data-table/data-table-faceted-filter.tsx",
+        "exports": [
+          "DataTableFacetedFilter"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      },
+      "DataTableViewOptions": {
+        "path": "packages/ui/web/src/components/data-table/data-table-view-options.tsx",
+        "exports": [
+          "DataTableViewOptions"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      },
+      "DataTablePagination": {
+        "path": "packages/ui/web/src/components/data-table/data-table-pagination.tsx",
+        "exports": [
+          "DataTablePagination"
+        ],
+        "props": [],
+        "dependencies": [
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      },
+      "DataTableToolbar": {
+        "path": "packages/ui/web/src/components/data-table/data-table-toolbar.tsx",
+        "exports": [
+          "DataTableToolbar"
+        ],
+        "props": [],
+        "dependencies": [
+          "react",
+          "zod",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "@tanstack/react-table"
+        ]
+      }
+    },
+    "modules": {
+      "@repo/liquid-code": {
+        "path": "packages/liquid-code",
+        "version": "0.1.0",
+        "exports": [
+          "*:./compiler"
+        ],
+        "dependencies": [
+          "@repo/liquid-survey"
+        ]
+      },
+      "@turbostarter/auth": {
+        "path": "packages/auth",
+        "version": "0.1.0",
+        "exports": [
+          "*:./types",
+          "*:./lib/utils",
+          "*:./lib/schema"
+        ],
+        "dependencies": [
+          "@better-auth/expo",
+          "@better-auth/passkey",
+          "@turbostarter/db",
+          "@turbostarter/email",
+          "@turbostarter/i18n",
+          "@turbostarter/shared",
+          "better-auth",
+          "envin",
+          "zod"
+        ]
+      },
+      "@turbostarter/shared": {
+        "path": "packages/shared",
+        "version": "0.1.0",
+        "exports": [],
+        "dependencies": [
+          "lodash",
+          "pino",
+          "react",
+          "slugify",
+          "zod"
+        ]
+      },
+      "@repo/liquid-survey": {
+        "path": "packages/liquid-survey",
+        "version": "0.1.0",
+        "exports": [
+          "*:./types",
+          "*:./validator",
+          "*:./engine",
+          "*:./utils",
+          "*:./analytics",
+          "*:./constants",
+          "*:./token-generator",
+          "*:./samples"
+        ],
+        "dependencies": [
+          "date-fns",
+          "nanoid"
+        ]
+      },
+      "@turbostarter/storage": {
+        "path": "packages/storage",
+        "version": "0.1.0",
+        "exports": [],
+        "dependencies": [
+          "@aws-sdk/client-s3",
+          "@aws-sdk/s3-request-presigner",
+          "@turbostarter/shared"
+        ]
+      },
+      "@turbostarter/cms": {
+        "path": "packages/cms",
+        "version": "0.1.0",
+        "exports": [
+          "*:./types",
+          "*:./collections"
+        ],
+        "dependencies": [
+          "@content-collections/core",
+          "@turbostarter/shared",
+          "reading-time"
+        ]
+      },
+      "@turbostarter/db": {
+        "path": "packages/db",
+        "version": "0.1.0",
+        "exports": [
+          "*:drizzle-orm/sql",
+          "*:./utils"
+        ],
+        "dependencies": [
+          "@turbostarter/shared",
+          "drizzle-orm",
+          "drizzle-zod",
+          "envin",
+          "postgres",
+          "zod"
+        ]
+      },
+      "@turbostarter/api": {
+        "path": "packages/api",
+        "version": "0.1.0",
+        "exports": [
+          "appRouter"
+        ],
+        "dependencies": [
+          "@ai-sdk/openai",
+          "@hono/zod-validator",
+          "@turbostarter/auth",
+          "@turbostarter/billing",
+          "@turbostarter/db",
+          "@turbostarter/email",
+          "@turbostarter/i18n",
+          "@turbostarter/monitoring-web",
+          "@turbostarter/shared",
+          "@turbostarter/storage"
+        ]
+      },
+      "@repo/liquid-render": {
+        "path": "packages/liquid-render",
+        "version": "0.1.0",
+        "exports": [
+          "validateSurvey",
+          "getValidationMessages",
+          "printValidationResults",
+          "type ExtendedValidationResult",
+          "type ExtendedValidationError",
+          "type ExtendedValidationErrorCode",
+          "",
+          "SurveyEngine",
+          "compile",
+          "parse",
+          "roundtrip",
+          "",
+          "SurveyScanner",
+          "type Token",
+          "type TokenType",
+          "SurveyParser",
+          "type SurveyAST",
+          "type NodeAST",
+          "SurveyEmitter",
+          "type EmitOptions"
+        ],
+        "dependencies": [
+          "@radix-ui/react-popover",
+          "@radix-ui/react-radio-group",
+          "@radix-ui/react-select",
+          "@radix-ui/react-tooltip",
+          "react",
+          "react-dom",
+          "recharts"
+        ]
+      },
+      "@turbostarter/i18n": {
+        "path": "packages/i18n",
+        "version": "0.1.0",
+        "exports": [
+          "Trans",
+          "*:./config",
+          "*:./client",
+          "*:./types",
+          "*:./utils"
+        ],
+        "dependencies": [
+          "@turbostarter/shared",
+          "i18next",
+          "i18next-browser-languagedetector",
+          "i18next-resources-to-backend",
+          "negotiator",
+          "react-i18next"
+        ]
+      },
+      "@turbostarter/email": {
+        "path": "packages/email",
+        "version": "0.1.0",
+        "exports": [
+          "*:./types"
+        ],
+        "dependencies": [
+          "@react-email/components",
+          "@turbostarter/i18n",
+          "@turbostarter/ui",
+          "nodemailer",
+          "react-email",
+          "zod"
+        ]
+      },
+      "@turbostarter/billing": {
+        "path": "packages/billing",
+        "version": "0.1.0",
+        "exports": [
+          "*:./types",
+          "*:./utils",
+          "*:./config"
+        ],
+        "dependencies": [
+          "@lemonsqueezy/lemonsqueezy.js",
+          "@polar-sh/sdk",
+          "@turbostarter/auth",
+          "@turbostarter/db",
+          "@turbostarter/shared",
+          "envin",
+          "stripe",
+          "zod"
+        ]
+      }
+    },
+    "schemas": {
+      "customer": {
+        "path": "packages/db/src/schema/customer.ts",
+        "variable": "customer",
+        "columns": [
+          "id",
+          "userId",
+          "customerId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "drizzle"
+      },
+      "user": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "user",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "session": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "session",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "account": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "account",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "verification": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "verification",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "passkey": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "passkey",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "two_factor": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "twoFactor",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "organization": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "organization",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "member": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "member",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      },
+      "invitation": {
+        "path": "packages/db/src/schema/auth.ts",
+        "variable": "invitation",
+        "columns": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "image",
+          "createdAt",
+          "updatedAt",
+          "twoFactorEnabled",
+          "isAnonymous",
+          "role",
+          "banned",
+          "banReason",
+          "banExpires",
+          "id",
+          "expiresAt"
+        ],
+        "type": "drizzle"
+      }
+    },
+    "endpoints": [],
+    "types": {
+      "LoginOption": {
+        "path": "apps/web/src/modules/auth/form/login/constants.ts"
+      },
+      "NavigationLink": {
+        "path": "apps/web/src/modules/marketing/layout/header/navigation/types.ts"
+      },
+      "NavigationLinkItem": {
+        "path": "apps/web/src/modules/marketing/layout/header/navigation/types.ts"
+      },
+      "ContactFormPayload": {
+        "path": "apps/web/src/modules/marketing/contact/utils/schema.ts"
+      },
+      "Sample": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "Finding": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "Module": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "Spec": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "TestCase": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "TestResult": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "Diagnosis": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "SynthesisState": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "SynthesisInput": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "SynthesisOutput": {
+        "path": ".archived/liquid-code-tcs/types/index.ts"
+      },
+      "AllowedPropertyValues": {
+        "path": "packages/analytics/shared/src/types.ts"
+      },
+      "AnalyticsProviderClientStrategy": {
+        "path": "packages/analytics/shared/src/types.ts"
+      },
+      "AnalyticsProviderServerStrategy": {
+        "path": "packages/analytics/shared/src/types.ts"
+      },
+      "BillingStatus": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "PricingPlanType": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "BillingModel": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "RecurringInterval": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "BillingDiscountType": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "BillingConfig": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "PricingPlan": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "PricingPlanPrice": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "Discount": {
+        "path": "packages/billing/src/types/index.ts"
+      },
+      "FreeFeature": {
+        "path": "packages/billing/src/config/features.ts"
+      },
+      "PremiumFeature": {
+        "path": "packages/billing/src/config/features.ts"
+      },
+      "EnterpriseFeature": {
+        "path": "packages/billing/src/config/features.ts"
+      },
+      "Feature": {
+        "path": "packages/billing/src/config/features.ts"
+      },
+      "WebhookCallbacks": {
+        "path": "packages/billing/src/providers/types.ts"
+      },
+      "BillingProviderStrategy": {
+        "path": "packages/billing/src/providers/types.ts"
+      },
+      "CheckoutPayload": {
+        "path": "packages/billing/src/lib/schema.ts"
+      },
+      "GetBillingPortalPayload": {
+        "path": "packages/billing/src/lib/schema.ts"
+      },
+      "EmailTemplate": {
+        "path": "packages/email/src/types/templates.ts"
+      },
+      "EmailVariables": {
+        "path": "packages/email/src/types/templates.ts"
+      },
+      "EmailProvider": {
+        "path": "packages/email/src/types/index.ts"
+      },
+      "EmailProviderStrategy": {
+        "path": "packages/email/src/providers/types.ts"
+      },
+      "Locale": {
+        "path": "packages/i18n/src/types/index.ts"
+      },
+      "MakeZodI18nMap": {
+        "path": "packages/i18n/src/utils/validation.ts"
+      },
+      "ZodI18nMapOptions": {
+        "path": "packages/i18n/src/utils/validation.ts"
+      },
+      "HandlePathOption": {
+        "path": "packages/i18n/src/utils/validation.ts"
+      },
+      "MonitoringProviderStrategy": {
+        "path": "packages/monitoring/shared/src/types.ts"
+      },
+      "MonitoringProviderClientStrategy": {
+        "path": "packages/monitoring/web/src/providers/types.ts"
+      },
+      "MonitoringProviderServerStrategy": {
+        "path": "packages/monitoring/web/src/providers/types.ts"
+      },
+      "ComponentConfig": {
+        "path": "packages/liquid-render/dev/gallery-data.ts"
+      },
+      "Category": {
+        "path": "packages/liquid-render/dev/gallery-data.ts"
+      },
+      "GalleryData": {
+        "path": "packages/liquid-render/dev/gallery-data.ts"
+      },
+      "NodeAnalytics": {
+        "path": "packages/liquid-survey/src/analytics.ts"
+      },
+      "SurveyFlowAnalytics": {
+        "path": "packages/liquid-survey/src/analytics.ts"
+      }
+    }
+  },
+  "relationships": [
+    {
+      "from": "CreateOrganizationBottomSheet",
+      "relation": "imports",
+      "to": "./lib/api"
+    },
+    {
+      "from": "AccountSwitcher",
+      "relation": "imports",
+      "to": "./create-organization"
+    },
+    {
+      "from": "OrganizationPicker",
+      "relation": "imports",
+      "to": "./create-organization"
+    },
+    {
+      "from": "OrganizationPicker",
+      "relation": "imports",
+      "to": "./lib/api"
+    },
+    {
+      "from": "Verification",
+      "relation": "imports",
+      "to": "./lib/api"
+    },
+    {
+      "from": "Updates",
+      "relation": "imports",
+      "to": "./styled"
+    },
+    {
+      "from": "BackupCodesSheet",
+      "relation": "imports",
+      "to": "../require-password"
+    },
+    {
+      "from": "BackupCodesSheet",
+      "relation": "imports",
+      "to": "../use-two-factor"
+    },
+    {
+      "from": "BackupCodesSheet",
+      "relation": "imports",
+      "to": "./use-backup-codes"
+    },
+    {
+      "from": "TotpSheet",
+      "relation": "imports",
+      "to": "../backup-codes/backup-codes"
+    },
+    {
+      "from": "TotpSheet",
+      "relation": "imports",
+      "to": "../require-password"
+    },
+    {
+      "from": "TotpSheet",
+      "relation": "imports",
+      "to": "../use-two-factor"
+    },
+    {
+      "from": "TotpSheet",
+      "relation": "imports",
+      "to": "./use-totp"
+    },
+    {
+      "from": "RegisterForm",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "RegisterForm",
+      "relation": "imports",
+      "to": "./store"
+    },
+    {
+      "from": "SocialIcons",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "AnonymousLogin",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "AnonymousLogin",
+      "relation": "imports",
+      "to": "./store"
+    },
+    {
+      "from": "UpdatePasswordForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "ForgotPasswordForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "MagicLinkLoginForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "PasswordLoginForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./magic-link"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./password"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./constants"
+    },
+    {
+      "from": "Invitation",
+      "relation": "imports",
+      "to": "./invitation-summary-card"
+    },
+    {
+      "from": "UserOrganizationInvitationsBanner",
+      "relation": "imports",
+      "to": "../invitation-summary-card"
+    },
+    {
+      "from": "InvitationsList",
+      "relation": "imports",
+      "to": "./invitations-list-filters"
+    },
+    {
+      "from": "MembersList",
+      "relation": "imports",
+      "to": "./members-list-filters"
+    },
+    {
+      "from": "MembersList",
+      "relation": "imports",
+      "to": "./members-list-item"
+    },
+    {
+      "from": "Providers",
+      "relation": "imports",
+      "to": "./analytics"
+    },
+    {
+      "from": "Providers",
+      "relation": "imports",
+      "to": "./monitoring"
+    },
+    {
+      "from": "CreateOrganizationModal",
+      "relation": "imports",
+      "to": "./lib/api"
+    },
+    {
+      "from": "AccountSwitcher",
+      "relation": "imports",
+      "to": "./hooks/use-active-organization"
+    },
+    {
+      "from": "OrganizationPicker",
+      "relation": "imports",
+      "to": "./create-organization"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/anonymous"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/login/constants"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/login/form"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/login/passkey"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/register-form"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/social-providers"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/two-factor"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/two-factor"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./layout/divider"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./layout/header"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./layout/invitation-disclaimer"
+    },
+    {
+      "from": "LoginFlow",
+      "relation": "imports",
+      "to": "./form/login/constants"
+    },
+    {
+      "from": "Pricing",
+      "relation": "imports",
+      "to": "./section"
+    },
+    {
+      "from": "PricingSection",
+      "relation": "imports",
+      "to": "./layout/header"
+    },
+    {
+      "from": "PricingSection",
+      "relation": "imports",
+      "to": "./plans/plans"
+    },
+    {
+      "from": "Plans",
+      "relation": "imports",
+      "to": "./plan/plan"
+    },
+    {
+      "from": "PricingHeader",
+      "relation": "imports",
+      "to": "./discount"
+    },
+    {
+      "from": "Plan",
+      "relation": "imports",
+      "to": "./hooks/use-plan"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "./actions"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "./utils/schema"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "./utils/schema"
+    },
+    {
+      "from": "Header",
+      "relation": "imports",
+      "to": "./navigation/mobile-navigation"
+    },
+    {
+      "from": "Header",
+      "relation": "imports",
+      "to": "./navigation/navigation"
+    },
+    {
+      "from": "MobileNavigation",
+      "relation": "imports",
+      "to": "./hamburger"
+    },
+    {
+      "from": "MobileNavigation",
+      "relation": "imports",
+      "to": "./navigation"
+    },
+    {
+      "from": "MobileNavigation",
+      "relation": "imports",
+      "to": "./types"
+    },
+    {
+      "from": "Navigation",
+      "relation": "imports",
+      "to": "./types"
+    },
+    {
+      "from": "I18nControls",
+      "relation": "imports",
+      "to": "./actions"
+    },
+    {
+      "from": "DashboardInset",
+      "relation": "imports",
+      "to": "./action-bar"
+    },
+    {
+      "from": "DashboardSidebar",
+      "relation": "imports",
+      "to": "./sidebar-link"
+    },
+    {
+      "from": "EditName",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "EditAvatar",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "DeleteAccount",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "../require-password"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "./backup-codes/backup-codes"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "./backup-codes/use-backup-codes"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "./totp/totp"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "./totp/use-totp"
+    },
+    {
+      "from": "TwoFactorAuthentication",
+      "relation": "imports",
+      "to": "./use-two-factor"
+    },
+    {
+      "from": "BackupCodesModal",
+      "relation": "imports",
+      "to": "../../require-password"
+    },
+    {
+      "from": "BackupCodesModal",
+      "relation": "imports",
+      "to": "../use-two-factor"
+    },
+    {
+      "from": "BackupCodesModal",
+      "relation": "imports",
+      "to": "./use-backup-codes"
+    },
+    {
+      "from": "TotpModal",
+      "relation": "imports",
+      "to": "../../require-password"
+    },
+    {
+      "from": "TotpModal",
+      "relation": "imports",
+      "to": "../backup-codes/backup-codes"
+    },
+    {
+      "from": "TotpModal",
+      "relation": "imports",
+      "to": "../use-two-factor"
+    },
+    {
+      "from": "TotpModal",
+      "relation": "imports",
+      "to": "./use-totp"
+    },
+    {
+      "from": "UpdateCustomerPlanModal",
+      "relation": "imports",
+      "to": "./server/invalidate"
+    },
+    {
+      "from": "UserHeader",
+      "relation": "imports",
+      "to": "./actions/ban"
+    },
+    {
+      "from": "UserHeader",
+      "relation": "imports",
+      "to": "./actions/delete"
+    },
+    {
+      "from": "UserHeader",
+      "relation": "imports",
+      "to": "./actions/impersonate"
+    },
+    {
+      "from": "UsersDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "InvitationsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "MembershipsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "AccountsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "PlansDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "OrganizationHeader",
+      "relation": "imports",
+      "to": "./actions/delete"
+    },
+    {
+      "from": "OrganizationsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "InvitationsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "MemberActions",
+      "relation": "imports",
+      "to": "../update-member-role"
+    },
+    {
+      "from": "MembersDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "CustomersDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "CustomerActions",
+      "relation": "imports",
+      "to": "../server/invalidate"
+    },
+    {
+      "from": "CustomerActions",
+      "relation": "imports",
+      "to": "../update-customer-plan"
+    },
+    {
+      "from": "RegisterForm",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "RegisterForm",
+      "relation": "imports",
+      "to": "./store"
+    },
+    {
+      "from": "SocialIcons",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "AnonymousLogin",
+      "relation": "imports",
+      "to": "../lib/api"
+    },
+    {
+      "from": "AnonymousLogin",
+      "relation": "imports",
+      "to": "./store"
+    },
+    {
+      "from": "UpdatePasswordForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "ForgotPasswordForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "PasskeyLogin",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "PasskeyLogin",
+      "relation": "imports",
+      "to": "../store"
+    },
+    {
+      "from": "MagicLinkLoginForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "PasswordLoginForm",
+      "relation": "imports",
+      "to": "../../lib/api"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./magic-link"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./password"
+    },
+    {
+      "from": "LoginForm",
+      "relation": "imports",
+      "to": "./constants"
+    },
+    {
+      "from": "EditName",
+      "relation": "imports",
+      "to": "../hooks/use-active-organization"
+    },
+    {
+      "from": "EditLogo",
+      "relation": "imports",
+      "to": "../hooks/use-active-organization"
+    },
+    {
+      "from": "DeleteOrganization",
+      "relation": "imports",
+      "to": "../hooks/use-active-organization"
+    },
+    {
+      "from": "UpdateMemberRoleModal",
+      "relation": "imports",
+      "to": "../hooks/use-active-organization"
+    },
+    {
+      "from": "Invitation",
+      "relation": "imports",
+      "to": "./invitation-summary-card"
+    },
+    {
+      "from": "UserOrganizationInvitationsBanner",
+      "relation": "imports",
+      "to": "../invitation-summary-card"
+    },
+    {
+      "from": "InvitationsDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "MembersDataTable",
+      "relation": "imports",
+      "to": "./columns"
+    },
+    {
+      "from": "Providers",
+      "relation": "imports",
+      "to": "./analytics"
+    },
+    {
+      "from": "Providers",
+      "relation": "imports",
+      "to": "./monitoring"
+    },
+    {
+      "from": "Providers",
+      "relation": "imports",
+      "to": "./theme"
+    },
+    {
+      "from": "QueryClientProvider",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "./_components/layout/layout"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "../types"
+    },
+    {
+      "from": "ContactForm",
+      "relation": "imports",
+      "to": "../types"
+    },
+    {
+      "from": "ConfirmEmail",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "ConfirmEmail",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "OrganizationInvitation",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "OrganizationInvitation",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "MagicLink",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "MagicLink",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "ResetPassword",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "ResetPassword",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "ChangeEmail",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "ChangeEmail",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "DeleteAccount",
+      "relation": "imports",
+      "to": "../_components/button"
+    },
+    {
+      "from": "DeleteAccount",
+      "relation": "imports",
+      "to": "../_components/layout/layout"
+    },
+    {
+      "from": "Footer",
+      "relation": "imports",
+      "to": "../../../env"
+    },
+    {
+      "from": "Layout",
+      "relation": "imports",
+      "to": "./footer"
+    },
+    {
+      "from": "Layout",
+      "relation": "imports",
+      "to": "./header"
+    },
+    {
+      "from": "ComponentGallery",
+      "relation": "imports",
+      "to": "../src/renderer/LiquidUI"
+    },
+    {
+      "from": "ComponentGallery",
+      "relation": "imports",
+      "to": "../src/compiler/ui-compiler"
+    },
+    {
+      "from": "AIDemo",
+      "relation": "imports",
+      "to": "../src/renderer/LiquidUI"
+    },
+    {
+      "from": "AIDemo",
+      "relation": "imports",
+      "to": "../src/platform/use-liquid-ai"
+    },
+    {
+      "from": "ComponentTest",
+      "relation": "imports",
+      "to": "../src/renderer/LiquidUI"
+    },
+    {
+      "from": "DrawerDemo",
+      "relation": "imports",
+      "to": "../src/compiler/compiler"
+    },
+    {
+      "from": "DrawerDemo",
+      "relation": "imports",
+      "to": "../src/renderer/LiquidUI"
+    },
+    {
+      "from": "Sparkline",
+      "relation": "imports",
+      "to": "../../types/custom-component"
+    },
+    {
+      "from": "Sparkline",
+      "relation": "imports",
+      "to": "../../renderer/data-context"
+    },
+    {
+      "from": "Nav",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Nav",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Nav",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "AreaChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "AreaChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "AreaChartComponent",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "BarChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "BarChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "BarChartComponent",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "DataTable",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DataTable",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DataTable",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Tabs",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tabs",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tabs",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Tabs",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "PieChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "PieChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "PieChartComponent",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Card",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Card",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Popover",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Popover",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Radio",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Radio",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Radio",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Radio",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Progress",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Progress",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Progress",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Icon",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Icon",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Container",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Container",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Container",
+      "relation": "imports",
+      "to": "../../compiler/ui-emitter"
+    },
+    {
+      "from": "Container",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Grid",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Grid",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "List",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "List",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "List",
+      "relation": "imports",
+      "to": "../../compiler/ui-emitter"
+    },
+    {
+      "from": "List",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "DateRange",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DateRange",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DateRange",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "DateRange",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Accordion",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Accordion",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Accordion",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Drawer",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Drawer",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Drawer",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Tooltip",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tooltip",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tooltip",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Heading",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Heading",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Heading",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Tag",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tag",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Tag",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Stack",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Stack",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Switch",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Switch",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Switch",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Switch",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Breadcrumb",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Breadcrumb",
+      "relation": "imports",
+      "to": "../../compiler/ui-emitter"
+    },
+    {
+      "from": "Breadcrumb",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Breadcrumb",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "LineChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "LineChartComponent",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "LineChartComponent",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Avatar",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Avatar",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Avatar",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "KPICard",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "KPICard",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "KPICard",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "KPICard",
+      "relation": "imports",
+      "to": "../../compiler/ui-emitter"
+    },
+    {
+      "from": "DatePicker",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DatePicker",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "DatePicker",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "DatePicker",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Header",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Header",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Header",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Badge",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Badge",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Badge",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Sidebar",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Sidebar",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Sidebar",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Button",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Button",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Button",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Image",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Image",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Image",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Modal",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Modal",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Text",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Text",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Text",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Checkbox",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Checkbox",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Checkbox",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Checkbox",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Stepper",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Stepper",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Stepper",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Range",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Range",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Range",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Range",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Select",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Select",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Select",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Select",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Textarea",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Textarea",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Textarea",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Textarea",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "Input",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Input",
+      "relation": "imports",
+      "to": "./utils"
+    },
+    {
+      "from": "Input",
+      "relation": "imports",
+      "to": "../data-context"
+    },
+    {
+      "from": "Input",
+      "relation": "imports",
+      "to": "../LiquidUI"
+    },
+    {
+      "from": "BuiltWith",
+      "relation": "imports",
+      "to": "./button"
+    },
+    {
+      "from": "BuiltWith",
+      "relation": "imports",
+      "to": "./text"
+    },
+    {
+      "from": "MODE_ICONS",
+      "relation": "imports",
+      "to": "./button"
+    },
+    {
+      "from": "MODE_ICONS",
+      "relation": "imports",
+      "to": "./icons"
+    },
+    {
+      "from": "MODE_ICONS",
+      "relation": "imports",
+      "to": "./label"
+    },
+    {
+      "from": "MODE_ICONS",
+      "relation": "imports",
+      "to": "./text"
+    },
+    {
+      "from": "LocaleIcon",
+      "relation": "imports",
+      "to": "./button"
+    },
+    {
+      "from": "LocaleIcon",
+      "relation": "imports",
+      "to": "./icons"
+    },
+    {
+      "from": "LocaleIcon",
+      "relation": "imports",
+      "to": "./text"
+    },
+    {
+      "from": "LocaleIcon",
+      "relation": "imports",
+      "to": "./icons"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/apple.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/discord.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/facebook.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/github.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/google.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/linkedin.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/stroke/android.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/stroke/apple.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/stroke/chrome.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/stroke/edge.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/stroke/firefox.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/brand/twitter.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/flag/spain.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/flag/united-kingdom.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/logo-text.svg"
+    },
+    {
+      "from": "Icons",
+      "relation": "imports",
+      "to": "./svg/logo.svg"
+    },
+    {
+      "from": "DataTable",
+      "relation": "imports",
+      "to": "./data-table-pagination"
+    },
+    {
+      "from": "DataTableToolbar",
+      "relation": "imports",
+      "to": "./data-table-date-filter"
+    },
+    {
+      "from": "DataTableToolbar",
+      "relation": "imports",
+      "to": "./data-table-faceted-filter"
+    },
+    {
+      "from": "DataTableToolbar",
+      "relation": "imports",
+      "to": "./data-table-slider-filter"
+    },
+    {
+      "from": "DataTableToolbar",
+      "relation": "imports",
+      "to": "./data-table-view-options"
+    }
+  ],
+  "facts": [
+    "2025-12-25: feat(liquid-render): add list/repeater support and expand DS",
+    "2025-12-25: feat(liquid-render): complete WF-0003 dashboard components",
+    "2025-12-24: feat: add production-ready UI renderer components",
+    "2025-12-24: feat: add streaming and fidelity modifiers for LLM-optimized",
+    "2025-12-24: fix: resolve 5 compiler bugs from adversarial testing campai",
+    "2025-12-23: feat: add LiquidCode UI compiler with full DSL support",
+    "2025-12-23: feat: add unified @repo/liquid-render package with comprehen",
+    "2025-12-23: refactor: clean up package structure, archive TCS modules",
+    "2025-12-23: feat: add production-ready liquid-code and liquid-survey pac",
+    "2025-12-23: feat: add survey engine with production features",
+    "231 React components",
+    "12 modules/packages",
+    "10 database tables",
+    "0 API endpoints",
+    "1149 TypeScript files"
+  ]
+}

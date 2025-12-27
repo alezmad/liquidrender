@@ -1,0 +1,43 @@
+---
+description: {{WISDOM_DESCRIPTION}} - cached patterns and answers for {{DOMAIN}}
+---
+
+# {{WISDOM_TITLE}}
+
+> **Confidence:** {{CONFIDENCE}}% | **Last validated:** {{DATE}}
+
+## TL;DR
+
+{{TLDR}}
+
+## When to Use This
+
+- {{USE_CASE_1}}
+- {{USE_CASE_2}}
+- {{USE_CASE_3}}
+
+## Pattern
+
+```{{LANGUAGE}}
+{{CODE_PATTERN}}
+```
+
+## Key Points
+
+1. {{KEY_POINT_1}}
+2. {{KEY_POINT_2}}
+3. {{KEY_POINT_3}}
+
+## Anti-Patterns
+
+- {{ANTI_PATTERN_1}}
+- {{ANTI_PATTERN_2}}
+
+## Related
+
+- `@wisdom-{{RELATED_1}}`
+- `@wisdom-{{RELATED_2}}`
+
+---
+
+*This wisdom file is agent-requested. Cursor loads it when the description matches your task.*

@@ -1,0 +1,72 @@
+name: Cognitive Context
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "packages/cognitive-context/**"
+      - ".cognitive/**"
+      - ".cursor/**"
+      - "CLAUDE.md"
+  pull_request:
+    paths:
+      - "packages/cognitive-context/**"
+      - ".cognitive/**"
+      - ".cursor/**"
+      - "CLAUDE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: "1"
+  NODE_VERSION: 22.x
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
+jobs:
+  validate:
+    name: 🧠 Validate Context
+    runs-on: ubuntu-latest
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v5
+
+      - name: 🔨 Setup
+        uses: ./tooling/github/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🏗️ Build cognitive-context
+        run: pnpm --filter @repo/cognitive-context build
+
+      - name: 🔍 Validate cognitive context
+        run: pnpm --filter @repo/cognitive-context exec cognitive validate
+        continue-on-error: false
+
+  sync-check:
+    name: 🔄 Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v5
+
+      - name: 🔨 Setup
+        uses: ./tooling/github/setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🏗️ Build cognitive-context
+        run: pnpm --filter @repo/cognitive-context build
+
+      - name: 🔍 Check sync status (dry-run)
+        run: |
+          OUTPUT=$(pnpm --filter @repo/cognitive-context exec cognitive sync --dry-run 2>&1) || true
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "would be updated\|would be created\|out of sync"; then
+            echo "::error::Cognitive context is out of sync. Run 'cognitive sync' locally and commit changes."
+            exit 1
+          fi
+          echo "✅ All tool configurations are in sync"

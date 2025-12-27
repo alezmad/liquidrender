@@ -1,5 +1,5 @@
-next_id: 9
-last_sync: '2025-12-25T23:52:05.894200'
+next_id: 12
+last_sync: '2025-12-27T19:00:00.000000'
 workflows:
   WF-0001:
     name: 'Quality Audit: liquid-render vs shadcn'
@@ -132,9 +132,22 @@ workflows:
     completed_tasks: 6
     git_tag: WF-0010-start
     duration: 30m
+  WF-0011:
+    name: Production Cognitive Context System
+    dirname: WF-0011-cognitive-context-system
+    location: active
+    status: approved
+    created_at: '2025-12-27T19:00:00Z'
+    updated_at: '2025-12-27T19:00:00Z'
+    started_at: ''
+    completed_at: ''
+    current_wave: 0
+    total_tasks: 13
+    completed_tasks: 0
+    git_tag: WF-0011-start
 stats:
-  total_workflows: 10
+  total_workflows: 11
   queued: 0
-  active: 2
+  active: 3
   completed: 8
   failed: 0

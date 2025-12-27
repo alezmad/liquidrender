@@ -6,11 +6,19 @@ Universal AI agent rules for this repository.
 
 ## Context Location
 
-All project context lives in `.context/` and `_bmad-output/`:
+All project context lives in `.claude/context/`, `.context/`, and `_bmad-output/`:
 
 ```
+.claude/context/                       ← Cognitive Context Framework
+├── ORIENTATION.md                     ← 300-token cognitive reload (read first)
+├── COGNITIVE-CONTEXT-FRAMEWORK.md     ← Framework philosophy & architecture
+├── wisdom/                            ← Cached answers (crystallized knowledge)
+│   └── how-to-create-component.md     ← Component authoring patterns
+├── schemas/                           ← Structure definitions
+└── templates/                         ← Document authoring templates
+
 .context/
-├── CLAUDE.md                          ← Context hub (read this next)
+├── CLAUDE.md                          ← Context hub
 ├── skills/                            ← Project-specific Agent Skills
 ├── workflows/                         ← Dev workflow templates
 │   └── MASTER-WORKFLOW-GENERATOR.md   ← Generate workflows on demand
@@ -20,13 +28,15 @@ _bmad-output/                          ← Project decisions (WHAT + HOW)
 └── [documents]                        ← PRD, architecture, epics, stories
 ```
 
-**Both are essential:** BMAD defines the project; framework docs show what's already available.
+**Context hierarchy:** `.claude/context/` for cognitive reload, BMAD for project decisions, framework docs for available capabilities.
 
 ## LiquidCode Components
 
 When creating or modifying LiquidCode renderer components:
 
-**Read first:** `packages/liquid-render/docs/COMPONENT-GUIDE.md`
+**Read first:** `.claude/context/wisdom/how-to-create-component.md` (crystallized patterns)
+
+**Deep reference:** `packages/liquid-render/docs/COMPONENT-GUIDE.md`
 
 Key requirements:
 - Use design tokens from `utils.ts` (never hardcode colors, spacing, etc.)
@@ -70,8 +80,10 @@ When instructions conflict:
 
 When starting a new task:
 1. This file (already loaded)
-2. `.context/CLAUDE.md` for context hub
-3. `_bmad-output/` for PRD/architecture when implementing features
+2. `.claude/context/ORIENTATION.md` for cognitive reload
+3. Check `.claude/context/wisdom/` for cached answers matching your task
+4. `.context/CLAUDE.md` for context hub
+5. `_bmad-output/` for PRD/architecture when implementing features
 
 ## Documentation Usage
 

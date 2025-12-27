@@ -1,0 +1,143 @@
+# Wisdom File Schema
+# Defines structure for cached answers (crystallized knowledge)
+# Wisdom = the answer someone already figured out
+
+version: 1
+
+description: |
+  Wisdom files are CACHED TRAVERSALS.
+  Someone already navigated the graph.
+  Someone already read the files.
+  Someone already figured it out.
+  This is the answer they found.
+
+frontmatter:
+  required:
+    title:
+      description: "Clear, searchable title"
+      example: "How to Create a LiquidRender Component"
+
+    purpose:
+      description: "What this wisdom helps with"
+      example: "Creating or modifying LiquidRender components"
+
+    answers:
+      description: "Questions this wisdom answers"
+      type: array
+      example:
+        - "How should I structure a component file?"
+        - "How do I use design tokens?"
+        - "What's the difference between dynamic and static variants?"
+
+  optional:
+    read_when:
+      description: "Trigger conditions"
+      example: "Creating or modifying a component"
+
+    skip_when:
+      description: "When NOT to use this"
+      example: "Just using existing components"
+
+    depends_on:
+      description: "What could invalidate this wisdom"
+      type: object
+      properties:
+        entities: "Array of entity names"
+        files: "Array of file paths"
+        concepts: "Array of concept names"
+      example:
+        entities: ["DataTable", "tokens"]
+        files: ["utils.ts", "COMPONENT-GUIDE.md"]
+        concepts: ["design-tokens"]
+
+    confidence:
+      description: "Trust level (0.0-1.0)"
+      default: 0.70
+
+    verified_at:
+      description: "Last verification date"
+      example: "2025-12-27"
+
+    verified_against:
+      description: "Commit hash when verified"
+      example: "abc123"
+
+body_structure:
+  description: |
+    Progressive structure within the document.
+    Each section can be read independently.
+
+  sections:
+    - name: "Sections table"
+      purpose: "Quick navigation with summaries"
+      format: "Markdown table: Section | Summary"
+
+    - name: "Per-section TL;DR"
+      purpose: "Key insight without full read"
+      format: "> **TL;DR:** one-line summary"
+
+    - name: "Full content"
+      purpose: "Complete explanation with examples"
+      format: "Standard markdown"
+
+example_structure: |
+  ---
+  title: How to Create a Component
+  purpose: Creating LiquidRender components
+  answers:
+    - How to structure a component?
+    - How to use design tokens?
+  read_when: Creating or modifying a component
+  depends_on:
+    files: [utils.ts, COMPONENT-GUIDE.md]
+  ---
+
+  # How to Create a Component
+
+  > **Read when:** Creating or modifying a component
+
+  ## Sections
+
+  | Section | Summary |
+  |---------|---------|
+  | File Structure | Types → Styles → Helpers → Main |
+  | Design Tokens | Import from utils.ts |
+
+  ---
+
+  ## File Structure
+
+  > **TL;DR:** Order as Types → Styles → Helpers → Sub-components → Main → Static
+
+  [Full content...]
+
+  ---
+
+  ## Design Tokens
+
+  > **TL;DR:** `import { tokens } from './utils'`. Never hardcode.
+
+  [Full content...]
+
+matching:
+  description: "How to match tasks to wisdom"
+  strategies:
+    - "Keyword match on title and answers"
+    - "Semantic similarity on purpose"
+    - "Dependency overlap with task entities"
+
+  priority:
+    - "Exact answer match"
+    - "Purpose match"
+    - "Keyword overlap"
+
+invalidation:
+  triggers:
+    - "Depended entity renamed/moved"
+    - "Depended file significantly changed"
+    - "Pattern deprecated"
+
+  not_triggers:
+    - "Unrelated file changed"
+    - "Cosmetic refactor"
+    - "New entities added (doesn't break existing)"

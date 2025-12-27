@@ -1,0 +1,254 @@
+{
+  "v": 1,
+  "generated": "2025-12-27",
+  "meta": {
+    "features": 4,
+    "patterns": 3,
+    "domains": 3
+  },
+  "concepts": {
+    "dsl-rendering": {
+      "tier1": "JSON DSL to React components via LiquidSchema pipeline",
+      "tier2": {
+        "summary": "LiquidCode DSL compiles to LiquidSchema JSON, then renders to React components. The pipeline supports both UI components (dashboards, forms, charts) and survey flows (questions, branching, navigation). Streaming parser enables progressive rendering during LLM output.",
+        "children": ["parsing", "compilation", "emission", "streaming"],
+        "related_entities": ["UIScanner", "UIParser", "UIEmitter", "StreamingParser", "LiquidUI"],
+        "docs": ["specs/LIQUID-RENDER-SPEC.md", "docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "Grammar: Program -> Signal* Statement+ where Statement = Block | Layer | Survey",
+          "Semantic type codes (Kp, Ln, Tb) preferred over numeric indices for LLM clarity",
+          "Roundtrip: DSL <-> Schema <-> React with lossless conversion"
+        ],
+        "gotchas": [
+          "Chart types (Ln, Br) use multi-binding for axes; non-charts expand repetition",
+          "Survey nodes only valid inside Survey { } blocks",
+          "Streaming parser uses checkpoint-based recovery for partial input"
+        ],
+        "see_also": ["data-binding", "charts", "component-structure"]
+      }
+    },
+    "design-tokens": {
+      "tier1": "Consistent theming via centralized utils.ts design system",
+      "tier2": {
+        "summary": "Shadcn-inspired design tokens provide CSS variable references for colors, spacing, typography, shadows, and transitions. Components use token references instead of hardcoded values, enabling theming and consistent visual language.",
+        "children": ["colors", "spacing", "typography", "shadows", "transitions"],
+        "related_entities": ["tokens", "chartColors", "cardStyles", "buttonStyles", "inputStyles"],
+        "docs": ["docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "tokens.colors.* for all colors with CSS variable fallbacks",
+          "tokens.spacing.* for margins/padding (xs to 2xl)",
+          "chartColors array for consistent chart palettes",
+          "mergeStyles() for composing style objects"
+        ],
+        "gotchas": [
+          "Never hardcode hex colors - always use tokens.colors.*",
+          "CSS variables enable runtime theme switching",
+          "chartColors[i % chartColors.length] for cycling chart series"
+        ],
+        "see_also": ["component-structure", "ssr-handling"]
+      }
+    },
+    "data-binding": {
+      "tier1": "Binding resolution from DSL references to runtime data values",
+      "tier2": {
+        "summary": "DataContext resolves bindings (field, indexed, computed, literal, iterator) to actual values. Supports dot notation for nested access, $ context for list iteration, and expression evaluation with formatters.",
+        "children": ["field-binding", "computed-binding", "iterator-binding", "formatters"],
+        "related_entities": ["resolveBinding", "DataContext", "getNestedValue", "formatValue"],
+        "docs": ["specs/LIQUID-RENDER-SPEC.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          ":fieldName -> data.fieldName (field binding)",
+          "=revenue/orders -> computed expression evaluation",
+          ":. and :.field -> current item in list iteration",
+          ":# -> current iteration index"
+        ],
+        "gotchas": [
+          "$ in DataContext indicates list iteration context",
+          "Computed expressions limited to field refs and basic math",
+          "formatValue auto-detects percentages (0-1) and currency (>=10000)"
+        ],
+        "see_also": ["dsl-rendering", "component-structure"]
+      }
+    },
+    "charts": {
+      "tier1": "Recharts-based data visualization with auto-detection",
+      "tier2": {
+        "summary": "Line, bar, pie, and area charts rendered via Recharts with ResponsiveContainer wrappers. Auto-detects x/y fields from data structure when not explicit. Uses chartColors for consistent palette and tokens for styling.",
+        "children": ["line-chart", "bar-chart", "pie-chart", "area-chart"],
+        "related_entities": ["LineChartComponent", "BarChartComponent", "PieChartComponent", "AreaChartComponent"],
+        "docs": ["docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "ResponsiveContainer wrapper for all charts (100% width, 220px height)",
+          "Auto-detect: x = first string/date field, y = first numeric field",
+          "Tooltip/Legend styled with tokens.colors for theme consistency",
+          "SSR placeholder rendering when isBrowser is false"
+        ],
+        "gotchas": [
+          "Multi-binding Ln :date :revenue means 1 chart with axes, not 2 charts",
+          "Always check isBrowser before rendering Recharts components",
+          "Use chartColors[i % chartColors.length] for multiple series"
+        ],
+        "see_also": ["design-tokens", "ssr-handling", "data-binding"]
+      }
+    },
+    "component-structure": {
+      "tier1": "Standard file organization: Types -> Styles -> Helpers -> Main -> Static",
+      "tier2": {
+        "summary": "Every component file follows consistent structure with section headers. Dynamic components receive LiquidComponentProps (block + data), static components have explicit props. All components include data-liquid-type attribute for targeting.",
+        "children": ["dynamic-component", "static-component", "section-headers"],
+        "related_entities": ["LiquidComponentProps", "liquidComponents", "componentRegistry"],
+        "docs": ["docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "Section order: Types, Styles, Helpers, Sub-components, Main, Static",
+          "Named + default exports: export { ComponentName, StaticComponent }",
+          "Register in liquidComponents map keyed by block type",
+          "data-liquid-type attribute on root element for CSS/testing"
+        ],
+        "gotchas": [
+          "Dynamic = LiquidComponentProps, Static = explicit typed props",
+          "Always handle empty/null data with graceful fallback UI",
+          "Use fieldToLabel() for auto-generating labels from field names"
+        ],
+        "see_also": ["design-tokens", "data-binding"]
+      }
+    },
+    "progressive-loading": {
+      "tier1": "Tier-based context expansion from minimal to complete",
+      "tier2": {
+        "summary": "Context framework uses progressive disclosure: tier1 (one-sentence), tier2 (structure/relationships), tier3 (deep knowledge). Documents expand on demand rather than loading everything upfront. Streaming parser enables progressive UI rendering as tokens arrive.",
+        "children": ["tier1-definition", "tier2-structure", "tier3-deep"],
+        "related_entities": ["StreamingParser", "StreamingResult"],
+        "docs": [".claude/context/COGNITIVE-CONTEXT-FRAMEWORK.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "Feed chunks incrementally, get best-effort renderable schema",
+          "Checkpoint-based recovery for streaming input",
+          "Safe parse points: newlines, closing brackets, commas at depth 0",
+          "finalize() patches incomplete input and closes unclosed structures"
+        ],
+        "gotchas": [
+          "onCheckpoint callback for progressive rendering updates",
+          "patchIncompleteInput adds implicit closing brackets/quotes",
+          "Always call finalize() after all input received"
+        ],
+        "see_also": ["dsl-rendering", "component-structure"]
+      }
+    },
+    "ssr-handling": {
+      "tier1": "Browser detection for client-only code in SSR environments",
+      "tier2": {
+        "summary": "Components that require browser APIs (charts, window access) use isBrowser check to render placeholders during SSR. Prevents hydration mismatches and build errors in SSR frameworks like Next.js.",
+        "children": ["browser-detection", "placeholder-rendering"],
+        "related_entities": ["isBrowser"],
+        "docs": ["docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "isBrowser = typeof window !== 'undefined'",
+          "Render placeholder div with data count during SSR",
+          "Same component structure whether SSR or client"
+        ],
+        "gotchas": [
+          "Recharts components fail during SSR without isBrowser guard",
+          "Placeholder should indicate component type and data size",
+          "No useEffect/useState differences between SSR and client"
+        ],
+        "see_also": ["charts", "component-structure"]
+      }
+    },
+    "compiler": {
+      "tier1": "DSL parsing pipeline: Scanner -> Parser -> Emitter",
+      "tier2": {
+        "summary": "Three-stage compilation from LiquidCode source to LiquidSchema. UIScanner tokenizes, UIParser builds AST, UIEmitter generates output format (liquidcode or liquidschema). Supports roundtrip testing for lossless conversion.",
+        "children": ["scanner", "parser", "emitter", "streaming-parser"],
+        "related_entities": ["UIScanner", "UIParser", "UIEmitter", "StreamingParser", "compileUI", "parseUI"],
+        "docs": ["specs/LIQUID-RENDER-SPEC.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "parseUI(source) -> LiquidSchema for rendering",
+          "compileUI(schema) -> LiquidCode DSL string",
+          "roundtripUI(schema) -> { dsl, reconstructed, isEquivalent }",
+          "Hybrid parser handles embedded Survey { } blocks"
+        ],
+        "gotchas": [
+          "Scanner errors thrown before parser runs",
+          "Parser needs source string for Survey content extraction",
+          "Auto-label equivalence in schema comparison"
+        ],
+        "see_also": ["dsl-rendering", "renderer", "data-context"]
+      }
+    },
+    "renderer": {
+      "tier1": "React component tree generation from LiquidSchema",
+      "tier2": {
+        "summary": "LiquidUI component renders LiquidSchema by mapping block types to React components via liquidComponents registry. Provides data context, signal handling, and layer management. Supports custom component injection.",
+        "children": ["liquid-ui", "component-registry", "block-rendering"],
+        "related_entities": ["LiquidUI", "liquidComponents", "componentRegistry", "LiquidComponentProps"],
+        "docs": ["docs/COMPONENT-GUIDE.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "liquidComponents map: block.type -> React component",
+          "LiquidComponentProps: { block, data, children?, className? }",
+          "40+ built-in components from KPI to charts to forms",
+          "Custom components via customComponents prop"
+        ],
+        "gotchas": [
+          "Unknown block types should render gracefully (not crash)",
+          "data-liquid-type attribute required for all components",
+          "Both dynamic and static variants exported per component"
+        ],
+        "see_also": ["compiler", "data-context", "component-structure"]
+      }
+    },
+    "data-context": {
+      "tier1": "Data binding resolution and value formatting",
+      "tier2": {
+        "summary": "DataContext provides the data source for binding resolution. resolveBinding() maps DSL bindings to actual values supporting field access, iteration, computation, and formatting. formatValue() handles display formatting.",
+        "children": ["resolve-binding", "format-value", "nested-access"],
+        "related_entities": ["DataContext", "resolveBinding", "formatValue", "applyFormatter"],
+        "docs": ["specs/LIQUID-RENDER-SPEC.md"]
+      },
+      "tier3": {
+        "key_patterns": [
+          "Binding kinds: field, indexed, computed, literal, indexRef, iterator",
+          "Dot notation: data.nested.field via getNestedValue()",
+          "Formatters: |currency, |percent, |number, |compact",
+          "List iteration: $ context for current item, # for index"
+        ],
+        "gotchas": [
+          "Expression eval uses Function() - limited to safe math",
+          "formatValue auto-detects type from value magnitude",
+          "Iterator bindings resolve differently inside vs outside lists"
+        ],
+        "see_also": ["data-binding", "compiler", "renderer"]
+      }
+    }
+  },
+  "relationships": [
+    { "from": "dsl-rendering", "to": "compiler", "type": "depends_on" },
+    { "from": "dsl-rendering", "to": "renderer", "type": "depends_on" },
+    { "from": "dsl-rendering", "to": "data-binding", "type": "depends_on" },
+    { "from": "charts", "to": "design-tokens", "type": "depends_on" },
+    { "from": "charts", "to": "ssr-handling", "type": "depends_on" },
+    { "from": "charts", "to": "data-binding", "type": "depends_on" },
+    { "from": "component-structure", "to": "design-tokens", "type": "depends_on" },
+    { "from": "component-structure", "to": "data-binding", "type": "depends_on" },
+    { "from": "progressive-loading", "to": "dsl-rendering", "type": "implements" },
+    { "from": "renderer", "to": "compiler", "type": "depends_on" },
+    { "from": "renderer", "to": "data-context", "type": "depends_on" },
+    { "from": "data-context", "to": "data-binding", "type": "implements" },
+    { "from": "compiler", "to": "dsl-rendering", "type": "implements" }
+  ]
+}

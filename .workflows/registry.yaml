@@ -6,14 +6,14 @@ workflows:
     dirname: WF-0001-quality-audit
     location: completed
     status: completed
-    created_at: 2025-12-25T00:00:00+00:00
+    created_at: 2025-12-25 00:00:00+00:00
     updated_at: '2025-12-25T22:24:00Z'
-    started_at: 2025-12-25T00:00:00+00:00
+    started_at: 2025-12-25 00:00:00+00:00
     completed_at: '2025-12-25T22:24:00Z'
     current_wave: 5
     total_tasks: 27
     completed_tasks: 27
-    duration: '22h'
+    duration: 22h
   WF-SPEC-AUDIT:
     name: Spec Compliance Audit
     dirname: WF-SPEC-AUDIT
@@ -26,15 +26,15 @@ workflows:
     current_wave: 0
     total_tasks: 4
     completed_tasks: 4
-    duration: '6m'
+    duration: 6m
   WF-0002:
     name: Quality Remediation - shadcn Alignment
     dirname: WF-0002-quality-remediation
     location: active
     status: pending
-    created_at: &id002 2025-12-25 00:00:00+00:00
+    created_at: &id001 2025-12-25 00:00:00+00:00
     updated_at: '2025-12-25T22:35:57.706839'
-    started_at: *id002
+    started_at: *id001
     completed_at: ''
     current_wave: 0
     total_tasks: 31
@@ -44,22 +44,22 @@ workflows:
     dirname: WF-0005-customblock-llm
     location: completed
     status: completed
-    created_at: 2024-12-25T00:00:00+00:00
+    created_at: 2024-12-25 00:00:00+00:00
     updated_at: '2025-12-25T19:25:28.729984'
-    started_at: 2024-12-25T00:00:00+00:00
+    started_at: 2024-12-25 00:00:00+00:00
     completed_at: '2025-12-25T19:25:28Z'
     current_wave: 3
     total_tasks: 8
     completed_tasks: 8
-    duration: '~1d'
+    duration: ~1d
   WF-0006:
     name: Context Management System
     dirname: WF-0006-context-management
     location: completed
     status: completed
-    created_at: &id004 2025-12-25 10:00:00+00:00
+    created_at: &id002 2025-12-25 10:00:00+00:00
     updated_at: '2025-12-25T23:02:00.847396'
-    started_at: *id004
+    started_at: *id002
     completed_at: 2025-12-25 10:15:00+00:00
     current_wave: 3
     total_tasks: 6
@@ -105,9 +105,21 @@ workflows:
     total_tasks: 3
     completed_tasks: 0
     git_tag: WF-0008-start
+  WF-0009:
+    name: Cognitive Context Framework
+    dirname: WF-0009-context-framework
+    location: active
+    status: pending
+    created_at: '2025-12-27T13:05:57.539472'
+    updated_at: '2025-12-27T13:05:57.539472'
+    started_at: ''
+    completed_at: ''
+    current_wave: 0
+    total_tasks: 7
+    completed_tasks: 0
 stats:
-  total_workflows: 8
+  total_workflows: 9
   queued: 0
-  active: 2
+  active: 3
   completed: 6
   failed: 0

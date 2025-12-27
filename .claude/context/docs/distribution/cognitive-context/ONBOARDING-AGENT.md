@@ -877,9 +877,59 @@ echo "✓ All integrations synced"
 
 ---
 
-## Phase 5: Tool Selection & Installation
+## Phase 5: Update Root Context Files
 
-After generating the knowledge layer, ask the user which tools they use:
+**Critical**: Update root CLAUDE.md and Cursor rules to reference `.cognitive/`.
+
+### 5.1 Update CLAUDE.md
+
+Add/update the Context Location section to include:
+
+```markdown
+## Context Location
+
+**Cognitive Context** (read first):
+- `.cognitive/SUMMARY.md` - Identity & orientation (~300 tokens)
+- `.cognitive/capabilities.yaml` - What exists (CHECK BEFORE BUILDING)
+- `.cognitive/cache/answers/` - Cached wisdom
+
+**Project Context**:
+- `.context/CLAUDE.md` - Context hub
+- `_bmad-output/` - Project decisions (PRD, architecture)
+
+## Reading Order
+
+1. `.cognitive/SUMMARY.md` - Always read first
+2. `.cognitive/capabilities.yaml` - Before building anything
+3. `.context/CLAUDE.md` - For project-specific context
+```
+
+### 5.2 Add Folder Management Rules
+
+Include in CLAUDE.md:
+
+```markdown
+## Special Folders
+
+| Folder | Access |
+|--------|--------|
+| `.cognitive/` | Read freely - cognitive context |
+| `.context/` | Read freely - project context |
+| `_bmad-output/` | Read freely - project decisions |
+| `.archived/` | DO NOT READ without permission |
+| `.mydocs/` | ASK before reading |
+| `.scratch/` | Safe sandbox for experiments |
+```
+
+### 5.3 Update Cursor Main Rule
+
+Ensure `.cursor/rules/orientation.mdc` has `alwaysApply: true` and references `.cognitive/`.
+
+---
+
+## Phase 6: Tool Selection & Installation
+
+After updating root files, ask the user which tools they use:
 
 ### 5.1 Ask Tool Preferences
 

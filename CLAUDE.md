@@ -2,39 +2,36 @@
 
 Universal AI agent rules for this repository.
 
-> **After reading this file:** Read `.context/CLAUDE.md` for full project context.
+> **After reading this file:** Read `.cognitive/SUMMARY.md` then `.cognitive/capabilities.yaml`.
 
 ## Context Location
 
-All project context lives in `.claude/context/`, `.context/`, and `_bmad-output/`:
-
+**Cognitive Context** (read first):
 ```
-.claude/context/                       ← Cognitive Context Framework
-├── ORIENTATION.md                     ← 300-token cognitive reload (read first)
-├── COGNITIVE-CONTEXT-FRAMEWORK.md     ← Framework philosophy & architecture
-├── wisdom/                            ← Cached answers (crystallized knowledge)
-│   └── how-to-create-component.md     ← Component authoring patterns
-├── schemas/                           ← Structure definitions
-└── templates/                         ← Document authoring templates
+.cognitive/
+├── SUMMARY.md              ← Identity & orientation (~300 tokens) - READ FIRST
+├── capabilities.yaml       ← What exists - CHECK BEFORE BUILDING ANYTHING
+├── rules.yaml              ← Project conventions
+├── knowledge.json          ← Entity map (303 entities)
+└── cache/answers/          ← Cached wisdom files
+```
 
+**Project Context**:
+```
 .context/
-├── CLAUDE.md                          ← Context hub
-├── skills/                            ← Project-specific Agent Skills
-├── workflows/                         ← Dev workflow templates
-│   └── MASTER-WORKFLOW-GENERATOR.md   ← Generate workflows on demand
-└── turbostarter-framework-context/    ← Framework we build ON TOP OF
+├── CLAUDE.md               ← Context hub
+└── turbostarter-framework-context/  ← Framework docs
 
-_bmad-output/                          ← Project decisions (WHAT + HOW)
-└── [documents]                        ← PRD, architecture, epics, stories
+_bmad-output/               ← Project decisions (PRD, architecture)
 ```
 
-**Context hierarchy:** `.claude/context/` for cognitive reload, BMAD for project decisions, framework docs for available capabilities.
+**Hierarchy:** `.cognitive/` for cognitive reload → `.context/` for project → `_bmad-output/` for decisions.
 
 ## LiquidCode Components
 
 When creating or modifying LiquidCode renderer components:
 
-**Read first:** `.claude/context/wisdom/how-to-create-component.md` (crystallized patterns)
+**Read first:** `.cognitive/cache/answers/how-to-create-component.md` (crystallized patterns)
 
 **Deep reference:** `packages/liquid-render/docs/COMPONENT-GUIDE.md`
 
@@ -51,6 +48,9 @@ Reference files:
 - `packages/liquid-render/specs/LIQUID-RENDER-SPEC.md` - DSL specification
 
 ## Special Folders
+
+### `.cognitive/` - Cognitive Context
+**Read freely. Read FIRST.** Contains SUMMARY.md, capabilities.yaml, cached wisdom.
 
 ### `.context/` - Project Context
 **Read freely.** Contains context navigation and framework documentation.
@@ -80,10 +80,11 @@ When instructions conflict:
 
 When starting a new task:
 1. This file (already loaded)
-2. `.claude/context/ORIENTATION.md` for cognitive reload
-3. Check `.claude/context/wisdom/` for cached answers matching your task
-4. `.context/CLAUDE.md` for context hub
-5. `_bmad-output/` for PRD/architecture when implementing features
+2. `.cognitive/SUMMARY.md` for cognitive reload
+3. `.cognitive/capabilities.yaml` before building anything
+4. Check `.cognitive/cache/answers/` for cached wisdom
+5. `.context/CLAUDE.md` for project context
+6. `_bmad-output/` for PRD/architecture when implementing features
 
 ## Documentation Usage
 

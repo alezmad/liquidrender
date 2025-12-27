@@ -1,0 +1,95 @@
+# capabilities.yaml - What already exists
+# CHECK HERE BEFORE BUILDING ANYTHING NEW
+
+# Format: what_you_need → use_this
+
+ui_components:
+  tables: liquid-render/components/data-table.tsx
+  charts:
+    line: liquid-render/components/line-chart.tsx
+    bar: liquid-render/components/bar-chart.tsx
+    area: liquid-render/components/area-chart.tsx
+    pie: liquid-render/components/pie-chart.tsx
+  forms:
+    radio: liquid-render/components/radio.tsx
+    switch: liquid-render/components/switch.tsx
+    date: liquid-render/components/date.tsx
+    daterange: liquid-render/components/daterange.tsx
+  layout:
+    card: liquid-render/components/card.tsx
+    grid: liquid-render/components/grid.tsx
+    stack: liquid-render/components/stack.tsx
+    container: liquid-render/components/container.tsx
+    tabs: liquid-render/components/tabs.tsx
+    accordion: liquid-render/components/accordion.tsx
+  feedback:
+    tooltip: liquid-render/components/tooltip.tsx
+    popover: liquid-render/components/popover.tsx
+    sheet: liquid-render/components/sheet.tsx
+    drawer: liquid-render/components/drawer.tsx
+  display:
+    heading: liquid-render/components/heading.tsx
+    icon: liquid-render/components/icon.tsx
+    avatar: liquid-render/components/avatar.tsx
+    tag: liquid-render/components/tag.tsx
+    progress: liquid-render/components/progress.tsx
+    kpi: liquid-render/components/kpi-card.tsx
+
+framework:  # TurboStarter - DO NOT REBUILD
+  auth: "@turbostarter/auth"
+  billing: "@turbostarter/billing"
+  database: "@turbostarter/db (Drizzle)"
+  api: "@turbostarter/api (Hono)"
+  email: "@turbostarter/email"
+  storage: "@turbostarter/storage"
+  i18n: "@turbostarter/i18n"
+  cms: "@turbostarter/cms"
+  analytics: packages/analytics
+  ai: "Built-in AI (OpenAI, Anthropic, Google, agents, chatbot, TTS)"
+  admin: "Super Admin dashboard"
+  organizations: "Multi-tenancy, RBAC, invitations"
+  background_tasks: "trigger.dev, Upstash QStash"
+  monitoring: "Sentry, PostHog"
+  deployment: "Vercel, Railway, Fly.io, Docker configs"
+  push_notifications: "Mobile push (Expo)"
+
+  _docs: ".context/turbostarter-framework-context/index.md"
+
+data_models:  # In packages/db - EXTEND, don't recreate
+  auth:
+    - user
+    - session
+    - account
+    - verification
+    - passkey
+    - two_factor
+  organizations:
+    - organization
+    - member
+    - invitation
+  billing:
+    - customer
+
+patterns:  # Already configured
+  forms: "react-hook-form + zod + @hookform/resolvers"
+  queries: "@tanstack/react-query"
+  validation: "zod schemas"
+  styling: "design tokens in utils.ts"
+
+packages_available:  # In package.json - USE THESE, don't add alternatives
+  charts: recharts
+  ui_primitives: "@radix-ui/* (popover, select, tooltip, radio-group)"
+  forms: react-hook-form
+  validation: zod
+  data_fetching: "@tanstack/react-query"
+  dates: date-fns
+  icons: lucide-react
+  classnames: clsx + tailwind-merge
+  http: hono (server)
+  database: drizzle-orm
+  auth: better-auth
+  mobile: expo + expo-router
+  testing: vitest + playwright + testing-library
+
+# RULE: Search this file before creating anything new
+# RULE: Don't add packages that duplicate what's already available

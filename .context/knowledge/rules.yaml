@@ -1,0 +1,55 @@
+# rules.yaml - Human-curated project conventions
+# This file captures knowledge that can't be extracted from code
+
+project:
+  name: LiquidRender
+  description: DSL-to-React rendering engine on TurboStarter
+
+conventions:
+  reuse_first:
+    - CHECK capabilities.yaml BEFORE creating anything new
+    - Extend existing components, don't duplicate
+    - TurboStarter features are NOT to be rebuilt
+
+  components:
+    - Use design tokens from utils.ts, never hardcode colors or spacing
+    - Include data-liquid-type attribute on root element
+    - Handle empty/null states gracefully
+    - Provide both dynamic and static variant exports
+    - File structure: Types → Styles → Helpers → Sub-components → Main → Static
+    - Use formatDisplayValue() and fieldToLabel() for display
+
+  code_style:
+    - No any types in TypeScript
+    - Prefer const over let
+    - Use async/await for I/O operations
+    - Adapt documentation examples to match existing patterns
+
+  database:
+    - Create migration for every schema change
+    - Use Drizzle ORM patterns from existing schema files
+
+folders:
+  read_freely:
+    - .context/
+    - _bmad-output/
+    - .scratch/
+
+  ask_first:
+    - .mydocs/
+
+  do_not_read:
+    - .archived/
+
+conflict_resolution:
+  # In order of priority (highest first)
+  - User's explicit instruction
+  - Root CLAUDE.md
+  - .context/CLAUDE.md
+  - _bmad-output/ documents
+  - Framework docs
+
+reference_files:
+  design_tokens: packages/liquid-render/src/renderer/components/utils.ts
+  dsl_spec: packages/liquid-render/specs/LIQUID-RENDER-SPEC.md
+  component_guide: packages/liquid-render/docs/COMPONENT-GUIDE.md

@@ -1,0 +1,38 @@
+---
+description: Setup Cognitive Context Framework - type @setup-cognitive-context to start agentic onboarding
+---
+
+# Setup Cognitive Context Framework
+
+You've been asked to set up the Cognitive Context Framework for this project.
+
+## What This Is
+
+The Cognitive Context Framework gives you (the AI) persistent memory and structured understanding of this codebase. After setup, you'll have:
+
+- **Orientation**: Always-loaded identity, structure, and constraints
+- **Wisdom files**: Cached patterns that load when relevant
+- **Entity index**: Quick lookups for components, models, endpoints
+
+## Your Protocol
+
+Read and follow `ONBOARDING-AGENT.md` in this directory.
+
+**Quick summary:**
+
+1. **Safety**: Check git status, create checkpoint, backup existing files
+2. **Discovery**: Actually READ the codebase - don't just pattern match
+3. **Interview**: Ask SPECIFIC questions based on what you found
+4. **Generate**: Create tailored orientation, wisdom, and indices
+5. **Validate**: Show what was created, invite refinement
+
+## Key Principles
+
+- **Read code, don't guess**: Open files and understand patterns
+- **Be specific**: "I see you use X pattern in Y file" not "What's your pattern?"
+- **Quality over quantity**: Few good wisdom files > many generic ones
+- **Under 300 tokens**: Orientation must be concise
+
+## Start Now
+
+Begin with Phase 1 (Safety) from the onboarding protocol.

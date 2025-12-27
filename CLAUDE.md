@@ -49,23 +49,14 @@ Reference files:
 
 ## Special Folders
 
-### `.cognitive/` - Cognitive Context
-**Read freely. Read FIRST.** Contains SUMMARY.md, capabilities.yaml, cached wisdom.
-
-### `.context/` - Project Context
-**Read freely.** Contains context navigation and framework documentation.
-
-### `_bmad-output/` - BMAD Output (Project Decisions)
-**Read freely.** Contains BMAD workflow outputs (PRD, architecture, epics). Defines WHAT to build and HOW for this specific project.
-
-### `.archived/` - Deprecated Files
-**DO NOT READ without user permission.** Contains deprecated context files that could divert development intent.
-
-### `.mydocs/` - Personal Development Notes
-**ASK before reading.** Contains the user's personal notes and research.
-
-### `.scratch/` - Temporary Experiments
-**Safe to use freely.** Sandbox for throwaway code and experiments.
+| Folder | Access | Purpose |
+|--------|--------|---------|
+| `.cognitive/` | **Read FIRST** | Cognitive context (SUMMARY, capabilities, wisdom) |
+| `.context/` | Read freely | Project context, framework docs |
+| `_bmad-output/` | Read freely | Project decisions (PRD, architecture) |
+| `.archived/` | **DO NOT READ** | Deprecated files - ask permission first |
+| `.mydocs/` | **ASK first** | User's personal notes |
+| `.scratch/` | Use freely | Sandbox for experiments |
 
 ## Conflict Resolution
 

@@ -911,14 +911,14 @@ Include in CLAUDE.md:
 ```markdown
 ## Special Folders
 
-| Folder | Access |
-|--------|--------|
-| `.cognitive/` | Read freely - cognitive context |
-| `.context/` | Read freely - project context |
-| `_bmad-output/` | Read freely - project decisions |
-| `.archived/` | DO NOT READ without permission |
-| `.mydocs/` | ASK before reading |
-| `.scratch/` | Safe sandbox for experiments |
+| Folder | Access | Purpose |
+|--------|--------|---------|
+| `.cognitive/` | **Read FIRST** | Cognitive context (SUMMARY, capabilities, wisdom) |
+| `.context/` | Read freely | Project context, framework docs |
+| `_bmad-output/` | Read freely | Project decisions (PRD, architecture) |
+| `.archived/` | **DO NOT READ** | Deprecated files - ask permission first |
+| `.mydocs/` | **ASK first** | User's personal notes |
+| `.scratch/` | Use freely | Sandbox for experiments |
 ```
 
 ### 5.3 Update Cursor Main Rule

@@ -1,0 +1,40 @@
+# Cognitive Context Configuration
+# https://github.com/your-org/cognitive-context
+
+version: "1.0"
+
+# Directories to scan for entities
+sourceDirs:
+  - src
+  - app
+  - lib
+
+# File patterns to include
+includePatterns:
+  - "**/*.ts"
+  - "**/*.tsx"
+
+# Patterns to exclude
+excludePatterns:
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/node_modules/**"
+
+# Token budgets (prevents context overflow)
+tokenBudget:
+  summary: 300        # SUMMARY.md max tokens
+  capabilities: 2000  # capabilities.yaml max tokens
+  wisdomPerFile: 1500 # Per wisdom file
+  total: 20000        # Total context budget
+
+# Tools to sync context to
+tools:
+  - name: cursor
+    enabled: true
+  - name: claude
+    enabled: true
+
+# Watch mode (auto-update on file changes)
+watch:
+  enabled: false
+  debounceMs: 500

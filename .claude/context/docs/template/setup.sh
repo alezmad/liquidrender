@@ -1,0 +1,917 @@
+#!/bin/bash
+#
+# Cognitive Context Framework - Setup Script
+# ==========================================
+# Automates installation of the Cognitive Context Framework into any project.
+#
+# Usage:
+#   curl -o setup.sh [url] && chmod +x setup.sh && ./setup.sh
+#   OR
+#   ./setup.sh                     # Interactive mode
+#   ./setup.sh --non-interactive   # Use defaults (project name from directory)
+#
+# Requirements:
+#   - bash 3.2+
+#   - git (for commit tracking)
+#   - Standard Unix tools (mkdir, cat, sed)
+#
+# Framework Version: 1.0
+# =============================================================================
+
+set -e
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+FRAMEWORK_VERSION="1.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+CONTEXT_DIR="$PROJECT_ROOT/.claude/context"
+HOOKS_DIR="$PROJECT_ROOT/.claude/hooks"
+GIT_HOOKS_DIR="$PROJECT_ROOT/.git/hooks"
+
+# Colors for output (disable if not a terminal)
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
+    CYAN='\033[0;36m'
+    BOLD='\033[1m'
+    NC='\033[0m' # No Color
+else
+    RED='' GREEN='' YELLOW='' BLUE='' CYAN='' BOLD='' NC=''
+fi
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[OK]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+log_step() {
+    echo -e "\n${BOLD}${CYAN}==> $1${NC}"
+}
+
+prompt_input() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+
+    if [[ -n "$default" ]]; then
+        echo -en "${BOLD}$prompt${NC} [${CYAN}$default${NC}]: "
+    else
+        echo -en "${BOLD}$prompt${NC}: "
+    fi
+
+    read -r input
+    if [[ -z "$input" ]]; then
+        eval "$var_name=\"$default\""
+    else
+        eval "$var_name=\"$input\""
+    fi
+}
+
+prompt_multiline() {
+    local prompt="$1"
+    local var_name="$2"
+    local items=()
+
+    echo -e "${BOLD}$prompt${NC} (enter empty line to finish):"
+    while true; do
+        echo -n "  - "
+        read -r item
+        [[ -z "$item" ]] && break
+        items+=("$item")
+    done
+
+    # Join with special delimiter for later processing
+    local IFS='|'
+    eval "$var_name=\"${items[*]}\""
+}
+
+file_exists_and_valid() {
+    local file="$1"
+    [[ -f "$file" ]] && [[ -s "$file" ]]
+}
+
+backup_if_exists() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        local backup="${file}.backup.$(date +%Y%m%d_%H%M%S)"
+        cp "$file" "$backup"
+        log_warn "Backed up existing file to: $backup"
+    fi
+}
+
+# =============================================================================
+# BANNER
+# =============================================================================
+
+show_banner() {
+    echo ""
+    echo -e "${BOLD}${CYAN}============================================${NC}"
+    echo -e "${BOLD}${CYAN}  Cognitive Context Framework Setup${NC}"
+    echo -e "${BOLD}${CYAN}  Version: $FRAMEWORK_VERSION${NC}"
+    echo -e "${BOLD}${CYAN}============================================${NC}"
+    echo ""
+    echo -e "This script will set up the Cognitive Context Framework"
+    echo -e "in your project at: ${BOLD}$PROJECT_ROOT${NC}"
+    echo ""
+}
+
+# =============================================================================
+# DIRECTORY STRUCTURE CREATION
+# =============================================================================
+
+create_directory_structure() {
+    log_step "Creating directory structure"
+
+    local dirs=(
+        "$CONTEXT_DIR"
+        "$CONTEXT_DIR/schemas"
+        "$CONTEXT_DIR/wisdom"
+        "$CONTEXT_DIR/indices"
+        "$CONTEXT_DIR/templates"
+        "$CONTEXT_DIR/scripts"
+        "$CONTEXT_DIR/docs"
+        "$HOOKS_DIR"
+    )
+
+    for dir in "${dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            log_success "Created: ${dir#$PROJECT_ROOT/}"
+        else
+            log_info "Exists: ${dir#$PROJECT_ROOT/}"
+        fi
+    done
+}
+
+# =============================================================================
+# SCHEMA FILES
+# =============================================================================
+
+create_schemas() {
+    log_step "Creating schema files"
+
+    # entities.yaml
+    if ! file_exists_and_valid "$CONTEXT_DIR/schemas/entities.yaml"; then
+        cat > "$CONTEXT_DIR/schemas/entities.yaml" << 'SCHEMA_ENTITIES'
+# Entity Index Schema
+# Defines structure for code-extracted entities (components, schemas, endpoints)
+# Generated by extract.py, never maintained by hand
+
+version: 1
+
+description: |
+  Maximally compressed index of code entities.
+  Progressive tiers: meta -> index -> summary -> source.
+  LLM expands tiers on demand.
+
+structure:
+  meta:
+    description: "Root counts (Tier 0, always loaded)"
+    example:
+      components: 47
+      schemas: 10
+      endpoints: 25
+      generated: "2025-12-27"
+      from_commit: "abc123"
+
+  categories:
+    components:
+      _index:
+        description: "List of names (Tier 1)"
+        type: array
+        example: ["DataTable", "LineChart", "BarChart"]
+
+      "[name]":
+        tier1:
+          description: "One-liner purpose"
+          type: string
+          max_tokens: 15
+
+        tier2:
+          description: "Interface summary"
+          type: object
+          properties:
+            path: "Relative file path"
+            props: "Array of prop names"
+            deps: "Array of dependencies"
+            exports: "Array of export names"
+
+        tier3:
+          description: "Full source (deferred)"
+          value: "READ_FROM_DISK"
+
+    schemas:
+      _index:
+        type: array
+
+    endpoints:
+      _index:
+        type: array
+
+expansion_triggers:
+  tier0_to_tier1:
+    - "Task mentions category keyword"
+    - "User asks 'what X exist?'"
+
+  tier1_to_tier2:
+    - "Task mentions specific entity name"
+    - "Following dependency chain"
+
+  tier2_to_tier3:
+    - "Task requires modification"
+    - "Debugging"
+    - "User explicitly requests source"
+
+token_budget:
+  tier0: ~50
+  tier1_per_category: ~100
+  tier2_per_entity: ~50
+  tier3: variable (read from disk)
+SCHEMA_ENTITIES
+        log_success "Created: schemas/entities.yaml"
+    else
+        log_info "Exists: schemas/entities.yaml"
+    fi
+
+    # concepts.yaml
+    if ! file_exists_and_valid "$CONTEXT_DIR/schemas/concepts.yaml"; then
+        cat > "$CONTEXT_DIR/schemas/concepts.yaml" << 'SCHEMA_CONCEPTS'
+# Concept Graph Schema
+# Defines structure for understanding-level knowledge (features, patterns, domains)
+# Complements entity graph: concepts = understanding, entities = implementation
+
+version: 1
+
+description: |
+  Concept graph for navigating understanding.
+  Maps features, patterns, and domains to their sub-concepts and related entities.
+  Used when task requires understanding before implementation.
+
+structure:
+  meta:
+    description: "Root concept categories"
+    example:
+      features: 12
+      patterns: 8
+      domains: 5
+
+  concepts:
+    "[concept_name]":
+      tier1:
+        description: "One-sentence definition"
+        type: string
+        max_tokens: 20
+
+      tier2:
+        description: "Structure and relationships"
+        type: object
+        properties:
+          summary: "2-3 sentence explanation"
+          children: "Array of sub-concept names"
+          related_entities: "Array of entity names"
+          docs: "Array of doc file paths"
+
+      tier3:
+        description: "Deep knowledge"
+        type: object
+        properties:
+          key_patterns: "Important implementation patterns"
+          gotchas: "Common mistakes"
+          see_also: "Related concepts"
+
+  relationships:
+    description: "Edges between concepts"
+    types:
+      - "is_part_of"      # child -> parent
+      - "depends_on"      # concept requires another
+      - "conflicts_with"  # mutual exclusion
+      - "implements"      # concept -> entities
+
+navigation:
+  entry_points:
+    - "features/"     # User-facing capabilities
+    - "patterns/"     # Reusable approaches
+    - "domains/"      # Knowledge areas
+
+  traversal:
+    understanding: "Start at feature -> drill into sub-concepts"
+    implementation: "Match concept -> find related entities -> read source"
+SCHEMA_CONCEPTS
+        log_success "Created: schemas/concepts.yaml"
+    else
+        log_info "Exists: schemas/concepts.yaml"
+    fi
+
+    # wisdom.yaml
+    if ! file_exists_and_valid "$CONTEXT_DIR/schemas/wisdom.yaml"; then
+        cat > "$CONTEXT_DIR/schemas/wisdom.yaml" << 'SCHEMA_WISDOM'
+# Wisdom File Schema
+# Defines structure for cached answers (crystallized knowledge)
+# Wisdom = the answer someone already figured out
+
+version: 1
+
+description: |
+  Wisdom files are CACHED TRAVERSALS.
+  Someone already navigated the graph.
+  Someone already read the files.
+  Someone already figured it out.
+  This is the answer they found.
+
+frontmatter:
+  required:
+    title:
+      description: "Clear, searchable title"
+      example: "How to Create a Component"
+
+    purpose:
+      description: "What this wisdom helps with"
+      example: "Creating or modifying components"
+
+    answers:
+      description: "Questions this wisdom answers"
+      type: array
+      example:
+        - "How should I structure a file?"
+        - "What patterns should I follow?"
+
+  optional:
+    read_when:
+      description: "Trigger conditions"
+      example: "Creating or modifying a component"
+
+    skip_when:
+      description: "When NOT to use this"
+      example: "Just using existing components"
+
+    depends_on:
+      description: "What could invalidate this wisdom"
+      type: object
+      properties:
+        entities: "Array of entity names"
+        files: "Array of file paths"
+        concepts: "Array of concept names"
+
+    confidence:
+      description: "Trust level (0.0-1.0)"
+      default: 0.70
+
+    verified_at:
+      description: "Last verification date"
+
+body_structure:
+  sections:
+    - name: "Sections table"
+      purpose: "Quick navigation with summaries"
+      format: "Markdown table: Section | Summary"
+
+    - name: "Per-section TL;DR"
+      purpose: "Key insight without full read"
+      format: "> **TL;DR:** one-line summary"
+
+    - name: "Full content"
+      purpose: "Complete explanation with examples"
+
+matching:
+  strategies:
+    - "Keyword match on title and answers"
+    - "Semantic similarity on purpose"
+    - "Dependency overlap with task entities"
+
+  priority:
+    - "Exact answer match"
+    - "Purpose match"
+    - "Keyword overlap"
+
+invalidation:
+  triggers:
+    - "Depended entity renamed/moved"
+    - "Depended file significantly changed"
+    - "Pattern deprecated"
+
+  not_triggers:
+    - "Unrelated file changed"
+    - "Cosmetic refactor"
+    - "New entities added"
+SCHEMA_WISDOM
+        log_success "Created: schemas/wisdom.yaml"
+    else
+        log_info "Exists: schemas/wisdom.yaml"
+    fi
+}
+
+# =============================================================================
+# INDEX FILES
+# =============================================================================
+
+create_indices() {
+    log_step "Creating initial index files"
+
+    local current_date
+    current_date=$(date +%Y-%m-%d)
+    local current_commit
+    current_commit=$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+    # entities.json
+    if ! file_exists_and_valid "$CONTEXT_DIR/indices/entities.json"; then
+        cat > "$CONTEXT_DIR/indices/entities.json" << ENTITIES_JSON
+{
+  "meta": {
+    "components": 0,
+    "schemas": 0,
+    "endpoints": 0,
+    "generated": "$current_date",
+    "from_commit": "$current_commit"
+  },
+  "categories": {
+    "components": {
+      "_index": []
+    },
+    "schemas": {
+      "_index": []
+    },
+    "endpoints": {
+      "_index": []
+    }
+  }
+}
+ENTITIES_JSON
+        log_success "Created: indices/entities.json"
+    else
+        log_info "Exists: indices/entities.json"
+    fi
+
+    # concepts.json
+    if ! file_exists_and_valid "$CONTEXT_DIR/indices/concepts.json"; then
+        cat > "$CONTEXT_DIR/indices/concepts.json" << CONCEPTS_JSON
+{
+  "v": 1,
+  "generated": "$current_date",
+  "meta": {
+    "features": 0,
+    "patterns": 0,
+    "domains": 0
+  },
+  "concepts": {},
+  "relationships": []
+}
+CONCEPTS_JSON
+        log_success "Created: indices/concepts.json"
+    else
+        log_info "Exists: indices/concepts.json"
+    fi
+}
+
+# =============================================================================
+# ORIENTATION.md
+# =============================================================================
+
+create_orientation() {
+    log_step "Creating ORIENTATION.md"
+
+    if file_exists_and_valid "$CONTEXT_DIR/ORIENTATION.md"; then
+        log_info "ORIENTATION.md already exists"
+        echo -n "  Overwrite? (y/N): "
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            log_info "Keeping existing ORIENTATION.md"
+            return
+        fi
+        backup_if_exists "$CONTEXT_DIR/ORIENTATION.md"
+    fi
+
+    cat > "$CONTEXT_DIR/ORIENTATION.md" << ORIENTATION
+# ORIENTATION
+
+## Identity
+
+$PROJECT_NAME is $PROJECT_DESCRIPTION.
+
+## Cognitive Stance
+
+Think of this as a **$MENTAL_MODEL**. When in doubt, $HEURISTIC.
+
+## Structure
+
+\`\`\`
+$MAIN_PATH/
+ORIENTATION
+
+    # Add key entities as structure lines
+    if [[ -n "$KEY_ENTITIES" ]]; then
+        IFS='|' read -ra entities <<< "$KEY_ENTITIES"
+        for entity in "${entities[@]}"; do
+            echo "├── $entity/" >> "$CONTEXT_DIR/ORIENTATION.md"
+        done
+    else
+        cat >> "$CONTEXT_DIR/ORIENTATION.md" << 'STRUCTURE'
+├── src/               # Source code
+├── docs/              # Documentation
+└── tests/             # Test files
+STRUCTURE
+    fi
+
+    cat >> "$CONTEXT_DIR/ORIENTATION.md" << 'ORIENTATION_END'
+```
+
+## Constraints
+
+- **NEVER** make changes without understanding the impact
+- **NEVER** skip error handling
+- **ALWAYS** follow existing patterns
+
+## Pointers
+
+- **Understanding the project?** -> Read this file first
+- **Adding features?** -> Check existing patterns in source code
+- **Debugging?** -> Start with the entry point
+ORIENTATION_END
+
+    log_success "Created: ORIENTATION.md"
+}
+
+# =============================================================================
+# PROGRESSIVE DOC TEMPLATE
+# =============================================================================
+
+create_progressive_template() {
+    log_step "Creating progressive document template"
+
+    if ! file_exists_and_valid "$CONTEXT_DIR/templates/progressive-doc.md"; then
+        cat > "$CONTEXT_DIR/templates/progressive-doc.md" << 'PROGRESSIVE_TEMPLATE'
+---
+title: "[Document Title]"
+purpose: "[What this document helps with - one sentence]"
+answers:
+  - "[First question this document answers]"
+  - "[Second question this document answers]"
+read_when: "[Trigger condition]"
+skip_when: "[Skip condition]"
+depends_on:
+  files: []
+  entities: []
+  concepts: []
+confidence: 0.70
+verified_at: "[YYYY-MM-DD]"
+---
+
+# [Document Title]
+
+> **Read when:** [Describe the trigger condition]
+>
+> **Skip when:** [Describe when this is NOT relevant]
+
+## Sections
+
+| Section | Summary |
+|---------|---------|
+| [Section 1](#section-1) | [What this section covers in ~10 words] |
+| [Section 2](#section-2) | [What this section covers in ~10 words] |
+
+---
+
+## Section 1
+
+> **TL;DR:** [The key insight in one sentence]
+
+[Full explanatory content...]
+
+---
+
+## Section 2
+
+> **TL;DR:** [Key insight for section 2]
+
+[Full content for section 2...]
+
+---
+
+## See Also
+
+- [Related Document](path/to/doc.md) - Brief description
+PROGRESSIVE_TEMPLATE
+        log_success "Created: templates/progressive-doc.md"
+    else
+        log_info "Exists: templates/progressive-doc.md"
+    fi
+}
+
+# =============================================================================
+# CONTEXT REFRESH HOOK
+# =============================================================================
+
+create_context_refresh_hook() {
+    log_step "Creating context refresh hook"
+
+    if ! file_exists_and_valid "$HOOKS_DIR/context-refresh.sh"; then
+        cat > "$HOOKS_DIR/context-refresh.sh" << 'CONTEXT_HOOK'
+#!/bin/bash
+# Context Refresh Hook
+# Checks if entities.json needs refresh based on git commits
+# Called on SessionStart and post-commit
+
+set -e
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+CONTEXT_DIR="$PROJECT_DIR/.claude/context"
+INDICES_DIR="$CONTEXT_DIR/indices"
+ENTITIES_FILE="$INDICES_DIR/entities.json"
+EXTRACT_SCRIPT="$CONTEXT_DIR/scripts/extract.py"
+
+# Get current commit hash
+CURRENT_COMMIT=$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Check if entities.json exists
+if [[ ! -f "$ENTITIES_FILE" ]]; then
+    if [[ -f "$EXTRACT_SCRIPT" ]]; then
+        echo "context-refresh: entities.json missing, extracting..."
+        python "$EXTRACT_SCRIPT" --quiet 2>/dev/null || python "$EXTRACT_SCRIPT"
+    else
+        echo "context-refresh: entities.json missing, but no extract script found"
+    fi
+    exit 0
+fi
+
+# Get commit hash from entities.json
+CACHED_COMMIT=$(grep -o '"from_commit": *"[^"]*"' "$ENTITIES_FILE" 2>/dev/null | cut -d'"' -f4 || echo "none")
+
+# Compare commits
+if [[ "$CURRENT_COMMIT" != "$CACHED_COMMIT" ]]; then
+    # Check if source files changed (customize this path for your project)
+    CHANGED_FILES=$(git -C "$PROJECT_DIR" diff --name-only "$CACHED_COMMIT" HEAD -- "*.ts" "*.tsx" "*.js" "*.jsx" 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$CHANGED_FILES" -gt 0 ]] && [[ -f "$EXTRACT_SCRIPT" ]]; then
+        echo "context-refresh: $CHANGED_FILES file(s) changed, extracting..."
+        python "$EXTRACT_SCRIPT" --quiet 2>/dev/null || python "$EXTRACT_SCRIPT"
+    else
+        echo "context-refresh: No relevant changes, index still valid"
+    fi
+else
+    echo "context-refresh: entities.json is current (commit: $CURRENT_COMMIT)"
+fi
+CONTEXT_HOOK
+        chmod +x "$HOOKS_DIR/context-refresh.sh"
+        log_success "Created: .claude/hooks/context-refresh.sh"
+    else
+        log_info "Exists: .claude/hooks/context-refresh.sh"
+    fi
+}
+
+# =============================================================================
+# GIT HOOK SETUP
+# =============================================================================
+
+setup_git_hooks() {
+    log_step "Setting up git hooks"
+
+    if [[ ! -d "$GIT_HOOKS_DIR" ]]; then
+        log_warn "No .git/hooks directory found. Skipping git hook setup."
+        log_info "Run 'git init' first, then re-run this script."
+        return
+    fi
+
+    local post_commit="$GIT_HOOKS_DIR/post-commit"
+    local hook_line=".claude/hooks/context-refresh.sh"
+
+    if [[ -f "$post_commit" ]]; then
+        # Check if hook already contains our line
+        if grep -q "context-refresh.sh" "$post_commit" 2>/dev/null; then
+            log_info "Git post-commit hook already configured"
+            return
+        fi
+
+        # Append to existing hook
+        log_info "Appending to existing post-commit hook"
+        echo "" >> "$post_commit"
+        echo "# Cognitive Context Framework - refresh entities on commit" >> "$post_commit"
+        echo "$hook_line" >> "$post_commit"
+    else
+        # Create new hook
+        cat > "$post_commit" << POSTHOOK
+#!/bin/bash
+# Git post-commit hook
+
+# Cognitive Context Framework - refresh entities on commit
+$hook_line
+POSTHOOK
+        chmod +x "$post_commit"
+    fi
+
+    log_success "Configured: .git/hooks/post-commit"
+}
+
+# =============================================================================
+# SAMPLE WISDOM FILE
+# =============================================================================
+
+create_sample_wisdom() {
+    log_step "Creating sample wisdom file"
+
+    local wisdom_file="$CONTEXT_DIR/wisdom/getting-started.md"
+
+    if ! file_exists_and_valid "$wisdom_file"; then
+        local current_date
+        current_date=$(date +%Y-%m-%d)
+
+        cat > "$wisdom_file" << WISDOM
+---
+title: Getting Started with $PROJECT_NAME
+purpose: Quick orientation for new contributors
+answers:
+  - How do I get started with this project?
+  - What should I read first?
+  - Where is the main code?
+read_when: You're new to this project
+skip_when: You're already familiar with the codebase
+depends_on:
+  files: []
+  entities: []
+  concepts: []
+confidence: 0.70
+verified_at: "$current_date"
+---
+
+# Getting Started with $PROJECT_NAME
+
+> **Read when:** You're new to this project
+>
+> **Skip when:** You're already familiar with the codebase
+
+## Sections
+
+| Section | Summary |
+|---------|---------|
+| [Overview](#overview) | What this project does and why |
+| [Quick Start](#quick-start) | Get up and running in minutes |
+| [Key Concepts](#key-concepts) | Core ideas you need to understand |
+
+---
+
+## Overview
+
+> **TL;DR:** $PROJECT_DESCRIPTION
+
+[Add more detailed project description here...]
+
+---
+
+## Quick Start
+
+> **TL;DR:** Clone, install dependencies, run the dev server.
+
+\`\`\`bash
+# Clone the repository
+git clone [your-repo-url]
+
+# Install dependencies
+npm install  # or pnpm/yarn
+
+# Start development
+npm run dev
+\`\`\`
+
+---
+
+## Key Concepts
+
+> **TL;DR:** Understand these core ideas before diving into the code.
+
+[Add key concepts for your project...]
+
+---
+
+## See Also
+
+- [ORIENTATION.md](../ORIENTATION.md) - Quick cognitive reload
+WISDOM
+        log_success "Created: wisdom/getting-started.md"
+    else
+        log_info "Exists: wisdom/getting-started.md"
+    fi
+}
+
+# =============================================================================
+# SUMMARY
+# =============================================================================
+
+show_summary() {
+    echo ""
+    echo -e "${BOLD}${GREEN}============================================${NC}"
+    echo -e "${BOLD}${GREEN}  Setup Complete!${NC}"
+    echo -e "${BOLD}${GREEN}============================================${NC}"
+    echo ""
+    echo -e "Created structure:"
+    echo -e "  ${CYAN}.claude/context/${NC}"
+    echo -e "    ├── ORIENTATION.md        ${GREEN}# Cognitive reload file${NC}"
+    echo -e "    ├── schemas/              ${GREEN}# Structure definitions${NC}"
+    echo -e "    ├── indices/              ${GREEN}# Entity & concept indices${NC}"
+    echo -e "    ├── wisdom/               ${GREEN}# Cached answers${NC}"
+    echo -e "    ├── templates/            ${GREEN}# Document templates${NC}"
+    echo -e "    ├── scripts/              ${GREEN}# Automation scripts${NC}"
+    echo -e "    └── docs/                 ${GREEN}# Framework documentation${NC}"
+    echo -e "  ${CYAN}.claude/hooks/${NC}"
+    echo -e "    └── context-refresh.sh    ${GREEN}# Git hook for refresh${NC}"
+    echo ""
+    echo -e "${BOLD}Next steps:${NC}"
+    echo ""
+    echo -e "  1. ${YELLOW}Edit ORIENTATION.md${NC} - Customize for your project"
+    echo -e "     ${CYAN}$CONTEXT_DIR/ORIENTATION.md${NC}"
+    echo ""
+    echo -e "  2. ${YELLOW}Create extract.py${NC} - Entity extraction script (optional)"
+    echo -e "     ${CYAN}$CONTEXT_DIR/scripts/extract.py${NC}"
+    echo ""
+    echo -e "  3. ${YELLOW}Add wisdom files${NC} - Cache answers to common questions"
+    echo -e "     ${CYAN}$CONTEXT_DIR/wisdom/*.md${NC}"
+    echo ""
+    echo -e "  4. ${YELLOW}Update CLAUDE.md${NC} - Add context system reference"
+    echo -e "     Add: 'Read .claude/context/ORIENTATION.md at session start'"
+    echo ""
+    echo -e "${BOLD}Documentation:${NC}"
+    echo -e "  - SPECIFICATION.md: Full technical specification"
+    echo -e "  - QUICKSTART.md: 5-minute setup guide"
+    echo ""
+}
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+main() {
+    show_banner
+
+    # Parse arguments
+    local interactive=true
+    for arg in "$@"; do
+        case $arg in
+            --non-interactive|-n)
+                interactive=false
+                ;;
+            --help|-h)
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  -n, --non-interactive  Use defaults without prompting"
+                echo "  -h, --help             Show this help message"
+                echo ""
+                exit 0
+                ;;
+        esac
+    done
+
+    # Gather project information
+    if [[ "$interactive" == true ]]; then
+        log_step "Project Information"
+
+        local default_name
+        default_name=$(basename "$PROJECT_ROOT")
+
+        prompt_input "Project name" "$default_name" PROJECT_NAME
+        prompt_input "One-line description" "A software project" PROJECT_DESCRIPTION
+        prompt_input "Mental model (e.g., 'data pipeline', 'component library')" "modular system" MENTAL_MODEL
+        prompt_input "Heuristic (e.g., 'trace data flow', 'follow the types')" "follow existing patterns" HEURISTIC
+        prompt_input "Main source path" "src" MAIN_PATH
+        prompt_multiline "Key directories/entities (leave empty to use defaults)" KEY_ENTITIES
+    else
+        PROJECT_NAME=$(basename "$PROJECT_ROOT")
+        PROJECT_DESCRIPTION="A software project"
+        MENTAL_MODEL="modular system"
+        HEURISTIC="follow existing patterns"
+        MAIN_PATH="src"
+        KEY_ENTITIES=""
+    fi
+
+    # Create everything
+    create_directory_structure
+    create_schemas
+    create_indices
+    create_orientation
+    create_progressive_template
+    create_context_refresh_hook
+    setup_git_hooks
+    create_sample_wisdom
+
+    show_summary
+}
+
+# Run main function
+main "$@"

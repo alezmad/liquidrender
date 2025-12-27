@@ -1,0 +1,78 @@
+---
+description: Entity and concept indices for quick lookups. Use @context-index to load.
+---
+
+# Context Index
+
+Reference this file when you need to look up entities or concepts.
+
+## Entity Index
+
+The entity index lives at `.claude/context/indices/entities.json`.
+
+**Structure:**
+```json
+{
+  "meta": {
+    "generated_at": "ISO timestamp",
+    "from_commit": "git commit hash",
+    "total_entities": 42
+  },
+  "entities": {
+    "tier1": {
+      "EntityName": {
+        "file": "path/to/file.tsx",
+        "type": "component|function|class",
+        "exports": ["named", "exports"]
+      }
+    },
+    "tier2": { ... }
+  }
+}
+```
+
+**Usage:** Before implementing, check if the entity exists:
+1. Search entities.json for the name
+2. If found, read the file path
+3. Follow existing patterns
+
+## Concept Index
+
+The concept index lives at `.claude/context/indices/concepts.json`.
+
+**Structure:**
+```json
+{
+  "meta": { ... },
+  "concepts": {
+    "features": {
+      "ConceptName": {
+        "description": "What this concept represents",
+        "related_entities": ["Entity1", "Entity2"],
+        "key_files": ["path/to/impl.ts"]
+      }
+    },
+    "patterns": { ... },
+    "domains": { ... }
+  }
+}
+```
+
+**Usage:** When working on a feature domain:
+1. Look up the concept
+2. Read related entities
+3. Check key files for patterns
+
+## Quick Commands
+
+```bash
+# Refresh indices (run after significant changes)
+python .claude/context/scripts/extract.py
+
+# Check index freshness
+cat .claude/context/indices/entities.json | jq '.meta'
+```
+
+---
+
+*This is a manual @mention file. Type `@context-index` to load it.*

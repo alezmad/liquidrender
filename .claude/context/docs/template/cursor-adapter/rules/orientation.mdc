@@ -1,0 +1,42 @@
+---
+description: Cognitive orientation - project identity, structure, and constraints. Always read first.
+alwaysApply: true
+---
+
+# {{PROJECT_NAME}} - Cognitive Orientation
+
+> **Read time:** ~30 seconds | **Token budget:** ~300 tokens
+
+## Identity
+
+You are working on **{{PROJECT_NAME}}**.
+
+{{PROJECT_DESCRIPTION}}
+
+## Mental Model
+
+{{COGNITIVE_STANCE}}
+
+## Structure
+
+```
+{{STRUCTURE}}
+```
+
+## Hard Constraints
+
+1. {{CONSTRAINT_1}}
+2. {{CONSTRAINT_2}}
+3. {{CONSTRAINT_3}}
+
+## Quick Pointers
+
+| Task Type | First Read |
+|-----------|------------|
+| {{TASK_TYPE_1}} | {{LOCATION_1}} |
+| {{TASK_TYPE_2}} | {{LOCATION_2}} |
+| {{TASK_TYPE_3}} | {{LOCATION_3}} |
+
+---
+
+*This orientation loads automatically. Check wisdom files (@wisdom-*) for specific patterns.*

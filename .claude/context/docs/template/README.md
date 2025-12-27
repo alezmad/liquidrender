@@ -14,6 +14,7 @@ This template provides everything you need to implement the Cognitive Context Fr
 ```
 template/
 ├── README.md                           ← You are here
+├── setup.sh                            ← One-command installation
 ├── context/
 │   ├── ORIENTATION.template.md         ← Template for cognitive reload file
 │   ├── wisdom/.gitkeep                 ← Directory for cached answers
@@ -26,8 +27,15 @@ template/
 │   │   └── extract.template.py         ← Template for entity extraction script
 │   └── templates/
 │       └── progressive-doc.template.md ← Template for progressive documents
-└── hooks/
-    └── context-refresh.template.sh     ← Template for git hook
+├── hooks/
+│   └── context-refresh.template.sh     ← Template for git hook
+├── cursor-adapter/                     ← Cursor IDE support
+│   ├── README.md
+│   ├── sync-to-cursor.sh               ← Sync script
+│   └── rules/                          ← .mdc templates
+└── claude-projects-adapter/            ← Claude Projects support
+    ├── README.md
+    └── generate-knowledge-file.sh      ← Export script
 ```
 
 ## Quick Start
@@ -188,6 +196,71 @@ Bash script that:
 - Start with 5-10 core concepts
 - Link to related entities
 - Update when architecture changes
+
+## Cross-Tool Support
+
+The Cognitive Context Framework works with multiple AI coding tools.
+
+### Supported Tools
+
+| Tool | Adapter | Setup |
+|------|---------|-------|
+| **Claude Code** | Native | This template (primary) |
+| **Cursor** | `cursor-adapter/` | `.cursor/rules/*.mdc` |
+| **Claude Projects** | `claude-projects-adapter/` | Upload knowledge file |
+
+### Cursor
+
+The Cursor adapter converts the framework to `.mdc` format.
+
+```bash
+# Option 1: Run the sync script
+./cursor-adapter/sync-to-cursor.sh
+
+# Option 2: Copy templates and customize
+cp -r cursor-adapter/rules/* .cursor/rules/
+```
+
+**Mapping:**
+- `ORIENTATION.md` → `orientation.mdc` (alwaysApply: true)
+- `wisdom/*.md` → `wisdom-*.mdc` (agent-requested)
+- Indices → Referenced via `@context-index`
+
+See `cursor-adapter/README.md` for details.
+
+### Claude Projects (claude.ai)
+
+The Claude Projects adapter creates uploadable knowledge files.
+
+```bash
+# Generate knowledge file
+./claude-projects-adapter/generate-knowledge-file.sh
+
+# Then upload PROJECT-KNOWLEDGE.md to your Claude Project
+```
+
+**Mapping:**
+- `ORIENTATION.md` → Project Instructions
+- Everything else → PROJECT-KNOWLEDGE.md (knowledge file)
+
+See `claude-projects-adapter/README.md` for details.
+
+### Cross-Tool Workflow
+
+For teams using multiple tools:
+
+1. **Source of truth:** `.claude/context/` (Claude Code format)
+2. **Sync to Cursor:** Run `sync-to-cursor.sh` after changes
+3. **Export for Claude Projects:** Run `generate-knowledge-file.sh`
+4. **Git hooks:** Work with both Claude Code and Cursor
+
+```
+.claude/context/ ──┬── (native) ──> Claude Code
+                   │
+                   ├── sync-to-cursor.sh ──> .cursor/rules/ ──> Cursor
+                   │
+                   └── generate-knowledge-file.sh ──> PROJECT-KNOWLEDGE.md ──> Claude Projects
+```
 
 ## Troubleshooting
 

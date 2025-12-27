@@ -14,7 +14,11 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-import yaml
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 
 class KnowledgeExtractor:
@@ -363,16 +367,22 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "knowledge.yaml"
 
-    # Write YAML
-    header = """# knowledge.yaml - AUTO-GENERATED
+    # Write output (YAML if available, otherwise JSON)
+    if HAS_YAML:
+        header = """# knowledge.yaml - AUTO-GENERATED
 # DO NOT EDIT - Regenerate with: python .claude/knowledge/generate.py
 # This file is derived from source code analysis.
 
 """
-
-    with open(output_path, "w") as f:
-        f.write(header)
-        yaml.dump(knowledge, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        with open(output_path, "w") as f:
+            f.write(header)
+            yaml.dump(knowledge, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    else:
+        # Fallback to JSON
+        output_path = output_dir / "knowledge.json"
+        with open(output_path, "w") as f:
+            json.dump(knowledge, f, indent=2)
+        print("Note: Using JSON format (install pyyaml for YAML output)")
 
     print(f"Generated: {output_path}")
     print(f"  Components: {len(knowledge['entities']['components'])}")

@@ -89,8 +89,14 @@ This prevents the death spiral: load everything → overflow → compact → los
 ╠═══════════════════════════════════════════════════════════════╣
 ║                                                               ║
 ║  ✓ Git checkpoint: [commit] (tagged: WF-[ID]-start)           ║
-║  ✓ Context gathered: X,XXX tokens (Y files)                   ║
 ║  ✓ Workflow directory created                                 ║
+║                                                               ║
+╠═══════════════════════════════════════════════════════════════╣
+║  CONTEXT LOADED (X,XXX tokens, Y files):                      ║
+║  ├── specs/LIQUID-RENDER-SPEC.md    (~4,200 tokens)           ║
+║  ├── docs/COMPONENT-GUIDE.md        (~1,800 tokens)           ║
+║  └── components/index.ts            (~2,500 tokens)           ║
+╠═══════════════════════════════════════════════════════════════╣
 ║                                                               ║
 ║  Wave 0 will create shared types and structure.               ║
 ║  Waves 1-N will launch PARALLEL SUBTASKS for speed.           ║

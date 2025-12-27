@@ -120,35 +120,64 @@ After each wave, run:
 
 ### 5. On Approval - Pre-Flight Protocol
 
-**Before creating any files, run pre-flight checks:**
+**CRITICAL: Execute ALL steps in EXACT order. Do NOT skip any step.**
 
-1. **Git State Check**:
-   ```bash
-   python .context/workflows/scripts/preflight-check.py WF-[ID]
-   ```
-   - If dirty: Show suggested commit message
-   - User decides: [C]ommit / [P]roceed / [X] Abort
-   - On commit: `git add -A && git commit -m "chore: pre-WF-[ID] checkpoint"`
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  MANDATORY PRE-FLIGHT SEQUENCE (NEVER SKIP)                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. GIT CHECKPOINT                                                  │
+│     └── Tag starting point                                          │
+│                                                                     │
+│  2. CREATE DIRECTORY ← Immediately after git                        │
+│     └── .workflows/active/WF-[ID]-[name]/                          │
+│                                                                     │
+│  3. GATHER CONTEXT  ← MANDATORY, right after directory              │
+│     └── python gather-context.py → CONTEXT-LIBRARY.yaml            │
+│     └── Display context summary to user                             │
+│                                                                     │
+│  4. CREATE STATUS.yaml                                              │
+│                                                                     │
+│  5. ASK USER BEFORE WAVE 0                                          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-2. **Tag Starting Point** (for clean rollback):
-   ```bash
-   git tag "WF-[ID]-start" -m "Pre-workflow checkpoint"
-   ```
+#### Step 1: Git Checkpoint
 
-3. **Create Workflow Directory**:
-   ```bash
-   mkdir -p .workflows/active/WF-[ID]-[name]/{docs,agents,checkpoints}
-   ```
+```bash
+# Check for uncommitted changes
+python .context/workflows/scripts/preflight-check.py WF-[ID]
+```
+- If dirty: Show suggested commit message
+- User decides: [C]ommit / [P]roceed / [X] Abort
+- Tag starting point:
+```bash
+git tag "WF-[ID]-start" -m "Pre-workflow checkpoint"
+```
 
-4. **Gather Context** (with budget management):
-   ```bash
-   python .context/workflows/scripts/gather-context.py .workflows/active/WF-[ID]-[name]
-   ```
-   - Generates CONTEXT-LIBRARY.yaml
-   - Applies token budget (default 20k)
-   - Shows context summary to user
+#### Step 2: Create Workflow Directory
 
-5. **Display Context Summary**:
+```bash
+mkdir -p .workflows/active/WF-[ID]-[name]/{docs,agents,checkpoints}
+```
+
+#### Step 3: Gather Context (MANDATORY - DO NOT SKIP)
+
+**This step is REQUIRED immediately after creating the directory.**
+
+```bash
+python .context/workflows/scripts/gather-context.py .workflows/active/WF-[ID]-[name]
+```
+
+This script:
+- Reads workflow requirements (files to create/modify)
+- Identifies required context files (specs, guides, examples)
+- Generates `CONTEXT-LIBRARY.yaml`
+- Applies token budget (default 20k)
+
+**ALWAYS display context summary after gathering:**
    ```
    ╔═══════════════════════════════════════════════════════════════╗
    ║  CONTEXT: WF-[ID]                        X,XXX / 20,000 tokens║
@@ -159,9 +188,11 @@ After each wave, run:
    ╚═══════════════════════════════════════════════════════════════╝
    ```
 
-6. **Create STATUS.yaml** with git checkpoint info
+#### Step 4: Create STATUS.yaml
 
-7. **Register in Central Registry**:
+Create STATUS.yaml with git checkpoint info and workflow structure.
+
+#### Step 5: Register in Central Registry
    ```bash
    python .context/workflows/scripts/update-registry.py create WF-[ID] \
      --name "[NAME]" \
@@ -171,7 +202,7 @@ After each wave, run:
    ```
    This adds the workflow to `.workflows/registry.yaml` for tracking.
 
-8. **Generate WORKFLOW-LAUNCHER.md** (for fresh session resume):
+#### Step 6: Generate WORKFLOW-LAUNCHER.md (for fresh session resume)
 
    Create `.workflows/active/WF-[ID]-[name]/WORKFLOW-LAUNCHER.md`:
 
@@ -224,7 +255,7 @@ After each wave, run:
    - Resume from the current wave
    ```
 
-9. **Offer Context Clear** (Optional):
+#### Step 7: Offer Context Clear (Optional)
 
    If conversation is heavy (>15k tokens accumulated):
    ```
@@ -250,7 +281,7 @@ After each wave, run:
    - On "C": Instruct user to run `/clear` then `/workflow:launch WF-[ID]`
    - On "S": Continue with current context
 
-10. **ASK USER BEFORE WAVE 0** (Required Confirmation):
+#### Step 8: ASK USER BEFORE WAVE 0 (Required Confirmation)
    ```
    ╔═══════════════════════════════════════════════════════════════╗
    ║  READY TO START: WF-[ID]                                      ║
@@ -276,9 +307,11 @@ After each wave, run:
    - On "n" or "no": Pause workflow, save state
    - On other input: Clarify and re-ask
 
-11. **Begin Wave 0** bootstrap (sequential)
+#### Step 9: Begin Wave 0
 
-12. **Launch PARALLEL subtasks** for Wave 1:
+Bootstrap (sequential) - create types, structure, etc.
+
+#### Step 10: Launch PARALLEL subtasks for Wave 1
    ```
    # In a SINGLE message, launch all Wave 1 tasks:
    [Task: T1, run_in_background=true]
@@ -291,7 +324,7 @@ After each wave, run:
    [TaskOutput: T3, block=true]
    ```
 
-### 13. Show Available Commands
+### 6. Show Available Commands
 
 ```
 ## Workflow Commands

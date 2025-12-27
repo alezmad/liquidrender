@@ -1,0 +1,88 @@
+# Concept Graph Schema
+# Defines structure for understanding-level knowledge (features, patterns, domains)
+# Complements entity graph: concepts = understanding, entities = implementation
+
+version: 1
+
+description: |
+  Concept graph for navigating understanding.
+  Maps features, patterns, and domains to their sub-concepts and related entities.
+  Used when task requires understanding before implementation.
+
+structure:
+  meta:
+    description: "Root concept categories"
+    example:
+      features: 12
+      patterns: 8
+      domains: 5
+
+  concepts:
+    "[concept_name]":
+      tier1:
+        description: "One-sentence definition"
+        type: string
+        max_tokens: 20
+        example: "Multi-tenancy via Better Auth organization plugin"
+
+      tier2:
+        description: "Structure and relationships"
+        type: object
+        properties:
+          summary: "2-3 sentence explanation"
+          children: "Array of sub-concept names"
+          related_entities: "Array of entity names"
+          docs: "Array of doc file paths"
+        example:
+          summary: "Organizations provide workspace isolation, member management, and role-based access."
+          children: ["data-model", "rbac", "active-organization", "invitations"]
+          related_entities: ["organization", "member", "invitation"]
+          docs: ["sections/web/organizations/overview.md"]
+
+      tier3:
+        description: "Deep knowledge"
+        type: object
+        properties:
+          key_patterns: "Important implementation patterns"
+          gotchas: "Common mistakes"
+          see_also: "Related concepts"
+
+  relationships:
+    description: "Edges between concepts"
+    types:
+      - "is_part_of"      # child -> parent
+      - "depends_on"      # concept requires another
+      - "conflicts_with"  # mutual exclusion
+      - "implements"      # concept -> entities
+
+example_graph:
+  organizations:
+    tier1: "Multi-tenancy via Better Auth"
+    tier2:
+      summary: "Workspace isolation, member management, RBAC"
+      children: ["data-model", "rbac", "active-org"]
+      related_entities: ["organization", "member"]
+
+  data-model:
+    tier1: "org/user/member/invitation entities"
+    tier2:
+      summary: "Four core tables with many-to-many user<->org relationship"
+      children: []
+      related_entities: ["organization", "user", "member", "invitation"]
+
+  rbac:
+    tier1: "Roles map to permissions on resources"
+    tier2:
+      summary: "member/admin/owner roles, hasPermission() checks"
+      children: ["permissions", "roles"]
+      related_entities: ["member"]
+
+navigation:
+  entry_points:
+    - "features/"     # User-facing capabilities
+    - "patterns/"     # Reusable approaches
+    - "domains/"      # Knowledge areas
+
+  traversal:
+    understanding: "Start at feature -> drill into sub-concepts"
+    implementation: "Match concept -> find related entities -> read source"

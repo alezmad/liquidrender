@@ -108,18 +108,33 @@ workflows:
   WF-0009:
     name: Cognitive Context Framework
     dirname: WF-0009-context-framework
-    location: active
-    status: pending
-    created_at: '2025-12-27T13:05:57.539472'
-    updated_at: '2025-12-27T13:05:57.539472'
-    started_at: ''
-    completed_at: ''
-    current_wave: 0
+    location: completed
+    status: completed
+    created_at: '2025-12-27T12:00:00Z'
+    updated_at: '2025-12-27T12:25:00Z'
+    started_at: '2025-12-27T12:00:00Z'
+    completed_at: '2025-12-27T12:25:00Z'
+    current_wave: 2
     total_tasks: 7
-    completed_tasks: 0
+    completed_tasks: 7
+    duration: 25m
+  WF-0010:
+    name: Cognitive Context Documentation
+    dirname: WF-0010-context-docs
+    location: completed
+    status: completed
+    created_at: '2025-12-27T13:00:00Z'
+    updated_at: '2025-12-27T13:30:00Z'
+    started_at: '2025-12-27T13:00:00Z'
+    completed_at: '2025-12-27T13:30:00Z'
+    current_wave: 2
+    total_tasks: 6
+    completed_tasks: 6
+    git_tag: WF-0010-start
+    duration: 30m
 stats:
-  total_workflows: 9
+  total_workflows: 10
   queued: 0
-  active: 3
-  completed: 6
+  active: 2
+  completed: 8
   failed: 0

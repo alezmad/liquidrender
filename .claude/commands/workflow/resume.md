@@ -11,18 +11,44 @@ Continue an interrupted workflow.
 
 ## Instructions
 
-1. Find workflow to resume:
-   - If $ARGUMENTS provided, use that ID
-   - Otherwise, find most recent in `.workflows/active/`
+**CRITICAL: Execute ALL steps in EXACT order. Do NOT skip any step.**
 
-2. **Verify Context Integrity** (CRITICAL):
-   ```bash
-   python .context/workflows/scripts/verify-context.py .workflows/active/WF-[ID]-[name]
-   ```
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  MANDATORY RESUME SEQUENCE (NEVER SKIP)                             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. FIND WORKFLOW                                                   │
+│     └── Locate STATUS.yaml                                          │
+│                                                                     │
+│  2. VERIFY CONTEXT INTEGRITY                                        │
+│     └── Check for drift                                             │
+│                                                                     │
+│  3. LOAD CONTEXT FILES  ← MANDATORY, before showing resume plan     │
+│     └── Read all files from CONTEXT-LIBRARY.yaml                   │
+│     └── These are REQUIRED for agents to work correctly            │
+│                                                                     │
+│  4. SHOW RESUME PLAN with context summary                           │
+│                                                                     │
+│  5. ASK USER BEFORE RESUMING                                        │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-   This checks if context files have changed since workflow started.
+### Step 1: Find Workflow
 
-   **If drift detected**, present options:
+- If $ARGUMENTS provided, use that ID
+- Otherwise, find most recent in `.workflows/active/`
+
+### Step 2: Verify Context Integrity
+
+```bash
+python .context/workflows/scripts/verify-context.py .workflows/active/WF-[ID]-[name]
+```
+
+This checks if context files have changed since workflow started.
+
+**If drift detected**, present options:
    ```
    ╔═══════════════════════════════════════════════════════════════╗
    ║  CONTEXT DRIFT DETECTED                                       ║
@@ -44,46 +70,76 @@ Continue an interrupted workflow.
    - **UPDATE**: Re-gather context, update CONTEXT-LIBRARY.yaml
    - **RESTART**: Full reset, re-run from Wave 0
 
-3. Read STATUS.yaml to determine task state
+### Step 3: Load Context Files (MANDATORY - DO NOT SKIP)
 
-4. Identify resume point:
-   - Current wave number
-   - Pending/failed tasks in wave
-   - Last successful checkpoint
+**This step is REQUIRED before showing the resume plan or launching agents.**
 
-4. Present resume plan with timing context:
-   ```
-   ## Resuming: WF-[ID] - [NAME]
+Read CONTEXT-LIBRARY.yaml and load ALL required context files:
 
-   ### Timing Context
+```bash
+# Read the context library
+cat .workflows/active/WF-[ID]-[name]/CONTEXT-LIBRARY.yaml
+```
 
-   **Originally Started**: [timestamp from timing.started]
-   **Interrupted After**: [elapsed before pause]
-   **Resumed At**: [current time]
+**Then READ each file listed in the `required` section:**
 
-   Completed before interruption:
-   | Agent | Duration | Status |
-   |-------|----------|--------|
-   | T1 | 33s | ✅ |
-   | T2 | 1m 46s | ✅ |
+```yaml
+# Example CONTEXT-LIBRARY.yaml
+required:
+  - path: packages/liquid-render/src/renderer/components/index.ts
+    purpose: Component registry
+  - path: packages/liquid-render/docs/COMPONENT-GUIDE.md
+    purpose: Design tokens & patterns
+```
 
-   Remaining:
-   | Agent | Est. Time |
-   |-------|-----------|
-   | T3 | 30s-1min |
-   | T4 | 30s-1min |
+**You MUST read these files NOW, before proceeding:**
+- Use the Read tool on each file path
+- These provide the context agents need to work correctly
+- Skipping this step leads to agents making mistakes
 
-   Last checkpoint: Wave [N] passed
-   Resume from: Wave [M], Task [T]
+### Step 4: Identify Resume Point
 
-   Pending tasks:
-   - T4: [name] (never started)
-   - T5: [name] (failed, attempt 2)
+Read STATUS.yaml and determine:
+- Current wave number
+- Pending/failed tasks in wave
+- Last successful checkpoint
 
-   **Continue?** Reply "yes" or describe changes.
-   ```
+### Step 5: Present Resume Plan with Context Summary
 
-5. **ASK USER BEFORE RESUMING**:
+**Include file paths in the context summary:**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  RESUME: WF-[ID] - [NAME]                                         ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  CONTEXT LOADED (X files, ~Y,YYY tokens):                         ║
+║  ├── components/index.ts      (component registry)                ║
+║  ├── docs/COMPONENT-GUIDE.md  (design tokens)                     ║
+║  └── dev/AIDemo.tsx           (reference implementation)          ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  TIMING:                                                          ║
+║    Started: [timestamp]                                           ║
+║    Interrupted After: [elapsed]                                   ║
+║    Resume At: [current time]                                      ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  COMPLETED:                                                       ║
+║    T1: [name]    33s    ✅                                        ║
+║    T2: [name]    1m 46s ✅                                        ║
+║                                                                   ║
+║  REMAINING:                                                       ║
+║    T3: [name]    pending                                          ║
+║    T4: [name]    pending                                          ║
+║                                                                   ║
+║  Resume from: Wave [M], Task [T]                                  ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+### Step 6: ASK USER BEFORE RESUMING
    ```
    ╔═══════════════════════════════════════════════════════════════╗
    ║  RESUME: WF-[ID] from Wave [N]                                ║
@@ -99,7 +155,7 @@ Continue an interrupted workflow.
    **Resume now?** [Y/n]
    ```
 
-6. On approval:
+### Step 7: On Approval - Launch Agents
    - Skip completed waves
    - Re-launch failed tasks (up to max 3 attempts)
    - **Launch pending tasks as PARALLEL SUBTASKS** (if no conflicts):
@@ -114,7 +170,7 @@ Continue an interrupted workflow.
      ```
    - Update STATUS.yaml with agent assignments
 
-7. After each wave:
+### Step 8: Validate After Each Wave
    ```bash
    .context/workflows/scripts/validate-wave.sh @repo/liquid-render
    ```

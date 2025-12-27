@@ -1,0 +1,977 @@
+{
+  "generated": true,
+  "dependencies": {
+    "@ai-sdk/openai": {
+      "version": "2.0.59",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@ai-sdk/react": {
+      "version": "2.0.86",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@aws-sdk/client-s3": {
+      "version": "3.922.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@aws-sdk/s3-request-presigner": {
+      "version": "3.922.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@better-auth/expo": {
+      "version": "1.4.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@better-auth/passkey": {
+      "version": "1.4.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@commitlint/cli": {
+      "version": "20.1.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@commitlint/config-conventional": {
+      "version": "20.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@commitlint/types": {
+      "version": "20.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@content-collections/core": {
+      "version": "0.11.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@dev-plugins/react-navigation": {
+      "version": "0.4.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@dev-plugins/react-query": {
+      "version": "0.4.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@expo-google-fonts/geist": {
+      "version": "0.4.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@expo-google-fonts/geist-mono": {
+      "version": "0.4.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@expo/metro-runtime": {
+      "version": "6.1.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@formatjs/intl-localematcher": {
+      "version": "0.6.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@gorhom/bottom-sheet": {
+      "version": "5.2.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@hono/zod-validator": {
+      "version": "0.7.4",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@hookform/resolvers": {
+      "version": "5.2.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@lemonsqueezy/lemonsqueezy.js": {
+      "version": "4.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@next/bundle-analyzer": {
+      "version": "16.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@openpanel/nextjs": {
+      "version": "1.0.9",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@polar-sh/sdk": {
+      "version": "0.40.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@radix-ui/react-popover": {
+      "version": "1.1.15",
+      "importance": "moderate",
+      "summary": "Headless popover. Root, Trigger, Content components. Accessible by default.",
+      "fetch": "https://www.radix-ui.com/primitives/docs/components/popover"
+    },
+    "@radix-ui/react-radio-group": {
+      "version": "1.3.8",
+      "importance": "low",
+      "summary": "Headless radio group. Root, Item, Indicator. Accessible.",
+      "fetch": null
+    },
+    "@radix-ui/react-select": {
+      "version": "2.2.6",
+      "importance": "moderate",
+      "summary": "Headless select. Root, Trigger, Content, Item. Keyboard navigation built-in.",
+      "fetch": "https://www.radix-ui.com/primitives/docs/components/select"
+    },
+    "@radix-ui/react-tooltip": {
+      "version": "1.2.8",
+      "importance": "low",
+      "summary": "Headless tooltip. Provider, Root, Trigger, Content. Delay props available.",
+      "fetch": null
+    },
+    "@react-email/components": {
+      "version": "0.3.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@react-native-async-storage/async-storage": {
+      "version": "2.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@react-native-google-signin/google-signin": {
+      "version": "16.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/avatar": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/checkbox": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/context-menu": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/dropdown-menu": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/label": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/progress": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/radio-group": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/select": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/slot": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/switch": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/table": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/tabs": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/tooltip": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@rn-primitives/types": {
+      "version": "1.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@sentry/browser": {
+      "version": "10.30.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@sentry/nextjs": {
+      "version": "10.30.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@sentry/react-native": {
+      "version": "7.7.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@shopify/react-native-skia": {
+      "version": "2.2.12",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@stardazed/streams-text-encoding": {
+      "version": "1.0.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@tanstack/react-query": {
+      "version": "catalog:",
+      "importance": "high",
+      "summary": "Server state management. useQuery for fetching, useMutation for updates. Automatic caching.",
+      "fetch": "https://tanstack.com/query/latest"
+    },
+    "@tanstack/react-query-devtools": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@tanstack/react-table": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@turbo/gen": {
+      "version": "2.6.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@ungap/structured-clone": {
+      "version": "1.3.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@vemetric/node": {
+      "version": "0.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@vemetric/react": {
+      "version": "0.6.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "@vercel/analytics": {
+      "version": "1.5.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "accept-language": {
+      "version": "3.0.20",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "ai": {
+      "version": "5.0.86",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "better-auth": {
+      "version": "1.4.6",
+      "importance": "high",
+      "summary": "Auth library. Session-based. Supports OAuth, magic link, credentials.",
+      "fetch": "https://www.better-auth.com/docs"
+    },
+    "class-variance-authority": {
+      "version": "0.7.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "cmdk": {
+      "version": "1.1.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "cross-env": {
+      "version": "10.1.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "culori": {
+      "version": "4.0.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "date-fns": {
+      "version": "3.6.0",
+      "importance": "skip",
+      "summary": "Date utilities. Well-known.",
+      "fetch": null
+    },
+    "dayjs": {
+      "version": "1.11.19",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "dotenv-cli": {
+      "version": "11.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "drizzle-orm": {
+      "version": "0.44.7",
+      "importance": "high",
+      "summary": "TypeScript ORM. Schema in schema.ts. select(), insert(), update(), delete(). Migrations via drizzle-kit.",
+      "fetch": "https://orm.drizzle.team/docs"
+    },
+    "drizzle-zod": {
+      "version": "0.8.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "envin": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo": {
+      "version": "54.0.27",
+      "importance": "high",
+      "summary": "React Native framework. expo-router for navigation. EAS for builds.",
+      "fetch": "https://docs.expo.dev"
+    },
+    "expo-apple-authentication": {
+      "version": "8.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-application": {
+      "version": "7.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-auth-session": {
+      "version": "7.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-blur": {
+      "version": "15.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-build-properties": {
+      "version": "1.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-clipboard": {
+      "version": "8.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-constants": {
+      "version": "18.0.11",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-crypto": {
+      "version": "15.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-dev-client": {
+      "version": "6.0.20",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-font": {
+      "version": "14.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-glass-effect": {
+      "version": "0.1.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-image": {
+      "version": "3.0.11",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-image-picker": {
+      "version": "17.0.9",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-linking": {
+      "version": "8.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-localization": {
+      "version": "17.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-navigation-bar": {
+      "version": "5.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-network": {
+      "version": "8.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-router": {
+      "version": "6.0.17",
+      "importance": "high",
+      "summary": "File-based routing for Expo. app/ directory. Stack, Tabs, Drawer navigators.",
+      "fetch": "https://docs.expo.dev/router/introduction"
+    },
+    "expo-secure-store": {
+      "version": "15.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-splash-screen": {
+      "version": "31.0.12",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-status-bar": {
+      "version": "3.0.9",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-store-review": {
+      "version": "9.0.9",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-system-ui": {
+      "version": "6.0.9",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-tracking-transparency": {
+      "version": "6.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-updates": {
+      "version": "29.0.15",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "expo-web-browser": {
+      "version": "15.0.10",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "hono": {
+      "version": "4.10.4",
+      "importance": "high",
+      "summary": "Fast web framework. app.get/post/put/delete. Middleware for auth, validation. Zod integration.",
+      "fetch": "https://hono.dev/docs"
+    },
+    "husky": {
+      "version": "9.1.7",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "i18next": {
+      "version": "25.6.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "i18next-browser-languagedetector": {
+      "version": "8.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "i18next-resources-to-backend": {
+      "version": "1.2.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "input-otp": {
+      "version": "1.4.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "input-otp-native": {
+      "version": "0.5.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "lodash": {
+      "version": "4.17.21",
+      "importance": "skip",
+      "summary": "Utility library. Well-known.",
+      "fetch": null
+    },
+    "lucide-react": {
+      "version": "0.552.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "lucide-react-native": {
+      "version": "0.552.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "marked": {
+      "version": "16.4.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "metro-react-native-babel-transformer": {
+      "version": "0.77.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "mixpanel": {
+      "version": "0.18.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "mixpanel-browser": {
+      "version": "2.71.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "mixpanel-react-native": {
+      "version": "3.1.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "motion": {
+      "version": "12.23.24",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "nanoid": {
+      "version": "5.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "negotiator": {
+      "version": "1.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "next": {
+      "version": "16.0.10",
+      "importance": "critical",
+      "summary": "Next.js App Router. Server Components default. Route handlers in app/api/. Metadata API for SEO.",
+      "fetch": "https://nextjs.org/docs"
+    },
+    "next-i18n-router": {
+      "version": "5.5.5",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "next-themes": {
+      "version": "0.4.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "nodemailer": {
+      "version": "7.0.11",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "nuqs": {
+      "version": "2.7.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "pino": {
+      "version": "10.1.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "postcss": {
+      "version": "8.5.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "postgres": {
+      "version": "3.4.7",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "posthog-js": {
+      "version": "1.283.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "posthog-node": {
+      "version": "5.11.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "posthog-react-native": {
+      "version": "4.14.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "prettier": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "radix-ui": {
+      "version": "1.4.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react": {
+      "version": "catalog:react19",
+      "importance": "critical",
+      "summary": "React 19. Hooks: useState, useEffect, useMemo, useCallback. Server Components with 'use client' directive.",
+      "fetch": "https://react.dev/reference"
+    },
+    "react-day-picker": {
+      "version": "9.11.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-dom": {
+      "version": "catalog:react19",
+      "importance": "critical",
+      "summary": "React DOM renderer. createRoot for client, renderToString for SSR.",
+      "fetch": null
+    },
+    "react-email": {
+      "version": "4.2.4",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-hook-form": {
+      "version": "catalog:",
+      "importance": "moderate",
+      "summary": "Form state. useForm(), register, handleSubmit. Integrates with Zod via resolver.",
+      "fetch": "https://react-hook-form.com/docs"
+    },
+    "react-i18next": {
+      "version": "16.2.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-gesture-handler": {
+      "version": "2.29.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-keyboard-controller": {
+      "version": "1.18.5",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-marked": {
+      "version": "7.0.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-reanimated": {
+      "version": "4.1.5",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-safe-area-context": {
+      "version": "5.6.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-screens": {
+      "version": "4.16.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-svg": {
+      "version": "15.15.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-svg-transformer": {
+      "version": "1.5.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-web": {
+      "version": "0.21.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-webview": {
+      "version": "13.15.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-native-worklets": {
+      "version": "0.5.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "react-qr-code": {
+      "version": "2.0.18",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "reading-time": {
+      "version": "1.5.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "recharts": {
+      "version": "2.15.4",
+      "importance": "moderate",
+      "summary": "React charts. LineChart, BarChart, PieChart, AreaChart. Wrap in ResponsiveContainer.",
+      "fetch": "mcp__recharts_Docs"
+    },
+    "slugify": {
+      "version": "1.6.6",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "sonner": {
+      "version": "2.0.7",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "stripe": {
+      "version": "19.2.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "tailwindcss": {
+      "version": "4.1.16",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "turbo": {
+      "version": "2.6.3",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "typescript": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "uniwind": {
+      "version": "1.2.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "uuid": {
+      "version": "13.0.0",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "vaul": {
+      "version": "1.1.2",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "victory-native": {
+      "version": "41.20.1",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "vitest": {
+      "version": "catalog:",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    },
+    "zod": {
+      "version": "catalog:",
+      "importance": "high",
+      "summary": "Schema validation. z.object(), z.string(), z.number(). Use .parse() or .safeParse().",
+      "fetch": null
+    },
+    "zustand": {
+      "version": "5.0.8",
+      "importance": "unknown",
+      "summary": null,
+      "fetch": null
+    }
+  }
+}

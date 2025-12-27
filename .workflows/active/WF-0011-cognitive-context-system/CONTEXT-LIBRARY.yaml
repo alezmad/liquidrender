@@ -1,0 +1,44 @@
+# Context Library for WF-0011: Production Cognitive Context System
+# Generated: 2025-12-27
+
+workflow_id: WF-0011
+workflow_name: Production Cognitive Context System
+budget_tokens: 20000
+estimated_tokens: 8500
+
+core_context:
+  - path: .claude/context/docs/distribution/cognitive-context/README.md
+    purpose: Current distribution documentation
+    tokens: ~1200
+
+  - path: .claude/context/docs/distribution/cognitive-context/ONBOARDING-AGENT.md
+    purpose: Agentic onboarding protocol
+    tokens: ~4200
+
+  - path: .context/knowledge/capabilities.yaml
+    purpose: Example capabilities format
+    tokens: ~800
+
+  - path: .context/knowledge/SUMMARY.md
+    purpose: Example summary format
+    tokens: ~600
+
+  - path: .context/knowledge/generate.py
+    purpose: Existing extraction script reference
+    tokens: ~400
+
+reference_patterns:
+  - path: packages/liquid-render/src/renderer/components/utils.ts
+    purpose: TypeScript module pattern reference
+    tokens: ~800
+
+deferred:
+  - path: .claude/context/docs/distribution/cognitive-context/setup.sh
+    purpose: Complex setup script (read if needed)
+    tokens: ~4000
+    reason: Over budget, reference only if implementing CLI
+
+notes:
+  - Building TypeScript-based context management system
+  - Target: Self-maintaining, production-ready
+  - Key features: AST extraction, validation, multi-tool sync

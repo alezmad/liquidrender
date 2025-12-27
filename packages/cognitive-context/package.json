@@ -1,0 +1,46 @@
+{
+  "name": "@repo/cognitive-context",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-ready context management system for AI coding assistants",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cognitive": "./bin/cognitive.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "commander": "^11.1.0",
+    "js-tiktoken": "^1.0.8",
+    "yaml": "^2.3.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "ai",
+    "context",
+    "cursor",
+    "claude",
+    "coding-assistant",
+    "developer-tools"
+  ],
+  "license": "MIT"
+}

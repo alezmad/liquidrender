@@ -141,13 +141,15 @@ function scoreQuery(
   for (const token of tokens) {
     const target = index.vocabulary[token];
     if (target) {
-      scores[target.domain].score += 10;  // Exact vocab match
-      scores[target.domain].terms.push(token);
+      const entry = (scores[target.domain] ??= { score: 0, terms: [] });
+      entry.score += 10;  // Exact vocab match
+      entry.terms.push(token);
     }
   }
 
   // Match against domain names, assets, metrics, dimensions
   for (const [domain, entry] of Object.entries(index.domains)) {
+    scores[domain] ??= { score: 0, terms: [] };
     for (const token of tokens) {
       if (domain.toLowerCase().includes(token)) {
         scores[domain].score += 5;
@@ -379,8 +381,7 @@ function pruneToTokenBudget(
     const maxPerAsset = 5;
     const byAsset: Record<string, SliceColumn[]> = {};
     for (const col of current.columns) {
-      byAsset[col.assetId] = byAsset[col.assetId] || [];
-      byAsset[col.assetId].push(col);
+      (byAsset[col.assetId] ??= []).push(col);
     }
     current.columns = Object.values(byAsset).flatMap(cols =>
       cols.slice(0, maxPerAsset)

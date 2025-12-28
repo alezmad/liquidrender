@@ -279,8 +279,8 @@ export function profileColumn(
       const sorted = [...numbers].sort((a, b) => a - b);
       const mid = Math.floor(sorted.length / 2);
       stats.median = sorted.length % 2 !== 0
-        ? sorted[mid]
-        : (sorted[mid - 1] + sorted[mid]) / 2;
+        ? sorted[mid]!
+        : (sorted[mid - 1]! + sorted[mid]!) / 2;
     }
   }
 
@@ -300,8 +300,8 @@ export function profileColumn(
       .sort((a, b) => a.getTime() - b.getTime());
 
     if (dates.length > 0) {
-      stats.minDate = dates[0].toISOString();
-      stats.maxDate = dates[dates.length - 1].toISOString();
+      stats.minDate = dates[0]!.toISOString();
+      stats.maxDate = dates[dates.length - 1]!.toISOString();
     }
   }
 
@@ -369,7 +369,7 @@ export function inferRelationships(
     const match = col.name.match(/^(.+?)_id$/i);
     if (!match) continue;
 
-    const targetName = match[1].toLowerCase();
+    const targetName = match[1]!.toLowerCase();
 
     // Find matching asset
     for (const [assetId, asset] of assetMap) {

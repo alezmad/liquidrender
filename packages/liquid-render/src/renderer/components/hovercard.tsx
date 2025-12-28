@@ -411,19 +411,23 @@ export function HoverCard({ block, data, children }: LiquidComponentProps): Reac
       <span
         style={styles.trigger}
         tabIndex={0}
-        aria-describedby={hovercardId}
+        aria-haspopup="dialog"
+        aria-expanded={isVisible}
+        aria-describedby={isVisible ? hovercardId : undefined}
       >
         {triggerChild}
       </span>
       <span
         id={hovercardId}
-        role="tooltip"
+        role="dialog"
+        aria-label={content?.title || "Additional information"}
         aria-hidden={!isVisible}
+        aria-live="polite"
         style={contentStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <span style={styles.arrow} />
+        <span style={styles.arrow} aria-hidden="true" />
         <HoverCardContentRenderer content={content}>
           {contentChildren.length > 0 ? contentChildren : null}
         </HoverCardContentRenderer>
@@ -531,18 +535,26 @@ export function StaticHoverCard({
       onFocus={handleMouseEnter}
       onBlur={handleMouseLeave}
     >
-      <span style={styles.trigger} tabIndex={0} aria-describedby={hovercardId}>
+      <span
+        style={styles.trigger}
+        tabIndex={0}
+        aria-haspopup="dialog"
+        aria-expanded={isVisible}
+        aria-describedby={isVisible ? hovercardId : undefined}
+      >
         {trigger}
       </span>
       <span
         id={hovercardId}
-        role="tooltip"
+        role="dialog"
+        aria-label={content?.title || "Additional information"}
         aria-hidden={!isVisible}
+        aria-live="polite"
         style={contentStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <span style={arrowStyle} />
+        <span style={arrowStyle} aria-hidden="true" />
         {children || <HoverCardContentRenderer content={content || null} />}
       </span>
     </span>

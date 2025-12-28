@@ -17,11 +17,29 @@ export interface CommandItem {
   shortcut?: string;
   disabled?: boolean;
   onSelect?: () => void;
+  /** Optional keywords/aliases for fuzzy search */
+  keywords?: string[];
 }
 
 export interface CommandGroup {
   heading: string;
   items: CommandItem[];
+}
+
+/** Result of fuzzy matching with score and match indices */
+interface FuzzyMatchResult {
+  matches: boolean;
+  score: number;
+  /** Indices of matched characters in the original string */
+  matchedIndices: number[];
+}
+
+/** Item with fuzzy search score for ranking */
+interface ScoredItem {
+  item: CommandItem;
+  score: number;
+  labelMatches: number[];
+  descriptionMatches: number[];
 }
 
 // ============================================================================
@@ -133,6 +151,19 @@ const styles = {
     textOverflow: 'ellipsis',
   } as React.CSSProperties,
 
+  // Fuzzy match highlight styles
+  matchHighlight: {
+    color: tokens.colors.primary,
+    fontWeight: tokens.fontWeight.semibold,
+    backgroundColor: 'transparent',
+  } as React.CSSProperties,
+
+  matchHighlightSelected: {
+    color: tokens.colors.accentForeground,
+    fontWeight: tokens.fontWeight.semibold,
+    backgroundColor: 'transparent',
+  } as React.CSSProperties,
+
   shortcut: {
     display: 'flex',
     gap: tokens.spacing.xs,
@@ -159,6 +190,227 @@ const styles = {
 // ============================================================================
 // Helpers
 // ============================================================================
+
+/**
+ * Fuzzy match algorithm that tolerates typos and partial matches.
+ * Uses a scoring system that rewards:
+ * - Consecutive character matches
+ * - Matches at word boundaries
+ * - Matches at the start of the string
+ * - Exact substring matches
+ *
+ * @param text The text to search in
+ * @param query The search query
+ * @returns Match result with score and matched indices
+ */
+function fuzzyMatch(text: string, query: string): FuzzyMatchResult {
+  if (!query) {
+    return { matches: true, score: 0, matchedIndices: [] };
+  }
+
+  const textLower = text.toLowerCase();
+  const queryLower = query.toLowerCase();
+
+  // Quick check: if query is longer than text, no match possible
+  if (queryLower.length > textLower.length) {
+    return { matches: false, score: 0, matchedIndices: [] };
+  }
+
+  // Exact match gets highest score
+  if (textLower === queryLower) {
+    return {
+      matches: true,
+      score: 1000,
+      matchedIndices: Array.from({ length: text.length }, (_, i) => i),
+    };
+  }
+
+  // Check for exact substring match (very high score)
+  const substringIndex = textLower.indexOf(queryLower);
+  if (substringIndex !== -1) {
+    const matchedIndices = Array.from(
+      { length: queryLower.length },
+      (_, i) => substringIndex + i
+    );
+    // Bonus for match at start
+    const startBonus = substringIndex === 0 ? 200 : 0;
+    // Bonus for match at word boundary
+    const prevChar = substringIndex > 0 ? text[substringIndex - 1] : undefined;
+    const wordBoundaryBonus =
+      substringIndex === 0 || (prevChar !== undefined && /[\s\-_]/.test(prevChar)) ? 100 : 0;
+
+    return {
+      matches: true,
+      score: 500 + startBonus + wordBoundaryBonus,
+      matchedIndices,
+    };
+  }
+
+  // Fuzzy matching with scoring
+  const matchedIndices: number[] = [];
+  let queryIndex = 0;
+  let score = 0;
+  let lastMatchIndex = -1;
+  let consecutiveMatches = 0;
+
+  for (let i = 0; i < textLower.length && queryIndex < queryLower.length; i++) {
+    if (textLower[i] === queryLower[queryIndex]) {
+      matchedIndices.push(i);
+
+      // Consecutive match bonus
+      if (lastMatchIndex === i - 1) {
+        consecutiveMatches++;
+        score += 10 * consecutiveMatches; // Increasing bonus for longer sequences
+      } else {
+        consecutiveMatches = 1;
+        score += 5;
+      }
+
+      // Word boundary bonus (matches at start of words)
+      const prevCharForWord = i > 0 ? text[i - 1] : undefined;
+      if (i === 0 || (prevCharForWord !== undefined && /[\s\-_]/.test(prevCharForWord))) {
+        score += 30;
+      }
+
+      // Camel case boundary bonus
+      const currentChar = text[i];
+      const prevCharForCamel = i > 0 ? text[i - 1] : undefined;
+      if (i > 0 && currentChar && prevCharForCamel &&
+          currentChar === currentChar.toUpperCase() &&
+          prevCharForCamel === prevCharForCamel.toLowerCase()) {
+        score += 20;
+      }
+
+      // Start of string bonus
+      if (i === 0) {
+        score += 50;
+      }
+
+      // Penalty for gaps (but less severe for small gaps)
+      if (lastMatchIndex !== -1 && i > lastMatchIndex + 1) {
+        const gap = i - lastMatchIndex - 1;
+        score -= Math.min(gap * 2, 20); // Cap the penalty
+      }
+
+      lastMatchIndex = i;
+      queryIndex++;
+    }
+  }
+
+  // Check if we matched all query characters
+  if (queryIndex === queryLower.length) {
+    // Bonus for shorter strings (more specific matches)
+    const lengthBonus = Math.max(0, 50 - (text.length - query.length) * 2);
+    score += lengthBonus;
+
+    return { matches: true, score, matchedIndices };
+  }
+
+  // Try approximate matching for typo tolerance (1 character tolerance)
+  if (queryLower.length >= 3) {
+    const typoResult = fuzzyMatchWithTypos(textLower, queryLower);
+    if (typoResult.matches) {
+      return {
+        matches: true,
+        score: typoResult.score * 0.7, // Penalty for typo match
+        matchedIndices: typoResult.matchedIndices,
+      };
+    }
+  }
+
+  return { matches: false, score: 0, matchedIndices: [] };
+}
+
+/**
+ * Fuzzy match with typo tolerance.
+ * Allows for one character substitution, insertion, or deletion.
+ */
+function fuzzyMatchWithTypos(text: string, query: string): FuzzyMatchResult {
+  // Try skipping each character in the query (simulates deletion in user input)
+  for (let skip = 0; skip < query.length; skip++) {
+    const modifiedQuery = query.slice(0, skip) + query.slice(skip + 1);
+    if (modifiedQuery.length < 2) continue;
+
+    const result = fuzzyMatch(text, modifiedQuery);
+    if (result.matches && result.score > 50) {
+      return result;
+    }
+  }
+
+  // Try character transposition
+  for (let i = 0; i < query.length - 1; i++) {
+    const chars = query.split('');
+    const charA = chars[i];
+    const charB = chars[i + 1];
+    if (charA !== undefined && charB !== undefined) {
+      chars[i] = charB;
+      chars[i + 1] = charA;
+    }
+    const transposed = chars.join('');
+
+    const result = fuzzyMatch(text, transposed);
+    if (result.matches && result.score > 50) {
+      return { ...result, score: result.score * 0.9 };
+    }
+  }
+
+  return { matches: false, score: 0, matchedIndices: [] };
+}
+
+/**
+ * Score an item against a query, searching across label, description, and keywords
+ */
+function scoreItem(item: CommandItem, query: string): ScoredItem | null {
+  if (!query.trim()) {
+    return {
+      item,
+      score: 0,
+      labelMatches: [],
+      descriptionMatches: [],
+    };
+  }
+
+  // Match against label (highest priority)
+  const labelResult = fuzzyMatch(item.label, query);
+
+  // Match against description
+  const descriptionResult = item.description
+    ? fuzzyMatch(item.description, query)
+    : { matches: false, score: 0, matchedIndices: [] };
+
+  // Match against keywords
+  let keywordScore = 0;
+  if (item.keywords) {
+    for (const keyword of item.keywords) {
+      const keywordResult = fuzzyMatch(keyword, query);
+      if (keywordResult.matches) {
+        keywordScore = Math.max(keywordScore, keywordResult.score * 0.9); // Slight penalty for keyword match
+      }
+    }
+  }
+
+  // Combine scores with weights
+  const labelWeight = 1.0;
+  const descriptionWeight = 0.6;
+  const keywordWeight = 0.8;
+
+  const totalScore =
+    (labelResult.matches ? labelResult.score * labelWeight : 0) +
+    (descriptionResult.matches ? descriptionResult.score * descriptionWeight : 0) +
+    keywordScore * keywordWeight;
+
+  // Return null if no match found
+  if (!labelResult.matches && !descriptionResult.matches && keywordScore === 0) {
+    return null;
+  }
+
+  return {
+    item,
+    score: totalScore,
+    labelMatches: labelResult.matchedIndices,
+    descriptionMatches: descriptionResult.matchedIndices,
+  };
+}
 
 /**
  * Parse command items from block.children
@@ -222,30 +474,103 @@ function parseCommandStructure(block: LiquidComponentProps['block']): CommandGro
   return groups;
 }
 
-/**
- * Filter items by search query
- */
-function filterGroups(groups: CommandGroup[], query: string): CommandGroup[] {
-  if (!query.trim()) return groups;
-
-  const lowerQuery = query.toLowerCase();
-
-  return groups
-    .map(group => ({
-      ...group,
-      items: group.items.filter(item =>
-        item.label.toLowerCase().includes(lowerQuery) ||
-        (item.description && item.description.toLowerCase().includes(lowerQuery))
-      ),
-    }))
-    .filter(group => group.items.length > 0);
+/** Scored group with sorted items */
+interface ScoredGroup {
+  heading: string;
+  items: ScoredItem[];
 }
 
 /**
- * Get flat list of all selectable items
+ * Filter and score groups using fuzzy search
+ */
+function fuzzyFilterGroups(groups: CommandGroup[], query: string): ScoredGroup[] {
+  if (!query.trim()) {
+    return groups.map(group => ({
+      heading: group.heading,
+      items: group.items.map(item => ({
+        item,
+        score: 0,
+        labelMatches: [],
+        descriptionMatches: [],
+      })),
+    }));
+  }
+
+  const result: ScoredGroup[] = [];
+
+  for (const group of groups) {
+    const scoredItems: ScoredItem[] = [];
+
+    for (const item of group.items) {
+      const scored = scoreItem(item, query);
+      if (scored !== null) {
+        scoredItems.push(scored);
+      }
+    }
+
+    if (scoredItems.length > 0) {
+      // Sort items by score (highest first)
+      scoredItems.sort((a, b) => b.score - a.score);
+      result.push({
+        heading: group.heading,
+        items: scoredItems,
+      });
+    }
+  }
+
+  // Sort groups by their best item's score
+  result.sort((a, b) => {
+    const aTopScore = a.items[0]?.score ?? 0;
+    const bTopScore = b.items[0]?.score ?? 0;
+    return bTopScore - aTopScore;
+  });
+
+  return result;
+}
+
+/**
+ * Legacy filter function for backward compatibility
+ * @deprecated Use fuzzyFilterGroups instead
+ */
+function filterGroups(groups: CommandGroup[], query: string): CommandGroup[] {
+  const scored = fuzzyFilterGroups(groups, query);
+  return scored.map(g => ({
+    heading: g.heading,
+    items: g.items.map(s => s.item),
+  }));
+}
+
+/**
+ * Get flat list of all selectable items from scored groups
+ */
+function getFlatScoredItems(groups: ScoredGroup[]): ScoredItem[] {
+  return groups.flatMap(group => group.items.filter(si => !si.item.disabled));
+}
+
+/**
+ * Get flat list of all selectable items (legacy)
  */
 function getFlatItems(groups: CommandGroup[]): CommandItem[] {
   return groups.flatMap(group => group.items.filter(item => !item.disabled));
+}
+
+/**
+ * Custom hook for debouncing a value
+ */
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 /**
@@ -268,11 +593,83 @@ function SearchIcon(): React.ReactElement {
   );
 }
 
+/**
+ * Renders text with fuzzy match highlights
+ */
+interface HighlightedTextProps {
+  text: string;
+  matchedIndices: number[];
+  isSelected: boolean;
+}
+
+function HighlightedText({
+  text,
+  matchedIndices,
+  isSelected,
+}: HighlightedTextProps): React.ReactElement {
+  if (matchedIndices.length === 0 || text.length === 0) {
+    return <>{text}</>;
+  }
+
+  const matchSet = new Set(matchedIndices);
+  const parts: React.ReactNode[] = [];
+  let currentRun = '';
+  let isCurrentlyMatched = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charAt(i);
+    const isMatched = matchSet.has(i);
+
+    if (i === 0) {
+      isCurrentlyMatched = isMatched;
+      currentRun = char;
+    } else if (isMatched === isCurrentlyMatched) {
+      currentRun += char;
+    } else {
+      // State changed, push current run
+      if (isCurrentlyMatched) {
+        parts.push(
+          <span
+            key={parts.length}
+            style={isSelected ? styles.matchHighlightSelected : styles.matchHighlight}
+          >
+            {currentRun}
+          </span>
+        );
+      } else {
+        parts.push(currentRun);
+      }
+      currentRun = char;
+      isCurrentlyMatched = isMatched;
+    }
+  }
+
+  // Push final run
+  if (currentRun) {
+    if (isCurrentlyMatched) {
+      parts.push(
+        <span
+          key={parts.length}
+          style={isSelected ? styles.matchHighlightSelected : styles.matchHighlight}
+        >
+          {currentRun}
+        </span>
+      );
+    } else {
+      parts.push(currentRun);
+    }
+  }
+
+  return <>{parts}</>;
+}
+
 interface CommandItemRowProps {
   item: CommandItem;
   isSelected: boolean;
   onSelect: (item: CommandItem) => void;
   onHover: () => void;
+  labelMatches?: number[];
+  descriptionMatches?: number[];
 }
 
 function CommandItemRow({
@@ -280,6 +677,8 @@ function CommandItemRow({
   isSelected,
   onSelect,
   onHover,
+  labelMatches = [],
+  descriptionMatches = [],
 }: CommandItemRowProps): React.ReactElement {
   const handleClick = useCallback(() => {
     if (!item.disabled) {
@@ -300,9 +699,21 @@ function CommandItemRow({
         <span style={styles.itemIcon}>{item.icon}</span>
       )}
       <div style={styles.itemContent}>
-        <div style={styles.itemLabel}>{item.label}</div>
+        <div style={styles.itemLabel}>
+          <HighlightedText
+            text={item.label}
+            matchedIndices={labelMatches}
+            isSelected={isSelected}
+          />
+        </div>
         {item.description && (
-          <div style={styles.itemDescription}>{item.description}</div>
+          <div style={styles.itemDescription}>
+            <HighlightedText
+              text={item.description}
+              matchedIndices={descriptionMatches}
+              isSelected={isSelected}
+            />
+          </div>
         )}
       </div>
       {item.shortcut && (
@@ -320,6 +731,9 @@ function CommandItemRow({
 // Main Component
 // ============================================================================
 
+/** Default debounce delay for fuzzy search (in ms) */
+const FUZZY_SEARCH_DEBOUNCE_MS = 150;
+
 export function Command({ block, data }: LiquidComponentProps): React.ReactElement {
   const { signalActions } = useLiquidContext();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -332,28 +746,31 @@ export function Command({ block, data }: LiquidComponentProps): React.ReactEleme
   );
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // Debounce search for performance with large lists
+  const debouncedSearchValue = useDebounce(searchValue, FUZZY_SEARCH_DEBOUNCE_MS);
+
   const placeholder = block.label || 'Type a command or search...';
   const emitSignal = block.signals?.emit;
 
   // Parse command structure from block children
   const allGroups = useMemo(() => parseCommandStructure(block), [block]);
 
-  // Filter groups based on search
-  const filteredGroups = useMemo(
-    () => filterGroups(allGroups, searchValue),
-    [allGroups, searchValue]
+  // Filter and score groups using fuzzy search
+  const scoredGroups = useMemo(
+    () => fuzzyFilterGroups(allGroups, debouncedSearchValue),
+    [allGroups, debouncedSearchValue]
   );
 
   // Get flat list of selectable items for keyboard navigation
   const selectableItems = useMemo(
-    () => getFlatItems(filteredGroups),
-    [filteredGroups]
+    () => getFlatScoredItems(scoredGroups),
+    [scoredGroups]
   );
 
   // Reset selection when filtered items change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [searchValue]);
+  }, [debouncedSearchValue]);
 
   // Focus input on mount
   useEffect(() => {
@@ -396,9 +813,9 @@ export function Command({ block, data }: LiquidComponentProps): React.ReactEleme
 
       case 'Enter':
         e.preventDefault();
-        const selectedItem = selectableItems[selectedIndex];
-        if (selectedItem && !selectedItem.disabled) {
-          handleSelect(selectedItem);
+        const selectedScoredItem = selectableItems[selectedIndex];
+        if (selectedScoredItem && !selectedScoredItem.item.disabled) {
+          handleSelect(selectedScoredItem.item);
         }
         break;
 
@@ -418,18 +835,18 @@ export function Command({ block, data }: LiquidComponentProps): React.ReactEleme
   useEffect(() => {
     if (!listRef.current || selectableItems.length === 0) return;
 
-    const selectedItem = selectableItems[selectedIndex];
-    if (!selectedItem) return;
+    const selectedScoredItem = selectableItems[selectedIndex];
+    if (!selectedScoredItem) return;
 
     const itemElement = listRef.current.querySelector(
-      `[data-item-id="${selectedItem.id}"]`
+      `[data-item-id="${selectedScoredItem.item.id}"]`
     );
     if (itemElement) {
       itemElement.scrollIntoView({ block: 'nearest' });
     }
   }, [selectedIndex, selectableItems]);
 
-  // Track which item index corresponds to each item in filteredGroups
+  // Track which item index corresponds to each item in scoredGroups
   let flatIndex = -1;
 
   return (
@@ -459,15 +876,16 @@ export function Command({ block, data }: LiquidComponentProps): React.ReactEleme
         role="listbox"
         style={styles.list}
       >
-        {filteredGroups.length === 0 ? (
+        {scoredGroups.length === 0 ? (
           <div style={styles.empty}>No results found.</div>
         ) : (
-          filteredGroups.map((group, groupIndex) => (
+          scoredGroups.map((group, groupIndex) => (
             <div key={groupIndex} style={styles.group}>
               {group.heading && (
                 <div style={styles.groupHeading}>{group.heading}</div>
               )}
-              {group.items.map(item => {
+              {group.items.map(scoredItem => {
+                const item = scoredItem.item;
                 // Only increment for non-disabled items
                 if (!item.disabled) {
                   flatIndex++;
@@ -486,6 +904,8 @@ export function Command({ block, data }: LiquidComponentProps): React.ReactEleme
                           setSelectedIndex(currentIndex);
                         }
                       }}
+                      labelMatches={scoredItem.labelMatches}
+                      descriptionMatches={scoredItem.descriptionMatches}
                     />
                   </div>
                 );
@@ -509,6 +929,8 @@ interface StaticCommandProps {
   onSearchChange?: (value: string) => void;
   emptyMessage?: string;
   style?: React.CSSProperties;
+  /** Debounce delay in ms for fuzzy search (default: 150) */
+  debounceMs?: number;
 }
 
 export function StaticCommand({
@@ -518,28 +940,32 @@ export function StaticCommand({
   onSearchChange,
   emptyMessage = 'No results found.',
   style: customStyle,
+  debounceMs = FUZZY_SEARCH_DEBOUNCE_MS,
 }: StaticCommandProps): React.ReactElement {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [searchValue, setSearchValue] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Filter groups based on search
-  const filteredGroups = useMemo(
-    () => filterGroups(groups, searchValue),
-    [groups, searchValue]
+  // Debounce search for performance with large lists
+  const debouncedSearchValue = useDebounce(searchValue, debounceMs);
+
+  // Filter and score groups using fuzzy search
+  const scoredGroups = useMemo(
+    () => fuzzyFilterGroups(groups, debouncedSearchValue),
+    [groups, debouncedSearchValue]
   );
 
   // Get flat list of selectable items for keyboard navigation
   const selectableItems = useMemo(
-    () => getFlatItems(filteredGroups),
-    [filteredGroups]
+    () => getFlatScoredItems(scoredGroups),
+    [scoredGroups]
   );
 
   // Reset selection when filtered items change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [searchValue]);
+  }, [debouncedSearchValue]);
 
   // Focus input on mount
   useEffect(() => {
@@ -582,9 +1008,9 @@ export function StaticCommand({
 
       case 'Enter':
         e.preventDefault();
-        const selectedItem = selectableItems[selectedIndex];
-        if (selectedItem && !selectedItem.disabled) {
-          handleSelect(selectedItem);
+        const selectedScoredItem = selectableItems[selectedIndex];
+        if (selectedScoredItem && !selectedScoredItem.item.disabled) {
+          handleSelect(selectedScoredItem.item);
         }
         break;
 
@@ -604,18 +1030,18 @@ export function StaticCommand({
   useEffect(() => {
     if (!listRef.current || selectableItems.length === 0) return;
 
-    const selectedItem = selectableItems[selectedIndex];
-    if (!selectedItem) return;
+    const selectedScoredItem = selectableItems[selectedIndex];
+    if (!selectedScoredItem) return;
 
     const itemElement = listRef.current.querySelector(
-      `[data-item-id="${selectedItem.id}"]`
+      `[data-item-id="${selectedScoredItem.item.id}"]`
     );
     if (itemElement) {
       itemElement.scrollIntoView({ block: 'nearest' });
     }
   }, [selectedIndex, selectableItems]);
 
-  // Track which item index corresponds to each item in filteredGroups
+  // Track which item index corresponds to each item in scoredGroups
   let flatIndex = -1;
 
   return (
@@ -648,15 +1074,16 @@ export function StaticCommand({
         role="listbox"
         style={styles.list}
       >
-        {filteredGroups.length === 0 ? (
+        {scoredGroups.length === 0 ? (
           <div style={styles.empty}>{emptyMessage}</div>
         ) : (
-          filteredGroups.map((group, groupIndex) => (
+          scoredGroups.map((group, groupIndex) => (
             <div key={groupIndex} style={styles.group}>
               {group.heading && (
                 <div style={styles.groupHeading}>{group.heading}</div>
               )}
-              {group.items.map(item => {
+              {group.items.map(scoredItem => {
+                const item = scoredItem.item;
                 // Only increment for non-disabled items
                 if (!item.disabled) {
                   flatIndex++;
@@ -675,6 +1102,8 @@ export function StaticCommand({
                           setSelectedIndex(currentIndex);
                         }
                       }}
+                      labelMatches={scoredItem.labelMatches}
+                      descriptionMatches={scoredItem.descriptionMatches}
                     />
                   </div>
                 );
@@ -811,5 +1240,22 @@ export function useCommand(initialOpen = false): UseCommandReturn {
     toggle: useCallback(() => setIsOpen(prev => !prev), []),
   };
 }
+
+// ============================================================================
+// Exported Utilities
+// ============================================================================
+
+/**
+ * Fuzzy match utility for custom implementations
+ * @param text The text to search in
+ * @param query The search query
+ * @returns Match result with score and matched character indices
+ */
+export { fuzzyMatch };
+
+/**
+ * Types for fuzzy search results
+ */
+export type { FuzzyMatchResult, ScoredItem, ScoredGroup };
 
 export default Command;

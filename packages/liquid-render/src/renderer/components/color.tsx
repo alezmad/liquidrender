@@ -28,6 +28,19 @@ const styles = {
     gap: tokens.spacing.xs,
   } as React.CSSProperties,
 
+  // Screen reader only - visually hidden but accessible
+  srOnly: {
+    position: 'absolute' as const,
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap' as const,
+    border: 0,
+  } as React.CSSProperties,
+
   label: {
     fontSize: tokens.fontSize.sm,
     fontWeight: tokens.fontWeight.medium,
@@ -264,6 +277,59 @@ function rgbaToHex(r: number, g: number, b: number, a?: number): string {
   return hex;
 }
 
+/**
+ * Get a human-readable color name from hex value
+ * First checks preset colors, then tries to describe by hue
+ */
+function getColorName(hex: string, presets: ColorPreset[]): string {
+  if (hex === 'transparent') return 'transparent';
+
+  const normalized = normalizeHex(hex).toLowerCase();
+
+  // Check if it matches a preset
+  const preset = presets.find(p => normalizeHex(p.value).toLowerCase() === normalized);
+  if (preset?.label) return preset.label;
+
+  // Fallback to hex value
+  return normalized.toUpperCase();
+}
+
+/**
+ * Convert hex to HSL for better color descriptions
+ */
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  const { r, g, b } = hexToRgba(hex);
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const l = (max + min) / 2;
+
+  let h = 0;
+  let s = 0;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case rNorm:
+        h = ((gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0)) * 60;
+        break;
+      case gNorm:
+        h = ((bNorm - rNorm) / d + 2) * 60;
+        break;
+      case bNorm:
+        h = ((rNorm - gNorm) / d + 4) * 60;
+        break;
+    }
+  }
+
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
 // ============================================================================
 // Sub-components
 // ============================================================================
@@ -335,15 +401,22 @@ function PresetSwatch({ color, isActive, onClick, label }: PresetSwatchProps): R
     isActive ? styles.presetSwatchActive : {}
   );
 
+  // Build descriptive aria-label
+  const colorLabel = label || color;
+  const ariaLabel = isActive
+    ? `${colorLabel} color, currently selected`
+    : `Select ${colorLabel} color`;
+
   return (
     <button
       type="button"
+      role="option"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={style}
-      aria-label={label || color}
-      aria-pressed={isActive}
+      aria-label={ariaLabel}
+      aria-selected={isActive}
     />
   );
 }
@@ -356,6 +429,7 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
   const { signalActions } = useLiquidContext();
   const colorId = generateId('color');
   const popoverId = `${colorId}-popover`;
+  const liveRegionId = `${colorId}-live`;
 
   // Resolve binding to get initial color value
   const boundValue = resolveBinding(block.binding, data);
@@ -368,12 +442,16 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
   const [isOpen, setIsOpen] = useState(false);
   const [hexInput, setHexInput] = useState(color.replace('#', ''));
   const [isFocused, setIsFocused] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const label = block.label;
   const showOpacity = block.props?.showOpacity !== false;
   const presets = (block.props?.presets as ColorPreset[] | undefined) || defaultPresets;
+
+  // Get current color name for announcements
+  const currentColorName = opacity === 0 ? 'transparent' : getColorName(color, presets);
   const emitSignal = block.signals?.emit;
 
   // Click outside handler
@@ -420,7 +498,10 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
     setColor(normalized);
     setHexInput(normalized.replace('#', ''));
     emitChange(normalized, opacity);
-  }, [opacity, emitChange]);
+    // Announce color change to screen readers
+    const colorName = getColorName(normalized, presets);
+    setAnnouncement(`Selected color: ${colorName}`);
+  }, [opacity, emitChange, presets]);
 
   const handleNativeInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     handleColorChange(e.target.value);
@@ -448,12 +529,15 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
     const newOpacity = parseFloat(e.target.value);
     setOpacity(newOpacity);
     emitChange(color, newOpacity);
+    // Announce opacity change to screen readers
+    setAnnouncement(`Opacity: ${Math.round(newOpacity * 100)}%`);
   }, [color, emitChange]);
 
   const handlePresetClick = useCallback((presetColor: string) => {
     if (presetColor === 'transparent') {
       setOpacity(0);
       emitChange(color, 0);
+      setAnnouncement('Selected color: transparent');
     } else {
       handleColorChange(presetColor);
     }
@@ -483,6 +567,17 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
       ref={wrapperRef}
       style={styles.wrapper}
     >
+      {/* Live region for screen reader announcements */}
+      <div
+        id={liveRegionId}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={styles.srOnly}
+      >
+        {announcement}
+      </div>
+
       {label && (
         <label id={`${colorId}-label`} style={styles.label}>
           {label}
@@ -496,11 +591,11 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
           onClick={toggleOpen}
           onKeyDown={handleTriggerKeyDown}
           focused={isFocused}
-          ariaLabel={`Current color: ${displayColor}. Click to change.`}
+          ariaLabel={`Current color: ${currentColorName}${opacity < 1 && opacity > 0 ? ` at ${Math.round(opacity * 100)}% opacity` : ''}. Click to open color picker.`}
           ariaExpanded={isOpen}
           ariaControls={popoverId}
         />
-        <span style={styles.hexDisplay}>
+        <span style={styles.hexDisplay} aria-hidden="true">
           {opacity === 0 ? 'transparent' : color.toUpperCase()}
         </span>
       </div>
@@ -509,27 +604,33 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
         id={popoverId}
         role="dialog"
         aria-modal="false"
-        aria-label="Color picker"
+        aria-label={`Color picker${label ? ` for ${label}` : ''}`}
         style={popoverStyle}
       >
         {/* Native color picker */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Color</div>
+          <div id={`${colorId}-picker-label`} style={styles.sectionLabel}>Color</div>
           <div style={styles.nativeInputWrapper}>
             <input
               type="color"
               value={color}
               onChange={handleNativeInputChange}
               style={styles.nativeInput}
-              aria-label="Color picker"
+              aria-label={`Pick a color. Current: ${currentColorName}`}
+              aria-describedby={`${colorId}-picker-label`}
             />
           </div>
         </div>
 
         {/* Preset colors */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Presets</div>
-          <div style={styles.presetGrid}>
+          <div id={`${colorId}-presets-label`} style={styles.sectionLabel}>Presets</div>
+          <div
+            role="listbox"
+            aria-label="Preset colors"
+            aria-describedby={`${colorId}-presets-label`}
+            style={styles.presetGrid}
+          >
             {presets.map((preset) => (
               <PresetSwatch
                 key={preset.value}
@@ -544,9 +645,9 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
 
         {/* Hex input */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Hex</div>
+          <div id={`${colorId}-hex-label`} style={styles.sectionLabel}>Hex</div>
           <div style={styles.hexInputWrapper}>
-            <span style={styles.hexPrefix}>#</span>
+            <span style={styles.hexPrefix} aria-hidden="true">#</span>
             <input
               type="text"
               value={hexInput}
@@ -556,7 +657,9 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
               style={styles.hexInput}
               maxLength={8}
               placeholder="000000"
-              aria-label="Hex color value"
+              aria-label="Hex color value (without hash symbol)"
+              aria-describedby={`${colorId}-hex-label`}
+              aria-invalid={!isValidHex(hexInput) && hexInput.length > 0}
             />
           </div>
         </div>
@@ -564,22 +667,24 @@ export function Color({ block, data }: LiquidComponentProps): React.ReactElement
         {/* Opacity slider */}
         {showOpacity && (
           <div style={styles.opacitySection}>
-            <div style={styles.sectionLabel}>Opacity</div>
+            <div id={`${colorId}-opacity-label`} style={styles.sectionLabel}>Opacity</div>
             <input
               type="range"
+              role="slider"
               min="0"
               max="1"
               step="0.01"
               value={opacity}
               onChange={handleOpacityChange}
               style={{ ...styles.opacitySlider, color }}
-              aria-label="Opacity"
+              aria-label={`Opacity: ${Math.round(opacity * 100)}%`}
+              aria-describedby={`${colorId}-opacity-label`}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(opacity * 100)}
               aria-valuetext={`${Math.round(opacity * 100)}%`}
             />
-            <div style={styles.opacityValue}>{Math.round(opacity * 100)}%</div>
+            <div style={styles.opacityValue} aria-hidden="true">{Math.round(opacity * 100)}%</div>
           </div>
         )}
       </div>
@@ -612,6 +717,7 @@ export function StaticColor({
 }: StaticColorProps): React.ReactElement {
   const colorId = generateId('color');
   const popoverId = `${colorId}-popover`;
+  const liveRegionId = `${colorId}-live`;
 
   const initialColor = isValidHex(value) ? normalizeHex(value) : '#3b82f6';
 
@@ -620,8 +726,12 @@ export function StaticColor({
   const [isOpen, setIsOpen] = useState(false);
   const [hexInput, setHexInput] = useState(color.replace('#', ''));
   const [isFocused, setIsFocused] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Get current color name for announcements
+  const currentColorName = opacity === 0 ? 'transparent' : getColorName(color, presets);
 
   // Sync with external value
   useEffect(() => {
@@ -676,7 +786,10 @@ export function StaticColor({
     setColor(normalized);
     setHexInput(normalized.replace('#', ''));
     emitChange(normalized, opacity);
-  }, [disabled, opacity, emitChange]);
+    // Announce color change to screen readers
+    const colorName = getColorName(normalized, presets);
+    setAnnouncement(`Selected color: ${colorName}`);
+  }, [disabled, opacity, emitChange, presets]);
 
   const handleNativeInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     handleColorChange(e.target.value);
@@ -705,6 +818,8 @@ export function StaticColor({
     const newOpacity = parseFloat(e.target.value);
     setOpacity(newOpacity);
     emitChange(color, newOpacity);
+    // Announce opacity change to screen readers
+    setAnnouncement(`Opacity: ${Math.round(newOpacity * 100)}%`);
   }, [disabled, color, emitChange]);
 
   const handlePresetClick = useCallback((presetColor: string) => {
@@ -712,6 +827,7 @@ export function StaticColor({
     if (presetColor === 'transparent') {
       setOpacity(0);
       emitChange(color, 0);
+      setAnnouncement('Selected color: transparent');
     } else {
       handleColorChange(presetColor);
     }
@@ -745,6 +861,17 @@ export function StaticColor({
 
   return (
     <div ref={wrapperRef} style={wrapperStyle}>
+      {/* Live region for screen reader announcements */}
+      <div
+        id={liveRegionId}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={styles.srOnly}
+      >
+        {announcement}
+      </div>
+
       {label && (
         <label id={`${colorId}-label`} style={styles.label}>
           {label}
@@ -758,11 +885,11 @@ export function StaticColor({
           onClick={toggleOpen}
           onKeyDown={handleTriggerKeyDown}
           focused={isFocused}
-          ariaLabel={`Current color: ${displayColor}. Click to change.`}
+          ariaLabel={`Current color: ${currentColorName}${opacity < 1 && opacity > 0 ? ` at ${Math.round(opacity * 100)}% opacity` : ''}. Click to open color picker.`}
           ariaExpanded={isOpen}
           ariaControls={popoverId}
         />
-        <span style={styles.hexDisplay}>
+        <span style={styles.hexDisplay} aria-hidden="true">
           {opacity === 0 ? 'transparent' : color.toUpperCase()}
         </span>
       </div>
@@ -771,19 +898,20 @@ export function StaticColor({
         id={popoverId}
         role="dialog"
         aria-modal="false"
-        aria-label="Color picker"
+        aria-label={`Color picker${label ? ` for ${label}` : ''}`}
         style={popoverStyle}
       >
         {/* Native color picker */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Color</div>
+          <div id={`${colorId}-picker-label`} style={styles.sectionLabel}>Color</div>
           <div style={styles.nativeInputWrapper}>
             <input
               type="color"
               value={color}
               onChange={handleNativeInputChange}
               style={styles.nativeInput}
-              aria-label="Color picker"
+              aria-label={`Pick a color. Current: ${currentColorName}`}
+              aria-describedby={`${colorId}-picker-label`}
               disabled={disabled}
             />
           </div>
@@ -791,8 +919,13 @@ export function StaticColor({
 
         {/* Preset colors */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Presets</div>
-          <div style={styles.presetGrid}>
+          <div id={`${colorId}-presets-label`} style={styles.sectionLabel}>Presets</div>
+          <div
+            role="listbox"
+            aria-label="Preset colors"
+            aria-describedby={`${colorId}-presets-label`}
+            style={styles.presetGrid}
+          >
             {presets.map((preset) => (
               <PresetSwatch
                 key={preset.value}
@@ -807,9 +940,9 @@ export function StaticColor({
 
         {/* Hex input */}
         <div style={styles.section}>
-          <div style={styles.sectionLabel}>Hex</div>
+          <div id={`${colorId}-hex-label`} style={styles.sectionLabel}>Hex</div>
           <div style={styles.hexInputWrapper}>
-            <span style={styles.hexPrefix}>#</span>
+            <span style={styles.hexPrefix} aria-hidden="true">#</span>
             <input
               type="text"
               value={hexInput}
@@ -819,7 +952,9 @@ export function StaticColor({
               style={styles.hexInput}
               maxLength={8}
               placeholder="000000"
-              aria-label="Hex color value"
+              aria-label="Hex color value (without hash symbol)"
+              aria-describedby={`${colorId}-hex-label`}
+              aria-invalid={!isValidHex(hexInput) && hexInput.length > 0}
               disabled={disabled}
             />
           </div>
@@ -828,23 +963,25 @@ export function StaticColor({
         {/* Opacity slider */}
         {showOpacity && (
           <div style={styles.opacitySection}>
-            <div style={styles.sectionLabel}>Opacity</div>
+            <div id={`${colorId}-opacity-label`} style={styles.sectionLabel}>Opacity</div>
             <input
               type="range"
+              role="slider"
               min="0"
               max="1"
               step="0.01"
               value={opacity}
               onChange={handleOpacityChange}
               style={{ ...styles.opacitySlider, color }}
-              aria-label="Opacity"
+              aria-label={`Opacity: ${Math.round(opacity * 100)}%`}
+              aria-describedby={`${colorId}-opacity-label`}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(opacity * 100)}
               aria-valuetext={`${Math.round(opacity * 100)}%`}
               disabled={disabled}
             />
-            <div style={styles.opacityValue}>{Math.round(opacity * 100)}%</div>
+            <div style={styles.opacityValue} aria-hidden="true">{Math.round(opacity * 100)}%</div>
           </div>
         )}
       </div>

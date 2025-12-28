@@ -1,5 +1,5 @@
 // Collapsible Component - Expandable/collapsible section with trigger
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { LiquidComponentProps } from './utils';
 import { tokens, mergeStyles, generateId } from './utils';
 import { resolveBinding } from '../data-context';
@@ -14,6 +14,9 @@ export interface CollapsibleState {
   open: () => void;
   close: () => void;
 }
+
+/** Animation phase for height transition */
+type AnimationPhase = 'idle' | 'measuring' | 'animating';
 
 // ============================================================================
 // Styles
@@ -79,15 +82,14 @@ const styles = {
   } as React.CSSProperties,
 
   content: {
+    overflow: 'hidden',
+    transition: `height ${tokens.transition.normal}`,
+  } as React.CSSProperties,
+
+  contentInner: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: tokens.spacing.sm,
-    overflow: 'hidden',
-    transition: `all ${tokens.transition.normal}`,
-  } as React.CSSProperties,
-
-  contentHidden: {
-    display: 'none',
   } as React.CSSProperties,
 };
 
@@ -174,19 +176,98 @@ function CollapsibleContentSection({
   id,
   children,
 }: CollapsibleContentProps): React.ReactElement {
-  const contentStyle = mergeStyles(
-    styles.content,
-    !isOpen ? styles.contentHidden : {}
+  const contentRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | 'auto'>(isOpen ? 'auto' : 0);
+  const [phase, setPhase] = useState<AnimationPhase>('idle');
+  const [isVisible, setIsVisible] = useState(isOpen);
+  const prevOpenRef = useRef(isOpen);
+
+  // Handle open/close animation
+  useEffect(() => {
+    // Skip on initial render
+    if (prevOpenRef.current === isOpen) return;
+    prevOpenRef.current = isOpen;
+
+    const innerEl = innerRef.current;
+    if (!innerEl) return;
+
+    if (isOpen) {
+      // Opening animation
+      setIsVisible(true);
+      setPhase('measuring');
+
+      // Use requestAnimationFrame for smooth transition
+      requestAnimationFrame(() => {
+        // Set height to 0 first
+        setHeight(0);
+
+        requestAnimationFrame(() => {
+          // Measure content and animate to that height
+          const measuredHeight = innerEl.scrollHeight;
+          setPhase('animating');
+          setHeight(measuredHeight);
+        });
+      });
+    } else {
+      // Closing animation
+      setPhase('measuring');
+
+      // First, set height to current measured value
+      const measuredHeight = innerEl.scrollHeight;
+      setHeight(measuredHeight);
+
+      // Force reflow then animate to 0
+      requestAnimationFrame(() => {
+        // Force reflow
+        void innerEl.offsetHeight;
+
+        requestAnimationFrame(() => {
+          setPhase('animating');
+          setHeight(0);
+        });
+      });
+    }
+  }, [isOpen]);
+
+  // Handle transition end
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      // Only handle height transitions on this element
+      if (e.propertyName !== 'height' || e.target !== contentRef.current) return;
+
+      if (isOpen) {
+        // After opening, set to auto so content can resize naturally
+        setHeight('auto');
+        setPhase('idle');
+      } else {
+        // After closing, hide content for accessibility
+        setIsVisible(false);
+        setPhase('idle');
+      }
+    },
+    [isOpen]
   );
+
+  const contentStyle: React.CSSProperties = mergeStyles(styles.content, {
+    height: typeof height === 'number' ? `${height}px` : height,
+    // Disable transition during measuring phase
+    transition: phase === 'measuring' ? 'none' : undefined,
+  });
 
   return (
     <div
+      ref={contentRef}
       id={id}
       role="region"
       style={contentStyle}
-      hidden={!isOpen}
+      hidden={!isVisible}
+      aria-hidden={!isOpen}
+      onTransitionEnd={handleTransitionEnd}
     >
-      {children}
+      <div ref={innerRef} style={styles.contentInner}>
+        {children}
+      </div>
     </div>
   );
 }

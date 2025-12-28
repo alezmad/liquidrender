@@ -1,7 +1,9 @@
 // AlertDialog Component - Modal dialog for confirming destructive actions
 import React, { useEffect, useCallback, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { LiquidComponentProps } from './utils';
 import { tokens, cardStyles, mergeStyles, buttonStyles, generateId } from './utils';
+import { createFocusTrap, getPortalContainer, canUseDOM, type FocusTrap } from './utils/focus-trap';
 
 // ============================================================================
 // Types
@@ -15,6 +17,7 @@ interface AlertDialogConfig {
   cancelLabel?: string;
   confirmLabel?: string;
   variant?: AlertDialogVariant;
+  closeOnBackdropClick?: boolean;
 }
 
 // ============================================================================
@@ -113,46 +116,86 @@ function extractConfig(block: LiquidComponentProps['block']): AlertDialogConfig 
     cancelLabel: (props.cancelLabel as string | undefined) || 'Cancel',
     confirmLabel: (props.confirmLabel as string | undefined) || 'Confirm',
     variant: (props.variant as AlertDialogVariant | undefined) || 'default',
+    closeOnBackdropClick: (props.closeOnBackdropClick as boolean | undefined) ?? false,
   };
 }
 
 // ============================================================================
-// Focus Trap Hook
+// Custom Hook for Focus Trap
 // ============================================================================
 
-function useFocusTrap(isOpen: boolean, ref: React.RefObject<HTMLDivElement | null>): void {
+function usePortalFocusTrap(
+  containerRef: React.RefObject<HTMLElement | null>,
+  isOpen: boolean,
+  options: {
+    onEscape?: () => void;
+    onClickOutside?: () => void;
+    returnFocusTo?: HTMLElement | null;
+  } = {}
+): void {
+  const trapRef = useRef<FocusTrap | null>(null);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    if (!isOpen || !ref.current) return;
-
-    const element = ref.current;
-    const focusableElements = element.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
-
-    // Focus first focusable element (cancel button for safety)
-    firstFocusable?.focus();
-
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key !== 'Tab') return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstFocusable) {
-          e.preventDefault();
-          lastFocusable?.focus();
-        }
-      } else {
-        if (document.activeElement === lastFocusable) {
-          e.preventDefault();
-          firstFocusable?.focus();
-        }
+    if (!isOpen || !containerRef.current) {
+      // Deactivate trap when closing
+      if (trapRef.current) {
+        trapRef.current.deactivate();
+        trapRef.current = null;
       }
-    };
+      return;
+    }
 
-    element.addEventListener('keydown', handleKeyDown);
-    return () => element.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, ref]);
+    // Store the currently focused element before opening
+    if (!triggerElementRef.current) {
+      triggerElementRef.current = document.activeElement as HTMLElement;
+    }
+
+    // Create and activate focus trap
+    trapRef.current = createFocusTrap({
+      container: containerRef.current,
+      returnFocusTo: options.returnFocusTo ?? triggerElementRef.current,
+      onEscape: options.onEscape,
+      onClickOutside: options.onClickOutside,
+      autoFocus: true,
+    });
+
+    trapRef.current.activate();
+
+    return () => {
+      if (trapRef.current) {
+        trapRef.current.deactivate();
+        trapRef.current = null;
+      }
+      triggerElementRef.current = null;
+    };
+  }, [isOpen, containerRef, options.onEscape, options.onClickOutside, options.returnFocusTo]);
+}
+
+// ============================================================================
+// Body Scroll Lock Hook
+// ============================================================================
+
+function useBodyScrollLock(isLocked: boolean): void {
+  useEffect(() => {
+    if (!isLocked || !canUseDOM) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+
+    // Calculate scrollbar width to prevent layout shift
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+    };
+  }, [isLocked]);
 }
 
 // ============================================================================
@@ -204,7 +247,7 @@ export function AlertDialog({ block, children }: LiquidComponentProps): React.Re
 }
 
 // ============================================================================
-// Static Component (standalone usage)
+// Static Component (standalone usage with portal rendering)
 // ============================================================================
 
 interface StaticAlertDialogProps {
@@ -216,6 +259,12 @@ interface StaticAlertDialogProps {
   cancelLabel?: string;
   confirmLabel?: string;
   variant?: AlertDialogVariant;
+  /** Whether clicking the backdrop closes the dialog (default: false for alert dialogs) */
+  closeOnBackdropClick?: boolean;
+  /** Custom element to return focus to when closed */
+  returnFocusTo?: HTMLElement | null;
+  /** Custom portal container ID */
+  portalContainerId?: string;
   children?: React.ReactNode;
 }
 
@@ -228,44 +277,48 @@ export function StaticAlertDialog({
   cancelLabel = 'Cancel',
   confirmLabel = 'Confirm',
   variant = 'default',
+  closeOnBackdropClick = false,
+  returnFocusTo,
+  portalContainerId = 'liquid-alertdialog-portal',
   children,
 }: StaticAlertDialogProps): React.ReactElement | null {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useRef(generateId('alertdialog-title'));
   const descId = useRef(generateId('alertdialog-desc'));
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
-  // Focus trap
-  useFocusTrap(isOpen, dialogRef);
-
-  // Escape key handler - does NOT close by default for alert dialogs
-  // User must explicitly choose cancel or confirm
+  // Get or create portal container on mount
   useEffect(() => {
-    if (!isOpen) return;
+    if (!canUseDOM) return;
+    const container = getPortalContainer(portalContainerId);
+    setPortalContainer(container);
+  }, [portalContainerId]);
 
-    const handleEscape = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
+  // Handle backdrop click
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent): void => {
+      // Only close if clicking the overlay itself, not its children
+      if (closeOnBackdropClick && e.target === e.currentTarget) {
         onCancel();
       }
-    };
+    },
+    [closeOnBackdropClick, onCancel]
+  );
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onCancel]);
+  // Focus trap with proper escape and click outside handling
+  usePortalFocusTrap(dialogRef, isOpen, {
+    onEscape: onCancel,
+    onClickOutside: closeOnBackdropClick ? onCancel : undefined,
+    returnFocusTo,
+  });
 
   // Body scroll lock
+  useBodyScrollLock(isOpen);
+
+  // Inject animation styles
   useEffect(() => {
-    if (!isOpen) return;
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [isOpen]);
-
-  injectStyles();
+    injectStyles();
+  }, []);
 
   // Handle confirm with keyboard
   const handleConfirmKeyDown = useCallback(
@@ -289,13 +342,15 @@ export function StaticAlertDialog({
     [onCancel]
   );
 
-  if (!isOpen) return null;
+  // Don't render if not open or no portal container (SSR safety)
+  if (!isOpen || !portalContainer) return null;
 
-  return (
+  const dialogContent = (
     <div
       style={styles.overlay}
       role="presentation"
-      // Alert dialogs should not close on overlay click
+      onClick={handleBackdropClick}
+      aria-hidden="true"
     >
       <div
         ref={dialogRef}
@@ -305,6 +360,7 @@ export function StaticAlertDialog({
         aria-describedby={description ? descId.current : undefined}
         data-liquid-type="alertdialog"
         style={styles.content}
+        onClick={(e) => e.stopPropagation()} // Prevent backdrop click from bubbling
       >
         <div style={styles.header}>
           {title && (
@@ -340,6 +396,9 @@ export function StaticAlertDialog({
       </div>
     </div>
   );
+
+  // Render via portal to document body level
+  return createPortal(dialogContent, portalContainer);
 }
 
 // ============================================================================

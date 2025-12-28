@@ -109,7 +109,8 @@ function getHandleStyles(
   direction: SplitDirection,
   isResizable: boolean,
   showHandle: boolean,
-  isDragging: boolean
+  isDragging: boolean,
+  isFocused: boolean
 ): React.CSSProperties {
   const isHorizontal = direction === 'horizontal';
   const handleSize = getHandleSize('sm');
@@ -127,8 +128,10 @@ function getHandleStyles(
       : 'default',
     userSelect: 'none',
     touchAction: 'none',
-    transition: `background-color ${tokens.transition.fast}`,
+    transition: `background-color ${tokens.transition.fast}, outline ${tokens.transition.fast}`,
     position: 'relative',
+    outline: isFocused ? `2px solid ${tokens.colors.ring}` : 'none',
+    outlineOffset: '2px',
   };
 }
 
@@ -210,17 +213,28 @@ interface ResizeHandleProps {
   direction: SplitDirection;
   isResizable: boolean;
   showHandle: boolean;
+  panelSize: number;
+  minSize: number;
+  maxSize: number;
   onDragStart: (e: React.MouseEvent | React.TouchEvent) => void;
+  onSizeChange: (newSize: number) => void;
 }
 
 function ResizeHandle({
   direction,
   isResizable,
   showHandle,
+  panelSize,
+  minSize,
+  maxSize,
   onDragStart,
+  onSizeChange,
 }: ResizeHandleProps): React.ReactElement {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [announcement, setAnnouncement] = useState<string>('');
+  const handleRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isResizable) return;
@@ -233,6 +247,43 @@ function ResizeHandle({
     setIsDragging(true);
     onDragStart(e);
   }, [isResizable, onDragStart]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!isResizable) return;
+
+    const increment = e.shiftKey ? 10 : 1;
+    const isHorizontal = direction === 'horizontal';
+    let newSize = panelSize;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        if (isHorizontal) newSize = Math.max(minSize, panelSize - increment);
+        break;
+      case 'ArrowRight':
+        if (isHorizontal) newSize = Math.min(maxSize, panelSize + increment);
+        break;
+      case 'ArrowUp':
+        if (!isHorizontal) newSize = Math.max(minSize, panelSize - increment);
+        break;
+      case 'ArrowDown':
+        if (!isHorizontal) newSize = Math.min(maxSize, panelSize + increment);
+        break;
+      case 'Home':
+        newSize = minSize;
+        break;
+      case 'End':
+        newSize = maxSize;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    if (newSize !== panelSize) {
+      onSizeChange(newSize);
+      setAnnouncement(`Panel size: ${Math.round(newSize)}%`);
+    }
+  }, [isResizable, direction, panelSize, minSize, maxSize, onSizeChange]);
 
   useEffect(() => {
     const handleUp = () => setIsDragging(false);
@@ -248,28 +299,65 @@ function ResizeHandle({
     };
   }, [isDragging]);
 
+  // Clear announcement after it's been read
+  useEffect(() => {
+    if (announcement) {
+      const timer = setTimeout(() => setAnnouncement(''), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [announcement]);
+
   return (
-    <div
-      data-liquid-split-handle
-      style={getHandleStyles(direction, isResizable, showHandle, isDragging)}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      role="separator"
-      aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
-      tabIndex={isResizable ? 0 : undefined}
-    >
-      <div style={getHandleBarStyles(direction, showHandle, isDragging, isHovering)}>
-        {showHandle && (
-          <div style={getGripDotsStyles(direction)}>
-            <span style={getDotStyle()} />
-            <span style={getDotStyle()} />
-            <span style={getDotStyle()} />
-          </div>
-        )}
+    <>
+      <div
+        ref={handleRef}
+        data-liquid-split-handle
+        style={getHandleStyles(direction, isResizable, showHandle, isDragging, isFocused)}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onKeyDown={handleKeyDown}
+        role="separator"
+        aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'}
+        aria-valuenow={Math.round(panelSize)}
+        aria-valuemin={minSize}
+        aria-valuemax={maxSize}
+        aria-label="Resize panels"
+        tabIndex={isResizable ? 0 : undefined}
+      >
+        <div style={getHandleBarStyles(direction, showHandle, isDragging, isHovering)}>
+          {showHandle && (
+            <div style={getGripDotsStyles(direction)}>
+              <span style={getDotStyle()} />
+              <span style={getDotStyle()} />
+              <span style={getDotStyle()} />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+      {/* Screen reader announcement for size changes */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {announcement}
+      </div>
+    </>
   );
 }
 
@@ -377,7 +465,11 @@ export function Split({ block, data, children }: LiquidComponentProps): React.Re
         direction={direction}
         isResizable={resizable}
         showHandle={showHandle}
+        panelSize={panelSize}
+        minSize={minSize}
+        maxSize={maxSize}
         onDragStart={handleDragStart}
+        onSizeChange={setPanelSize}
       />
 
       <div
@@ -517,7 +609,11 @@ export function StaticSplit({
         direction={direction}
         isResizable={resizable}
         showHandle={showHandle}
+        panelSize={panelSize}
+        minSize={minSize}
+        maxSize={maxSize}
         onDragStart={handleDragStart}
+        onSizeChange={setPanelSize}
       />
 
       <div

@@ -13,6 +13,7 @@ import {
   isBrowser,
 } from './utils';
 import { resolveBinding } from '../data-context';
+import { createFocusTrap } from './utils/focus-trap';
 
 // ============================================================================
 // Types
@@ -152,6 +153,24 @@ const styles = {
     cursor: 'not-allowed',
   },
 
+  navButtonFocus: {
+    outline: `2px solid ${tokens.colors.ring}`,
+    outlineOffset: '2px',
+  },
+
+  // Screen reader only styles
+  srOnly: {
+    position: 'absolute' as const,
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap' as const,
+    border: 0,
+  },
+
   // Close button
   closeButton: mergeStyles(buttonStyles('ghost', 'md'), {
     width: '2.5rem',
@@ -239,6 +258,18 @@ function injectStyles() {
       box-shadow: ${tokens.shadow.md};
     }
     [data-liquid-type="lightbox"] .lightbox-thumbnail:focus {
+      outline: 2px solid ${tokens.colors.ring};
+      outline-offset: 2px;
+    }
+    [data-liquid-type="lightbox"] .lightbox-nav-button:focus {
+      outline: 2px solid ${tokens.colors.ring};
+      outline-offset: 2px;
+    }
+    [data-liquid-type="lightbox"] .lightbox-close-button:focus {
+      outline: 2px solid ${tokens.colors.ring};
+      outline-offset: 2px;
+    }
+    [data-liquid-type="lightbox"] .lightbox-zoom-button:focus {
       outline: 2px solid ${tokens.colors.ring};
       outline-offset: 2px;
     }
@@ -381,6 +412,8 @@ interface LightboxModalProps {
   onPrev: () => void;
   onNext: () => void;
   onSelect: (index: number) => void;
+  /** Reference to the thumbnail that opened the lightbox for focus restoration */
+  triggerRef?: React.RefObject<HTMLElement>;
 }
 
 function LightboxModal({
@@ -390,9 +423,13 @@ function LightboxModal({
   onClose,
   onPrev,
   onNext,
+  onSelect,
+  triggerRef,
 }: LightboxModalProps): React.ReactElement | null {
   const [zoom, setZoom] = useState<ZoomLevel>(1);
   const imageRef = useRef<HTMLImageElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const currentImage = images[currentIndex];
   const canGoPrev = currentIndex > 0;
@@ -403,29 +440,59 @@ function LightboxModal({
     setZoom(1);
   }, [currentIndex]);
 
-  // Keyboard navigation
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen || !overlayRef.current) return;
+
+    const trap = createFocusTrap({
+      container: overlayRef.current,
+      returnFocusTo: triggerRef?.current,
+      onEscape: onClose,
+      onClickOutside: onClose,
+      initialFocus: closeButtonRef.current,
+      autoFocus: true,
+    });
+
+    trap.activate();
+
+    return () => {
+      trap.deactivate();
+    };
+  }, [isOpen, onClose, triggerRef]);
+
+  // Enhanced keyboard navigation (handled separately for Home/End which focus trap doesn't handle)
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'Escape':
-          onClose();
-          break;
         case 'ArrowLeft':
+          e.preventDefault();
           if (canGoPrev) onPrev();
           break;
         case 'ArrowRight':
+          e.preventDefault();
           if (canGoNext) onNext();
+          break;
+        case 'Home':
+          e.preventDefault();
+          onSelect(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          onSelect(images.length - 1);
           break;
         case '+':
         case '=':
+          e.preventDefault();
           setZoom(prev => Math.min(3, prev + 0.5) as ZoomLevel);
           break;
         case '-':
+          e.preventDefault();
           setZoom(prev => Math.max(1, prev - 0.5) as ZoomLevel);
           break;
         case '0':
+          e.preventDefault();
           setZoom(1);
           break;
       }
@@ -433,7 +500,7 @@ function LightboxModal({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, canGoPrev, canGoNext, onClose, onPrev, onNext]);
+  }, [isOpen, canGoPrev, canGoNext, onPrev, onNext, onSelect, images.length]);
 
   // Body scroll lock
   useEffect(() => {
@@ -475,17 +542,29 @@ function LightboxModal({
 
   return (
     <div
+      ref={overlayRef}
       className="lightbox-overlay"
       style={styles.overlay}
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-label="Image lightbox"
+      aria-describedby="lightbox-status"
     >
+      {/* Screen reader announcements */}
+      <div
+        id="lightbox-status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={styles.srOnly}
+      >
+        Image {currentIndex + 1} of {images.length}: {currentImage.alt || `Image ${currentIndex + 1}`}
+      </div>
+
       {/* Header */}
       <div style={styles.header}>
         {/* Counter */}
-        <span style={styles.counter}>
+        <span style={styles.counter} aria-hidden="true">
           {currentIndex + 1} of {images.length}
         </span>
 
@@ -493,6 +572,7 @@ function LightboxModal({
         <div style={styles.zoomControls}>
           <button
             type="button"
+            className="lightbox-zoom-button"
             style={styles.zoomButton}
             onClick={handleZoomOut}
             disabled={zoom === 1}
@@ -500,11 +580,12 @@ function LightboxModal({
           >
             -
           </button>
-          <span style={{ color: '#fff', fontSize: tokens.fontSize.xs, minWidth: '3rem', textAlign: 'center' as const }}>
+          <span style={{ color: '#fff', fontSize: tokens.fontSize.xs, minWidth: '3rem', textAlign: 'center' as const }} aria-hidden="true">
             {Math.round(zoom * 100)}%
           </span>
           <button
             type="button"
+            className="lightbox-zoom-button"
             style={styles.zoomButton}
             onClick={handleZoomIn}
             disabled={zoom === 3}
@@ -516,10 +597,12 @@ function LightboxModal({
 
         {/* Close button */}
         <button
+          ref={closeButtonRef}
           type="button"
+          className="lightbox-close-button"
           style={styles.closeButton}
           onClick={onClose}
-          aria-label="Close lightbox"
+          aria-label="Close lightbox (Escape)"
         >
           <CloseIcon />
         </button>
@@ -528,6 +611,7 @@ function LightboxModal({
       {/* Navigation - Previous */}
       <button
         type="button"
+        className="lightbox-nav-button"
         style={mergeStyles(
           styles.navButton,
           styles.navButtonLeft,
@@ -535,7 +619,7 @@ function LightboxModal({
         )}
         onClick={onPrev}
         disabled={!canGoPrev}
-        aria-label="Previous image"
+        aria-label={`Previous image (${currentIndex} of ${images.length})`}
       >
         <ArrowLeftIcon />
       </button>
@@ -555,6 +639,7 @@ function LightboxModal({
       {/* Navigation - Next */}
       <button
         type="button"
+        className="lightbox-nav-button"
         style={mergeStyles(
           styles.navButton,
           styles.navButtonRight,
@@ -562,7 +647,7 @@ function LightboxModal({
         )}
         onClick={onNext}
         disabled={!canGoNext}
-        aria-label="Next image"
+        aria-label={`Next image (${currentIndex + 2} of ${images.length})`}
       >
         <ArrowRightIcon />
       </button>
@@ -594,6 +679,8 @@ function LightboxModal({
 export function Lightbox({ block, data }: LiquidComponentProps): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const lastClickedIndexRef = useRef<number>(0);
 
   // Resolve the binding to get image data
   const rawData = resolveBinding(block.binding, data);
@@ -603,8 +690,9 @@ export function Lightbox({ block, data }: LiquidComponentProps): React.ReactElem
   const containerStyle = mergeStyles(styles.container, getLayoutStyles(block));
 
   // Handlers
-  const openLightbox = useCallback((index: number) => {
+  const openLightbox = useCallback((index: number, buttonRef?: HTMLButtonElement | null) => {
     setCurrentIndex(index);
+    lastClickedIndexRef.current = index;
     setIsOpen(true);
   }, []);
 
@@ -620,9 +708,11 @@ export function Lightbox({ block, data }: LiquidComponentProps): React.ReactElem
     setCurrentIndex(prev => Math.min(images.length - 1, prev + 1));
   }, [images.length]);
 
-  const selectImage = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
+  const goToImage = useCallback((index: number) => {
+    // Clamp to valid range
+    const clampedIndex = Math.max(0, Math.min(images.length - 1, index));
+    setCurrentIndex(clampedIndex);
+  }, [images.length]);
 
   // Inject styles
   if (isBrowser) {
@@ -659,7 +749,7 @@ export function Lightbox({ block, data }: LiquidComponentProps): React.ReactElem
         onClose={closeLightbox}
         onPrev={goToPrev}
         onNext={goToNext}
-        onSelect={selectImage}
+        onSelect={goToImage}
       />
     </div>
   );
@@ -773,10 +863,12 @@ export function StaticLightbox({
     });
   }, [images.length, onChange]);
 
-  const selectImage = useCallback((index: number) => {
-    setCurrentIndex(index);
-    onChange?.(index);
-  }, [onChange]);
+  const goToImage = useCallback((index: number) => {
+    // Clamp to valid range
+    const clampedIndex = Math.max(0, Math.min(images.length - 1, index));
+    setCurrentIndex(clampedIndex);
+    onChange?.(clampedIndex);
+  }, [images.length, onChange]);
 
   // Inject styles
   if (isBrowser) {
@@ -812,7 +904,7 @@ export function StaticLightbox({
         onClose={closeLightbox}
         onPrev={goToPrev}
         onNext={goToNext}
-        onSelect={selectImage}
+        onSelect={goToImage}
       />
     </div>
   );

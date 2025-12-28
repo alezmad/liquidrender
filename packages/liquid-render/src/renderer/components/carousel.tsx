@@ -1,6 +1,7 @@
 // Carousel Component - Horizontally scrolling carousel with navigation
 // DSL: Cr :arrayBinding [children]
 // Special bindings: :. = current item, :# = current index
+// Features: Touch/swipe gestures, keyboard navigation, auto-play
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { LiquidComponentProps } from './utils';
@@ -15,6 +16,14 @@ import type { Block } from '../../compiler/ui-emitter';
 import { resolveBinding, type DataContext } from '../data-context';
 
 // ============================================================================
+// Touch/Swipe Constants
+// ============================================================================
+
+const SWIPE_THRESHOLD = 50; // Minimum distance in pixels
+const VELOCITY_THRESHOLD = 0.5; // Minimum velocity (px/ms)
+const SPRING_ANIMATION_DURATION = 300; // Duration for spring-back animation in ms
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -24,6 +33,15 @@ interface CarouselState {
   currentIndex: number;
   canScrollPrev: boolean;
   canScrollNext: boolean;
+}
+
+interface TouchState {
+  startX: number;
+  startY: number;
+  startTime: number;
+  currentOffset: number;
+  isDragging: boolean;
+  isHorizontalSwipe: boolean | null; // null = undetermined, true/false = determined direction
 }
 
 // ============================================================================
@@ -44,12 +62,34 @@ function getCarouselViewportStyles(orientation: CarouselOrientation): React.CSSP
   };
 }
 
-function getCarouselContentStyles(orientation: CarouselOrientation): React.CSSProperties {
+function getCarouselContentStyles(
+  orientation: CarouselOrientation,
+  isDragging: boolean = false
+): React.CSSProperties {
   return {
     display: 'flex',
     flexDirection: orientation === 'horizontal' ? 'row' : 'column',
     gap: tokens.spacing.md,
-    transition: `transform ${tokens.transition.normal}`,
+    // Disable transition during drag for immediate visual feedback
+    transition: isDragging ? 'none' : `transform ${tokens.transition.normal}`,
+    // Improve touch experience
+    touchAction: orientation === 'horizontal' ? 'pan-y' : 'pan-x',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  };
+}
+
+/**
+ * Get initial touch state
+ */
+function getInitialTouchState(): TouchState {
+  return {
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    currentOffset: 0,
+    isDragging: false,
+    isHorizontalSwipe: null,
   };
 }
 
@@ -281,7 +321,11 @@ function CarouselDots({ total, current, onSelect }: CarouselDotsProps): React.Re
  */
 export function Carousel({ block, data, children }: LiquidComponentProps): React.ReactElement {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const touchStateRef = useRef<TouchState>(getInitialTouchState());
 
   // Resolve the binding to get the array data
   const arrayData = resolveBinding(block.binding, data);
@@ -296,6 +340,7 @@ export function Carousel({ block, data, children }: LiquidComponentProps): React
   const scrollTo = useCallback((index: number) => {
     const clampedIndex = Math.max(0, Math.min(index, itemCount - 1));
     setCurrentIndex(clampedIndex);
+    setDragOffset(0);
   }, [itemCount]);
 
   const scrollPrev = useCallback(() => {
@@ -305,6 +350,137 @@ export function Carousel({ block, data, children }: LiquidComponentProps): React
   const scrollNext = useCallback(() => {
     scrollTo(currentIndex + 1);
   }, [currentIndex, scrollTo]);
+
+  // ============================================================================
+  // Touch/Swipe Handlers
+  // ============================================================================
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    touchStateRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      startTime: Date.now(),
+      currentOffset: 0,
+      isDragging: true,
+      isHorizontalSwipe: null, // Direction not yet determined
+    };
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const touchState = touchStateRef.current;
+    if (!touchState.isDragging) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchState.startX;
+    const deltaY = touch.clientY - touchState.startY;
+
+    // Determine swipe direction on first significant movement
+    if (touchState.isHorizontalSwipe === null) {
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
+
+      // Need at least 10px movement to determine direction
+      if (absDeltaX > 10 || absDeltaY > 10) {
+        const isHorizontal = absDeltaX > absDeltaY;
+        touchState.isHorizontalSwipe = isHorizontal;
+
+        // For horizontal carousel: only handle horizontal swipes
+        // For vertical carousel: only handle vertical swipes
+        const shouldHandle = orientation === 'horizontal' ? isHorizontal : !isHorizontal;
+
+        if (!shouldHandle) {
+          // Let the browser handle this swipe (scrolling)
+          touchState.isDragging = false;
+          setIsDragging(false);
+          return;
+        }
+      } else {
+        // Not enough movement yet
+        return;
+      }
+    }
+
+    // Get the relevant delta based on orientation
+    const delta = orientation === 'horizontal' ? deltaX : deltaY;
+
+    // Prevent default to stop page scroll during carousel swipe
+    e.preventDefault();
+
+    // Calculate offset as percentage of viewport
+    const viewport = viewportRef.current;
+    if (viewport) {
+      const dimension = orientation === 'horizontal'
+        ? viewport.offsetWidth
+        : viewport.offsetHeight;
+      const offsetPercent = (delta / dimension) * 100;
+
+      // Apply resistance at edges
+      let resistedOffset = offsetPercent;
+      if ((currentIndex === 0 && delta > 0) ||
+          (currentIndex === itemCount - 1 && delta < 0)) {
+        // Apply rubber-band effect at edges
+        resistedOffset = offsetPercent * 0.3;
+      }
+
+      touchState.currentOffset = delta;
+      setDragOffset(resistedOffset);
+    }
+  }, [orientation, currentIndex, itemCount]);
+
+  const handleTouchEnd = useCallback(() => {
+    const touchState = touchStateRef.current;
+    if (!touchState.isDragging) return;
+
+    const deltaTime = Date.now() - touchState.startTime;
+    const velocity = Math.abs(touchState.currentOffset) / deltaTime;
+    const distance = Math.abs(touchState.currentOffset);
+
+    // Determine if swipe should trigger navigation
+    const shouldNavigate = distance > SWIPE_THRESHOLD || velocity > VELOCITY_THRESHOLD;
+
+    if (shouldNavigate) {
+      // Determine direction and navigate
+      const delta = touchState.currentOffset;
+      if (orientation === 'horizontal') {
+        if (delta > 0 && canScrollPrev) {
+          scrollPrev();
+        } else if (delta < 0 && canScrollNext) {
+          scrollNext();
+        } else {
+          // Spring back - can't navigate further
+          setDragOffset(0);
+        }
+      } else {
+        if (delta > 0 && canScrollPrev) {
+          scrollPrev();
+        } else if (delta < 0 && canScrollNext) {
+          scrollNext();
+        } else {
+          setDragOffset(0);
+        }
+      }
+    } else {
+      // Spring back to current slide
+      setDragOffset(0);
+    }
+
+    // Reset touch state
+    touchStateRef.current = getInitialTouchState();
+    setIsDragging(false);
+  }, [orientation, canScrollPrev, canScrollNext, scrollPrev, scrollNext]);
+
+  const handleTouchCancel = useCallback(() => {
+    // Reset on touch cancel
+    touchStateRef.current = getInitialTouchState();
+    setIsDragging(false);
+    setDragOffset(0);
+  }, []);
 
   // Keyboard navigation
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -333,13 +509,14 @@ export function Carousel({ block, data, children }: LiquidComponentProps): React
     getLayoutStyles(block)
   );
 
-  // Content transform
+  // Content transform with drag offset
+  const baseTranslate = currentIndex * 100;
   const contentStyle = mergeStyles(
-    getCarouselContentStyles(orientation),
+    getCarouselContentStyles(orientation, isDragging),
     {
       transform: orientation === 'horizontal'
-        ? `translateX(-${currentIndex * 100}%)`
-        : `translateY(-${currentIndex * 100}%)`,
+        ? `translateX(calc(-${baseTranslate}% + ${dragOffset}%))`
+        : `translateY(calc(-${baseTranslate}% + ${dragOffset}%))`,
     }
   );
 
@@ -370,7 +547,14 @@ export function Carousel({ block, data, children }: LiquidComponentProps): React
         aria-label={block.label || 'Carousel'}
         tabIndex={0}
       >
-        <div style={getCarouselViewportStyles(orientation)}>
+        <div
+          ref={viewportRef}
+          style={getCarouselViewportStyles(orientation)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
           <div ref={contentRef} style={contentStyle}>
             {childArray.map((child, index) => (
               <div
@@ -417,7 +601,14 @@ export function Carousel({ block, data, children }: LiquidComponentProps): React
       aria-label={block.label || 'Carousel'}
       tabIndex={0}
     >
-      <div style={getCarouselViewportStyles(orientation)}>
+      <div
+        ref={viewportRef}
+        style={getCarouselViewportStyles(orientation)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         <div ref={contentRef} style={contentStyle}>
           {/* Children will be injected by LiquidUI BlockRenderer */}
         </div>
@@ -503,8 +694,12 @@ export function StaticCarousel<T = unknown>({
   onSlideChange,
 }: StaticCarouselProps<T>): React.ReactElement {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStateRef = useRef<TouchState>(getInitialTouchState());
 
   // Calculate navigation state
   const itemCount = items?.length || 0;
@@ -515,6 +710,7 @@ export function StaticCarousel<T = unknown>({
   const scrollTo = useCallback((index: number) => {
     const clampedIndex = Math.max(0, Math.min(index, itemCount - 1));
     setCurrentIndex(clampedIndex);
+    setDragOffset(0);
     onSlideChange?.(clampedIndex);
   }, [itemCount, onSlideChange]);
 
@@ -562,6 +758,140 @@ export function StaticCarousel<T = unknown>({
     }
   }, [autoPlay, itemCount, scrollNext]);
 
+  // ============================================================================
+  // Touch/Swipe Handlers
+  // ============================================================================
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    // Pause auto-play during touch
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+      autoPlayRef.current = null;
+    }
+
+    touchStateRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      startTime: Date.now(),
+      currentOffset: 0,
+      isDragging: true,
+      isHorizontalSwipe: null,
+    };
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const touchState = touchStateRef.current;
+    if (!touchState.isDragging) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchState.startX;
+    const deltaY = touch.clientY - touchState.startY;
+
+    // Determine swipe direction on first significant movement
+    if (touchState.isHorizontalSwipe === null) {
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
+
+      if (absDeltaX > 10 || absDeltaY > 10) {
+        const isHorizontal = absDeltaX > absDeltaY;
+        touchState.isHorizontalSwipe = isHorizontal;
+
+        const shouldHandle = orientation === 'horizontal' ? isHorizontal : !isHorizontal;
+
+        if (!shouldHandle) {
+          touchState.isDragging = false;
+          setIsDragging(false);
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+
+    const delta = orientation === 'horizontal' ? deltaX : deltaY;
+    e.preventDefault();
+
+    const viewport = viewportRef.current;
+    if (viewport) {
+      const dimension = orientation === 'horizontal'
+        ? viewport.offsetWidth
+        : viewport.offsetHeight;
+      const offsetPercent = (delta / dimension) * 100;
+
+      let resistedOffset = offsetPercent;
+      if ((currentIndex === 0 && delta > 0) ||
+          (currentIndex === itemCount - 1 && delta < 0)) {
+        resistedOffset = offsetPercent * 0.3;
+      }
+
+      touchState.currentOffset = delta;
+      setDragOffset(resistedOffset);
+    }
+  }, [orientation, currentIndex, itemCount]);
+
+  const handleTouchEnd = useCallback(() => {
+    const touchState = touchStateRef.current;
+    if (!touchState.isDragging) return;
+
+    const deltaTime = Date.now() - touchState.startTime;
+    const velocity = Math.abs(touchState.currentOffset) / deltaTime;
+    const distance = Math.abs(touchState.currentOffset);
+
+    const shouldNavigate = distance > SWIPE_THRESHOLD || velocity > VELOCITY_THRESHOLD;
+
+    if (shouldNavigate) {
+      const delta = touchState.currentOffset;
+      if (orientation === 'horizontal') {
+        if (delta > 0 && canScrollPrev) {
+          scrollPrev();
+        } else if (delta < 0 && canScrollNext) {
+          scrollNext();
+        } else {
+          setDragOffset(0);
+        }
+      } else {
+        if (delta > 0 && canScrollPrev) {
+          scrollPrev();
+        } else if (delta < 0 && canScrollNext) {
+          scrollNext();
+        } else {
+          setDragOffset(0);
+        }
+      }
+    } else {
+      setDragOffset(0);
+    }
+
+    touchStateRef.current = getInitialTouchState();
+    setIsDragging(false);
+
+    // Resume auto-play after touch
+    if (autoPlay > 0 && itemCount > 1) {
+      autoPlayRef.current = setInterval(() => {
+        scrollNext();
+      }, autoPlay);
+    }
+  }, [orientation, canScrollPrev, canScrollNext, scrollPrev, scrollNext, autoPlay, itemCount]);
+
+  const handleTouchCancel = useCallback(() => {
+    touchStateRef.current = getInitialTouchState();
+    setIsDragging(false);
+    setDragOffset(0);
+
+    // Resume auto-play after touch cancel
+    if (autoPlay > 0 && itemCount > 1) {
+      autoPlayRef.current = setInterval(() => {
+        scrollNext();
+      }, autoPlay);
+    }
+  }, [autoPlay, itemCount, scrollNext]);
+
   // Keyboard navigation
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (orientation === 'horizontal') {
@@ -589,13 +919,14 @@ export function StaticCarousel<T = unknown>({
     customStyle
   );
 
-  // Content transform
+  // Content transform with drag offset
+  const baseTranslate = currentIndex * 100;
   const contentStyle = mergeStyles(
-    getCarouselContentStyles(orientation),
+    getCarouselContentStyles(orientation, isDragging),
     {
       transform: orientation === 'horizontal'
-        ? `translateX(-${currentIndex * 100}%)`
-        : `translateY(-${currentIndex * 100}%)`,
+        ? `translateX(calc(-${baseTranslate}% + ${dragOffset}%))`
+        : `translateY(calc(-${baseTranslate}% + ${dragOffset}%))`,
     }
   );
 
@@ -625,7 +956,14 @@ export function StaticCarousel<T = unknown>({
       aria-label={label}
       tabIndex={0}
     >
-      <div style={getCarouselViewportStyles(orientation)}>
+      <div
+        ref={viewportRef}
+        style={getCarouselViewportStyles(orientation)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         <div ref={contentRef} style={contentStyle}>
           {items.map((item, index) => {
             const key = keyExtractor ? keyExtractor(item, index) : index;

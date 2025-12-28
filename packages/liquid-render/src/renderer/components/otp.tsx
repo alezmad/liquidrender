@@ -156,6 +156,14 @@ function getSlotStates(value: string, activeIndex: number, length: number): OTPS
   }));
 }
 
+/**
+ * Extract numeric digits from pasted content
+ * Handles various formats: "123456", "123-456", "123 456", etc.
+ */
+function extractDigitsFromPaste(pastedText: string): string {
+  return pastedText.replace(/[^0-9]/g, '');
+}
+
 // ============================================================================
 // Sub-components
 // ============================================================================
@@ -251,6 +259,33 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
       setActiveIndex(Math.min(length - 1, activeIndex + 1));
     }
   }, [value.length, activeIndex, length]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const pastedText = e.clipboardData.getData('text');
+    const digits = extractDigitsFromPaste(pastedText).slice(0, length);
+
+    if (digits.length === 0) return;
+
+    setValue(digits);
+
+    // Move focus to the appropriate position:
+    // - If paste fills all fields, focus on last field
+    // - If partial paste, focus on next empty field
+    const nextActiveIndex = Math.min(digits.length, length - 1);
+    setActiveIndex(nextActiveIndex);
+
+    // Emit signal when value changes
+    if (emitSignal?.name) {
+      signalActions.emit(emitSignal.name, digits);
+    }
+
+    // Auto-submit when complete
+    if (digits.length === length && block.signals?.emit?.name) {
+      signalActions.emit(`${emitSignal?.name || 'otp'}:complete`, digits);
+    }
+  }, [length, emitSignal, signalActions, block.signals?.emit?.name]);
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);
@@ -350,6 +385,7 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onFocus={handleFocus}
           onBlur={handleBlur}
           style={styles.hiddenInput}
@@ -447,6 +483,36 @@ export function StaticOTP({
       setActiveIndex(Math.min(length - 1, activeIndex + 1));
     }
   }, [value.length, activeIndex, length, disabled]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
+
+    e.preventDefault();
+
+    const pastedText = e.clipboardData.getData('text');
+    const digits = extractDigitsFromPaste(pastedText).slice(0, length);
+
+    if (digits.length === 0) return;
+
+    // Update internal state if uncontrolled
+    if (controlledValue === undefined) {
+      setInternalValue(digits);
+    }
+
+    // Move focus to the appropriate position:
+    // - If paste fills all fields, focus on last field
+    // - If partial paste, focus on next empty field
+    const nextActiveIndex = Math.min(digits.length, length - 1);
+    setActiveIndex(nextActiveIndex);
+
+    // Trigger onChange callback
+    onChange?.(digits);
+
+    // Auto-complete callback when all digits are filled
+    if (digits.length === length) {
+      onComplete?.(digits);
+    }
+  }, [length, controlledValue, onChange, onComplete, disabled]);
 
   const handleFocus = useCallback(() => {
     if (disabled) return;
@@ -555,6 +621,7 @@ export function StaticOTP({
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}

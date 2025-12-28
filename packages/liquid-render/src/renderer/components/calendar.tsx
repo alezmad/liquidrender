@@ -1,7 +1,7 @@
 // Calendar Component - Full calendar view with month navigation
 // DSL: Ca :binding "Label" or Ca :selectedDate
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { LiquidComponentProps } from './utils';
 import { tokens, mergeStyles, generateId, formatDisplayValue, fieldToLabel } from './utils';
 import { resolveBinding } from '../data-context';
@@ -171,6 +171,11 @@ const styles = {
     cursor: 'not-allowed',
   } as React.CSSProperties,
 
+  dayCellFocused: {
+    outline: `2px solid ${tokens.colors.ring}`,
+    outlineOffset: '2px',
+  } as React.CSSProperties,
+
   displayValue: {
     fontSize: tokens.fontSize.sm,
     color: tokens.colors.mutedForeground,
@@ -338,6 +343,37 @@ function formatDateForDisplay(date: CalendarDate | null): string {
 }
 
 /**
+ * Convert CalendarDate to Date object
+ */
+function calendarDateToDate(date: CalendarDate): Date {
+  return new Date(date.year, date.month, date.day);
+}
+
+/**
+ * Convert Date object to CalendarDate
+ */
+function dateToCalendarDate(date: Date): CalendarDate {
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    day: date.getDate(),
+  };
+}
+
+/**
+ * Format CalendarDate for screen reader announcement
+ */
+function formatDateForAria(date: CalendarDate): string {
+  const d = new Date(date.year, date.month, date.day);
+  return d.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/**
  * Get calendar grid data for a month
  */
 function getCalendarGrid(year: number, month: number): (CalendarDate | null)[] {
@@ -390,11 +426,15 @@ interface DayCellProps {
   currentMonth: number;
   isSelected: boolean;
   isToday: boolean;
+  isFocused: boolean;
   isRangeStart?: boolean;
   isRangeEnd?: boolean;
   isInRange?: boolean;
   isDisabled?: boolean;
+  tabIndex: number;
   onClick: (date: CalendarDate) => void;
+  onFocus: (date: CalendarDate) => void;
+  cellRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 function DayCell({
@@ -402,11 +442,15 @@ function DayCell({
   currentMonth,
   isSelected,
   isToday: isTodayDate,
+  isFocused,
   isRangeStart,
   isRangeEnd,
   isInRange: isInRangeDate,
   isDisabled,
+  tabIndex,
   onClick,
+  onFocus,
+  cellRef,
 }: DayCellProps): React.ReactElement {
   const [isHovered, setIsHovered] = useState(false);
   const isOutside = date.month !== currentMonth;
@@ -440,8 +484,12 @@ function DayCell({
       style = mergeStyles(style, styles.dayCellHover);
     }
 
+    if (isFocused) {
+      style = mergeStyles(style, styles.dayCellFocused);
+    }
+
     return style;
-  }, [isOutside, isTodayDate, isSelected, isRangeStart, isRangeEnd, isInRangeDate, isHovered, isDisabled]);
+  }, [isOutside, isTodayDate, isSelected, isRangeStart, isRangeEnd, isInRangeDate, isHovered, isDisabled, isFocused]);
 
   const handleClick = useCallback(() => {
     if (!isDisabled) {
@@ -449,15 +497,23 @@ function DayCell({
     }
   }, [date, isDisabled, onClick]);
 
+  const handleFocus = useCallback(() => {
+    onFocus(date);
+  }, [date, onFocus]);
+
   return (
     <button
+      ref={cellRef}
       type="button"
+      role="gridcell"
       style={cellStyle}
       onClick={handleClick}
+      onFocus={handleFocus}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       disabled={isDisabled}
-      aria-label={formatDateForDisplay(date)}
+      tabIndex={tabIndex}
+      aria-label={formatDateForAria(date)}
       aria-selected={isSelected || isRangeStart || isRangeEnd}
       aria-current={isTodayDate ? 'date' : undefined}
     >
@@ -541,12 +597,39 @@ export function Calendar({ block, data }: LiquidComponentProps): React.ReactElem
     mode === 'range' ? (initialSelected as DateRange) : { start: null, end: null }
   );
 
+  // Keyboard navigation state
+  const [focusedDate, setFocusedDate] = useState<CalendarDate | null>(() => {
+    // Initialize focused date: selected date, or first day of current month
+    if (Array.isArray(initialSelected) && initialSelected.length > 0 && initialSelected[0]) {
+      return initialSelected[0];
+    }
+    if (mode === 'range' && (initialSelected as DateRange).start) {
+      return (initialSelected as DateRange).start;
+    }
+    return { year: today.getFullYear(), month: today.getMonth(), day: today.getDate() };
+  });
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const focusedCellRef = useRef<HTMLButtonElement | null>(null);
+
+  // Live region for screen reader announcements
+  const [announcement, setAnnouncement] = useState<string>('');
+
   const label = block.label;
   const emitSignal = block.signals?.emit;
   const labelId = generateId('calendar-label');
+  const gridId = generateId('calendar-grid');
 
   // Calendar grid
   const calendarGrid = useMemo(() => getCalendarGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+
+  // Update view when focused date changes to a different month
+  const updateViewForDate = useCallback((date: CalendarDate) => {
+    if (date.month !== viewMonth || date.year !== viewYear) {
+      setViewMonth(date.month);
+      setViewYear(date.year);
+    }
+  }, [viewMonth, viewYear]);
 
   // Navigation handlers
   const goToPreviousMonth = useCallback(() => {
@@ -614,6 +697,88 @@ export function Calendar({ block, data }: LiquidComponentProps): React.ReactElem
     }
   }, [mode, emitChange]);
 
+  // Handle focus on a date cell
+  const handleDateFocus = useCallback((date: CalendarDate) => {
+    setFocusedDate(date);
+  }, []);
+
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!focusedDate) return;
+
+    const currentDate = calendarDateToDate(focusedDate);
+    let newDate: Date | null = null;
+    let handled = false;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() - 1);
+        handled = true;
+        break;
+      case 'ArrowRight':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + 1);
+        handled = true;
+        break;
+      case 'ArrowUp':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() - 7);
+        handled = true;
+        break;
+      case 'ArrowDown':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + 7);
+        handled = true;
+        break;
+      case 'Home':
+        // Move to first day of current month
+        newDate = new Date(focusedDate.year, focusedDate.month, 1);
+        handled = true;
+        break;
+      case 'End':
+        // Move to last day of current month
+        newDate = new Date(focusedDate.year, focusedDate.month + 1, 0);
+        handled = true;
+        break;
+      case 'PageUp':
+        // Move to same day in previous month
+        newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() - 1);
+        handled = true;
+        break;
+      case 'PageDown':
+        // Move to same day in next month
+        newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() + 1);
+        handled = true;
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        handleDateClick(focusedDate);
+        setAnnouncement(`Selected ${formatDateForAria(focusedDate)}`);
+        return;
+      default:
+        return;
+    }
+
+    if (handled && newDate) {
+      e.preventDefault();
+      const newCalendarDate = dateToCalendarDate(newDate);
+      setFocusedDate(newCalendarDate);
+      updateViewForDate(newCalendarDate);
+      setAnnouncement(formatDateForAria(newCalendarDate));
+    }
+  }, [focusedDate, handleDateClick, updateViewForDate]);
+
+  // Focus the focused cell when focusedDate changes
+  useEffect(() => {
+    if (focusedCellRef.current) {
+      focusedCellRef.current.focus();
+    }
+  }, [focusedDate, viewMonth, viewYear]);
+
   // Check if a date is selected
   const isDateSelected = useCallback((date: CalendarDate): boolean => {
     if (mode === 'range') {
@@ -621,6 +786,20 @@ export function Calendar({ block, data }: LiquidComponentProps): React.ReactElem
     }
     return selectedDates.some(d => isSameDay(d, date));
   }, [mode, selectedDates, dateRange]);
+
+  // Determine tabIndex for a date cell
+  const getTabIndex = useCallback((date: CalendarDate): number => {
+    return isSameDay(date, focusedDate) ? 0 : -1;
+  }, [focusedDate]);
+
+  // Split grid into weeks for proper row structure
+  const weeks = useMemo(() => {
+    const result: (CalendarDate | null)[][] = [];
+    for (let i = 0; i < calendarGrid.length; i += 7) {
+      result.push(calendarGrid.slice(i, i + 7));
+    }
+    return result;
+  }, [calendarGrid]);
 
   return (
     <div style={styles.wrapper} data-liquid-type="calendar">
@@ -638,7 +817,7 @@ export function Calendar({ block, data }: LiquidComponentProps): React.ReactElem
             onClick={goToPreviousMonth}
             ariaLabel="Previous month"
           />
-          <span style={styles.monthYearLabel}>
+          <span style={styles.monthYearLabel} aria-live="polite">
             {MONTHS[viewMonth]} {viewYear}
           </span>
           <NavButton
@@ -651,29 +830,71 @@ export function Calendar({ block, data }: LiquidComponentProps): React.ReactElem
         {/* Weekday headers */}
         <div style={styles.weekdaysRow} role="row">
           {WEEKDAYS.map(day => (
-            <div key={day} style={styles.weekday} role="columnheader">
+            <div key={day} style={styles.weekday} role="columnheader" aria-label={
+              day === 'Su' ? 'Sunday' :
+              day === 'Mo' ? 'Monday' :
+              day === 'Tu' ? 'Tuesday' :
+              day === 'We' ? 'Wednesday' :
+              day === 'Th' ? 'Thursday' :
+              day === 'Fr' ? 'Friday' : 'Saturday'
+            }>
               {day}
             </div>
           ))}
         </div>
 
         {/* Days grid */}
-        <div style={styles.daysGrid} role="grid">
-          {calendarGrid.map((date, index) => (
-            date && (
-              <DayCell
-                key={`${date.year}-${date.month}-${date.day}-${index}`}
-                date={date}
-                currentMonth={viewMonth}
-                isSelected={isDateSelected(date)}
-                isToday={isToday(date)}
-                isRangeStart={mode === 'range' && isSameDay(date, dateRange.start)}
-                isRangeEnd={mode === 'range' && isSameDay(date, dateRange.end)}
-                isInRange={mode === 'range' && isInRange(date, dateRange)}
-                onClick={handleDateClick}
-              />
-            )
+        <div
+          ref={gridRef}
+          id={gridId}
+          style={styles.daysGrid}
+          role="grid"
+          aria-labelledby={labelId}
+          onKeyDown={handleKeyDown}
+        >
+          {weeks.map((week, weekIndex) => (
+            <div key={weekIndex} role="row" style={{ display: 'contents' }}>
+              {week.map((date, dayIndex) => (
+                date && (
+                  <DayCell
+                    key={`${date.year}-${date.month}-${date.day}-${weekIndex}-${dayIndex}`}
+                    date={date}
+                    currentMonth={viewMonth}
+                    isSelected={isDateSelected(date)}
+                    isToday={isToday(date)}
+                    isFocused={isSameDay(date, focusedDate)}
+                    isRangeStart={mode === 'range' && isSameDay(date, dateRange.start)}
+                    isRangeEnd={mode === 'range' && isSameDay(date, dateRange.end)}
+                    isInRange={mode === 'range' && isInRange(date, dateRange)}
+                    tabIndex={getTabIndex(date)}
+                    onClick={handleDateClick}
+                    onFocus={handleDateFocus}
+                    cellRef={isSameDay(date, focusedDate) ? focusedCellRef : undefined}
+                  />
+                )
+              ))}
+            </div>
           ))}
+        </div>
+
+        {/* Live region for screen reader announcements */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          {announcement}
         </div>
       </div>
 
@@ -773,10 +994,36 @@ export function StaticCalendar({
     mode === 'range' ? (initialSelected as DateRange) : { start: null, end: null }
   );
 
+  // Keyboard navigation state
+  const [focusedDate, setFocusedDate] = useState<CalendarDate | null>(() => {
+    if (Array.isArray(initialSelected) && initialSelected.length > 0 && initialSelected[0]) {
+      return initialSelected[0];
+    }
+    if (mode === 'range' && (initialSelected as DateRange).start) {
+      return (initialSelected as DateRange).start;
+    }
+    return { year: today.getFullYear(), month: today.getMonth(), day: today.getDate() };
+  });
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const focusedCellRef = useRef<HTMLButtonElement | null>(null);
+
+  // Live region for screen reader announcements
+  const [announcement, setAnnouncement] = useState<string>('');
+
   const labelId = generateId('calendar-label');
+  const gridId = generateId('calendar-grid');
 
   // Calendar grid
   const calendarGrid = useMemo(() => getCalendarGrid(viewYear, viewMonth), [viewYear, viewMonth]);
+
+  // Update view when focused date changes to a different month
+  const updateViewForDate = useCallback((date: CalendarDate) => {
+    if (date.month !== viewMonth || date.year !== viewYear) {
+      setViewMonth(date.month);
+      setViewYear(date.year);
+    }
+  }, [viewMonth, viewYear]);
 
   // Check if date is disabled
   const isDateDisabled = useCallback((date: CalendarDate): boolean => {
@@ -842,6 +1089,86 @@ export function StaticCalendar({
     }
   }, [mode, onChange, isDateDisabled]);
 
+  // Handle focus on a date cell
+  const handleDateFocus = useCallback((date: CalendarDate) => {
+    setFocusedDate(date);
+  }, []);
+
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!focusedDate) return;
+
+    const currentDate = calendarDateToDate(focusedDate);
+    let newDate: Date | null = null;
+    let handled = false;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() - 1);
+        handled = true;
+        break;
+      case 'ArrowRight':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + 1);
+        handled = true;
+        break;
+      case 'ArrowUp':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() - 7);
+        handled = true;
+        break;
+      case 'ArrowDown':
+        newDate = new Date(currentDate);
+        newDate.setDate(newDate.getDate() + 7);
+        handled = true;
+        break;
+      case 'Home':
+        newDate = new Date(focusedDate.year, focusedDate.month, 1);
+        handled = true;
+        break;
+      case 'End':
+        newDate = new Date(focusedDate.year, focusedDate.month + 1, 0);
+        handled = true;
+        break;
+      case 'PageUp':
+        newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() - 1);
+        handled = true;
+        break;
+      case 'PageDown':
+        newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() + 1);
+        handled = true;
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (!isDateDisabled(focusedDate)) {
+          handleDateClick(focusedDate);
+          setAnnouncement(`Selected ${formatDateForAria(focusedDate)}`);
+        }
+        return;
+      default:
+        return;
+    }
+
+    if (handled && newDate) {
+      e.preventDefault();
+      const newCalendarDate = dateToCalendarDate(newDate);
+      setFocusedDate(newCalendarDate);
+      updateViewForDate(newCalendarDate);
+      setAnnouncement(formatDateForAria(newCalendarDate));
+    }
+  }, [focusedDate, handleDateClick, updateViewForDate, isDateDisabled]);
+
+  // Focus the focused cell when focusedDate changes
+  useEffect(() => {
+    if (focusedCellRef.current) {
+      focusedCellRef.current.focus();
+    }
+  }, [focusedDate, viewMonth, viewYear]);
+
   // Check if a date is selected
   const isDateSelected = useCallback((date: CalendarDate): boolean => {
     if (mode === 'range') {
@@ -849,6 +1176,20 @@ export function StaticCalendar({
     }
     return selectedDates.some(d => isSameDay(d, date));
   }, [mode, selectedDates, dateRange]);
+
+  // Determine tabIndex for a date cell
+  const getTabIndex = useCallback((date: CalendarDate): number => {
+    return isSameDay(date, focusedDate) ? 0 : -1;
+  }, [focusedDate]);
+
+  // Split grid into weeks for proper row structure
+  const weeks = useMemo(() => {
+    const result: (CalendarDate | null)[][] = [];
+    for (let i = 0; i < calendarGrid.length; i += 7) {
+      result.push(calendarGrid.slice(i, i + 7));
+    }
+    return result;
+  }, [calendarGrid]);
 
   return (
     <div style={mergeStyles(styles.wrapper, wrapperStyle)} data-liquid-type="calendar">
@@ -866,7 +1207,7 @@ export function StaticCalendar({
             onClick={goToPreviousMonth}
             ariaLabel="Previous month"
           />
-          <span style={styles.monthYearLabel}>
+          <span style={styles.monthYearLabel} aria-live="polite">
             {MONTHS[viewMonth]} {viewYear}
           </span>
           <NavButton
@@ -879,30 +1220,72 @@ export function StaticCalendar({
         {/* Weekday headers */}
         <div style={styles.weekdaysRow} role="row">
           {WEEKDAYS.map(day => (
-            <div key={day} style={styles.weekday} role="columnheader">
+            <div key={day} style={styles.weekday} role="columnheader" aria-label={
+              day === 'Su' ? 'Sunday' :
+              day === 'Mo' ? 'Monday' :
+              day === 'Tu' ? 'Tuesday' :
+              day === 'We' ? 'Wednesday' :
+              day === 'Th' ? 'Thursday' :
+              day === 'Fr' ? 'Friday' : 'Saturday'
+            }>
               {day}
             </div>
           ))}
         </div>
 
         {/* Days grid */}
-        <div style={styles.daysGrid} role="grid">
-          {calendarGrid.map((date, index) => (
-            date && (
-              <DayCell
-                key={`${date.year}-${date.month}-${date.day}-${index}`}
-                date={date}
-                currentMonth={viewMonth}
-                isSelected={isDateSelected(date)}
-                isToday={isToday(date)}
-                isRangeStart={mode === 'range' && isSameDay(date, dateRange.start)}
-                isRangeEnd={mode === 'range' && isSameDay(date, dateRange.end)}
-                isInRange={mode === 'range' && isInRange(date, dateRange)}
-                isDisabled={isDateDisabled(date)}
-                onClick={handleDateClick}
-              />
-            )
+        <div
+          ref={gridRef}
+          id={gridId}
+          style={styles.daysGrid}
+          role="grid"
+          aria-labelledby={labelId}
+          onKeyDown={handleKeyDown}
+        >
+          {weeks.map((week, weekIndex) => (
+            <div key={weekIndex} role="row" style={{ display: 'contents' }}>
+              {week.map((date, dayIndex) => (
+                date && (
+                  <DayCell
+                    key={`${date.year}-${date.month}-${date.day}-${weekIndex}-${dayIndex}`}
+                    date={date}
+                    currentMonth={viewMonth}
+                    isSelected={isDateSelected(date)}
+                    isToday={isToday(date)}
+                    isFocused={isSameDay(date, focusedDate)}
+                    isRangeStart={mode === 'range' && isSameDay(date, dateRange.start)}
+                    isRangeEnd={mode === 'range' && isSameDay(date, dateRange.end)}
+                    isInRange={mode === 'range' && isInRange(date, dateRange)}
+                    isDisabled={isDateDisabled(date)}
+                    tabIndex={getTabIndex(date)}
+                    onClick={handleDateClick}
+                    onFocus={handleDateFocus}
+                    cellRef={isSameDay(date, focusedDate) ? focusedCellRef : undefined}
+                  />
+                )
+              ))}
+            </div>
           ))}
+        </div>
+
+        {/* Live region for screen reader announcements */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          {announcement}
         </div>
       </div>
 

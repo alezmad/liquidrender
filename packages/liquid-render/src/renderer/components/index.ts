@@ -183,7 +183,23 @@ export { Separator, StaticSeparator } from './separator';
 export { Split, StaticSplit, SplitPanel, NestedSplit } from './split';
 
 // Toast
-export { Toast, StaticToast } from './toast';
+export {
+  Toast,
+  StaticToast,
+  ToastProvider,
+  useToast,
+} from './toast';
+export type {
+  ToastVariant,
+  ToastPosition,
+  ToastAction,
+  ToastData,
+  ToastOptions,
+  ToastContextValue,
+  ToastFunction,
+  ToastProviderProps,
+  StaticToastProps,
+} from './toast';
 
 // ============================================================================
 // Wave 2 Components (More shadcn wrappers)

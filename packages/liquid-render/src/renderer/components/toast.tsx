@@ -1,7 +1,16 @@
-// Toast Component - Notification messages with auto-dismiss and variants
-import React, { useEffect, useState, useCallback } from 'react';
+// Toast Component - Notification manager with queue, stacking, and auto-dismiss
+// Inspired by Sonner toast library
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from 'react';
 import type { LiquidComponentProps } from './utils';
-import { tokens, baseStyles, mergeStyles, formatDisplayValue } from './utils';
+import { tokens, baseStyles, mergeStyles, formatDisplayValue, generateId } from './utils';
 import { resolveBinding } from '../data-context';
 
 // ============================================================================
@@ -10,16 +19,60 @@ import { resolveBinding } from '../data-context';
 
 type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
 
-interface ToastValue {
+type ToastPosition =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
+
+interface ToastAction {
+  label: string;
+  onClick?: () => void;
+}
+
+interface ToastData {
+  id: string;
+  title?: string;
+  description?: string;
+  variant: ToastVariant;
+  duration: number; // 0 = no auto-dismiss
+  dismissible: boolean;
+  action?: ToastAction;
+  createdAt: number;
+}
+
+interface ToastOptions {
   title?: string;
   description?: string;
   variant?: ToastVariant;
-  duration?: number; // in milliseconds, 0 = no auto-dismiss
+  duration?: number;
   dismissible?: boolean;
-  action?: {
-    label: string;
-    onClick?: () => void;
-  };
+  action?: ToastAction;
+}
+
+interface ToastContextValue {
+  toasts: ToastData[];
+  toast: ToastFunction;
+  dismiss: (id: string) => void;
+  dismissAll: () => void;
+}
+
+interface ToastFunction {
+  (options: ToastOptions): string;
+  success: (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) => string;
+  error: (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) => string;
+  warning: (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) => string;
+  info: (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) => string;
+}
+
+interface ToastProviderProps {
+  children: React.ReactNode;
+  position?: ToastPosition;
+  max?: number;
+  defaultDuration?: number;
+  gap?: number;
 }
 
 // ============================================================================
@@ -27,7 +80,35 @@ interface ToastValue {
 // ============================================================================
 
 const styles = {
-  container: (variant: ToastVariant, isVisible: boolean): React.CSSProperties => {
+  viewport: (position: ToastPosition, gap: number): React.CSSProperties => {
+    const positionStyles: Record<ToastPosition, React.CSSProperties> = {
+      'top-left': { top: tokens.spacing.lg, left: tokens.spacing.lg },
+      'top-center': { top: tokens.spacing.lg, left: '50%', transform: 'translateX(-50%)' },
+      'top-right': { top: tokens.spacing.lg, right: tokens.spacing.lg },
+      'bottom-left': { bottom: tokens.spacing.lg, left: tokens.spacing.lg },
+      'bottom-center': { bottom: tokens.spacing.lg, left: '50%', transform: 'translateX(-50%)' },
+      'bottom-right': { bottom: tokens.spacing.lg, right: tokens.spacing.lg },
+    };
+
+    return mergeStyles(baseStyles(), {
+      position: 'fixed',
+      zIndex: 9999,
+      display: 'flex',
+      flexDirection: position.startsWith('top') ? 'column' : 'column-reverse',
+      gap: `${gap}px`,
+      pointerEvents: 'none',
+      maxHeight: '100vh',
+      padding: tokens.spacing.md,
+      ...positionStyles[position],
+    });
+  },
+
+  toast: (
+    variant: ToastVariant,
+    isVisible: boolean,
+    isExiting: boolean,
+    position: ToastPosition
+  ): React.CSSProperties => {
     const variantStyles: Record<ToastVariant, React.CSSProperties> = {
       default: {
         backgroundColor: tokens.colors.card,
@@ -68,25 +149,38 @@ const styles = {
       },
     };
 
-    return mergeStyles(
-      baseStyles(),
-      {
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: tokens.spacing.sm,
-        padding: tokens.spacing.md,
-        borderRadius: tokens.radius.lg,
-        border: `1px solid ${tokens.colors.border}`,
-        boxShadow: tokens.shadow.lg,
-        minWidth: '300px',
-        maxWidth: '420px',
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(-8px)',
-        transition: `all ${tokens.transition.normal}`,
-        pointerEvents: isVisible ? 'auto' : 'none',
-      },
-      variantStyles[variant]
-    );
+    // Determine animation direction based on position
+    const isTop = position.startsWith('top');
+    const enterTransform = isTop ? 'translateY(-100%)' : 'translateY(100%)';
+    const exitTransform = isTop ? 'translateY(-100%)' : 'translateY(100%)';
+
+    let transform = 'translateY(0)';
+    let opacity = 1;
+
+    if (!isVisible) {
+      transform = enterTransform;
+      opacity = 0;
+    } else if (isExiting) {
+      transform = exitTransform;
+      opacity = 0;
+    }
+
+    return mergeStyles(baseStyles(), {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: tokens.spacing.sm,
+      padding: tokens.spacing.md,
+      borderRadius: tokens.radius.lg,
+      border: `1px solid ${tokens.colors.border}`,
+      boxShadow: tokens.shadow.lg,
+      minWidth: '300px',
+      maxWidth: '420px',
+      opacity,
+      transform,
+      transition: `all ${tokens.transition.normal}`,
+      pointerEvents: 'auto',
+      ...variantStyles[variant],
+    });
   },
 
   icon: (variant: ToastVariant): React.CSSProperties => {
@@ -177,13 +271,14 @@ const styles = {
 /**
  * Get variant from block style or value
  */
-function getVariant(block: { style?: { color?: string } }, value?: ToastValue): ToastVariant {
-  // Check value variant first
+function getVariant(
+  block: { style?: { color?: string } },
+  value?: { variant?: ToastVariant }
+): ToastVariant {
   if (value?.variant) {
     return value.variant;
   }
 
-  // Check block color style
   const blockColor = block.style?.color;
   if (blockColor) {
     switch (blockColor) {
@@ -213,16 +308,15 @@ function getVariant(block: { style?: { color?: string } }, value?: ToastValue): 
 /**
  * Extract toast configuration from raw value
  */
-function parseToastValue(rawValue: unknown): ToastValue {
+function parseToastValue(rawValue: unknown): ToastOptions {
   if (rawValue === null || rawValue === undefined) {
     return {};
   }
 
   if (typeof rawValue === 'object' && rawValue !== null) {
-    return rawValue as ToastValue;
+    return rawValue as ToastOptions;
   }
 
-  // Simple string becomes the title
   if (typeof rawValue === 'string') {
     return { title: rawValue };
   }
@@ -325,7 +419,10 @@ function CloseIcon({ style }: { style: React.CSSProperties }): React.ReactElemen
 /**
  * Get icon for variant
  */
-function getVariantIcon(variant: ToastVariant, style: React.CSSProperties): React.ReactElement | null {
+function getVariantIcon(
+  variant: ToastVariant,
+  style: React.CSSProperties
+): React.ReactElement | null {
   switch (variant) {
     case 'success':
       return <SuccessIcon style={style} />;
@@ -341,7 +438,264 @@ function getVariantIcon(variant: ToastVariant, style: React.CSSProperties): Reac
 }
 
 // ============================================================================
-// Main Component
+// Context
+// ============================================================================
+
+const ToastContext = createContext<ToastContextValue | null>(null);
+
+/**
+ * Hook to access toast functionality
+ */
+export function useToast(): ToastContextValue {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+}
+
+// ============================================================================
+// Toast Item Component
+// ============================================================================
+
+interface ToastItemProps {
+  toast: ToastData;
+  position: ToastPosition;
+  onDismiss: (id: string) => void;
+}
+
+function ToastItem({ toast, position, onDismiss }: ToastItemProps): React.ReactElement {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Enter animation
+  useEffect(() => {
+    // Small delay for enter animation
+    const enterTimer = setTimeout(() => {
+      setIsVisible(true);
+    }, 10);
+
+    return () => clearTimeout(enterTimer);
+  }, []);
+
+  // Auto-dismiss timer
+  useEffect(() => {
+    if (toast.duration > 0) {
+      timerRef.current = setTimeout(() => {
+        handleDismiss();
+      }, toast.duration);
+
+      return () => {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+      };
+    }
+  }, [toast.duration, toast.id]);
+
+  const handleDismiss = useCallback(() => {
+    // Start exit animation
+    setIsExiting(true);
+
+    // Remove after animation completes
+    setTimeout(() => {
+      onDismiss(toast.id);
+    }, 200);
+  }, [onDismiss, toast.id]);
+
+  const handleActionClick = useCallback(() => {
+    if (toast.action?.onClick) {
+      toast.action.onClick();
+    }
+    handleDismiss();
+  }, [toast.action, handleDismiss]);
+
+  // Pause timer on hover
+  const handleMouseEnter = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // Resume timer on mouse leave
+  const handleMouseLeave = useCallback(() => {
+    if (toast.duration > 0 && !isExiting) {
+      timerRef.current = setTimeout(() => {
+        handleDismiss();
+      }, toast.duration / 2); // Give half the time remaining
+    }
+  }, [toast.duration, isExiting, handleDismiss]);
+
+  const icon = getVariantIcon(toast.variant, styles.icon(toast.variant));
+
+  return (
+    <div
+      data-liquid-type="toast"
+      data-variant={toast.variant}
+      data-toast-id={toast.id}
+      role="alert"
+      aria-live="polite"
+      style={styles.toast(toast.variant, isVisible, isExiting, position)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {icon}
+
+      <div style={styles.content()}>
+        {toast.title && <div style={styles.title()}>{toast.title}</div>}
+        {toast.description && <div style={styles.description()}>{toast.description}</div>}
+
+        {toast.action && (
+          <div style={styles.actions()}>
+            <button type="button" style={styles.actionButton()} onClick={handleActionClick}>
+              {toast.action.label}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {toast.dismissible && (
+        <button
+          type="button"
+          style={styles.dismissButton()}
+          onClick={handleDismiss}
+          aria-label="Dismiss notification"
+        >
+          <CloseIcon style={{ width: '14px', height: '14px' }} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Toast Viewport Component
+// ============================================================================
+
+interface ToastViewportProps {
+  toasts: ToastData[];
+  position: ToastPosition;
+  max: number;
+  gap: number;
+  onDismiss: (id: string) => void;
+}
+
+function ToastViewport({
+  toasts,
+  position,
+  max,
+  gap,
+  onDismiss,
+}: ToastViewportProps): React.ReactElement | null {
+  // Limit visible toasts
+  const visibleToasts = toasts.slice(0, max);
+
+  if (visibleToasts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div style={styles.viewport(position, gap)} aria-label="Notifications" role="region">
+      {visibleToasts.map((toast) => (
+        <ToastItem key={toast.id} toast={toast} position={position} onDismiss={onDismiss} />
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// Toast Provider Component
+// ============================================================================
+
+export function ToastProvider({
+  children,
+  position = 'top-right',
+  max = 5,
+  defaultDuration = 5000,
+  gap = 8,
+}: ToastProviderProps): React.ReactElement {
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+
+  const dismiss = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const dismissAll = useCallback(() => {
+    setToasts([]);
+  }, []);
+
+  const addToast = useCallback(
+    (options: ToastOptions): string => {
+      const id = generateId('toast');
+      const newToast: ToastData = {
+        id,
+        title: options.title,
+        description: options.description,
+        variant: options.variant || 'default',
+        duration: options.duration ?? defaultDuration,
+        dismissible: options.dismissible ?? true,
+        action: options.action,
+        createdAt: Date.now(),
+      };
+
+      setToasts((prev) => {
+        // Add new toast to the beginning (most recent first)
+        const updated = [newToast, ...prev];
+        return updated;
+      });
+
+      return id;
+    },
+    [defaultDuration]
+  );
+
+  // Create the toast function with convenience methods
+  const toastFunction = useMemo(() => {
+    const fn = ((options: ToastOptions) => addToast(options)) as ToastFunction;
+
+    fn.success = (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) =>
+      addToast({ ...options, title: message, variant: 'success' });
+
+    fn.error = (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) =>
+      addToast({ ...options, title: message, variant: 'error' });
+
+    fn.warning = (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) =>
+      addToast({ ...options, title: message, variant: 'warning' });
+
+    fn.info = (message: string, options?: Omit<ToastOptions, 'variant' | 'title'>) =>
+      addToast({ ...options, title: message, variant: 'info' });
+
+    return fn;
+  }, [addToast]);
+
+  const contextValue = useMemo<ToastContextValue>(
+    () => ({
+      toasts,
+      toast: toastFunction,
+      dismiss,
+      dismissAll,
+    }),
+    [toasts, toastFunction, dismiss, dismissAll]
+  );
+
+  return (
+    <ToastContext.Provider value={contextValue}>
+      {children}
+      <ToastViewport
+        toasts={toasts}
+        position={position}
+        max={max}
+        gap={gap}
+        onDismiss={dismiss}
+      />
+    </ToastContext.Provider>
+  );
+}
+
+// ============================================================================
+// Main Component (for LiquidCode block rendering)
 // ============================================================================
 
 export function Toast({ block, data }: LiquidComponentProps): React.ReactElement {
@@ -357,29 +711,35 @@ export function Toast({ block, data }: LiquidComponentProps): React.ReactElement
   // Extract properties with defaults
   const title = toastConfig.title ?? block.label ?? '';
   const description = toastConfig.description ?? '';
-  const duration = toastConfig.duration ?? 5000; // 5 seconds default
+  const duration = toastConfig.duration ?? 5000;
   const dismissible = toastConfig.dismissible ?? true;
   const action = toastConfig.action;
 
-  // Visibility state
+  // Visibility state for standalone usage
   const [isVisible, setIsVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
+
+  // Enter animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-dismiss timer
   useEffect(() => {
-    if (duration > 0 && isVisible) {
+    if (duration > 0 && isVisible && !isExiting) {
       const timer = setTimeout(() => {
-        setIsVisible(false);
+        handleDismiss();
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration, isVisible]);
+  }, [duration, isVisible, isExiting]);
 
-  // Handle dismiss
   const handleDismiss = useCallback(() => {
-    setIsVisible(false);
+    setIsExiting(true);
+    setTimeout(() => setIsVisible(false), 200);
   }, []);
 
-  // Handle action click
   const handleActionClick = useCallback(() => {
     if (action?.onClick) {
       action.onClick();
@@ -387,12 +747,16 @@ export function Toast({ block, data }: LiquidComponentProps): React.ReactElement
     handleDismiss();
   }, [action, handleDismiss]);
 
-  // Empty state - nothing to render
+  // Empty state
   if (!title && !description) {
     return <></>;
   }
 
-  // Icon for variant
+  // Hidden after exit animation
+  if (!isVisible && isExiting) {
+    return <></>;
+  }
+
   const icon = getVariantIcon(variant, styles.icon(variant));
 
   return (
@@ -401,31 +765,23 @@ export function Toast({ block, data }: LiquidComponentProps): React.ReactElement
       data-variant={variant}
       role="alert"
       aria-live="polite"
-      style={styles.container(variant, isVisible)}
+      style={styles.toast(variant, isVisible, isExiting, 'top-right')}
     >
-      {/* Icon */}
       {icon}
 
-      {/* Content */}
       <div style={styles.content()}>
         {title && <div style={styles.title()}>{title}</div>}
         {description && <div style={styles.description()}>{description}</div>}
 
-        {/* Action button */}
         {action && (
           <div style={styles.actions()}>
-            <button
-              type="button"
-              style={styles.actionButton()}
-              onClick={handleActionClick}
-            >
+            <button type="button" style={styles.actionButton()} onClick={handleActionClick}>
               {action.label}
             </button>
           </div>
         )}
       </div>
 
-      {/* Dismiss button */}
       {dismissible && (
         <button
           type="button"
@@ -450,11 +806,9 @@ interface StaticToastProps {
   variant?: ToastVariant;
   duration?: number;
   dismissible?: boolean;
-  action?: {
-    label: string;
-    onClick?: () => void;
-  };
+  action?: ToastAction;
   onDismiss?: () => void;
+  position?: ToastPosition;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -467,29 +821,36 @@ export function StaticToast({
   dismissible = true,
   action,
   onDismiss,
+  position = 'top-right',
   style: customStyle,
 }: StaticToastProps): React.ReactElement {
-  // Visibility state
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  // Enter animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-dismiss timer
   useEffect(() => {
-    if (duration > 0 && isVisible) {
+    if (duration > 0 && isVisible && !isExiting) {
       const timer = setTimeout(() => {
-        setIsVisible(false);
-        onDismiss?.();
+        handleDismiss();
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration, isVisible, onDismiss]);
+  }, [duration, isVisible, isExiting]);
 
-  // Handle dismiss
   const handleDismiss = useCallback(() => {
-    setIsVisible(false);
-    onDismiss?.();
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsVisible(false);
+      onDismiss?.();
+    }, 200);
   }, [onDismiss]);
 
-  // Handle action click
   const handleActionClick = useCallback(() => {
     if (action?.onClick) {
       action.onClick();
@@ -497,16 +858,20 @@ export function StaticToast({
     handleDismiss();
   }, [action, handleDismiss]);
 
-  // Empty state - nothing to render
+  // Empty state
   if (!title && !description) {
     return <></>;
   }
 
-  // Icon for variant
+  // Hidden after exit animation
+  if (!isVisible && isExiting) {
+    return <></>;
+  }
+
   const icon = getVariantIcon(variant, styles.icon(variant));
 
   const containerStyle = mergeStyles(
-    styles.container(variant, isVisible),
+    styles.toast(variant, isVisible, isExiting, position),
     customStyle
   );
 
@@ -518,29 +883,21 @@ export function StaticToast({
       aria-live="polite"
       style={containerStyle}
     >
-      {/* Icon */}
       {icon}
 
-      {/* Content */}
       <div style={styles.content()}>
         {title && <div style={styles.title()}>{title}</div>}
         {description && <div style={styles.description()}>{description}</div>}
 
-        {/* Action button */}
         {action && (
           <div style={styles.actions()}>
-            <button
-              type="button"
-              style={styles.actionButton()}
-              onClick={handleActionClick}
-            >
+            <button type="button" style={styles.actionButton()} onClick={handleActionClick}>
               {action.label}
             </button>
           </div>
         )}
       </div>
 
-      {/* Dismiss button */}
       {dismissible && (
         <button
           type="button"
@@ -554,5 +911,21 @@ export function StaticToast({
     </div>
   );
 }
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export type {
+  ToastVariant,
+  ToastPosition,
+  ToastAction,
+  ToastData,
+  ToastOptions,
+  ToastContextValue,
+  ToastFunction,
+  ToastProviderProps,
+  StaticToastProps,
+};
 
 export default Toast;

@@ -158,6 +158,143 @@ export { Stack, VStack, HStack, StaticStack, StaticVStack, StaticHStack } from '
 export { Grid, StaticGrid, GridItem, ResponsiveGrid } from './grid';
 
 // ============================================================================
+// Wave 1 Components (shadcn wrappers)
+// ============================================================================
+
+// Alert
+export { Alert, StaticAlert } from './alert';
+
+// Calendar
+export { Calendar, StaticCalendar } from './calendar';
+
+// Carousel
+export { Carousel, StaticCarousel } from './carousel';
+
+// Collapsible
+export { Collapsible, StaticCollapsible } from './collapsible';
+
+// OTP
+export { OTP, StaticOTP } from './otp';
+
+// Separator
+export { Separator, StaticSeparator } from './separator';
+
+// Split
+export { Split, StaticSplit, SplitPanel, NestedSplit } from './split';
+
+// Toast
+export { Toast, StaticToast } from './toast';
+
+// ============================================================================
+// Wave 2 Components (More shadcn wrappers)
+// ============================================================================
+
+// AlertDialog
+export { AlertDialog, StaticAlertDialog } from './alertdialog';
+
+// Dropdown
+export { Dropdown, StaticDropdown } from './dropdown';
+
+// ContextMenu
+export { ContextMenu, StaticContextMenu } from './contextmenu';
+
+// Command
+export { Command, StaticCommand } from './command';
+
+// Pagination
+export { Pagination, StaticPagination } from './pagination';
+
+// HoverCard
+export { HoverCard, StaticHoverCard } from './hovercard';
+
+// ============================================================================
+// Wave 3 Components (Form controls)
+// ============================================================================
+
+// Upload
+export { Upload, StaticUpload } from './upload';
+
+// Color
+export { Color, StaticColor } from './color';
+
+// Time
+export { Time, StaticTime } from './time';
+
+// Rating
+export { Rating, StaticRating } from './rating';
+
+// Empty
+export { Empty, StaticEmpty } from './empty';
+
+// ============================================================================
+// Wave 4 Components (Loading states)
+// ============================================================================
+
+// Skeleton
+export { Skeleton, StaticSkeleton } from './skeleton';
+
+// Spinner
+export { Spinner, StaticSpinner } from './spinner';
+
+// ============================================================================
+// Wave 5 Components (Simple Recharts)
+// ============================================================================
+
+// Gauge
+export { Gauge, StaticGauge } from './gauge';
+
+// Scatter
+export { Scatter, StaticScatter } from './scatter';
+
+// Sparkline
+export { Sparkline, StaticSparkline } from './sparkline';
+
+// ============================================================================
+// Wave 6 Components (Media + Timeline)
+// ============================================================================
+
+// Video
+export { Video, StaticVideo } from './video';
+
+// Audio
+export { Audio, StaticAudio } from './audio';
+
+// Lightbox
+export { Lightbox, StaticLightbox } from './lightbox';
+
+// Timeline
+export { Timeline, StaticTimeline } from './timeline';
+
+// ============================================================================
+// Wave 7 Components (Complex charts)
+// ============================================================================
+
+// Heatmap
+export { Heatmap, StaticHeatmap } from './heatmap';
+
+// Sankey
+export { Sankey, StaticSankey } from './sankey';
+
+// Tree
+export { Tree, StaticTree } from './tree';
+
+// ============================================================================
+// Wave 8 Components (Very complex)
+// ============================================================================
+
+// Kanban
+export { Kanban, StaticKanban } from './kanban';
+
+// Org
+export { Org, StaticOrg } from './org';
+
+// Map
+export { Map, StaticMap } from './map';
+
+// Flow
+export { Flow, StaticFlow } from './flow';
+
+// ============================================================================
 // Component Map for Registry
 // ============================================================================
 
@@ -201,6 +338,49 @@ import { List } from './list';
 import { Image } from './image';
 import { Stack, VStack, HStack } from './stack';
 import { Grid } from './grid';
+// Wave 1 imports
+import { Alert } from './alert';
+import { Calendar } from './calendar';
+import { Carousel } from './carousel';
+import { Collapsible } from './collapsible';
+import { OTP } from './otp';
+import { Separator } from './separator';
+import { Split } from './split';
+import { Toast } from './toast';
+// Wave 2 imports
+import { AlertDialog } from './alertdialog';
+import { Dropdown } from './dropdown';
+import { ContextMenu } from './contextmenu';
+import { Command } from './command';
+import { Pagination } from './pagination';
+import { HoverCard } from './hovercard';
+// Wave 3 imports
+import { Upload } from './upload';
+import { Color } from './color';
+import { Time } from './time';
+import { Rating } from './rating';
+import { Empty } from './empty';
+// Wave 4 imports
+import { Skeleton } from './skeleton';
+import { Spinner } from './spinner';
+// Wave 5 imports
+import { Gauge } from './gauge';
+import { Scatter } from './scatter';
+import { Sparkline } from './sparkline';
+// Wave 6 imports
+import { Video } from './video';
+import { Audio } from './audio';
+import { Lightbox } from './lightbox';
+import { Timeline } from './timeline';
+// Wave 7 imports
+import { Heatmap } from './heatmap';
+import { Sankey } from './sankey';
+import { Tree } from './tree';
+// Wave 8 imports
+import { Kanban } from './kanban';
+import { Org } from './org';
+import { Map } from './map';
+import { Flow } from './flow';
 
 import type { LiquidComponentProps } from './utils';
 import type { ComponentType } from 'react';
@@ -252,4 +432,47 @@ export const liquidComponents: Record<string, ComponentType<LiquidComponentProps
   vstack: VStack,
   hstack: HStack,
   grid: Grid,
+  // Wave 1 components
+  alert: Alert,
+  calendar: Calendar,
+  carousel: Carousel,
+  collapsible: Collapsible,
+  otp: OTP,
+  separator: Separator,
+  split: Split,
+  toast: Toast,
+  // Wave 2 components
+  alertdialog: AlertDialog,
+  dropdown: Dropdown,
+  contextmenu: ContextMenu,
+  command: Command,
+  pagination: Pagination,
+  hovercard: HoverCard,
+  // Wave 3 components
+  upload: Upload,
+  color: Color,
+  time: Time,
+  rating: Rating,
+  empty: Empty,
+  // Wave 4 components
+  skeleton: Skeleton,
+  spinner: Spinner,
+  // Wave 5 components
+  gauge: Gauge,
+  scatter: Scatter,
+  sparkline: Sparkline,
+  // Wave 6 components
+  video: Video,
+  audio: Audio,
+  lightbox: Lightbox,
+  timeline: Timeline,
+  // Wave 7 components
+  heatmap: Heatmap,
+  sankey: Sankey,
+  tree: Tree,
+  // Wave 8 components
+  kanban: Kanban,
+  org: Org,
+  map: Map,
+  flow: Flow,
 };

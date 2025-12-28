@@ -98,6 +98,26 @@ export const UI_TYPE_CODES: Record<string, string> = {
   Kb: 'kanban',
   Ca: 'calendar',
   Ti: 'timeline',
+  // Feedback
+  Al: 'alert',
+  Dg: 'alertdialog',
+  To: 'toast',
+  // Loading States
+  Ld: 'skeleton',
+  Lr: 'spinner',
+  // Layout Utilities
+  Co: 'collapsible',
+  Sv: 'separator',
+  // Menus & Commands
+  Dn: 'dropdown',
+  Cx: 'contextmenu',
+  Cm: 'command',
+  Pn: 'pagination',
+  Hc: 'hovercard',
+  // Empty States
+  Ep: 'empty',
+  // Charts (additional)
+  Sc: 'scatter',
   // Custom (LLM-generated components)
   Custom: 'custom',
 };

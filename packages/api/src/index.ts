@@ -13,6 +13,7 @@ import { adminRouter } from "./modules/admin/router";
 import { aiRouter } from "./modules/ai/router";
 import { authRouter } from "./modules/auth/router";
 import { billingRouter } from "./modules/billing/router";
+import { knosiaRouter } from "./modules/knosia/router";
 import { organizationRouter } from "./modules/organization/router";
 import { storageRouter } from "./modules/storage/router";
 import { vocabularyRouter } from "./modules/vocabulary/router";
@@ -49,6 +50,7 @@ const appRouter = new Hono()
   .route("/ai", aiRouter)
   .route("/auth", authRouter)
   .route("/billing", billingRouter)
+  .route("/knosia", knosiaRouter)
   .route("/organizations", organizationRouter)
   .route("/storage", storageRouter)
   .route("/vocabulary", vocabularyRouter)

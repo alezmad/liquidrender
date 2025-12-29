@@ -80,3 +80,7 @@ When starting a new task:
 ## Documentation Usage
 
 Examples from documentation are illustrative. Adapt them to match existing repository patterns rather than copying verbatim.
+
+## Context7 MCP
+
+Always use Context7 when tasks involve code generation, setup or configuration steps, or library/API documentation. Automatically use the Context7 MCP tools to resolve library IDs and fetch library docs without requiring explicit user request.

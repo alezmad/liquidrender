@@ -170,6 +170,66 @@ export {
 } from './emitters';
 
 // =============================================================================
+// VOCABULARY (Query Engine - Wave 1)
+// =============================================================================
+
+export {
+  // Types
+  type SlotEntry,
+  type MetricSlotEntry,
+  type DimensionSlotEntry,
+  type Pattern,
+  type SlotType,
+  type SynonymRegistry,
+  type CompiledVocabulary,
+  type VocabularyCompilerOptions,
+  // Patterns
+  DEFAULT_PATTERNS,
+  TIME_SLOTS,
+  createPattern,
+  // Synonyms
+  GLOBAL_SYNONYMS,
+  ACTION_WORDS,
+  createSynonymRegistry,
+  resolveSynonym,
+  // Compiler
+  compileVocabulary,
+  generatePatternsFromVocabulary,
+} from './vocabulary';
+
+// =============================================================================
+// QUERY ENGINE (Query Engine - Wave 2 & 3)
+// =============================================================================
+
+export {
+  // Types
+  type QueryContext,
+  type RoleContext,
+  type QueryOptions as NLQueryOptions,
+  type NormalizeResult,
+  type Substitution,
+  type MatchResult,
+  type VocabularyResolution,
+  type QueryTrace,
+  type FallbackResult,
+  type QueryResult as NLQueryResult,
+  type QueryErrorCode,
+  // Normalizer
+  normalize,
+  tokenize,
+  applySynonyms,
+  // Matcher
+  match,
+  matchPattern,
+  fillSlots,
+  buildOutput,
+  // Engine
+  query as nlQuery,
+  createQueryEngine,
+  QueryEngine,
+} from './query';
+
+// =============================================================================
 // CONVENIENCE FUNCTIONS
 // =============================================================================
 

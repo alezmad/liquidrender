@@ -1,0 +1,91 @@
+id: WF-0017
+name: Query Engine
+status: completed
+created: 2025-12-29
+completed: 2025-12-29
+location: packages/liquid-connect/src
+
+git:
+  start_tag: WF-0017-start
+  start_commit: 55b2d06
+
+waves:
+  - id: 0
+    name: Bootstrap
+    status: completed
+    type: sequential
+    tasks:
+      - id: T0a
+        name: vocabulary/types.ts
+        status: completed
+      - id: T0b
+        name: vocabulary/index.ts
+        status: completed
+      - id: T0c
+        name: query/types.ts
+        status: completed
+      - id: T0d
+        name: query/index.ts
+        status: completed
+
+  - id: 1
+    name: Core Building Blocks
+    status: completed
+    type: parallel
+    tasks:
+      - id: T1a
+        name: vocabulary/patterns.ts
+        status: completed
+      - id: T1b
+        name: vocabulary/synonyms.ts
+        status: completed
+
+  - id: 2
+    name: Query Processing
+    status: completed
+    type: parallel
+    tasks:
+      - id: T2a
+        name: query/normalizer.ts
+        status: completed
+      - id: T2b
+        name: query/matcher.ts
+        status: completed
+
+  - id: 3
+    name: Integration
+    status: completed
+    type: sequential
+    tasks:
+      - id: T3a
+        name: vocabulary/compiler.ts
+        status: completed
+      - id: T3b
+        name: query/engine.ts
+        status: completed
+      - id: T3c
+        name: Update main index.ts
+        status: completed
+
+context:
+  artifacts:
+    - .claude/artifacts/2025-12-29-query-engine-implementation-plan.md
+    - .claude/artifacts/2025-12-29-query-engine-vocabulary-bridge.md
+
+  key_files:
+    - packages/liquid-connect/src/uvb/models.ts  # DetectedVocabulary
+    - packages/liquid-connect/src/index.ts       # Main exports
+    - packages/liquid-connect/src/compiler/      # AST validation
+
+decisions:
+  - LLM fallback deferred to future wave
+  - Use existing compiler for LC validation
+  - 3-level synonym resolution (user→org→global)
+  - Dynamic pattern generation from vocabulary
+
+summary:
+  files_created: 10
+  total_lines: ~3100
+  patterns: 31 default + dynamic
+  synonyms: 120+ global
+  time_slots: 60+

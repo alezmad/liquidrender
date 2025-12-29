@@ -1,4 +1,11 @@
-import { jsonb, pgEnum, pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
+import {
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  integer,
+} from "drizzle-orm/pg-core";
 
 import { generateId } from "@turbostarter/shared/utils";
 

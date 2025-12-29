@@ -1,0 +1,103 @@
+id: WF-0017
+name: Knosia API V1
+description: Implement Knosia semantic layer API - 15 tables, 6 modules
+status: completed
+created: 2025-12-29T03:20:00Z
+completed: 2025-12-29T14:20:00Z
+
+git:
+  branch: main
+  start_commit: 1b3512e
+  start_tag: WF-0017-start
+
+context:
+  files:
+    - .claude/artifacts/2025-12-29-knosia-architecture-vision.md
+    - .claude/artifacts/2025-12-29-0315-knosia-api-contract-spec.md
+    - .claude/artifacts/2025-12-29-query-engine-vocabulary-bridge.md
+    - packages/db/src/schema/vocabulary.ts
+    - packages/api/src/modules/vocabulary/router.ts
+  tokens_estimated: 14000
+
+waves:
+  - id: 0
+    name: Schema
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Database Schema (15 tables)
+        file: packages/db/src/schema/knosia.ts
+        status: completed
+        complexity: L
+
+  - id: 1
+    name: API Modules
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: Connections Module
+        files:
+          - packages/api/src/modules/knosia/connections/router.ts
+          - packages/api/src/modules/knosia/connections/queries.ts
+          - packages/api/src/modules/knosia/connections/mutations.ts
+          - packages/api/src/modules/knosia/connections/schemas.ts
+        status: completed
+        complexity: M
+      - id: T2
+        name: Analysis Module (SSE)
+        files:
+          - packages/api/src/modules/knosia/analysis/router.ts
+          - packages/api/src/modules/knosia/analysis/queries.ts
+          - packages/api/src/modules/knosia/analysis/schemas.ts
+        status: completed
+        complexity: M
+      - id: T3
+        name: Vocabulary Module
+        files:
+          - packages/api/src/modules/knosia/vocabulary/router.ts
+          - packages/api/src/modules/knosia/vocabulary/queries.ts
+          - packages/api/src/modules/knosia/vocabulary/mutations.ts
+          - packages/api/src/modules/knosia/vocabulary/schemas.ts
+        status: completed
+        complexity: M
+      - id: T4
+        name: Briefing Module
+        files:
+          - packages/api/src/modules/knosia/briefing/router.ts
+          - packages/api/src/modules/knosia/briefing/queries.ts
+          - packages/api/src/modules/knosia/briefing/schemas.ts
+        status: completed
+        complexity: S
+      - id: T5
+        name: Conversation Module
+        files:
+          - packages/api/src/modules/knosia/conversation/router.ts
+          - packages/api/src/modules/knosia/conversation/queries.ts
+          - packages/api/src/modules/knosia/conversation/schemas.ts
+        status: completed
+        complexity: M
+      - id: T6
+        name: Preferences Module
+        files:
+          - packages/api/src/modules/knosia/preferences/router.ts
+          - packages/api/src/modules/knosia/preferences/queries.ts
+          - packages/api/src/modules/knosia/preferences/mutations.ts
+          - packages/api/src/modules/knosia/preferences/schemas.ts
+        status: completed
+        complexity: S
+
+  - id: 2
+    name: Integration
+    type: sequential
+    status: completed
+    tasks:
+      - id: T7
+        name: Router Integration
+        files:
+          - packages/api/src/modules/knosia/router.ts
+        status: completed
+        complexity: S
+
+current_wave: 2

@@ -63,3 +63,4 @@ dist/
 
 # Large voice model files
 .claude/piper-voices/*.onnx
+.mcp.json

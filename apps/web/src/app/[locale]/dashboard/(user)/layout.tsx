@@ -22,6 +22,11 @@ const menu = [
         href: pathsConfig.dashboard.user.ai,
         icon: Icons.Brain,
       },
+      {
+        title: "vocabulary",
+        href: pathsConfig.dashboard.user.vocabulary,
+        icon: Icons.BookOpen,
+      },
     ],
   },
   {

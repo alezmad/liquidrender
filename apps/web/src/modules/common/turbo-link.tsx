@@ -3,17 +3,21 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import type { LinkProps } from "next/link";
-import type { AnchorHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 
-type TurboLinkProps = LinkProps &
-  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> & {
-    children?: React.ReactNode;
-  };
+type TurboLinkProps = ComponentProps<typeof Link>;
 
-export const TurboLink = (props: TurboLinkProps) => {
+export const TurboLink = ({
+  onMouseEnter,
+  onPointerEnter,
+  onTouchStart,
+  onFocus,
+  children,
+  ...props
+}: TurboLinkProps) => {
   const router = useRouter();
-  const strHref = typeof props.href === "string" ? props.href : props.href.href;
+  const strHref =
+    typeof props.href === "string" ? props.href : props.href?.href;
 
   const conditionalPrefetch = () => {
     if (strHref) {
@@ -27,22 +31,22 @@ export const TurboLink = (props: TurboLinkProps) => {
       prefetch={false}
       onMouseEnter={(e) => {
         conditionalPrefetch();
-        return props.onMouseEnter?.(e);
+        onMouseEnter?.(e);
       }}
       onPointerEnter={(e) => {
         conditionalPrefetch();
-        return props.onPointerEnter?.(e);
+        onPointerEnter?.(e);
       }}
       onTouchStart={(e) => {
         conditionalPrefetch();
-        return props.onTouchStart?.(e);
+        onTouchStart?.(e);
       }}
       onFocus={(e) => {
         conditionalPrefetch();
-        return props.onFocus?.(e);
+        onFocus?.(e);
       }}
     >
-      {props.children}
+      {children}
     </Link>
   );
 };

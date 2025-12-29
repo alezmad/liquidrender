@@ -44,6 +44,7 @@ const pathsConfig = {
     user: {
       index: DASHBOARD_PREFIX,
       ai: `${DASHBOARD_PREFIX}/ai`,
+      vocabulary: `${DASHBOARD_PREFIX}/vocabulary`,
       settings: {
         index: `${DASHBOARD_PREFIX}/settings`,
         security: `${DASHBOARD_PREFIX}/settings/security`,

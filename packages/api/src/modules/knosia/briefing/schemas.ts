@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+import { connectionIdSchema } from "../shared-schemas";
+
 // ============================================================================
 // REQUEST SCHEMAS
 // ============================================================================
 
 export const getBriefingSchema = z.object({
-  connectionId: z.string().uuid().optional(),
+  connectionId: connectionIdSchema.optional(),
   date: z.string().date().optional(),
 });
 

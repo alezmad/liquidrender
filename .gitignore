@@ -60,3 +60,6 @@ dist/
 
 # TTS audio cache
 .claude/audio/
+
+# Large voice model files
+.claude/piper-voices/*.onnx

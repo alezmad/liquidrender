@@ -1,0 +1,83 @@
+workflow:
+  id: WF-0019
+  name: Knosia Onboarding Foundation
+  status: completed
+  created: 2025-12-29T23:32:00
+  completed: 2025-12-30T00:30:00
+
+git:
+  branch: main
+  commit: b3db360
+  tag: WF-0019-start
+
+progress:
+  current_wave: 4
+  total_waves: 4
+  tasks_completed: 10
+  tasks_total: 10
+
+waves:
+  - wave: 0
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0.1
+        name: Paths config
+        status: completed
+        files: [apps/web/src/config/paths.ts]
+      - id: T0.2
+        name: i18n translations
+        status: completed
+        files: [packages/i18n/src/translations/en/knosia.json, packages/i18n/src/translations/es/knosia.json]
+      - id: T0.3
+        name: Types + barrel
+        status: completed
+        files: [apps/web/src/modules/onboarding/types.ts, apps/web/src/modules/onboarding/index.ts]
+
+  - wave: 1
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1.1
+        name: Onboarding layout
+        status: completed
+        files: [apps/web/src/modules/onboarding/components/layout/onboarding-layout.tsx, apps/web/src/modules/onboarding/components/layout/progress-indicator.tsx]
+      - id: T1.2
+        name: Database selector
+        status: completed
+        files: [apps/web/src/modules/onboarding/components/connect/database-selector.tsx]
+      - id: T1.3
+        name: Hooks
+        status: completed
+        files: [apps/web/src/modules/onboarding/hooks/use-connection-test.ts, apps/web/src/modules/onboarding/hooks/use-analysis.ts, apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts]
+
+  - wave: 2
+    type: parallel
+    status: completed
+    tasks:
+      - id: T2.1
+        name: Connection form
+        status: completed
+        files: [apps/web/src/modules/onboarding/components/connect/connection-form.tsx, apps/web/src/modules/onboarding/components/connect/connection-test.tsx]
+      - id: T2.2
+        name: Analysis progress
+        status: completed
+        files: [apps/web/src/modules/onboarding/components/review/analysis-progress.tsx]
+      - id: T2.3
+        name: Detection review
+        status: completed
+        files: [apps/web/src/modules/onboarding/components/review/detection-review.tsx, apps/web/src/modules/onboarding/components/review/business-type-card.tsx, apps/web/src/modules/onboarding/components/review/schema-summary.tsx, apps/web/src/modules/onboarding/components/review/index.ts]
+
+  - wave: 3
+    type: sequential
+    status: completed
+    tasks:
+      - id: T3.1
+        name: Route pages
+        status: completed
+        files: [apps/web/src/app/[locale]/onboarding/layout.tsx, apps/web/src/app/[locale]/onboarding/page.tsx, apps/web/src/app/[locale]/onboarding/connect/page.tsx, apps/web/src/app/[locale]/onboarding/review/page.tsx]
+
+validation:
+  last_run: 2025-12-30T00:30:00
+  typecheck: pass
+  build: null

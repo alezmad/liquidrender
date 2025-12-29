@@ -1,0 +1,201 @@
+{
+  "onboarding": {
+    "title": "Comienza con Knosia",
+    "steps": {
+      "connect": "Conectar Datos",
+      "understand": "Confirmar Comprension",
+      "dashboard": "Tu Dashboard"
+    },
+    "connect": {
+      "title": "Conecta tus datos",
+      "description": "Analizaremos tu esquema y te pondremos en marcha—generalmente en menos de un minuto.",
+      "selectDatabase": "Selecciona tu base de datos",
+      "security": "Acceso de solo lectura. Tus datos siguen siendo tuyos.",
+      "securityLink": "Como usamos el acceso",
+      "databases": {
+        "postgres": "PostgreSQL",
+        "snowflake": "Snowflake",
+        "bigquery": "BigQuery",
+        "mysql": "MySQL",
+        "redshift": "Redshift",
+        "duckdb": "DuckDB",
+        "more": "Mas"
+      },
+      "form": {
+        "host": "Host",
+        "port": "Puerto",
+        "database": "Base de datos",
+        "username": "Usuario",
+        "password": "Contrasena",
+        "schema": "Esquema (opcional)",
+        "testConnect": "Probar y Continuar",
+        "back": "Volver"
+      },
+      "error": {
+        "title": "No se pudo conectar a la base de datos",
+        "checkHost": "Verifica que el host sea accesible desde tu red",
+        "checkCredentials": "Verifica que el usuario y contrasena sean correctos",
+        "checkAccess": "Asegurate de que el usuario tenga acceso de lectura al esquema",
+        "technicalDetails": "Detalles tecnicos (para IT)",
+        "copyForIT": "Copiar para IT",
+        "tryAgain": "Intentar de nuevo"
+      }
+    },
+    "analysis": {
+      "title": "Analizando tus datos…",
+      "subtitle": "Generalmente ~5 segundos.",
+      "slowMessage": "Todavia trabajando—esquemas grandes pueden tomar mas tiempo.",
+      "steps": {
+        "connected": "Conectado a la base de datos",
+        "tables": "Encontradas {{count}} tablas",
+        "metrics": "Identificadas {{count}} metricas",
+        "patterns": "Detectando patrones de negocio…",
+        "vocabulary": "Generando vocabulario"
+      }
+    },
+    "review": {
+      "title": "Analisis completo",
+      "matchLabel": "Tu esquema coincide mas con un",
+      "change": "Cambiar",
+      "confidence": {
+        "high": "Alta confianza",
+        "medium": "Confianza media",
+        "low": "Baja confianza"
+      },
+      "basedOn": "Basado en {{reason}}",
+      "found": "Esto es lo que encontre:",
+      "tables": "tablas",
+      "metrics": "metricas",
+      "dimensions": "dimensiones",
+      "entities": "Entidades clave detectadas:",
+      "reviewMatch": "Revisar lo que detecte",
+      "looksGood": "Se ve bien"
+    },
+    "role": {
+      "title": "Cual es tu enfoque principal?",
+      "subtitle": "Esto determina que insights aparecen primero.",
+      "changeNote": "Siempre puedes agregar mas vistas despues.",
+      "roles": {
+        "executive": {
+          "title": "Ejecutivo",
+          "description": "Ingresos, salud del crecimiento, tendencias"
+        },
+        "finance": {
+          "title": "Finanzas",
+          "description": "Margenes, runway costos, presupuesto"
+        },
+        "sales": {
+          "title": "Ventas",
+          "description": "Pipeline, cuota deals, representantes"
+        },
+        "marketing": {
+          "title": "Marketing",
+          "description": "Campanas, CAC leads, embudo"
+        },
+        "product": {
+          "title": "Producto",
+          "description": "Funciones, uso retencion, NPS"
+        },
+        "support": {
+          "title": "Soporte",
+          "description": "Tickets, CSAT tiempo de respuesta"
+        }
+      }
+    },
+    "confirm": {
+      "title": "Casi listo",
+      "subtitle": "Algunas preguntas rapidas para personalizar.",
+      "questionOf": "Pregunta {{current}}/{{total}}",
+      "skipDefaults": "Saltar y usar valores predeterminados",
+      "skipToast": "Usando valores sugeridos. Puedes cambiarlos en cualquier momento en Vocabulario.",
+      "suggested": "Sugerido",
+      "somethingElse": "Algo mas…",
+      "seeDashboard": "Ver tu dashboard",
+      "categories": {
+        "revenue": "INGRESOS",
+        "customers": "CLIENTES",
+        "time": "TIEMPO"
+      }
+    },
+    "ready": {
+      "title": "Todo listo",
+      "subtitle": "Aqui esta tu primer briefing:",
+      "goToDashboard": "Ir al Dashboard"
+    }
+  },
+  "briefing": {
+    "title": "Briefing",
+    "description": "Esto es lo que esta pasando con tu negocio",
+    "greeting": "Buenos dias",
+    "dataThrough": "Basado en datos hasta {{date}}",
+    "lastUpdated": "Ultima actualizacion: {{time}}",
+    "attentionNeeded": "Atencion requerida",
+    "insight": "Insight",
+    "askPlaceholder": "Haz una pregunta…"
+  },
+  "conversation": {
+    "title": "Preguntar",
+    "placeholder": "Pregunta cualquier cosa sobre tus datos…",
+    "try": "Intenta:",
+    "basedOn": "Basado en:",
+    "filterApplied": "Filtro aplicado:",
+    "rememberChoice": "Recordare que '{{term}}' significa {{meaning}}"
+  },
+  "sidebar": {
+    "briefing": "Briefing",
+    "ask": "Preguntar",
+    "connections": "Conexiones",
+    "vocabulary": "Vocabulario",
+    "settings": "Configuracion",
+    "more": "Mas",
+    "platform": "plataforma",
+    "manage": "gestionar"
+  },
+  "connections": {
+    "title": "Conexiones",
+    "description": "Administra tus conexiones de base de datos"
+  },
+  "vocabulary": {
+    "title": "Vocabulario",
+    "description": "Revisa y edita como Knosia entiende tus datos"
+  },
+  "settings": {
+    "title": "Configuracion",
+    "description": "Configura tu espacio de trabajo de Knosia"
+  },
+  "businessTypes": {
+    "saas": "Negocio SaaS",
+    "ecommerce": "E-commerce",
+    "marketplace": "Marketplace",
+    "healthcare": "Salud",
+    "financial": "Servicios Financieros",
+    "other": "Otro"
+  },
+  "guest": {
+    "warning": {
+      "title": "Espacio de invitado",
+      "expiring": "Tu espacio expira en {{days}} días",
+      "expiringHours": "Tu espacio expira en {{hours}} horas",
+      "expired": "Tu espacio ha expirado",
+      "signUp": "Regístrate para conservar tus datos",
+      "description": "Crea una cuenta gratuita para guardar tus conexiones y configuraciones permanentemente."
+    }
+  },
+  "errors": {
+    "connectionLost": "Problema de conexion",
+    "cantReachDatabase": "No puedo acceder a tu base de datos en este momento.",
+    "showingCached": "Mostrando datos en cache de hace {{time}}.",
+    "retryConnection": "Reintentar conexion",
+    "checkSettings": "Verificar configuracion de conexion",
+    "noData": "No tengo datos de {{field}} en tu base de datos.",
+    "canBreakDownBy": "Puedo desglosar {{metric}} por:"
+  },
+  "empty": {
+    "buildingView": "Construyendo tu vista de tendencias",
+    "needMoreData": "Puedo mostrar tendencias una vez que tenga ~7 dias de datos.",
+    "dataStarting": "Ahora mismo veo datos comenzando {{date}}.",
+    "inMeantime": "Mientras tanto, puedes:",
+    "askQuestions": "Hacer preguntas sobre tus datos actuales",
+    "exploreVocabulary": "Explorar tu vocabulario"
+  }
+}

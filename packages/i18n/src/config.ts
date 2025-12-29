@@ -16,6 +16,7 @@ export const config = {
     "billing",
     "marketing",
     "validation",
+    "knosia",
   ],
   cookie: "locale",
 } as const;

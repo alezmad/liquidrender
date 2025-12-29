@@ -1,0 +1,201 @@
+{
+  "onboarding": {
+    "title": "Get started with Knosia",
+    "steps": {
+      "connect": "Connect Data",
+      "understand": "Confirm Understanding",
+      "dashboard": "Your Dashboard"
+    },
+    "connect": {
+      "title": "Connect your data",
+      "description": "We'll analyze your schema and have you up and running—usually under a minute.",
+      "selectDatabase": "Select your database",
+      "security": "Read-only access. Your data stays yours.",
+      "securityLink": "How we use access",
+      "databases": {
+        "postgres": "PostgreSQL",
+        "snowflake": "Snowflake",
+        "bigquery": "BigQuery",
+        "mysql": "MySQL",
+        "redshift": "Redshift",
+        "duckdb": "DuckDB",
+        "more": "More"
+      },
+      "form": {
+        "host": "Host",
+        "port": "Port",
+        "database": "Database",
+        "username": "Username",
+        "password": "Password",
+        "schema": "Schema (optional)",
+        "testConnect": "Test & Continue",
+        "back": "Back"
+      },
+      "error": {
+        "title": "Could not connect to database",
+        "checkHost": "Check that the host is reachable from your network",
+        "checkCredentials": "Verify username and password are correct",
+        "checkAccess": "Ensure the user has read access to the schema",
+        "technicalDetails": "Technical details (for IT)",
+        "copyForIT": "Copy for IT",
+        "tryAgain": "Try Again"
+      }
+    },
+    "analysis": {
+      "title": "Analyzing your data…",
+      "subtitle": "Usually ~5 seconds.",
+      "slowMessage": "Still working—large schemas can take longer.",
+      "steps": {
+        "connected": "Connected to database",
+        "tables": "Found {{count}} tables",
+        "metrics": "Identified {{count}} metrics",
+        "patterns": "Detecting business patterns…",
+        "vocabulary": "Generating vocabulary"
+      }
+    },
+    "review": {
+      "title": "Analysis complete",
+      "matchLabel": "Your schema most closely matches a",
+      "change": "Change",
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "basedOn": "Based on {{reason}}",
+      "found": "Here's what I found:",
+      "tables": "tables",
+      "metrics": "metrics",
+      "dimensions": "dimensions",
+      "entities": "Key entities detected:",
+      "reviewMatch": "Review what I matched",
+      "looksGood": "Looks good"
+    },
+    "role": {
+      "title": "What's your primary focus?",
+      "subtitle": "This shapes which insights surface first.",
+      "changeNote": "You can always add more views later.",
+      "roles": {
+        "executive": {
+          "title": "Executive",
+          "description": "Revenue, growth health, trends"
+        },
+        "finance": {
+          "title": "Finance",
+          "description": "Margins, runway costs, budget"
+        },
+        "sales": {
+          "title": "Sales",
+          "description": "Pipeline, quota deals, reps"
+        },
+        "marketing": {
+          "title": "Marketing",
+          "description": "Campaigns, CAC leads, funnel"
+        },
+        "product": {
+          "title": "Product",
+          "description": "Features, usage retention, NPS"
+        },
+        "support": {
+          "title": "Support",
+          "description": "Tickets, CSAT response time"
+        }
+      }
+    },
+    "confirm": {
+      "title": "Almost done",
+      "subtitle": "A few quick questions to personalize.",
+      "questionOf": "Question {{current}}/{{total}}",
+      "skipDefaults": "Skip and use defaults",
+      "skipToast": "Using suggested defaults. You can change these anytime in Vocabulary.",
+      "suggested": "Suggested",
+      "somethingElse": "Something else…",
+      "seeDashboard": "See your dashboard",
+      "categories": {
+        "revenue": "REVENUE",
+        "customers": "CUSTOMERS",
+        "time": "TIME"
+      }
+    },
+    "ready": {
+      "title": "You're all set",
+      "subtitle": "Here's your first briefing:",
+      "goToDashboard": "Go to Dashboard"
+    }
+  },
+  "briefing": {
+    "title": "Briefing",
+    "description": "Here's what's happening with your business",
+    "greeting": "Good morning",
+    "dataThrough": "Based on data through {{date}}",
+    "lastUpdated": "Last updated: {{time}}",
+    "attentionNeeded": "Attention needed",
+    "insight": "Insight",
+    "askPlaceholder": "Ask a question…"
+  },
+  "conversation": {
+    "title": "Ask",
+    "placeholder": "Ask anything about your data…",
+    "try": "Try:",
+    "basedOn": "Based on:",
+    "filterApplied": "Filter applied:",
+    "rememberChoice": "I'll remember '{{term}}' means {{meaning}}"
+  },
+  "sidebar": {
+    "briefing": "Briefing",
+    "ask": "Ask",
+    "connections": "Connections",
+    "vocabulary": "Vocabulary",
+    "settings": "Settings",
+    "more": "More",
+    "platform": "platform",
+    "manage": "manage"
+  },
+  "connections": {
+    "title": "Connections",
+    "description": "Manage your database connections"
+  },
+  "vocabulary": {
+    "title": "Vocabulary",
+    "description": "Review and edit how Knosia understands your data"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your Knosia workspace"
+  },
+  "businessTypes": {
+    "saas": "SaaS Business",
+    "ecommerce": "E-commerce",
+    "marketplace": "Marketplace",
+    "healthcare": "Healthcare",
+    "financial": "Financial Services",
+    "other": "Other"
+  },
+  "guest": {
+    "warning": {
+      "title": "Guest workspace",
+      "expiring": "Your workspace expires in {{days}} days",
+      "expiringHours": "Your workspace expires in {{hours}} hours",
+      "expired": "Your workspace has expired",
+      "signUp": "Sign up to keep your data",
+      "description": "Create a free account to save your connections and settings permanently."
+    }
+  },
+  "errors": {
+    "connectionLost": "Connection issue",
+    "cantReachDatabase": "I can't reach your database right now.",
+    "showingCached": "Showing cached data from {{time}} ago.",
+    "retryConnection": "Retry connection",
+    "checkSettings": "Check connection settings",
+    "noData": "I don't have {{field}} data in your database.",
+    "canBreakDownBy": "I can break down {{metric}} by:"
+  },
+  "empty": {
+    "buildingView": "Building your trend view",
+    "needMoreData": "I can show trends once I have ~7 days of data.",
+    "dataStarting": "Right now I see data starting {{date}}.",
+    "inMeantime": "In the meantime, you can:",
+    "askQuestions": "Ask questions about your current data",
+    "exploreVocabulary": "Explore your vocabulary"
+  }
+}

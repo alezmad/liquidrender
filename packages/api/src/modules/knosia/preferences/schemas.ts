@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+import { connectionIdSchema } from "../shared-schemas";
+
 // ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
 export const updatePreferencesSchema = z.object({
-  defaultConnectionId: z.string().uuid().optional(),
+  defaultConnectionId: connectionIdSchema.optional(),
   role: z.string().optional(),
   comparisonPeriod: z.enum(["WoW", "MoM", "YoY"]).optional(),
   briefingTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),

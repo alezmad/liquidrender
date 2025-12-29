@@ -7,4 +7,5 @@ export const en = {
   admin: () => import("./admin.json"),
   dashboard: () => import("./dashboard.json"),
   validation: () => import("./validation.json"),
+  knosia: () => import("./knosia.json"),
 } as const;

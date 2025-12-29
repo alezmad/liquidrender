@@ -3,11 +3,29 @@ const AUTH_PREFIX = "/auth";
 const BLOG_PREFIX = "/blog";
 const DASHBOARD_PREFIX = "/dashboard";
 const LEGAL_PREFIX = "/legal";
+const ONBOARDING_PREFIX = "/onboarding";
 
 const API_PREFIX = "/api";
 
 const pathsConfig = {
   index: "/",
+  onboarding: {
+    index: ONBOARDING_PREFIX,
+    connect: `${ONBOARDING_PREFIX}/connect`,
+    review: `${ONBOARDING_PREFIX}/review`,
+    role: `${ONBOARDING_PREFIX}/role`,
+    confirm: `${ONBOARDING_PREFIX}/confirm`,
+    ready: `${ONBOARDING_PREFIX}/ready`,
+  },
+  knosia: {
+    index: `${DASHBOARD_PREFIX}/knosia`,
+    briefing: `${DASHBOARD_PREFIX}/knosia/briefing`,
+    ask: `${DASHBOARD_PREFIX}/knosia/ask`,
+    page: (slug: string) => `${DASHBOARD_PREFIX}/knosia/p/${slug}`,
+    connections: `${DASHBOARD_PREFIX}/knosia/connections`,
+    vocabulary: `${DASHBOARD_PREFIX}/knosia/vocabulary`,
+    settings: `${DASHBOARD_PREFIX}/knosia/settings`,
+  },
   admin: {
     index: ADMIN_PREFIX,
     users: {
@@ -69,4 +87,5 @@ export {
   AUTH_PREFIX,
   API_PREFIX,
   LEGAL_PREFIX,
+  ONBOARDING_PREFIX,
 };

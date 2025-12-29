@@ -123,6 +123,10 @@ export const knosiaMismatchStatusEnum = pgEnum("knosia_mismatch_status", [
 
 /**
  * Organizations - Top-level organizational entity
+ *
+ * Guest organizations have a 7-day TTL (expiresAt set).
+ * When expiresAt passes, org and all related data are eligible for cleanup.
+ * Converting guest → registered clears expiresAt.
  */
 export const knosiaOrganization = pgTable("knosia_organization", {
   id: text().primaryKey().$defaultFn(generateId),
@@ -140,6 +144,9 @@ export const knosiaOrganization = pgTable("knosia_organization", {
     approvalRequired?: boolean;
     reviewCycle?: string;
   }>(),
+  // Guest workspace TTL - null means never expires (registered user)
+  isGuest: boolean().default(false),
+  expiresAt: timestamp(), // null = never expires
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()

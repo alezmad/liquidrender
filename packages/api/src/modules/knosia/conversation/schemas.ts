@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { connectionIdSchema, workspaceIdSchema } from "../shared-schemas";
+
 // ============================================================================
 // FILTER SCHEMA
 // ============================================================================
@@ -26,8 +28,8 @@ export const queryContextSchema = z.object({
 
 export const conversationQueryInputSchema = z.object({
   query: z.string().min(1).max(1000),
-  connectionId: z.string().uuid(),
-  workspaceId: z.string(),
+  connectionId: connectionIdSchema,
+  workspaceId: workspaceIdSchema,
   context: queryContextSchema.optional(),
 });
 

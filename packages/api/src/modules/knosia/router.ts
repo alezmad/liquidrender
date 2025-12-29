@@ -4,6 +4,7 @@ import { analysisRouter } from "./analysis";
 import { briefingRouter } from "./briefing";
 import { connectionsRouter } from "./connections";
 import { conversationRouter } from "./conversation";
+import { knosiaOrganizationRouter } from "./organization";
 import { preferencesRouter } from "./preferences";
 import { knosiaVocabularyRouter } from "./vocabulary";
 
@@ -23,5 +24,6 @@ export const knosiaRouter = new Hono<{ Variables: Variables }>()
   .route("/briefing", briefingRouter)
   .route("/connections", connectionsRouter)
   .route("/conversation", conversationRouter)
+  .route("/organization", knosiaOrganizationRouter)
   .route("/preferences", preferencesRouter)
   .route("/vocabulary", knosiaVocabularyRouter);

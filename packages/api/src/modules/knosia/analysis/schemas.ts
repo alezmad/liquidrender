@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+import { connectionIdSchema } from "../shared-schemas";
+
 // ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
 export const runAnalysisSchema = z.object({
-  connectionId: z.string().uuid(),
+  connectionId: connectionIdSchema,
 });
 
 export const getAnalysisSchema = z.object({

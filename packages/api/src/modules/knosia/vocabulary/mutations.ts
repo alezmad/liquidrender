@@ -1,10 +1,14 @@
-import { eq, and } from "@turbostarter/db";
+import { eq, and, sql } from "@turbostarter/db";
 import {
   knosiaAnalysis,
   knosiaVocabularyItem,
   knosiaMismatchReport,
+  knosiaWorkspace,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
+import { compileVocabulary } from "@repo/liquid-connect";
+
+import { transformToDetectedVocabulary } from "../shared/transforms";
 
 import type {
   ConfirmVocabularyInput,
@@ -182,11 +186,54 @@ export async function confirmVocabulary(
     }
   });
 
+  // Compile vocabulary for Query Engine and cache in workspace
+  await compileAndCacheVocabulary(workspaceId);
+
   return {
     vocabularyId,
     confirmedAt: new Date().toISOString(),
     answersApplied,
   };
+}
+
+/**
+ * Compile vocabulary items and cache in workspace for Query Engine
+ */
+export async function compileAndCacheVocabulary(
+  workspaceId: string
+): Promise<void> {
+  // Load all vocabulary items for workspace
+  const items = await db.query.knosiaVocabularyItem.findMany({
+    where: eq(knosiaVocabularyItem.workspaceId, workspaceId),
+  });
+
+  if (items.length === 0) {
+    return;
+  }
+
+  // Transform to DetectedVocabulary format
+  const detected = transformToDetectedVocabulary(items);
+
+  // Compile for Query Engine
+  const compiled = compileVocabulary(detected, {
+    includeDefaultPatterns: true,
+    includeGlobalSynonyms: true,
+  });
+
+  // Serialize for JSONB storage (Date → string)
+  const serializedCompiled = {
+    ...compiled,
+    compiledAt: compiled.compiledAt.toISOString(),
+  };
+
+  // Cache in workspace
+  await db
+    .update(knosiaWorkspace)
+    .set({
+      compiledVocabulary: serializedCompiled,
+      vocabularyVersion: sql`vocabulary_version + 1`,
+    })
+    .where(eq(knosiaWorkspace.id, workspaceId));
 }
 
 /**

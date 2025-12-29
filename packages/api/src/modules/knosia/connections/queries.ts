@@ -132,44 +132,4 @@ export const getConnections = async (
   }));
 };
 
-/**
- * Test a database connection without saving it
- *
- * NOTE: This is a stub implementation. Real implementation requires
- * database adapters for each connection type (postgres, mysql, etc.)
- */
-export const testDatabaseConnection = async (
-  input: TestConnectionInput,
-): Promise<{
-  success: boolean;
-  message: string;
-  latencyMs?: number;
-}> => {
-  const startTime = Date.now();
-
-  // TODO: Implement real connection testing with database adapters
-  // For now, return a stub success response
-  // In production, this would:
-  // 1. Create appropriate database adapter based on input.type
-  // 2. Attempt to connect with credentials
-  // 3. Run a simple query (e.g., SELECT 1)
-  // 4. Return success/failure with latency
-
-  // Stub implementation - simulates a successful connection
-  const latencyMs = Date.now() - startTime + Math.floor(Math.random() * 50);
-
-  // Basic validation that would be needed for real implementation
-  if (!input.host || !input.database || !input.username) {
-    return {
-      success: false,
-      message: "Missing required connection parameters",
-    };
-  }
-
-  // Simulate success for now
-  return {
-    success: true,
-    message: `Successfully connected to ${input.type} database "${input.database}" at ${input.host}`,
-    latencyMs,
-  };
-};
+// testDatabaseConnection is now in mutations.ts with real PostgresAdapter integration

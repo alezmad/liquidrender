@@ -175,6 +175,28 @@ export const knosiaWorkspace = pgTable("knosia_workspace", {
     autoInsights?: { enabled: boolean; maxPerDay: number };
     proactiveAlerts?: { enabled: boolean; channels: string[] };
   }>(),
+  // LiquidConnect compiled vocabulary (cached)
+  compiledVocabulary: jsonb().$type<{
+    version: string;
+    vocabularyId?: string;
+    compiledAt: string; // ISO date string
+    patterns: unknown[];
+    slots: {
+      m: unknown[]; // MetricSlotEntry[]
+      d: unknown[]; // DimensionSlotEntry[]
+      f: unknown[]; // SlotEntry[]
+      t: unknown[]; // SlotEntry[]
+    };
+    synonyms: {
+      global: Record<string, string>;
+      org: Record<string, string>;
+      user: Record<string, string>;
+    };
+    metricAggregations: Record<string, string>;
+    dimensionCardinalities: Record<string, number>;
+    safeDimensions: string[];
+  }>(),
+  vocabularyVersion: integer().default(1),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
@@ -321,6 +343,7 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     formulaHuman?: string;
     formulaSql?: string;
     sourceTables?: string[];
+    sourceColumn?: string; // DB column name for simple mappings
     caveats?: string[];
     exampleValues?: { low?: string; typical?: string; high?: string };
   }>(),

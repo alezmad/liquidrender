@@ -37,6 +37,7 @@ export interface CompleteEvent {
     reasoning: string;
     alternatives: Array<{ type: string; confidence: number }>;
   };
+  confirmations?: unknown[]; // UVB confirmation questions for user
 }
 
 export interface ErrorEvent {

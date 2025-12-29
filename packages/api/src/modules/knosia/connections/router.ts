@@ -2,8 +2,8 @@ import { Hono } from "hono";
 
 import { enforceAuth } from "../../../middleware";
 
-import { createConnection, deleteConnection } from "./mutations";
-import { getConnection, getConnections, testDatabaseConnection } from "./queries";
+import { createConnection, deleteConnection, testDatabaseConnection } from "./mutations";
+import { getConnection, getConnections } from "./queries";
 import {
   testConnectionInputSchema,
   createConnectionInputSchema,

@@ -37,7 +37,7 @@ describe("getVocabularySchema", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ZodError);
       const zodError = error as ZodError;
-      expect(zodError.issues[0].message).toBe("Analysis ID is required");
+      expect(zodError.issues[0]?.message).toBe("Analysis ID is required");
     }
   });
 
@@ -264,7 +264,7 @@ describe("reportMismatchSchema", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ZodError);
       const zodError = error as ZodError;
-      expect(zodError.issues[0].message).toBe("Item ID is required");
+      expect(zodError.issues[0]?.message).toBe("Item ID is required");
     }
   });
 

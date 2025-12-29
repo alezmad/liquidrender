@@ -2,8 +2,23 @@ import { and, desc, eq, count } from "@turbostarter/db";
 import {
   knosiaConversation,
   knosiaConversationMessage,
+  knosiaWorkspace,
+  knosiaUserPreference,
+  knosiaConnection,
+  knosiaWorkspaceConnection,
+  knosiaVocabularyItem,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
+import {
+  createQueryEngine,
+  compile,
+  emit,
+  type CompiledVocabulary,
+  type SemanticLayer,
+} from "@repo/liquid-connect";
+import { PostgresAdapter } from "@repo/liquid-connect/uvb";
+
+import { buildSemanticLayer } from "../shared/semantic";
 
 import type {
   ConversationQueryInput,
@@ -167,8 +182,15 @@ function generateMockClarificationResponse(
 // ============================================================================
 
 /**
- * Process a natural language query.
- * Currently returns mock data - will integrate with Query Engine.
+ * Process a natural language query using LiquidConnect Query Engine.
+ *
+ * Pipeline:
+ * 1. Load workspace vocabulary (cached CompiledVocabulary)
+ * 2. Get user aliases from preferences
+ * 3. Query Engine: NL → DSL
+ * 4. Compiler: DSL → SQL (via SemanticLayer)
+ * 5. Execute SQL via PostgresAdapter
+ * 6. Return visualization response
  */
 export const processQuery = async (
   input: ConversationQueryInput & { userId: string },
@@ -218,15 +240,13 @@ export const processQuery = async (
     content: input.query,
   });
 
-  // Generate response (mock for now)
-  // In the future, this will call the Query Engine
-  const shouldClarify = input.query.toLowerCase().includes("revenue") &&
-                         !input.query.toLowerCase().includes("total") &&
-                         !input.query.toLowerCase().includes("net");
-
-  const response = shouldClarify
-    ? generateMockClarificationResponse(queryId, input.query)
-    : generateMockVisualizationResponse(queryId, input.query);
+  // Try real Query Engine processing
+  const response = await processWithQueryEngine(
+    queryId,
+    input.query,
+    input.workspaceId,
+    input.userId,
+  );
 
   // Store assistant message
   await db.insert(knosiaConversationMessage).values({
@@ -236,10 +256,13 @@ export const processQuery = async (
       ? response.visualization?.title ?? "Visualization generated"
       : response.type === "clarification"
       ? response.clarification?.question ?? "Clarification needed"
+      : response.type === "error"
+      ? response.error?.message ?? "Error occurred"
       : "Response generated",
     intent: response.type,
     visualization: response.visualization as typeof knosiaConversationMessage.$inferInsert.visualization,
-    grounding: response.visualization?.grounding.path.map(p => p.vocabularyItemId),
+    grounding: response.visualization?.grounding?.path?.map(p => p.vocabularyItemId),
+    sqlGenerated: response.visualization?.sql,
   });
 
   // Update conversation title if this is the first query
@@ -252,6 +275,278 @@ export const processQuery = async (
 
   return { conversation, response };
 };
+
+/**
+ * Process query using LiquidConnect Query Engine
+ */
+async function processWithQueryEngine(
+  queryId: string,
+  query: string,
+  workspaceId: string,
+  userId: string,
+): Promise<ConversationResponse> {
+  try {
+    // 1. Load workspace with compiled vocabulary
+    const workspace = await db.query.knosiaWorkspace.findFirst({
+      where: eq(knosiaWorkspace.id, workspaceId),
+    });
+
+    if (!workspace?.compiledVocabulary) {
+      return {
+        queryId,
+        type: "error",
+        error: {
+          code: "NO_VOCABULARY",
+          message: "No vocabulary configured. Please run schema analysis first.",
+          recoverable: true,
+        },
+        suggestions: ["Run schema analysis", "Connect a database"],
+        appliedFilters: [],
+      };
+    }
+
+    // Deserialize compiled vocabulary (Date stored as string)
+    const compiledVocab = workspace.compiledVocabulary as unknown as CompiledVocabulary & {
+      compiledAt: string;
+    };
+    const vocabulary: CompiledVocabulary = {
+      ...compiledVocab,
+      compiledAt: new Date(compiledVocab.compiledAt),
+    };
+
+    // 2. Get user aliases
+    const prefs = await db.query.knosiaUserPreference.findFirst({
+      where: and(
+        eq(knosiaUserPreference.userId, userId),
+        eq(knosiaUserPreference.workspaceId, workspaceId),
+      ),
+    });
+
+    const userAliases = (prefs?.aliases ?? {}) as Record<string, string>;
+
+    // 3. Create Query Engine and process NL → DSL
+    const engine = createQueryEngine(vocabulary);
+    const nlResult = engine.queryWithAliases(query, userAliases);
+
+    if (!nlResult.success) {
+      // Return clarification if Query Engine couldn't parse
+      // QueryResult doesn't have suggestions, use error message to create options
+      const errorSuggestions = nlResult.error
+        ? [`Clarify: ${nlResult.error}`]
+        : ["Try rephrasing your question"];
+
+      return {
+        queryId,
+        type: "clarification",
+        clarification: {
+          question: nlResult.error ?? "I couldn't understand that query.",
+          options: errorSuggestions.map((s, i) => ({
+            id: `sug-${i}`,
+            label: s,
+            description: "Try this instead",
+          })),
+          rememberChoice: false,
+        },
+        suggestions: errorSuggestions,
+        appliedFilters: [],
+      };
+    }
+
+    // 4. Get vocabulary items for semantic layer
+    const vocabItems = await db.query.knosiaVocabularyItem.findMany({
+      where: eq(knosiaVocabularyItem.workspaceId, workspaceId),
+    });
+
+    // 5. Get connection for this workspace
+    const wsConnection = await db.query.knosiaWorkspaceConnection.findFirst({
+      where: eq(knosiaWorkspaceConnection.workspaceId, workspaceId),
+    });
+
+    if (!wsConnection) {
+      return {
+        queryId,
+        type: "error",
+        error: {
+          code: "NO_CONNECTION",
+          message: "No database connection configured for this workspace.",
+          recoverable: true,
+        },
+        suggestions: ["Connect a database"],
+        appliedFilters: [],
+      };
+    }
+
+    const connection = await db.query.knosiaConnection.findFirst({
+      where: eq(knosiaConnection.id, wsConnection.connectionId),
+    });
+
+    if (!connection) {
+      return {
+        queryId,
+        type: "error",
+        error: {
+          code: "CONNECTION_NOT_FOUND",
+          message: "Database connection not found.",
+          recoverable: false,
+        },
+        suggestions: [],
+        appliedFilters: [],
+      };
+    }
+
+    // 6. Build semantic layer
+    const semanticLayer = buildSemanticLayer({
+      workspace,
+      vocabularyItems: vocabItems,
+      connection,
+    });
+
+    // 7. Compile DSL → SQL
+    const lcOutput = nlResult.lcOutput!;
+    let flow: ReturnType<typeof compile>;
+    try {
+      flow = compile(lcOutput, semanticLayer);
+    } catch (compileError) {
+      return {
+        queryId,
+        type: "error",
+        error: {
+          code: "COMPILE_ERROR",
+          message: `Failed to compile query: ${compileError instanceof Error ? compileError.message : "Unknown error"}`,
+          recoverable: true,
+        },
+        suggestions: ["Try rephrasing your question"],
+        appliedFilters: [],
+      };
+    }
+
+    // 8. Emit SQL for postgres
+    const sqlResult = emit(flow, "postgres");
+
+    // 9. Execute SQL
+    let credentials: { username: string; password: string };
+    try {
+      credentials = JSON.parse(connection.credentials ?? "{}") as { username: string; password: string };
+    } catch {
+      return {
+        queryId,
+        type: "error",
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Failed to parse connection credentials.",
+          recoverable: false,
+        },
+        suggestions: [],
+        appliedFilters: [],
+      };
+    }
+
+    const adapter = new PostgresAdapter({
+      host: connection.host,
+      port: connection.port ?? 5432,
+      database: connection.database,
+      user: credentials.username,
+      password: credentials.password,
+      ssl: connection.sslEnabled ?? true,
+    });
+
+    await adapter.connect();
+    let data: unknown[];
+    try {
+      data = await adapter.query(sqlResult.sql, sqlResult.params);
+    } finally {
+      await adapter.disconnect();
+    }
+
+    // 10. Infer visualization type
+    const vizType = inferVisualizationType(nlResult, data);
+
+    return {
+      queryId,
+      type: "visualization",
+      visualization: {
+        type: vizType,
+        title: `Results for: ${query.slice(0, 50)}${query.length > 50 ? "..." : ""}`,
+        data,
+        sql: sqlResult.sql,
+        grounding: {
+          path: nlResult.trace?.resolutions?.map((resolution) => ({
+            id: resolution.resolved,
+            label: resolution.term,
+            vocabularyItemId: resolution.resolved,
+          })) ?? [],
+          interactive: true,
+        },
+      },
+      suggestions: generateFollowUpSuggestions(nlResult),
+      appliedFilters: [],
+    };
+  } catch (error) {
+    console.error("Query Engine error:", error);
+    // Fall back to mock response
+    return generateMockVisualizationResponse(queryId, query);
+  }
+}
+
+/**
+ * Infer the best visualization type from query and data
+ */
+function inferVisualizationType(
+  nlResult: { lcOutput?: string },
+  data: unknown[],
+): "bar" | "line" | "table" | "kpi" | "pie" {
+  const lcOutput = nlResult.lcOutput ?? "";
+
+  // KPI: single metric without dimensions
+  if (data.length === 1 && !lcOutput.includes("#")) {
+    return "kpi";
+  }
+
+  // Line: has time dimension
+  if (lcOutput.includes("~")) {
+    return "line";
+  }
+
+  // Pie: small number of categories
+  if (data.length <= 6 && lcOutput.includes("#")) {
+    return "pie";
+  }
+
+  // Table: many rows
+  if (data.length > 10) {
+    return "table";
+  }
+
+  // Default: bar chart
+  return "bar";
+}
+
+/**
+ * Generate follow-up suggestions based on query result
+ */
+function generateFollowUpSuggestions(
+  nlResult: { lcOutput?: string },
+): string[] {
+  const suggestions: string[] = [];
+  const lcOutput = nlResult.lcOutput ?? "";
+
+  // Suggest adding dimensions if none
+  if (!lcOutput.includes("#")) {
+    suggestions.push("Break this down by region");
+    suggestions.push("Show by category");
+  }
+
+  // Suggest time comparison if no time filter
+  if (!lcOutput.includes("~")) {
+    suggestions.push("Show trend over time");
+    suggestions.push("Compare to last month");
+  }
+
+  // Suggest drill-down
+  suggestions.push("Show top 10 contributors");
+
+  return suggestions.slice(0, 4);
+}
 
 /**
  * Handle clarification response from user.

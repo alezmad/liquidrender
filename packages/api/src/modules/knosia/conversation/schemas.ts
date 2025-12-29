@@ -77,6 +77,7 @@ export interface VisualizationData {
   type: "bar" | "line" | "table" | "kpi" | "pie";
   title: string;
   data: unknown;
+  sql?: string;
   grounding: Grounding;
 }
 
@@ -106,8 +107,10 @@ export interface ClarificationData {
 }
 
 export interface ErrorData {
+  code?: string;
   message: string;
-  alternatives: string[];
+  alternatives?: string[];
+  recoverable?: boolean;
 }
 
 export interface AppliedFilter {

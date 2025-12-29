@@ -1,0 +1,43 @@
+id: WF-0018
+name: Knosia LiquidConnect Integration
+generated: 2025-12-29T18:15:00Z
+
+# Context files for agents
+files:
+  # Primary integration spec (PRIORITY ONE)
+  - path: .claude/artifacts/2025-12-29-1715-FINAL-knosia-liquidconnect-integration.md
+    purpose: Complete integration specification with code examples
+    tokens: ~8000
+    priority: 1
+
+  # Schema reference
+  - path: packages/db/src/schema/knosia.ts
+    purpose: Current Knosia database schema (15 tables)
+    tokens: ~2000
+    priority: 2
+
+  # LiquidConnect exports
+  - path: packages/liquid-connect/src/index.ts
+    purpose: LiquidConnect public API exports
+    tokens: ~500
+    priority: 2
+
+  # Existing mutations to modify
+  - path: packages/api/src/modules/knosia/connections/mutations.ts
+    purpose: Current connection mutations (add testConnection)
+    tokens: ~400
+    priority: 3
+
+  # Existing analysis queries to modify
+  - path: packages/api/src/modules/knosia/analysis/queries.ts
+    purpose: Current mock analysis (replace with UVB)
+    tokens: ~700
+    priority: 3
+
+total_tokens: ~11600
+budget: 20000
+
+notes:
+  - FINAL document contains all patterns, type mappings, and code examples
+  - Each agent should read FINAL doc first, then relevant file(s)
+  - Shared transforms created in Wave 0, available to all Wave 1+ agents

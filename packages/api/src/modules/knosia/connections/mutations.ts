@@ -5,12 +5,84 @@ import {
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 import { generateId } from "@turbostarter/shared/utils";
+import { PostgresAdapter } from "@repo/liquid-connect/uvb";
 
 import type {
   CreateConnectionInput,
   DeleteConnectionInput,
   ConnectionWithHealth,
+  TestConnectionInput,
 } from "./schemas";
+
+// =============================================================================
+// Test Connection Result
+// =============================================================================
+
+export interface TestConnectionResult {
+  success: boolean;
+  message: string;
+  latencyMs?: number;
+  serverVersion?: string;
+}
+
+// =============================================================================
+// Test Database Connection
+// =============================================================================
+
+/**
+ * Test a database connection using PostgresAdapter
+ *
+ * Validates credentials and measures latency without saving.
+ */
+export const testDatabaseConnection = async (
+  input: TestConnectionInput
+): Promise<TestConnectionResult> => {
+  // Only postgres supported currently
+  if (input.type !== "postgres") {
+    return {
+      success: false,
+      message: `Connection type '${input.type}' not yet supported. Only 'postgres' is available.`,
+    };
+  }
+
+  const adapter = new PostgresAdapter({
+    host: input.host,
+    port: input.port ?? 5432,
+    database: input.database,
+    user: input.username,
+    password: input.password,
+    ssl: input.ssl,
+  });
+
+  const startTime = Date.now();
+
+  try {
+    await adapter.connect();
+
+    // Test with a simple query and get server version
+    interface VersionResult {
+      version: string;
+    }
+    const result = await adapter.query<VersionResult>("SELECT version() as version");
+    const latencyMs = Date.now() - startTime;
+    const serverVersion = result[0]?.version ?? "Unknown";
+
+    await adapter.disconnect();
+
+    return {
+      success: true,
+      message: `Connected to ${input.type}://${input.host}:${input.port ?? 5432}/${input.database}`,
+      latencyMs,
+      serverVersion,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown connection error";
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  }
+};
 
 /**
  * Create a new database connection

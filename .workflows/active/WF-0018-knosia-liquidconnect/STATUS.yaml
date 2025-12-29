@@ -1,0 +1,109 @@
+id: WF-0018
+name: Knosia LiquidConnect Integration
+description: Wire Knosia API modules to LiquidConnect library (PostgresAdapter, UVB, QueryEngine)
+status: completed
+created: 2025-12-29T18:15:00Z
+completed: 2025-12-29T23:12:00Z
+
+git:
+  branch: main
+  start_commit: dd58f29
+  start_tag: WF-0018-start
+
+context:
+  primary_doc: .claude/artifacts/2025-12-29-1715-FINAL-knosia-liquidconnect-integration.md
+  tokens_estimated: 11600
+
+waves:
+  - id: 0
+    name: Bootstrap
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0.1
+        name: Schema Migration
+        description: Add compiledVocabulary + vocabularyVersion columns to knosiaWorkspace
+        file: packages/db/src/schema/knosia.ts
+        status: completed
+        complexity: S
+
+      - id: T0.2
+        name: Shared Transforms
+        description: Create transformToDetectedVocabulary() function
+        file: packages/api/src/modules/knosia/shared/transforms.ts
+        status: completed
+        complexity: M
+
+      - id: T0.3
+        name: Semantic Builder
+        description: Create buildSemanticLayer() function
+        file: packages/api/src/modules/knosia/shared/semantic.ts
+        status: completed
+        complexity: M
+
+  - id: 1
+    name: Connections + Analysis
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1.1
+        name: Connection Testing
+        description: Add testDatabaseConnection() using PostgresAdapter
+        file: packages/api/src/modules/knosia/connections/mutations.ts
+        status: completed
+        complexity: M
+
+      - id: T1.2
+        name: UVB Integration
+        description: Replace mock analysis with extractSchema + applyHardRules
+        file: packages/api/src/modules/knosia/analysis/queries.ts
+        status: completed
+        complexity: L
+
+  - id: 2
+    name: Vocabulary + Conversation
+    type: parallel
+    status: completed
+    tasks:
+      - id: T2.1
+        name: Vocabulary Compilation
+        description: Add confirmVocabulary() with compileVocabulary
+        file: packages/api/src/modules/knosia/vocabulary/mutations.ts
+        status: completed
+        complexity: M
+
+      - id: T2.2
+        name: Query Engine
+        description: Add processQuery() with createQueryEngine
+        file: packages/api/src/modules/knosia/conversation/queries.ts
+        status: completed
+        complexity: L
+
+  - id: 3
+    name: Validation
+    type: sequential
+    status: completed
+    tasks:
+      - id: T3.1
+        name: Integration Test
+        description: Type check, run tests, validate pipeline
+        status: completed
+        complexity: M
+
+current_wave: 3
+total_tasks: 8
+completed_tasks: 8
+
+validation:
+  typecheck: passed
+  tests: 317 tests passed
+  integration: all modules wired correctly
+
+notes:
+  - Schema: Added compiledVocabulary + vocabularyVersion to knosiaWorkspace
+  - Shared transforms module created for Knosia→LiquidConnect type mapping
+  - Semantic layer builder generates LC SemanticLayer from workspace vocabulary
+  - Connection testing uses real PostgresAdapter with latency measurement
+  - Analysis uses UVB extractSchema + applyHardRules with SSE streaming
+  - Vocabulary compilation uses compileVocabulary and caches in workspace
+  - Query engine uses full pipeline NL→QueryEngine→DSL→Compiler→SQL→Execute

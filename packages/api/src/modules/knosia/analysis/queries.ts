@@ -1,6 +1,11 @@
 import { eq } from "@turbostarter/db";
 import { knosiaAnalysis, knosiaConnection } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
+import {
+  PostgresAdapter,
+  extractSchema,
+  applyHardRules,
+} from "@repo/liquid-connect/uvb";
 
 import type { GetAnalysisInput } from "./schemas";
 import type { StepEvent, CompleteEvent, ErrorEvent } from "./schemas";
@@ -54,8 +59,8 @@ export const getConnection = async (connectionId: string) => {
 /**
  * Run analysis - returns async generator for SSE streaming
  *
- * This is a mock implementation with delays.
- * Real implementation will integrate with UVB (Universal Vocabulary Bridge).
+ * Uses UVB (Universal Vocabulary Builder) for real schema extraction
+ * and hard rules detection.
  */
 export async function* runAnalysis(connectionId: string): AsyncGenerator<
   | { event: "step"; data: StepEvent }
@@ -70,6 +75,19 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       data: {
         code: "CONNECTION_NOT_FOUND",
         message: "The specified connection was not found",
+        recoverable: false,
+      },
+    };
+    return;
+  }
+
+  // Only postgres supported currently
+  if (connection.type !== "postgres") {
+    yield {
+      event: "error",
+      data: {
+        code: "UNSUPPORTED_TYPE",
+        message: `Connection type '${connection.type}' not yet supported. Only 'postgres' is available.`,
         recoverable: false,
       },
     };
@@ -101,58 +119,180 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
     return;
   }
 
+  // Parse credentials
+  let credentials: { username: string; password: string };
   try {
-    // Step through analysis phases
-    for (const stepDef of ANALYSIS_STEPS) {
-      // Emit step started
-      yield {
-        event: "step",
-        data: {
-          step: stepDef.step as 1 | 2 | 3 | 4 | 5,
-          status: "started",
-          label: stepDef.label,
-          detail: stepDef.detail,
-        },
-      };
+    credentials = JSON.parse(connection.credentials ?? "{}") as { username: string; password: string };
+  } catch {
+    yield {
+      event: "error",
+      data: {
+        code: "INVALID_CREDENTIALS",
+        message: "Failed to parse connection credentials",
+        recoverable: false,
+      },
+    };
+    return;
+  }
 
-      // Update DB with current step
-      await db
-        .update(knosiaAnalysis)
-        .set({ currentStep: stepDef.step })
-        .where(eq(knosiaAnalysis.id, analysis.id));
+  // Create PostgresAdapter
+  const adapter = new PostgresAdapter({
+    host: connection.host,
+    port: connection.port ?? 5432,
+    database: connection.database,
+    user: credentials.username,
+    password: credentials.password,
+    ssl: connection.sslEnabled ?? true,
+  });
 
-      // Simulate processing time (mock - replace with real UVB calls)
-      await delay(800 + Math.random() * 400);
-
-      // Emit step completed
-      yield {
-        event: "step",
-        data: {
-          step: stepDef.step as 1 | 2 | 3 | 4 | 5,
-          status: "completed",
-          label: stepDef.label,
-        },
-      };
-    }
-
-    // Mock analysis results
-    // TODO: Replace with real UVB integration
-    const mockSummary = {
-      tables: 12,
-      metrics: 8,
-      dimensions: 15,
-      entities: ["Customer", "Order", "Product", "Employee"],
+  try {
+    // Step 1: Connect to database
+    yield {
+      event: "step",
+      data: {
+        step: 1,
+        status: "started",
+        label: ANALYSIS_STEPS[0].label,
+        detail: ANALYSIS_STEPS[0].detail,
+      },
     };
 
-    const mockBusinessType = {
-      detected: "E-Commerce",
-      confidence: 0.87,
-      reasoning: "Detected order, product, and customer tables with typical e-commerce patterns",
-      alternatives: [
-        { type: "Retail", confidence: 0.72 },
-        { type: "Marketplace", confidence: 0.45 },
-      ],
+    await db
+      .update(knosiaAnalysis)
+      .set({ currentStep: 1 })
+      .where(eq(knosiaAnalysis.id, analysis.id));
+
+    await adapter.connect();
+
+    yield {
+      event: "step",
+      data: {
+        step: 1,
+        status: "completed",
+        label: ANALYSIS_STEPS[0].label,
+      },
     };
+
+    // Step 2: Extract schema
+    yield {
+      event: "step",
+      data: {
+        step: 2,
+        status: "started",
+        label: ANALYSIS_STEPS[1].label,
+        detail: ANALYSIS_STEPS[1].detail,
+      },
+    };
+
+    await db
+      .update(knosiaAnalysis)
+      .set({ currentStep: 2 })
+      .where(eq(knosiaAnalysis.id, analysis.id));
+
+    const schema = await extractSchema(adapter, {
+      schema: connection.schema ?? "public",
+    });
+
+    yield {
+      event: "step",
+      data: {
+        step: 2,
+        status: "completed",
+        label: ANALYSIS_STEPS[1].label,
+      },
+    };
+
+    // Step 3: Detect business type (mock for now - could use LLM)
+    yield {
+      event: "step",
+      data: {
+        step: 3,
+        status: "started",
+        label: ANALYSIS_STEPS[2].label,
+        detail: ANALYSIS_STEPS[2].detail,
+      },
+    };
+
+    await db
+      .update(knosiaAnalysis)
+      .set({ currentStep: 3 })
+      .where(eq(knosiaAnalysis.id, analysis.id));
+
+    // Simple heuristic for business type detection
+    const tableNames = schema.tables.map((t) => t.name.toLowerCase());
+    const businessType = detectBusinessType(tableNames);
+
+    yield {
+      event: "step",
+      data: {
+        step: 3,
+        status: "completed",
+        label: ANALYSIS_STEPS[2].label,
+      },
+    };
+
+    // Step 4: Apply hard rules
+    yield {
+      event: "step",
+      data: {
+        step: 4,
+        status: "started",
+        label: ANALYSIS_STEPS[3].label,
+        detail: ANALYSIS_STEPS[3].detail,
+      },
+    };
+
+    await db
+      .update(knosiaAnalysis)
+      .set({ currentStep: 4 })
+      .where(eq(knosiaAnalysis.id, analysis.id));
+
+    const { detected, confirmations } = applyHardRules(schema);
+
+    yield {
+      event: "step",
+      data: {
+        step: 4,
+        status: "completed",
+        label: ANALYSIS_STEPS[3].label,
+      },
+    };
+
+    // Step 5: Generate vocabulary
+    yield {
+      event: "step",
+      data: {
+        step: 5,
+        status: "started",
+        label: ANALYSIS_STEPS[4].label,
+        detail: ANALYSIS_STEPS[4].detail,
+      },
+    };
+
+    await db
+      .update(knosiaAnalysis)
+      .set({ currentStep: 5 })
+      .where(eq(knosiaAnalysis.id, analysis.id));
+
+    // Build summary from detected vocabulary
+    const summary = {
+      tables: schema.tables.length,
+      metrics: detected.metrics.length,
+      dimensions: detected.dimensions.length,
+      entities: detected.entities.map((e) => e.name),
+    };
+
+    yield {
+      event: "step",
+      data: {
+        step: 5,
+        status: "completed",
+        label: ANALYSIS_STEPS[4].label,
+      },
+    };
+
+    // Disconnect from database
+    await adapter.disconnect();
 
     // Update analysis with results
     await db
@@ -160,8 +300,9 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       .set({
         status: "completed",
         currentStep: 5,
-        summary: mockSummary,
-        businessType: mockBusinessType,
+        summary,
+        businessType,
+        detectedVocab: detected,
         completedAt: new Date(),
       })
       .where(eq(knosiaAnalysis.id, analysis.id));
@@ -171,11 +312,19 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       event: "complete",
       data: {
         analysisId: analysis.id,
-        summary: mockSummary,
-        businessType: mockBusinessType,
+        summary,
+        businessType,
+        confirmations,
       },
     };
   } catch (error) {
+    // Ensure we disconnect on error
+    try {
+      await adapter.disconnect();
+    } catch {
+      // Ignore disconnect errors
+    }
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 
     // Update analysis with error
@@ -201,10 +350,63 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
   }
 }
 
-// ============================================================================
-// UTILITIES
-// ============================================================================
+/**
+ * Simple heuristic business type detection based on table names
+ */
+function detectBusinessType(tableNames: string[]): {
+  detected: string;
+  confidence: number;
+  reasoning: string;
+  alternatives: { type: string; confidence: number }[];
+} {
+  const patterns: Record<string, { keywords: string[]; weight: number }> = {
+    "E-Commerce": {
+      keywords: ["order", "product", "cart", "customer", "payment", "shipping"],
+      weight: 1,
+    },
+    "SaaS": {
+      keywords: ["user", "subscription", "plan", "tenant", "organization", "team"],
+      weight: 1,
+    },
+    "CRM": {
+      keywords: ["contact", "lead", "opportunity", "account", "deal", "pipeline"],
+      weight: 1,
+    },
+    "ERP": {
+      keywords: ["inventory", "warehouse", "supplier", "purchase", "invoice", "employee"],
+      weight: 1,
+    },
+    "Analytics": {
+      keywords: ["event", "metric", "dimension", "fact", "session", "pageview"],
+      weight: 1,
+    },
+  };
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  const scores: Record<string, number> = {};
+
+  for (const [type, config] of Object.entries(patterns)) {
+    let matches = 0;
+    for (const keyword of config.keywords) {
+      if (tableNames.some((t) => t.includes(keyword))) {
+        matches++;
+      }
+    }
+    scores[type] = (matches / config.keywords.length) * config.weight;
+  }
+
+  // Sort by score
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [topType, topScore] = sorted[0] ?? ["Unknown", 0];
+  const alternatives = sorted.slice(1, 3).map(([type, score]) => ({
+    type,
+    confidence: Math.round(score * 100) / 100,
+  }));
+
+  return {
+    detected: topType,
+    confidence: Math.round(topScore * 100) / 100,
+    reasoning: `Detected ${Math.round(topScore * 6)} matching table patterns for ${topType}`,
+    alternatives,
+  };
 }
+

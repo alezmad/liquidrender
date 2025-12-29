@@ -21,6 +21,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacing.xs,
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
   } as React.CSSProperties,
 
   step: {
@@ -93,8 +96,20 @@ export function Stepper({ block, data }: LiquidComponentProps): React.ReactEleme
       label: child.label || '',
     }));
 
+  // Helper to get step status for screen readers
+  const getStepStatus = (index: number): string => {
+    if (index < currentStep) return 'completed';
+    if (index === currentStep) return 'current';
+    return 'pending';
+  };
+
   return (
-    <div data-liquid-type="stepper" data-orientation="horizontal" style={styles.container}>
+    <ol
+      data-liquid-type="stepper"
+      data-orientation="horizontal"
+      style={styles.container}
+      aria-label="Progress steps"
+    >
       {steps.map((step, index) => {
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
@@ -112,24 +127,35 @@ export function Stepper({ block, data }: LiquidComponentProps): React.ReactEleme
           isPending ? styles.labelMuted : {}
         );
 
+        const stepStatus = getStepStatus(index);
+
         return (
-          <React.Fragment key={index}>
-            <div style={styles.step}>
-              <span style={indicatorStyle}>
-                {isCompleted ? '✓' : index + 1}
-              </span>
-              <span style={labelStyle}>{step.label}</span>
-            </div>
+          <li
+            key={index}
+            style={styles.step}
+            aria-current={isActive ? 'step' : undefined}
+            aria-label={`Step ${index + 1}: ${step.label}, ${stepStatus}`}
+          >
+            <span
+              style={indicatorStyle}
+              aria-hidden="true"
+            >
+              {isCompleted ? '✓' : index + 1}
+            </span>
+            <span style={labelStyle}>{step.label}</span>
             {index < steps.length - 1 && (
-              <div style={mergeStyles(
-                styles.connector,
-                isCompleted ? styles.connectorCompleted : {}
-              )} />
+              <span
+                style={mergeStyles(
+                  styles.connector,
+                  isCompleted ? styles.connectorCompleted : {}
+                )}
+                aria-hidden="true"
+              />
             )}
-          </React.Fragment>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 
@@ -157,8 +183,20 @@ export function StaticStepper({
     customStyle
   );
 
+  // Helper to get step status for screen readers
+  const getStepStatus = (index: number): string => {
+    if (index < currentStep) return 'completed';
+    if (index === currentStep) return 'current';
+    return 'pending';
+  };
+
   return (
-    <div data-liquid-type="stepper" data-orientation={orientation} style={containerStyle}>
+    <ol
+      data-liquid-type="stepper"
+      data-orientation={orientation}
+      style={containerStyle}
+      aria-label="Progress steps"
+    >
       {steps.map((label, index) => {
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
@@ -176,25 +214,36 @@ export function StaticStepper({
           isPending ? styles.labelMuted : {}
         );
 
+        const stepStatus = getStepStatus(index);
+
         return (
-          <React.Fragment key={index}>
-            <div style={styles.step}>
-              <span style={indicatorStyle}>
-                {isCompleted ? '✓' : index + 1}
-              </span>
-              <span style={labelStyle}>{label}</span>
-            </div>
+          <li
+            key={index}
+            style={styles.step}
+            aria-current={isActive ? 'step' : undefined}
+            aria-label={`Step ${index + 1}: ${label}, ${stepStatus}`}
+          >
+            <span
+              style={indicatorStyle}
+              aria-hidden="true"
+            >
+              {isCompleted ? '✓' : index + 1}
+            </span>
+            <span style={labelStyle}>{label}</span>
             {index < steps.length - 1 && (
-              <div style={mergeStyles(
-                styles.connector,
-                isCompleted ? styles.connectorCompleted : {},
-                orientation === 'vertical' ? { width: '2px', height: '1.5rem', minWidth: 0 } : {}
-              )} />
+              <span
+                style={mergeStyles(
+                  styles.connector,
+                  isCompleted ? styles.connectorCompleted : {},
+                  orientation === 'vertical' ? { width: '2px', height: '1.5rem', minWidth: 0 } : {}
+                )}
+                aria-hidden="true"
+              />
             )}
-          </React.Fragment>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 

@@ -4,9 +4,9 @@ import { AIDemo } from './AIDemo';
 import { ComponentTest } from './ComponentTest';
 import { ComponentGallery } from './ComponentGallery';
 
-// Get URL params
+// Get API key from env (preferred) or URL params (fallback)
 const urlParams = new URLSearchParams(window.location.search);
-const apiKey = urlParams.get('apiKey') || urlParams.get('apikEY') || '';
+const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || urlParams.get('apiKey') || urlParams.get('apikEY') || '';
 const isTestMode = window.location.pathname === '/test' || urlParams.has('component');
 const isGalleryMode = window.location.pathname === '/gallery' || urlParams.has('gallery');
 

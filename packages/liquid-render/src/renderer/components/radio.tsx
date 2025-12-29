@@ -100,7 +100,7 @@ export function Radio({ block, data }: LiquidComponentProps): React.ReactElement
   return (
     <fieldset data-liquid-type="radio" style={styles.fieldset}>
       {label && <legend style={styles.legend}>{label}</legend>}
-      <div style={styles.optionsContainer}>
+      <div style={styles.optionsContainer} role="radiogroup" aria-label={label}>
         {options.map((option, index) => {
           const optionId = `${groupId}-${index}`;
           const isSelected = String(currentValue) === option.value;
@@ -114,6 +114,7 @@ export function Radio({ block, data }: LiquidComponentProps): React.ReactElement
                 value={option.value}
                 checked={isSelected}
                 onChange={() => handleChange(option.value)}
+                aria-checked={isSelected}
                 style={styles.input}
               />
               <span style={styles.label}>{option.label}</span>
@@ -136,6 +137,8 @@ export interface StaticRadioProps {
   onChange?: (value: string) => void;
   label?: string;
   disabled?: boolean;
+  required?: boolean;
+  description?: string;
   style?: React.CSSProperties;
 }
 
@@ -146,18 +149,40 @@ export function StaticRadio({
   onChange,
   label,
   disabled = false,
+  required = false,
+  description,
   style: customStyle,
 }: StaticRadioProps): React.ReactElement {
   const groupId = generateId('radio');
+  const descriptionId = description ? `${groupId}-description` : undefined;
 
   return (
-    <fieldset data-liquid-type="radio" style={mergeStyles(styles.fieldset, customStyle)}>
+    <fieldset
+      data-liquid-type="radio"
+      style={mergeStyles(styles.fieldset, customStyle)}
+      aria-describedby={descriptionId}
+      aria-required={required}
+      aria-disabled={disabled}
+    >
       {label && <legend style={styles.legend}>{label}</legend>}
-      <div style={styles.optionsContainer}>
+      {description && (
+        <p id={descriptionId} style={{ ...styles.label, marginBottom: tokens.spacing.sm, marginTop: 0 }}>
+          {description}
+        </p>
+      )}
+      <div style={styles.optionsContainer} role="radiogroup" aria-label={label}>
         {options.map((option, index) => {
           const optionId = `${groupId}-${index}`;
           return (
-            <label key={optionId} htmlFor={optionId} style={styles.option}>
+            <label
+              key={optionId}
+              htmlFor={optionId}
+              style={{
+                ...styles.option,
+                opacity: disabled ? 0.5 : 1,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+              }}
+            >
               <input
                 type="radio"
                 id={optionId}
@@ -166,7 +191,12 @@ export function StaticRadio({
                 checked={value === option.value}
                 onChange={() => onChange?.(option.value)}
                 disabled={disabled}
-                style={styles.input}
+                required={required && index === 0}
+                aria-checked={value === option.value}
+                style={{
+                  ...styles.input,
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                }}
               />
               <span style={styles.label}>{option.label}</span>
             </label>

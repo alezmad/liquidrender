@@ -259,6 +259,8 @@ function UploadIcon({ compact }: { compact?: boolean }): React.ReactElement {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
     >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="17 8 12 3 7 8" />
@@ -277,6 +279,8 @@ function FileIcon(): React.ReactElement {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
     >
       <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
       <polyline points="13 2 13 9 20 9" />
@@ -295,6 +299,8 @@ function CloseIcon(): React.ReactElement {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
@@ -311,14 +317,23 @@ function FileItemComponent({ uploadedFile, onRemove }: FileItemComponentProps): 
   const { id, name, size, status, progress, preview, error } = uploadedFile;
   const isUploading = status === 'uploading';
   const hasError = status === 'error';
+  const isComplete = status === 'complete';
+
+  // Generate a status description for screen readers
+  const getStatusDescription = (): string => {
+    if (hasError) return `Error: ${error}`;
+    if (isUploading) return `Uploading: ${progress}% complete`;
+    if (isComplete) return 'Upload complete';
+    return 'Pending upload';
+  };
 
   return (
-    <div style={styles.fileItem}>
-      <div style={styles.filePreview}>
+    <div style={styles.fileItem} role="listitem">
+      <div style={styles.filePreview} aria-hidden="true">
         {preview ? (
           <img
             src={preview}
-            alt={name}
+            alt=""
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: tokens.radius.sm }}
           />
         ) : (
@@ -329,14 +344,28 @@ function FileItemComponent({ uploadedFile, onRemove }: FileItemComponentProps): 
         <div style={styles.fileName} title={name}>
           {name}
         </div>
-        <div style={hasError ? styles.fileError : styles.fileSize}>
+        <div
+          style={hasError ? styles.fileError : styles.fileSize}
+          role={hasError ? 'alert' : undefined}
+        >
           {hasError ? error : formatFileSize(size)}
         </div>
         {isUploading && (
-          <div style={styles.progressBar}>
+          <div
+            style={styles.progressBar}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Uploading ${name}`}
+          >
             <div style={styles.progressFill(progress)} />
           </div>
         )}
+        {/* Screen reader only status announcement */}
+        <span className="sr-only" style={{ position: 'absolute', left: '-9999px' }}>
+          {getStatusDescription()}
+        </span>
       </div>
       <button
         type="button"
@@ -474,10 +503,15 @@ export function Upload({ block, data }: LiquidComponentProps): React.ReactElemen
     : styles.dropZone(isDragging, disabled);
 
   const canAddMore = files.length < maxFiles;
+  const hintId = `${inputId}-hint`;
+  const labelId = label ? `${inputId}-label` : undefined;
+
+  // Build aria-describedby with available elements
+  const ariaDescribedBy = [hintId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div data-liquid-type="upload" style={styles.wrapper}>
-      {label && <div style={styles.label}>{label}</div>}
+      {label && <div id={labelId} style={styles.label}>{label}</div>}
 
       {canAddMore && (
         <div
@@ -490,10 +524,13 @@ export function Upload({ block, data }: LiquidComponentProps): React.ReactElemen
           onDrop={handleDrop}
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label="Upload files"
+          aria-label={label ? `${label}: Upload files by dragging or clicking` : 'Upload files by dragging or clicking'}
+          aria-labelledby={labelId}
+          aria-describedby={ariaDescribedBy}
+          aria-disabled={disabled}
         >
           <UploadIcon compact={isCompact} />
-          <div style={isCompact ? styles.dropZoneTextCompact : styles.dropZoneText}>
+          <div style={isCompact ? styles.dropZoneTextCompact : styles.dropZoneText} aria-hidden="true">
             {isCompact ? (
               <>Drop files or <span style={styles.browseLink}>browse</span></>
             ) : (
@@ -516,10 +553,15 @@ export function Upload({ block, data }: LiquidComponentProps): React.ReactElemen
         style={styles.hiddenInput}
         disabled={disabled}
         aria-hidden="true"
+        tabIndex={-1}
       />
 
       {files.length > 0 && (
-        <div style={styles.fileList}>
+        <div
+          style={styles.fileList}
+          role="list"
+          aria-label={`Uploaded files: ${files.length} file${files.length !== 1 ? 's' : ''}`}
+        >
           {files.map((uploadedFile) => (
             <FileItemComponent
               key={uploadedFile.id}
@@ -530,11 +572,9 @@ export function Upload({ block, data }: LiquidComponentProps): React.ReactElemen
         </div>
       )}
 
-      {!isCompact && (
-        <div style={styles.hint}>
-          Max {maxFiles} files, up to {formatFileSize(maxSize)} each
-        </div>
-      )}
+      <div id={hintId} style={isCompact ? { ...styles.hint, display: 'none' } : styles.hint}>
+        Max {maxFiles} files, up to {formatFileSize(maxSize)} each
+      </div>
     </div>
   );
 }
@@ -691,10 +731,15 @@ export function StaticUpload({
     : styles.dropZone(isDragging, disabled);
 
   const canAddMore = files.length < maxFiles;
+  const hintId = `${inputId}-hint`;
+  const labelId = label ? `${inputId}-label` : undefined;
+
+  // Build aria-describedby with available elements
+  const ariaDescribedBy = [hintId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div data-liquid-type="upload" style={styles.wrapper} className={className}>
-      {label && <div style={styles.label}>{label}</div>}
+      {label && <div id={labelId} style={styles.label}>{label}</div>}
 
       {canAddMore && (
         <div
@@ -707,10 +752,13 @@ export function StaticUpload({
           onDrop={handleDrop}
           role="button"
           tabIndex={disabled ? -1 : 0}
-          aria-label="Upload files"
+          aria-label={label ? `${label}: Upload files by dragging or clicking` : 'Upload files by dragging or clicking'}
+          aria-labelledby={labelId}
+          aria-describedby={ariaDescribedBy}
+          aria-disabled={disabled}
         >
           <UploadIcon compact={isCompact} />
-          <div style={isCompact ? styles.dropZoneTextCompact : styles.dropZoneText}>
+          <div style={isCompact ? styles.dropZoneTextCompact : styles.dropZoneText} aria-hidden="true">
             {isCompact ? (
               <>Drop files or <span style={styles.browseLink}>browse</span></>
             ) : (
@@ -733,10 +781,15 @@ export function StaticUpload({
         style={styles.hiddenInput}
         disabled={disabled}
         aria-hidden="true"
+        tabIndex={-1}
       />
 
       {files.length > 0 && (
-        <div style={styles.fileList}>
+        <div
+          style={styles.fileList}
+          role="list"
+          aria-label={`Uploaded files: ${files.length} file${files.length !== 1 ? 's' : ''}`}
+        >
           {files.map((uploadedFile) => (
             <FileItemComponent
               key={uploadedFile.id}
@@ -747,11 +800,9 @@ export function StaticUpload({
         </div>
       )}
 
-      {!isCompact && (
-        <div style={styles.hint}>
-          Max {maxFiles} files, up to {formatFileSize(maxSize)} each
-        </div>
-      )}
+      <div id={hintId} style={isCompact ? { ...styles.hint, display: 'none' } : styles.hint}>
+        Max {maxFiles} files, up to {formatFileSize(maxSize)} each
+      </div>
     </div>
   );
 }

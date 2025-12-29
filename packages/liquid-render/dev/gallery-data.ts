@@ -50,6 +50,10 @@ export function generateGalleryData() {
     monthlyData: generateMonthlyData(),
     weeklyData: generateWeeklyData(),
     categoryData: generateCategoryData(),
+    scatterData: generateScatterData(),
+    sparklineData: generateSparklineData(),
+    heatmapData: generateHeatmapData(),
+    sankeyData: generateSankeyData(),
 
     // Table data
     recentOrders: generateOrders(8),
@@ -78,6 +82,32 @@ export function generateGalleryData() {
     navItems: generateNavItems(),
     breadcrumbs: generateBreadcrumbs(),
     tabItems: generateTabItems(),
+    commands: generateCommands(),
+
+    // Pagination
+    currentPage: 3,
+    totalPages: 10,
+
+    // Time/Date
+    selectedTime: '14:30',
+    otpCode: '',
+    color: '#3b82f6',
+    quantity: 1,
+
+    // Complex data structures
+    events: generateCalendarEvents(),
+    timelineEvents: generateTimelineEvents(),
+    treeData: generateTreeData(),
+    kanbanData: generateKanbanData(),
+    orgData: generateOrgData(),
+    flowData: generateFlowData(),
+    mapData: generateMapData(),
+    carouselImages: generateCarouselImages(),
+    galleryImages: generateCarouselImages(),
+
+    // Media
+    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    audioUrl: 'https://www.w3schools.com/html/horse.mp3',
 
     // Misc
     progress: faker.number.int({ min: 25, max: 85 }),
@@ -217,6 +247,190 @@ function generateTags(count: number) {
   return faker.helpers.arrayElements(tagNames, count);
 }
 
+function generateScatterData() {
+  return Array.from({ length: 20 }, () => ({
+    x: faker.number.int({ min: 0, max: 100 }),
+    y: faker.number.int({ min: 0, max: 100 }),
+    size: faker.number.int({ min: 10, max: 50 }),
+  }));
+}
+
+function generateSparklineData() {
+  return Array.from({ length: 12 }, () => faker.number.int({ min: 20, max: 80 }));
+}
+
+function generateHeatmapData() {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const data: { day: string; hour: number; value: number }[] = [];
+  days.forEach((day) => {
+    hours.forEach((hour) => {
+      data.push({ day, hour, value: faker.number.int({ min: 0, max: 100 }) });
+    });
+  });
+  return data;
+}
+
+function generateSankeyData() {
+  return {
+    nodes: [
+      { id: 'source1', label: 'Website' },
+      { id: 'source2', label: 'Mobile' },
+      { id: 'middle1', label: 'Signup' },
+      { id: 'middle2', label: 'Trial' },
+      { id: 'target1', label: 'Paid' },
+      { id: 'target2', label: 'Churned' },
+    ],
+    links: [
+      { source: 'source1', target: 'middle1', value: 100 },
+      { source: 'source2', target: 'middle1', value: 50 },
+      { source: 'middle1', target: 'middle2', value: 80 },
+      { source: 'middle2', target: 'target1', value: 60 },
+      { source: 'middle2', target: 'target2', value: 20 },
+    ],
+  };
+}
+
+function generateCommands() {
+  return [
+    { id: 'new', label: 'New File', shortcut: '⌘N', icon: 'file-plus' },
+    { id: 'open', label: 'Open...', shortcut: '⌘O', icon: 'folder-open' },
+    { id: 'save', label: 'Save', shortcut: '⌘S', icon: 'save' },
+    { id: 'settings', label: 'Settings', shortcut: '⌘,', icon: 'settings' },
+  ];
+}
+
+function generateCalendarEvents() {
+  const today = new Date();
+  return Array.from({ length: 5 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    return {
+      id: faker.string.uuid().slice(0, 8),
+      title: faker.lorem.words(3),
+      date: date.toISOString().split('T')[0],
+      color: faker.helpers.arrayElement(['blue', 'green', 'red', 'yellow']),
+    };
+  });
+}
+
+function generateTimelineEvents() {
+  return [
+    { id: '1', title: 'Project Started', date: '2024-01-01', icon: 'rocket' },
+    { id: '2', title: 'MVP Launched', date: '2024-03-15', icon: 'flag' },
+    { id: '3', title: 'First Customer', date: '2024-04-01', icon: 'user-plus' },
+    { id: '4', title: 'Series A', date: '2024-06-01', icon: 'dollar-sign' },
+  ];
+}
+
+function generateTreeData() {
+  return {
+    id: 'root',
+    label: 'src',
+    children: [
+      {
+        id: 'components',
+        label: 'components',
+        children: [
+          { id: 'button', label: 'Button.tsx' },
+          { id: 'card', label: 'Card.tsx' },
+        ],
+      },
+      {
+        id: 'utils',
+        label: 'utils',
+        children: [{ id: 'helpers', label: 'helpers.ts' }],
+      },
+      { id: 'index', label: 'index.ts' },
+    ],
+  };
+}
+
+function generateKanbanData() {
+  return {
+    columns: [
+      {
+        id: 'todo',
+        title: 'To Do',
+        cards: [
+          { id: '1', title: faker.lorem.words(3), priority: 'high' },
+          { id: '2', title: faker.lorem.words(4), priority: 'low' },
+        ],
+      },
+      {
+        id: 'in-progress',
+        title: 'In Progress',
+        cards: [{ id: '3', title: faker.lorem.words(3), priority: 'medium' }],
+      },
+      {
+        id: 'done',
+        title: 'Done',
+        cards: [{ id: '4', title: faker.lorem.words(2), priority: 'low' }],
+      },
+    ],
+  };
+}
+
+function generateOrgData() {
+  return {
+    id: 'ceo',
+    name: faker.person.fullName(),
+    role: 'CEO',
+    children: [
+      {
+        id: 'cto',
+        name: faker.person.fullName(),
+        role: 'CTO',
+        children: [
+          { id: 'dev1', name: faker.person.fullName(), role: 'Developer' },
+          { id: 'dev2', name: faker.person.fullName(), role: 'Developer' },
+        ],
+      },
+      {
+        id: 'cfo',
+        name: faker.person.fullName(),
+        role: 'CFO',
+        children: [{ id: 'acc1', name: faker.person.fullName(), role: 'Accountant' }],
+      },
+    ],
+  };
+}
+
+function generateFlowData() {
+  return {
+    nodes: [
+      { id: 'start', type: 'start', label: 'Start' },
+      { id: 'process', type: 'process', label: 'Process Data' },
+      { id: 'decision', type: 'decision', label: 'Valid?' },
+      { id: 'end', type: 'end', label: 'End' },
+    ],
+    edges: [
+      { from: 'start', to: 'process' },
+      { from: 'process', to: 'decision' },
+      { from: 'decision', to: 'end', label: 'Yes' },
+    ],
+  };
+}
+
+function generateMapData() {
+  return {
+    center: { lat: 37.7749, lng: -122.4194 },
+    markers: [
+      { id: '1', lat: 37.7749, lng: -122.4194, label: 'San Francisco' },
+      { id: '2', lat: 34.0522, lng: -118.2437, label: 'Los Angeles' },
+      { id: '3', lat: 40.7128, lng: -74.006, label: 'New York' },
+    ],
+  };
+}
+
+function generateCarouselImages() {
+  return Array.from({ length: 4 }, (_, i) => ({
+    id: String(i + 1),
+    src: faker.image.urlPicsumPhotos({ width: 800, height: 400 }),
+    alt: faker.lorem.words(3),
+  }));
+}
+
 // ============================================================================
 // Component Registry
 // ============================================================================
@@ -229,12 +443,23 @@ export const componentRegistry: ComponentConfig[] = [
   { type: 'heading', name: 'Heading', category: 'Core', dsl: 'Hd "Section Title" #2' },
   { type: 'container', name: 'Container', category: 'Core', dsl: 'Cn ^row [Tx "Item A", Tx "Item B", Tx "Item C"]' },
   { type: 'card', name: 'Card', category: 'Core', dsl: 'Cd "Card Title" [Tx "Card content goes here"]' },
+  { type: 'alert', name: 'Alert', category: 'Core', dsl: 'Al "Operation completed successfully" #success' },
+  { type: 'separator', name: 'Separator', category: 'Core', dsl: 'Sp' },
+  { type: 'empty', name: 'Empty State', category: 'Core', dsl: 'Em "No data available" "Try adding some items"' },
+  { type: 'skeleton', name: 'Skeleton', category: 'Core', dsl: 'Sk' },
+  { type: 'spinner', name: 'Spinner', category: 'Core', dsl: 'Sn #md' },
+  { type: 'toast', name: 'Toast', category: 'Core', dsl: 'To "Changes saved" #success' },
 
   // Charts
   { type: 'line', name: 'Line Chart', category: 'Charts', dsl: 'Ln :monthlyData "Monthly Trends"' },
   { type: 'bar', name: 'Bar Chart', category: 'Charts', dsl: 'Br :monthlyData "Revenue by Month"' },
   { type: 'pie', name: 'Pie Chart', category: 'Charts', dsl: 'Pi :categoryData "Sales by Category"' },
   { type: 'area', name: 'Area Chart', category: 'Charts', dsl: 'Ar :monthlyData "Revenue Over Time"' },
+  { type: 'scatter', name: 'Scatter Chart', category: 'Charts', dsl: 'Sc :scatterData "Correlation"' },
+  { type: 'gauge', name: 'Gauge', category: 'Charts', dsl: 'Ga :progress "Performance" 100' },
+  { type: 'sparkline', name: 'Sparkline', category: 'Charts', dsl: 'Sl :sparklineData' },
+  { type: 'heatmap', name: 'Heatmap', category: 'Charts', dsl: 'Hm :heatmapData "Activity"' },
+  { type: 'sankey', name: 'Sankey', category: 'Charts', dsl: 'Sy :sankeyData "Flow"' },
 
   // Forms
   { type: 'input', name: 'Input', category: 'Forms', dsl: 'In :user.name "Full Name"' },
@@ -242,10 +467,17 @@ export const componentRegistry: ComponentConfig[] = [
   { type: 'select', name: 'Select', category: 'Forms', dsl: 'Se :user.role "Role" [opt "user" "User", opt "admin" "Admin", opt "editor" "Editor"]' },
   { type: 'checkbox', name: 'Checkbox', category: 'Forms', dsl: 'Ck :enabled "Enable notifications"' },
   { type: 'switch', name: 'Switch', category: 'Forms', dsl: 'Sw :settings.notifications "Notifications"' },
+  { type: 'radio', name: 'Radio', category: 'Forms', dsl: 'Rd :user.role "Role" [opt "user" "User", opt "admin" "Admin"]' },
   { type: 'range', name: 'Range', category: 'Forms', dsl: 'Rg :progress "Volume" 0 100' },
   { type: 'date', name: 'Date Picker', category: 'Forms', dsl: 'Dt :selectedDate "Select Date"' },
+  { type: 'time', name: 'Time Picker', category: 'Forms', dsl: 'Ti :selectedTime "Select Time"' },
   { type: 'daterange', name: 'Date Range', category: 'Forms', dsl: 'Dr :dateRange "Date Range"' },
   { type: 'form', name: 'Form', category: 'Forms', dsl: 'Fm :user [In :name "Name", In :email "Email", Bt "Submit" #primary]' },
+  { type: 'upload', name: 'Upload', category: 'Forms', dsl: 'Up "Drop files here"' },
+  { type: 'rating', name: 'Rating', category: 'Forms', dsl: 'Rt :rating "Rate this" 5' },
+  { type: 'otp', name: 'OTP Input', category: 'Forms', dsl: 'Ot :otpCode 6' },
+  { type: 'color', name: 'Color Picker', category: 'Forms', dsl: 'Cl :color "Pick a color"' },
+  { type: 'stepper', name: 'Stepper', category: 'Forms', dsl: 'St :quantity "Quantity" 1 10' },
 
   // Layout
   { type: 'grid', name: 'Grid', category: 'Layout', dsl: 'Gd #3 [Cd "A" [Tx "1"], Cd "B" [Tx "2"], Cd "C" [Tx "3"]]' },
@@ -254,6 +486,8 @@ export const componentRegistry: ComponentConfig[] = [
   { type: 'hstack', name: 'HStack', category: 'Layout', dsl: 'Cn ^row [Bt "A", Bt "B", Bt "C"]' },
   { type: 'sheet', name: 'Sheet', category: 'Layout', dsl: 'Sh "Settings Panel" [Tx "Sheet content here"]' },
   { type: 'drawer', name: 'Drawer', category: 'Layout', dsl: 'Dw "Menu" [Tx "Drawer content"]' },
+  { type: 'split', name: 'Split Pane', category: 'Layout', dsl: 'Sp [Tx "Left panel", Tx "Right panel"]' },
+  { type: 'collapsible', name: 'Collapsible', category: 'Layout', dsl: 'Co "Show more" [Tx "Hidden content here"]' },
 
   // Navigation
   { type: 'tabs', name: 'Tabs', category: 'Navigation', dsl: 'Ts [tab "Overview" [Tx "Overview content"], tab "Details" [Tx "Details content"]]' },
@@ -261,6 +495,10 @@ export const componentRegistry: ComponentConfig[] = [
   { type: 'breadcrumb', name: 'Breadcrumb', category: 'Navigation', dsl: 'Bc :breadcrumbs' },
   { type: 'header', name: 'Header', category: 'Navigation', dsl: 'Hr "App Title" [Bt "Action"]' },
   { type: 'sidebar', name: 'Sidebar', category: 'Navigation', dsl: 'Sd :navItems' },
+  { type: 'pagination', name: 'Pagination', category: 'Navigation', dsl: 'Pn :currentPage :totalPages' },
+  { type: 'command', name: 'Command Palette', category: 'Navigation', dsl: 'Cm :commands "Search..."' },
+  { type: 'dropdown', name: 'Dropdown Menu', category: 'Navigation', dsl: 'Dn "Actions" [opt "edit" "Edit", opt "delete" "Delete"]' },
+  { type: 'contextmenu', name: 'Context Menu', category: 'Navigation', dsl: 'Cx [opt "copy" "Copy", opt "paste" "Paste"] [Tx "Right-click me"]' },
 
   // Data Display
   { type: 'table', name: 'Data Table', category: 'Data Display', dsl: 'Tb :recentOrders "Recent Orders"' },
@@ -271,12 +509,27 @@ export const componentRegistry: ComponentConfig[] = [
   { type: 'progress', name: 'Progress', category: 'Data Display', dsl: 'Pg :progress "Loading"' },
   { type: 'icon', name: 'Icon', category: 'Data Display', dsl: 'Ic "check-circle" #green' },
   { type: 'image', name: 'Image', category: 'Data Display', dsl: 'Im :imageUrl "Sample Image"' },
+  { type: 'calendar', name: 'Calendar', category: 'Data Display', dsl: 'Ca :events "Events"' },
+  { type: 'timeline', name: 'Timeline', category: 'Data Display', dsl: 'Tl :timelineEvents "Project History"' },
+  { type: 'tree', name: 'Tree View', category: 'Data Display', dsl: 'Tr :treeData "Files"' },
+  { type: 'kanban', name: 'Kanban', category: 'Data Display', dsl: 'Kb :kanbanData "Tasks"' },
+  { type: 'org', name: 'Org Chart', category: 'Data Display', dsl: 'Og :orgData "Organization"' },
+  { type: 'flow', name: 'Flow Diagram', category: 'Data Display', dsl: 'Fl :flowData "Process"' },
+  { type: 'map', name: 'Map', category: 'Data Display', dsl: 'Mp :mapData "Locations"' },
+  { type: 'carousel', name: 'Carousel', category: 'Data Display', dsl: 'Cr :carouselImages' },
 
   // Interactive
   { type: 'modal', name: 'Modal', category: 'Interactive', dsl: 'Md "Confirm Action" [Tx "Are you sure?", Bt "Confirm" #primary]' },
   { type: 'tooltip', name: 'Tooltip', category: 'Interactive', dsl: 'Tl "Hover for info" [Bt "Hover me"]' },
   { type: 'popover', name: 'Popover', category: 'Interactive', dsl: 'Pp "Options" [Bt "Option 1", Bt "Option 2"]' },
   { type: 'accordion', name: 'Accordion', category: 'Interactive', dsl: 'Ac "FAQ" [Tx "Frequently asked questions content here"]' },
+  { type: 'alertdialog', name: 'Alert Dialog', category: 'Interactive', dsl: 'Ad "Delete Item?" "This action cannot be undone."' },
+  { type: 'hovercard', name: 'Hover Card', category: 'Interactive', dsl: 'Hc [Tx "@username"] [Cd "User Profile" [Tx "Bio here"]]' },
+  { type: 'lightbox', name: 'Lightbox', category: 'Interactive', dsl: 'Lb :galleryImages' },
+
+  // Media
+  { type: 'video', name: 'Video', category: 'Interactive', dsl: 'Vd :videoUrl "Demo Video"' },
+  { type: 'audio', name: 'Audio', category: 'Interactive', dsl: 'Au :audioUrl "Podcast"' },
 ];
 
 // ============================================================================

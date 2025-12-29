@@ -1,0 +1,58 @@
+id: WF-009
+name: LiquidRender B2B Marketing Pages
+status: completed
+created: 2025-12-29
+completed: 2025-12-29
+target: B2B Intelligence Clients
+
+git:
+  start_tag: WF-009-start
+  start_commit: ab43834
+
+waves:
+  - id: 0
+    name: Bootstrap
+    status: completed
+    tasks:
+      - types.ts
+      - copy.ts
+      - index.ts skeleton
+  - id: 1
+    name: Core Sections
+    status: completed
+    parallel: true
+    tasks:
+      - hero.tsx
+      - how-it-works.tsx
+      - three-modes.tsx
+  - id: 2
+    name: Differentiator Sections
+    status: completed
+    parallel: true
+    tasks:
+      - competitor-map.tsx
+      - learning-journey.tsx
+      - vocabulary-section.tsx
+  - id: 3
+    name: Integration
+    status: completed
+    tasks:
+      - final-cta.tsx
+      - index.ts exports
+
+current_wave: completed
+
+output_directory: apps/web/src/modules/marketing/knosia/
+
+artifacts:
+  - apps/web/src/modules/marketing/knosia/hero.tsx
+  - apps/web/src/modules/marketing/knosia/how-it-works.tsx
+  - apps/web/src/modules/marketing/knosia/three-modes.tsx
+  - apps/web/src/modules/marketing/knosia/competitor-map.tsx
+  - apps/web/src/modules/marketing/knosia/learning-journey.tsx
+  - apps/web/src/modules/marketing/knosia/vocabulary-section.tsx
+  - apps/web/src/modules/marketing/knosia/final-cta.tsx
+
+completion:
+  status: success
+  completed_at: 2025-12-29

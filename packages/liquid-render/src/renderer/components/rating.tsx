@@ -1,5 +1,5 @@
 // Rating Component - Star rating display with interactive selection
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { LiquidComponentProps } from './utils';
 import { tokens, mergeStyles, getBlockColor, clamp } from './utils';
 import { resolveBinding } from '../data-context';
@@ -83,6 +83,12 @@ const styles = {
 
   iconButtonHover: {
     transform: 'scale(1.1)',
+  } as React.CSSProperties,
+
+  iconButtonFocus: {
+    outline: `2px solid ${tokens.colors.ring}`,
+    outlineOffset: '2px',
+    borderRadius: tokens.radius.sm,
   } as React.CSSProperties,
 
   label: {
@@ -310,6 +316,7 @@ function getFillAmount(index: number, value: number, allowHalf: boolean): number
 interface RatingIconProps {
   index: number;
   value: number;
+  max: number;
   hoverValue: number | null;
   allowHalf: boolean;
   icon: IconType;
@@ -317,13 +324,16 @@ interface RatingIconProps {
   filledColor: string;
   emptyColor: string;
   interactive: boolean;
+  isFocused: boolean;
   onClick: (value: number) => void;
   onHover: (value: number | null) => void;
+  onFocus: (index: number) => void;
 }
 
 function RatingIcon({
   index,
   value,
+  max,
   hoverValue,
   allowHalf,
   icon,
@@ -331,8 +341,10 @@ function RatingIcon({
   filledColor,
   emptyColor,
   interactive,
+  isFocused,
   onClick,
   onHover,
+  onFocus,
 }: RatingIconProps): React.ReactElement {
   const [isHovered, setIsHovered] = useState(false);
   const displayValue = hoverValue !== null ? hoverValue : value;
@@ -341,12 +353,10 @@ function RatingIcon({
   const IconComponent = iconComponents[icon];
   const iconSize = sizeMap[size];
 
-  const handleClick = useCallback(() => {
-    if (interactive) {
-      // If allowing half, clicking on left half gives index + 0.5, right half gives index + 1
-      onClick(index + 1);
-    }
-  }, [interactive, index, onClick]);
+  // Determine if this radio option is currently selected
+  const ratingForThisIcon = index + 1;
+  const isSelected = Math.ceil(value) === ratingForThisIcon ||
+    (allowHalf && (value === index + 0.5 || value === index + 1));
 
   const handleHalfClick = useCallback((e: React.MouseEvent) => {
     if (interactive && allowHalf) {
@@ -373,21 +383,29 @@ function RatingIcon({
     }
   }, [interactive, onHover]);
 
+  const handleFocus = useCallback(() => {
+    onFocus(index);
+  }, [index, onFocus]);
+
   const buttonStyle = mergeStyles(
     styles.iconButton(interactive),
-    isHovered ? styles.iconButtonHover : {}
+    isHovered ? styles.iconButtonHover : {},
+    isFocused ? styles.iconButtonFocus : {}
   );
 
   return (
     <button
       type="button"
+      role="radio"
       style={buttonStyle}
       onClick={handleHalfClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
       disabled={!interactive}
-      aria-label={`Rate ${index + 1} out of ${value}`}
-      tabIndex={interactive ? 0 : -1}
+      aria-checked={isSelected}
+      aria-label={`${ratingForThisIcon} of ${max} stars`}
+      tabIndex={interactive && isFocused ? 0 : -1}
     >
       <IconComponent
         filled={fillAmount}
@@ -406,6 +424,8 @@ function RatingIcon({
 export function Rating({ block, data }: LiquidComponentProps): React.ReactElement {
   const { signalActions } = useLiquidContext();
   const [hoverValue, setHoverValue] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Resolve the binding to get the current value
   const rawValue = resolveBinding(block.binding, data);
@@ -428,6 +448,12 @@ export function Rating({ block, data }: LiquidComponentProps): React.ReactElemen
   const emitSignal = block.signals?.emit;
   const interactive = !readOnly;
 
+  // Initialize focused index based on current value
+  useEffect(() => {
+    const valueBasedIndex = Math.max(0, Math.ceil(clampedValue) - 1);
+    setFocusedIndex(valueBasedIndex);
+  }, [clampedValue]);
+
   const handleClick = useCallback((newValue: number) => {
     if (interactive && emitSignal?.name) {
       signalActions.emit(emitSignal.name, String(newValue));
@@ -438,23 +464,95 @@ export function Rating({ block, data }: LiquidComponentProps): React.ReactElemen
     setHoverValue(value);
   }, []);
 
+  const handleFocus = useCallback((index: number) => {
+    setFocusedIndex(index);
+  }, []);
+
+  // Keyboard navigation for radiogroup pattern
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!interactive) return;
+
+    let newIndex = focusedIndex;
+    let shouldSelect = false;
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+        e.preventDefault();
+        newIndex = Math.min(focusedIndex + 1, max - 1);
+        shouldSelect = true;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        e.preventDefault();
+        newIndex = Math.max(focusedIndex - 1, 0);
+        shouldSelect = true;
+        break;
+      case 'Home':
+        e.preventDefault();
+        newIndex = 0;
+        shouldSelect = true;
+        break;
+      case 'End':
+        e.preventDefault();
+        newIndex = max - 1;
+        shouldSelect = true;
+        break;
+      case ' ':
+      case 'Enter':
+        e.preventDefault();
+        // Select current focused option
+        handleClick(focusedIndex + 1);
+        return;
+      default:
+        return;
+    }
+
+    setFocusedIndex(newIndex);
+
+    // Move focus to the new button
+    if (containerRef.current) {
+      const buttons = containerRef.current.querySelectorAll('button[role="radio"]');
+      const targetButton = buttons[newIndex] as HTMLButtonElement;
+      if (targetButton) {
+        targetButton.focus();
+        // Optionally select on arrow key (common pattern for radiogroups)
+        if (shouldSelect) {
+          handleClick(newIndex + 1);
+        }
+      }
+    }
+  }, [interactive, focusedIndex, max, handleClick]);
+
   const filledColor = color || defaultFilledColor;
   const emptyColor = defaultEmptyColor;
 
+  // Generate accessible description
+  const accessibleLabel = label || 'Rating';
+
   return (
     <div data-liquid-type="rating" style={styles.wrapper}>
-      {label && <span style={styles.label}>{label}</span>}
+      {label && (
+        <span id={`rating-label-${label}`} style={styles.label}>
+          {label}
+        </span>
+      )}
       <div style={styles.container}>
         <div
+          ref={containerRef}
           style={styles.iconsWrapper(size)}
           role="radiogroup"
-          aria-label={label || 'Rating'}
+          aria-label={accessibleLabel}
+          aria-describedby={showValue ? `rating-value-${label || 'default'}` : undefined}
+          aria-readonly={readOnly || undefined}
+          onKeyDown={handleKeyDown}
         >
           {Array.from({ length: max }, (_, i) => (
             <RatingIcon
               key={i}
               index={i}
               value={clampedValue}
+              max={max}
               hoverValue={hoverValue}
               allowHalf={allowHalf}
               icon={icon}
@@ -462,13 +560,19 @@ export function Rating({ block, data }: LiquidComponentProps): React.ReactElemen
               filledColor={filledColor}
               emptyColor={emptyColor}
               interactive={interactive}
+              isFocused={focusedIndex === i}
               onClick={handleClick}
               onHover={handleHover}
+              onFocus={handleFocus}
             />
           ))}
         </div>
         {showValue && (
-          <span style={styles.valueText}>
+          <span
+            id={`rating-value-${label || 'default'}`}
+            style={styles.valueText}
+            aria-live="polite"
+          >
             {clampedValue}{allowHalf ? '' : ''}/{max}
           </span>
         )}
@@ -496,9 +600,17 @@ export function StaticRating({
   style: customStyle,
 }: StaticRatingProps): React.ReactElement {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const clampedValue = clamp(value, 0, max);
   const interactive = !readOnly && !!onChange;
+
+  // Initialize focused index based on current value
+  useEffect(() => {
+    const valueBasedIndex = Math.max(0, Math.ceil(clampedValue) - 1);
+    setFocusedIndex(valueBasedIndex);
+  }, [clampedValue]);
 
   const handleClick = useCallback((newValue: number) => {
     if (interactive && onChange) {
@@ -510,25 +622,95 @@ export function StaticRating({
     setHoverValue(value);
   }, []);
 
+  const handleFocus = useCallback((index: number) => {
+    setFocusedIndex(index);
+  }, []);
+
+  // Keyboard navigation for radiogroup pattern
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!interactive) return;
+
+    let newIndex = focusedIndex;
+    let shouldSelect = false;
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+        e.preventDefault();
+        newIndex = Math.min(focusedIndex + 1, max - 1);
+        shouldSelect = true;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        e.preventDefault();
+        newIndex = Math.max(focusedIndex - 1, 0);
+        shouldSelect = true;
+        break;
+      case 'Home':
+        e.preventDefault();
+        newIndex = 0;
+        shouldSelect = true;
+        break;
+      case 'End':
+        e.preventDefault();
+        newIndex = max - 1;
+        shouldSelect = true;
+        break;
+      case ' ':
+      case 'Enter':
+        e.preventDefault();
+        handleClick(focusedIndex + 1);
+        return;
+      default:
+        return;
+    }
+
+    setFocusedIndex(newIndex);
+
+    if (containerRef.current) {
+      const buttons = containerRef.current.querySelectorAll('button[role="radio"]');
+      const targetButton = buttons[newIndex] as HTMLButtonElement;
+      if (targetButton) {
+        targetButton.focus();
+        if (shouldSelect) {
+          handleClick(newIndex + 1);
+        }
+      }
+    }
+  }, [interactive, focusedIndex, max, handleClick]);
+
   const filledColor = color || defaultFilledColor;
   const emptyColor = defaultEmptyColor;
 
   const wrapperStyle = mergeStyles(styles.wrapper, customStyle);
 
+  // Generate unique ID for accessibility
+  const ratingId = label ? label.replace(/\s+/g, '-').toLowerCase() : 'static-rating';
+  const accessibleLabel = label || 'Rating';
+
   return (
     <div data-liquid-type="rating" style={wrapperStyle} className={className}>
-      {label && <span style={styles.label}>{label}</span>}
+      {label && (
+        <span id={`rating-label-${ratingId}`} style={styles.label}>
+          {label}
+        </span>
+      )}
       <div style={styles.container}>
         <div
+          ref={containerRef}
           style={styles.iconsWrapper(size)}
           role="radiogroup"
-          aria-label={label || 'Rating'}
+          aria-label={accessibleLabel}
+          aria-describedby={showValue ? `rating-value-${ratingId}` : undefined}
+          aria-readonly={readOnly || undefined}
+          onKeyDown={handleKeyDown}
         >
           {Array.from({ length: max }, (_, i) => (
             <RatingIcon
               key={i}
               index={i}
               value={clampedValue}
+              max={max}
               hoverValue={hoverValue}
               allowHalf={allowHalf}
               icon={icon}
@@ -536,13 +718,19 @@ export function StaticRating({
               filledColor={filledColor}
               emptyColor={emptyColor}
               interactive={interactive}
+              isFocused={focusedIndex === i}
               onClick={handleClick}
               onHover={handleHover}
+              onFocus={handleFocus}
             />
           ))}
         </div>
         {showValue && (
-          <span style={styles.valueText}>
+          <span
+            id={`rating-value-${ratingId}`}
+            style={styles.valueText}
+            aria-live="polite"
+          >
             {clampedValue}/{max}
           </span>
         )}

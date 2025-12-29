@@ -1,0 +1,122 @@
+workflow:
+  id: WF-0016
+  name: Accessibility Remediation
+  status: completed
+  created_at: '2025-12-29T02:45:00Z'
+  completed_at: '2025-12-29T03:00:00Z'
+  git_tag: WF-0016-start
+
+waves:
+  - id: 0
+    name: Bootstrap
+    status: completed
+    tasks:
+      - id: T0
+        name: Create audit report
+        status: completed
+
+  - id: 1
+    name: Core/Feedback Components
+    status: completed
+    parallel: true
+    tasks:
+      - id: T1
+        name: Alert - add role="alert"
+        file: src/renderer/components/alert.tsx
+        status: completed
+      - id: T2
+        name: Toast - add role="alert" + aria-live
+        file: src/renderer/components/toast.tsx
+        status: completed
+      - id: T3
+        name: Spinner - add role="status" + aria-label
+        file: src/renderer/components/spinner.tsx
+        status: completed
+      - id: T4
+        name: Skeleton - add aria-busy
+        file: src/renderer/components/skeleton.tsx
+        status: completed
+      - id: T5
+        name: Separator - add role="separator"
+        file: src/renderer/components/separator.tsx
+        status: completed
+      - id: T6
+        name: KPI Card - add aria-labelledby
+        file: src/renderer/components/kpi-card.tsx
+        status: completed
+
+  - id: 2
+    name: Form Components
+    status: completed
+    parallel: true
+    tasks:
+      - id: T7
+        name: Select - fix ARIA
+        file: src/renderer/components/select.tsx
+        status: completed
+      - id: T8
+        name: Checkbox - fix ARIA
+        file: src/renderer/components/checkbox.tsx
+        status: completed
+      - id: T9
+        name: Switch - add role="switch"
+        file: src/renderer/components/switch.tsx
+        status: completed
+      - id: T10
+        name: Radio - add role="radiogroup"
+        file: src/renderer/components/radio.tsx
+        status: completed
+      - id: T11
+        name: Range - fix slider ARIA
+        file: src/renderer/components/range.tsx
+        status: completed
+      - id: T12
+        name: Upload - fix file input
+        file: src/renderer/components/upload.tsx
+        status: completed
+      - id: T13
+        name: Rating - add ARIA
+        file: src/renderer/components/rating.tsx
+        status: completed
+      - id: T14
+        name: OTP - add textbox roles
+        file: src/renderer/components/otp.tsx
+        status: completed
+      - id: T15
+        name: Color - fix color input
+        file: src/renderer/components/color.tsx
+        status: completed
+      - id: T16
+        name: Stepper - add spinbutton
+        file: src/renderer/components/stepper.tsx
+        status: completed
+      - id: T17
+        name: Time - fix time input
+        file: src/renderer/components/time.tsx
+        status: completed
+
+  - id: 3
+    name: Data Display Components
+    status: completed
+    parallel: true
+    tasks:
+      - id: T18
+        name: List - use semantic list
+        file: src/renderer/components/list.tsx
+        status: completed
+      - id: T19
+        name: Kanban - add drag a11y
+        file: src/renderer/components/kanban.tsx
+        status: completed
+
+  - id: 4
+    name: Validation
+    status: completed
+    tasks:
+      - id: T20
+        name: Run a11y validation
+        status: completed
+
+current_wave: 4
+total_tasks: 20
+completed_tasks: 20

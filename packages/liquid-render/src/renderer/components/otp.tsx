@@ -171,13 +171,14 @@ function extractDigitsFromPaste(pastedText: string): string {
 interface OTPSlotProps {
   state: OTPSlotState;
   index: number;
+  totalLength: number;
   isFirst: boolean;
   isLast: boolean;
   hasError: boolean;
   onClick: () => void;
 }
 
-function OTPSlot({ state, isFirst, isLast, hasError, onClick }: OTPSlotProps): React.ReactElement {
+function OTPSlot({ state, index, totalLength, isFirst, isLast, hasError, onClick }: OTPSlotProps): React.ReactElement {
   const { char, isActive, hasFakeCaret } = state;
 
   return (
@@ -186,10 +187,12 @@ function OTPSlot({ state, isFirst, isLast, hasError, onClick }: OTPSlotProps): R
       data-active={isActive}
       style={styles.slot(isActive, hasError, isFirst, isLast)}
       onClick={onClick}
+      aria-hidden="true"
+      aria-label={`Digit ${index + 1} of ${totalLength}${char ? `: ${char}` : ''}`}
     >
       {char}
       {hasFakeCaret && (
-        <div style={styles.caret}>
+        <div style={styles.caret} aria-hidden="true">
           <div style={styles.caretBlink} />
         </div>
       )}
@@ -199,7 +202,12 @@ function OTPSlot({ state, isFirst, isLast, hasError, onClick }: OTPSlotProps): R
 
 function OTPSeparator(): React.ReactElement {
   return (
-    <div data-slot="input-otp-separator" role="separator" style={styles.separator}>
+    <div
+      data-slot="input-otp-separator"
+      role="separator"
+      aria-hidden="true"
+      style={styles.separator}
+    >
       <div style={styles.separatorIcon} />
     </div>
   );
@@ -307,12 +315,20 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
     if (showSeparator) {
       // First group
       const firstGroup = (
-        <div key="group-1" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-1"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits 1 to ${separatorIndex}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.slice(0, separatorIndex).map((state, i) => (
             <OTPSlot
               key={i}
               state={state}
               index={i}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === separatorIndex - 1}
               hasError={false}
@@ -328,12 +344,20 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
 
       // Second group
       const secondGroup = (
-        <div key="group-2" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-2"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits ${separatorIndex + 1} to ${length}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.slice(separatorIndex).map((state, i) => (
             <OTPSlot
               key={i + separatorIndex}
               state={state}
               index={i + separatorIndex}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === length - separatorIndex - 1}
               hasError={false}
@@ -346,12 +370,20 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
     } else {
       // Single group
       slots.push(
-        <div key="group-1" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-1"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits 1 to ${length}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.map((state, i) => (
             <OTPSlot
               key={i}
               state={state}
               index={i}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === length - 1}
               hasError={false}
@@ -372,7 +404,12 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
           {label}
         </label>
       )}
-      <div data-slot="input-otp" style={styles.container}>
+      <div
+        data-slot="input-otp"
+        role="group"
+        aria-label={`${label || 'One-time password'} input with ${length} digits`}
+        style={styles.container}
+      >
         {renderSlots()}
         <input
           ref={inputRef}
@@ -389,7 +426,7 @@ export function OTP({ block, data }: LiquidComponentProps): React.ReactElement {
           onFocus={handleFocus}
           onBlur={handleBlur}
           style={styles.hiddenInput}
-          aria-label={label || 'One-time password'}
+          aria-label={`${label || 'One-time password'}, ${length} digits${value ? `, ${value.length} entered` : ''}`}
         />
       </div>
     </div>
@@ -537,12 +574,20 @@ export function StaticOTP({
     if (showSeparator) {
       // First group
       const firstGroup = (
-        <div key="group-1" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-1"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits 1 to ${separatorIndex}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.slice(0, separatorIndex).map((state, i) => (
             <OTPSlot
               key={i}
               state={state}
               index={i}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === separatorIndex - 1}
               hasError={hasError}
@@ -558,12 +603,20 @@ export function StaticOTP({
 
       // Second group
       const secondGroup = (
-        <div key="group-2" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-2"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits ${separatorIndex + 1} to ${length}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.slice(separatorIndex).map((state, i) => (
             <OTPSlot
               key={i + separatorIndex}
               state={state}
               index={i + separatorIndex}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === length - separatorIndex - 1}
               hasError={hasError}
@@ -576,12 +629,20 @@ export function StaticOTP({
     } else {
       // Single group
       slots.push(
-        <div key="group-1" data-slot="input-otp-group" style={styles.group}>
+        <div
+          key="group-1"
+          data-slot="input-otp-group"
+          role="group"
+          aria-label={`Digits 1 to ${length}`}
+          aria-hidden="true"
+          style={styles.group}
+        >
           {slotStates.map((state, i) => (
             <OTPSlot
               key={i}
               state={state}
               index={i}
+              totalLength={length}
               isFirst={i === 0}
               isLast={i === length - 1}
               hasError={hasError}
@@ -608,7 +669,12 @@ export function StaticOTP({
           {label}
         </label>
       )}
-      <div data-slot="input-otp" style={styles.container}>
+      <div
+        data-slot="input-otp"
+        role="group"
+        aria-label={`${label || 'One-time password'} input with ${length} digits`}
+        style={styles.container}
+      >
         {renderSlots()}
         <input
           ref={inputRef}
@@ -626,7 +692,7 @@ export function StaticOTP({
           onBlur={handleBlur}
           disabled={disabled}
           style={styles.hiddenInput}
-          aria-label={label || 'One-time password'}
+          aria-label={`${label || 'One-time password'}, ${length} digits${value ? `, ${value.length} entered` : ''}`}
           aria-invalid={hasError}
           aria-describedby={
             error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined

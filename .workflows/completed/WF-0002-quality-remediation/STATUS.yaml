@@ -1,8 +1,13 @@
 workflow: "Quality Remediation - shadcn Alignment"
 workflow_id: WF-0002
 started_at: 2025-12-25T00:00:00Z
+archived_at: 2025-12-29
 current_wave: 0
-overall_status: pending
+overall_status: superseded
+superseded_by:
+  - WF-0013-component-polish
+  - WF-0014-fix-ts-errors
+notes: Archived - quality/a11y work addressed in later workflows
 
 dependencies_installed: false
 

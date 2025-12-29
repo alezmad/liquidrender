@@ -105,15 +105,17 @@ const styles = {
 interface SingleKPIProps {
   kpi: KPIValue;
   color?: string;
+  id?: string;
 }
 
-function SingleKPI({ kpi, color }: SingleKPIProps): React.ReactElement {
+function SingleKPI({ kpi, color, id }: SingleKPIProps): React.ReactElement {
   const formattedValue = formatDisplayValue(kpi.value);
+  const labelId = id ? `${id}-label` : undefined;
 
   return (
     <div style={styles.card(color)} data-liquid-type="kpi">
-      <div style={styles.label}>{kpi.label}</div>
-      <div style={styles.value}>{formattedValue}</div>
+      <div style={styles.label} id={labelId}>{kpi.label}</div>
+      <div style={styles.value} aria-labelledby={labelId}>{formattedValue}</div>
       {kpi.trend && kpi.change !== undefined && (
         <div style={styles.trend(kpi.trend)}>
           {kpi.trend === 'up' && (
@@ -141,19 +143,20 @@ export function KPICard({ block, data }: LiquidComponentProps): React.ReactEleme
   const value = resolveBinding(block.binding, data);
   const label = block.label || '';
   const color = getBlockColor(block);
+  const baseId = React.useId();
 
   const kpis = extractKPIValues(value, label);
 
   // Single KPI
   if (kpis.length === 1) {
-    return <SingleKPI kpi={kpis[0]!} color={color} />;
+    return <SingleKPI kpi={kpis[0]!} color={color} id={baseId} />;
   }
 
   // Multiple KPIs (expanded from object)
   return (
     <div style={styles.container} data-liquid-type="kpi-group">
       {kpis.map((kpi, i) => (
-        <SingleKPI key={i} kpi={kpi} color={color} />
+        <SingleKPI key={i} kpi={kpi} color={color} id={`${baseId}-${i}`} />
       ))}
     </div>
   );

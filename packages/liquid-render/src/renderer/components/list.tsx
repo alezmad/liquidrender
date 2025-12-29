@@ -118,8 +118,8 @@ export function List({ block, data, children }: LiquidComponentProps): React.Rea
   if (!Array.isArray(arrayData) || arrayData.length === 0) {
     const emptyMessage = block.label || 'No items';
     return (
-      <div data-liquid-type="list" style={containerStyle}>
-        <div style={styles.emptyState}>
+      <div data-liquid-type="list" role="list" style={containerStyle}>
+        <div role="listitem" style={styles.emptyState}>
           {emptyMessage === 'No items' ? emptyMessage : `No ${emptyMessage.toLowerCase()}`}
         </div>
       </div>
@@ -130,7 +130,7 @@ export function List({ block, data, children }: LiquidComponentProps): React.Rea
   // In this case, LiquidUI has already done the iteration and passed rendered children
   if (children) {
     return (
-      <div data-liquid-type="list" style={containerStyle}>
+      <div data-liquid-type="list" role="list" style={containerStyle}>
         {children}
       </div>
     );
@@ -142,7 +142,7 @@ export function List({ block, data, children }: LiquidComponentProps): React.Rea
   // The actual iteration logic lives in LiquidUI.tsx's BlockRenderer.
 
   return (
-    <div data-liquid-type="list" style={containerStyle}>
+    <div data-liquid-type="list" role="list" style={containerStyle}>
       {/* Children will be injected by LiquidUI BlockRenderer */}
     </div>
   );
@@ -208,9 +208,9 @@ export function StaticList<T = unknown>({
   // Handle empty state
   if (!items || items.length === 0) {
     return (
-      <div data-liquid-type="list" style={containerStyle} className={className}>
+      <div data-liquid-type="list" role="list" style={containerStyle} className={className}>
         {typeof emptyState === 'string' ? (
-          <div style={styles.emptyState}>{emptyState}</div>
+          <div role="listitem" style={styles.emptyState}>{emptyState}</div>
         ) : (
           emptyState
         )}
@@ -219,11 +219,11 @@ export function StaticList<T = unknown>({
   }
 
   return (
-    <div data-liquid-type="list" style={containerStyle} className={className}>
+    <div data-liquid-type="list" role="list" style={containerStyle} className={className}>
       {items.map((item, index) => {
         const key = keyExtractor ? keyExtractor(item, index) : index;
         return (
-          <div key={key} data-list-item-index={index}>
+          <div key={key} role="listitem" data-list-item-index={index}>
             {renderItem(item, index)}
           </div>
         );
@@ -285,9 +285,9 @@ export function GridList<T = unknown>({
   // Handle empty state
   if (!items || items.length === 0) {
     return (
-      <div data-liquid-type="list" data-list-variant="grid" style={containerStyle} className={className}>
+      <div data-liquid-type="list" data-list-variant="grid" role="list" style={containerStyle} className={className}>
         {typeof emptyState === 'string' ? (
-          <div style={{ ...styles.emptyState, gridColumn: '1 / -1' }}>{emptyState}</div>
+          <div role="listitem" style={{ ...styles.emptyState, gridColumn: '1 / -1' }}>{emptyState}</div>
         ) : (
           emptyState
         )}
@@ -296,11 +296,11 @@ export function GridList<T = unknown>({
   }
 
   return (
-    <div data-liquid-type="list" data-list-variant="grid" style={containerStyle} className={className}>
+    <div data-liquid-type="list" data-list-variant="grid" role="list" style={containerStyle} className={className}>
       {items.map((item, index) => {
         const key = keyExtractor ? keyExtractor(item, index) : index;
         return (
-          <div key={key} data-list-item-index={index}>
+          <div key={key} role="listitem" data-list-item-index={index}>
             {renderItem(item, index)}
           </div>
         );

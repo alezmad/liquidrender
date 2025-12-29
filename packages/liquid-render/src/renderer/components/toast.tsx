@@ -536,7 +536,8 @@ function ToastItem({ toast, position, onDismiss }: ToastItemProps): React.ReactE
       data-variant={toast.variant}
       data-toast-id={toast.id}
       role="alert"
-      aria-live="polite"
+      aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
       style={styles.toast(toast.variant, isVisible, isExiting, position)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -764,7 +765,8 @@ export function Toast({ block, data }: LiquidComponentProps): React.ReactElement
       data-liquid-type="toast"
       data-variant={variant}
       role="alert"
-      aria-live="polite"
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
       style={styles.toast(variant, isVisible, isExiting, 'top-right')}
     >
       {icon}
@@ -880,7 +882,8 @@ export function StaticToast({
       data-liquid-type="toast"
       data-variant={variant}
       role="alert"
-      aria-live="polite"
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      aria-atomic="true"
       style={containerStyle}
     >
       {icon}

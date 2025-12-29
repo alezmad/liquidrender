@@ -146,10 +146,11 @@ export function Select({ block, data }: LiquidComponentProps): React.ReactElemen
           onChange={handleChange}
           style={styles.select(false)}
           disabled
+          aria-disabled="true"
         >
           <option value="">No options available</option>
         </select>
-        <span style={styles.chevron}>▼</span>
+        <span style={styles.chevron} aria-hidden="true">▼</span>
       </div>
     );
   }
@@ -174,7 +175,7 @@ export function Select({ block, data }: LiquidComponentProps): React.ReactElemen
             </option>
           ))}
         </select>
-        <span style={styles.chevron}>▼</span>
+        <span style={styles.chevron} aria-hidden="true">▼</span>
       </div>
     </div>
   );
@@ -234,7 +235,7 @@ export function StaticSelect({
             </option>
           ))}
         </select>
-        <span style={styles.chevron}>▼</span>
+        <span style={styles.chevron} aria-hidden="true">▼</span>
       </div>
       {error && (
         <span id={`${selectId}-error`} style={styles.error} role="alert">

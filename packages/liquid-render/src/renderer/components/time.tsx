@@ -225,6 +225,7 @@ interface SpinFieldProps {
   onChange: (value: number) => void;
   label: string;
   displayValue?: string;
+  valueText?: string;
 }
 
 function SpinField({
@@ -234,6 +235,7 @@ function SpinField({
   onChange,
   label,
   displayValue,
+  valueText,
 }: SpinFieldProps): React.ReactElement {
   const handleIncrement = useCallback(() => {
     onChange(wrapNumber(value + 1, min, max));
@@ -267,17 +269,23 @@ function SpinField({
         onClick={handleIncrement}
         style={styles.spinButton}
         aria-label={`Increase ${label}`}
+        aria-hidden="true"
         tabIndex={-1}
       >
         &#9650;
       </button>
       <input
         type="text"
+        role="spinbutton"
         value={displayValue ?? padNumber(value)}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         style={styles.numberInput}
         aria-label={label}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        aria-valuetext={valueText ?? String(value)}
         inputMode="numeric"
         maxLength={2}
       />
@@ -286,6 +294,7 @@ function SpinField({
         onClick={handleDecrement}
         style={styles.spinButton}
         aria-label={`Decrease ${label}`}
+        aria-hidden="true"
         tabIndex={-1}
       >
         &#9660;
@@ -359,7 +368,12 @@ export function Time({ block, data }: LiquidComponentProps): React.ReactElement 
         </label>
       )}
 
-      <div style={styles.inputsWrapper} role="group" aria-labelledby={label ? labelId : undefined}>
+      <div
+        style={styles.inputsWrapper}
+        role="group"
+        aria-labelledby={label ? labelId : undefined}
+        aria-label={label ? undefined : 'Time picker'}
+      >
         {/* Hours */}
         <SpinField
           value={format === '24h' ? timeValue.hours : hours12}
@@ -368,9 +382,10 @@ export function Time({ block, data }: LiquidComponentProps): React.ReactElement 
           onChange={handleHoursChange}
           label="Hours"
           displayValue={format === '24h' ? padNumber(timeValue.hours) : padNumber(hours12)}
+          valueText={format === '24h' ? `${timeValue.hours} hours` : `${hours12} hours`}
         />
 
-        <span style={styles.separator}>:</span>
+        <span style={styles.separator} aria-hidden="true">:</span>
 
         {/* Minutes */}
         <SpinField
@@ -379,38 +394,42 @@ export function Time({ block, data }: LiquidComponentProps): React.ReactElement 
           max={59}
           onChange={handleMinutesChange}
           label="Minutes"
+          valueText={`${timeValue.minutes} minutes`}
         />
 
         {/* Seconds (optional) */}
         {showSeconds && (
           <>
-            <span style={styles.separator}>:</span>
+            <span style={styles.separator} aria-hidden="true">:</span>
             <SpinField
               value={timeValue.seconds}
               min={0}
               max={59}
               onChange={handleSecondsChange}
               label="Seconds"
+              valueText={`${timeValue.seconds} seconds`}
             />
           </>
         )}
 
         {/* AM/PM selector for 12h format */}
         {format === '12h' && (
-          <div style={styles.periodWrapper}>
+          <div style={styles.periodWrapper} role="radiogroup" aria-label="Time period">
             <button
               type="button"
+              role="radio"
               onClick={() => handlePeriodChange('AM')}
               style={period === 'AM' ? styles.periodButtonActive : styles.periodButton}
-              aria-pressed={period === 'AM'}
+              aria-checked={period === 'AM'}
             >
               AM
             </button>
             <button
               type="button"
+              role="radio"
               onClick={() => handlePeriodChange('PM')}
               style={period === 'PM' ? styles.periodButtonActive : styles.periodButton}
-              aria-pressed={period === 'PM'}
+              aria-checked={period === 'PM'}
             >
               PM
             </button>
@@ -455,7 +474,8 @@ export function NativeTimePicker({ block, data }: LiquidComponentProps): React.R
         value={timeValue}
         onChange={handleChange}
         style={styles.nativeInput}
-        aria-labelledby={labelId}
+        aria-labelledby={label ? labelId : undefined}
+        aria-label={label ? undefined : 'Time'}
       />
     </div>
   );
@@ -540,7 +560,8 @@ export function StaticTime({
           value={formatTimeToString(timeValue, false)}
           onChange={handleNativeChange}
           style={styles.nativeInput}
-          aria-labelledby={labelId}
+          aria-labelledby={label ? labelId : undefined}
+          aria-label={label ? undefined : 'Time'}
         />
       </div>
     );
@@ -554,7 +575,12 @@ export function StaticTime({
         </label>
       )}
 
-      <div style={styles.inputsWrapper} role="group" aria-labelledby={label ? labelId : undefined}>
+      <div
+        style={styles.inputsWrapper}
+        role="group"
+        aria-labelledby={label ? labelId : undefined}
+        aria-label={label ? undefined : 'Time picker'}
+      >
         {/* Hours */}
         <SpinField
           value={format === '24h' ? timeValue.hours : hours12}
@@ -563,9 +589,10 @@ export function StaticTime({
           onChange={handleHoursChange}
           label="Hours"
           displayValue={format === '24h' ? padNumber(timeValue.hours) : padNumber(hours12)}
+          valueText={format === '24h' ? `${timeValue.hours} hours` : `${hours12} hours`}
         />
 
-        <span style={styles.separator}>:</span>
+        <span style={styles.separator} aria-hidden="true">:</span>
 
         {/* Minutes */}
         <SpinField
@@ -574,38 +601,42 @@ export function StaticTime({
           max={59}
           onChange={handleMinutesChange}
           label="Minutes"
+          valueText={`${timeValue.minutes} minutes`}
         />
 
         {/* Seconds (optional) */}
         {showSeconds && (
           <>
-            <span style={styles.separator}>:</span>
+            <span style={styles.separator} aria-hidden="true">:</span>
             <SpinField
               value={timeValue.seconds}
               min={0}
               max={59}
               onChange={handleSecondsChange}
               label="Seconds"
+              valueText={`${timeValue.seconds} seconds`}
             />
           </>
         )}
 
         {/* AM/PM selector for 12h format */}
         {format === '12h' && (
-          <div style={styles.periodWrapper}>
+          <div style={styles.periodWrapper} role="radiogroup" aria-label="Time period">
             <button
               type="button"
+              role="radio"
               onClick={() => handlePeriodChange('AM')}
               style={period === 'AM' ? styles.periodButtonActive : styles.periodButton}
-              aria-pressed={period === 'AM'}
+              aria-checked={period === 'AM'}
             >
               AM
             </button>
             <button
               type="button"
+              role="radio"
               onClick={() => handlePeriodChange('PM')}
               style={period === 'PM' ? styles.periodButtonActive : styles.periodButton}
-              aria-pressed={period === 'PM'}
+              aria-checked={period === 'PM'}
             >
               PM
             </button>

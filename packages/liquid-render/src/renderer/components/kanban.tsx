@@ -218,6 +218,18 @@ const styles = {
     fontSize: tokens.fontSize.xs,
     fontStyle: 'italic',
   } as React.CSSProperties,
+
+  visuallyHidden: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  } as React.CSSProperties,
 };
 
 // ============================================================================
@@ -300,6 +312,7 @@ interface KanbanCardItemProps {
   onDragStart: (cardId: string, columnId: string) => void;
   onDragEnd: () => void;
   onHover: (cardId: string | null) => void;
+  instructionsId: string;
 }
 
 function KanbanCardItem({
@@ -310,6 +323,7 @@ function KanbanCardItem({
   onDragStart,
   onDragEnd,
   onHover,
+  instructionsId,
 }: KanbanCardItemProps): React.ReactElement {
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -320,6 +334,10 @@ function KanbanCardItem({
   return (
     <div
       draggable
+      role="listitem"
+      aria-roledescription="draggable item"
+      aria-grabbed={isDragging}
+      aria-describedby={instructionsId}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
       onMouseEnter={() => onHover(card.id)}
@@ -490,6 +508,7 @@ export function Kanban({ block, data: context }: LiquidComponentProps): React.Re
   }, []);
 
   const label = block.label;
+  const instructionsId = 'kanban-dnd-instructions';
 
   // Empty state
   if (!boardData || boardData.columns.length === 0) {
@@ -504,11 +523,17 @@ export function Kanban({ block, data: context }: LiquidComponentProps): React.Re
   return (
     <div data-liquid-type="kanban" style={styles.wrapper}>
       {label && <div style={styles.header}>{label}</div>}
+      <div id={instructionsId} style={styles.visuallyHidden}>
+        Press space bar to start dragging. While dragging, use arrow keys to move the item. Press space bar again to drop the item in its new position, or press escape to cancel.
+      </div>
 
-      <div style={styles.board}>
+      <div style={styles.board} role="region" aria-label={label || 'Kanban board'}>
         {boardData.columns.map(column => (
           <div
             key={column.id}
+            role="group"
+            aria-label={`${column.title} column, ${column.cards.length} cards`}
+            aria-dropeffect={dragState.cardId ? 'move' : 'none'}
             style={mergeStyles(
               styles.column,
               dragState.targetColumnId === column.id && dragState.cardId ? styles.columnDragOver : undefined
@@ -520,12 +545,12 @@ export function Kanban({ block, data: context }: LiquidComponentProps): React.Re
           >
             <div style={styles.columnHeader}>
               <span>{column.title}</span>
-              <span style={styles.columnCount as React.CSSProperties}>
+              <span style={styles.columnCount as React.CSSProperties} aria-hidden="true">
                 {column.cards.length}
               </span>
             </div>
 
-            <div style={styles.columnBody as React.CSSProperties}>
+            <div style={styles.columnBody as React.CSSProperties} role="list">
               {column.cards.length > 0 ? (
                 column.cards.map((card) => (
                   <KanbanCardItem
@@ -537,10 +562,11 @@ export function Kanban({ block, data: context }: LiquidComponentProps): React.Re
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onHover={setHoveredCard}
+                    instructionsId={instructionsId}
                   />
                 ))
               ) : (
-                <div style={styles.emptyColumn as React.CSSProperties}>
+                <div style={styles.emptyColumn as React.CSSProperties} role="listitem">
                   Drop cards here
                 </div>
               )}
@@ -550,6 +576,7 @@ export function Kanban({ block, data: context }: LiquidComponentProps): React.Re
               type="button"
               style={styles.addButton}
               onClick={() => handleAddCard(column.id)}
+              aria-label={`Add card to ${column.title}`}
             >
               <PlusIcon size={14} />
               Add card
@@ -693,6 +720,8 @@ export function StaticKanban({
     }
   }, [onAddCard]);
 
+  const instructionsId = 'static-kanban-dnd-instructions';
+
   if (columns.length === 0) {
     return (
       <div style={mergeStyles(styles.wrapper, customStyle)}>
@@ -705,11 +734,17 @@ export function StaticKanban({
   return (
     <div style={mergeStyles(styles.wrapper, customStyle)}>
       {title && <div style={styles.header}>{title}</div>}
+      <div id={instructionsId} style={styles.visuallyHidden}>
+        Press space bar to start dragging. While dragging, use arrow keys to move the item. Press space bar again to drop the item in its new position, or press escape to cancel.
+      </div>
 
-      <div style={styles.board}>
+      <div style={styles.board} role="region" aria-label={title || 'Kanban board'}>
         {columns.map(column => (
           <div
             key={column.id}
+            role="group"
+            aria-label={`${column.title} column, ${column.cards.length} cards`}
+            aria-dropeffect={dragState.cardId ? 'move' : 'none'}
             style={mergeStyles(
               styles.column,
               dragState.targetColumnId === column.id && dragState.cardId ? styles.columnDragOver : undefined
@@ -721,12 +756,12 @@ export function StaticKanban({
           >
             <div style={styles.columnHeader}>
               <span>{column.title}</span>
-              <span style={styles.columnCount as React.CSSProperties}>
+              <span style={styles.columnCount as React.CSSProperties} aria-hidden="true">
                 {column.cards.length}
               </span>
             </div>
 
-            <div style={styles.columnBody as React.CSSProperties}>
+            <div style={styles.columnBody as React.CSSProperties} role="list">
               {column.cards.length > 0 ? (
                 column.cards.map((card) => (
                   <KanbanCardItem
@@ -738,10 +773,11 @@ export function StaticKanban({
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onHover={setHoveredCard}
+                    instructionsId={instructionsId}
                   />
                 ))
               ) : (
-                <div style={styles.emptyColumn as React.CSSProperties}>
+                <div style={styles.emptyColumn as React.CSSProperties} role="listitem">
                   Drop cards here
                 </div>
               )}
@@ -751,6 +787,7 @@ export function StaticKanban({
               type="button"
               style={styles.addButton}
               onClick={() => handleAddCard(column.id)}
+              aria-label={`Add card to ${column.title}`}
             >
               <PlusIcon size={14} />
               Add card

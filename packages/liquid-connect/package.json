@@ -39,6 +39,10 @@
     "./emitters/postgres": {
       "types": "./dist/emitters/postgres/index.d.ts",
       "import": "./dist/emitters/postgres/index.js"
+    },
+    "./uvb": {
+      "types": "./dist/uvb/index.d.ts",
+      "import": "./dist/uvb/index.js"
     }
   },
   "scripts": {

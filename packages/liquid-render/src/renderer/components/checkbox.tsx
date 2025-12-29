@@ -115,6 +115,8 @@ function CheckIcon({ size }: { size: CheckboxSize }): React.ReactElement {
       strokeLinecap="round"
       strokeLinejoin="round"
       style={styles.checkIcon(size)}
+      aria-hidden="true"
+      focusable="false"
     >
       <polyline points="20 6 9 17 4 12" />
     </svg>
@@ -148,19 +150,6 @@ export function Checkbox({ block, data }: LiquidComponentProps): React.ReactElem
     }
   }, [emitSignal, signalActions]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLLabelElement>) => {
-    if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault();
-      setChecked(prev => {
-        const newChecked = !prev;
-        if (emitSignal?.name) {
-          signalActions.emit(emitSignal.name, String(newChecked));
-        }
-        return newChecked;
-      });
-    }
-  }, [emitSignal, signalActions]);
-
   const inputId = generateId('checkbox');
 
   return (
@@ -168,8 +157,6 @@ export function Checkbox({ block, data }: LiquidComponentProps): React.ReactElem
       <label
         htmlFor={inputId}
         style={styles.label(false, size)}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
       >
         <span style={styles.inputWrapper(size)}>
           <input
@@ -222,21 +209,6 @@ export function StaticCheckbox({
     onChange?.(newChecked);
   }, [isControlled, onChange]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLLabelElement>) => {
-    if (disabled) return;
-
-    if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault();
-      const newChecked = !checked;
-
-      if (!isControlled) {
-        setUncontrolledChecked(newChecked);
-      }
-
-      onChange?.(newChecked);
-    }
-  }, [disabled, checked, isControlled, onChange]);
-
   const inputId = id || generateId('checkbox');
 
   return (
@@ -244,8 +216,6 @@ export function StaticCheckbox({
       <label
         htmlFor={inputId}
         style={styles.label(disabled, size)}
-        onKeyDown={handleKeyDown}
-        tabIndex={disabled ? -1 : 0}
       >
         <span style={styles.inputWrapper(size)}>
           <input

@@ -264,6 +264,7 @@ export function Alert({ block, data }: LiquidComponentProps): React.ReactElement
       data-liquid-type="alert"
       data-variant={variant}
       role="alert"
+      aria-live={variant === 'destructive' || variant === 'warning' ? 'assertive' : 'polite'}
       style={styles.alert(variant, customColor)}
     >
       {showIcon && (
@@ -316,6 +317,7 @@ export function StaticAlert({
       data-liquid-type="alert"
       data-variant={variant}
       role="alert"
+      aria-live={variant === 'destructive' || variant === 'warning' ? 'assertive' : 'polite'}
       style={mergeStyles(styles.alert(variant, color), customStyle)}
     >
       {icon && (

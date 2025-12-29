@@ -40,12 +40,6 @@ function getOrientationFromBlock(block: LiquidComponentProps['block']): Separato
   return 'horizontal';
 }
 
-function getDecorativeFromBlock(block: LiquidComponentProps['block']): boolean {
-  // If decorative is explicitly set to false, return false
-  // Otherwise default to true (most separators are decorative)
-  if (block.props?.decorative === false) return false;
-  return true;
-}
 
 // ============================================================================
 // Main Component
@@ -53,7 +47,6 @@ function getDecorativeFromBlock(block: LiquidComponentProps['block']): boolean {
 
 export function Separator({ block }: LiquidComponentProps): React.ReactElement {
   const orientation = getOrientationFromBlock(block);
-  const decorative = getDecorativeFromBlock(block);
 
   const style = mergeStyles(
     baseStyles(),
@@ -64,8 +57,8 @@ export function Separator({ block }: LiquidComponentProps): React.ReactElement {
   return (
     <div
       data-liquid-type="separator"
-      role={decorative ? 'none' : 'separator'}
-      aria-orientation={decorative ? undefined : orientation}
+      role="separator"
+      aria-orientation={orientation}
       style={style}
     />
   );
@@ -77,14 +70,12 @@ export function Separator({ block }: LiquidComponentProps): React.ReactElement {
 
 interface StaticSeparatorProps {
   orientation?: SeparatorOrientation;
-  decorative?: boolean;
   style?: React.CSSProperties;
   className?: string;
 }
 
 export function StaticSeparator({
   orientation = 'horizontal',
-  decorative = true,
   style: customStyle,
 }: StaticSeparatorProps): React.ReactElement {
   const style = mergeStyles(
@@ -97,8 +88,8 @@ export function StaticSeparator({
   return (
     <div
       data-liquid-type="separator"
-      role={decorative ? 'none' : 'separator'}
-      aria-orientation={decorative ? undefined : orientation}
+      role="separator"
+      aria-orientation={orientation}
       style={style}
     />
   );

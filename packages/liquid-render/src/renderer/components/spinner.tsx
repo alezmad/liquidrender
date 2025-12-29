@@ -125,12 +125,14 @@ export function Spinner({ block, data }: LiquidComponentProps): React.ReactEleme
   const { label: spinnerLabel, size } = extractSpinnerData(rawValue, label, blockSize);
 
   return (
-    <div data-liquid-type="spinner" style={styles.wrapper}>
-      <div
-        style={styles.spinner(size, color)}
-        role="status"
-        aria-label={spinnerLabel || 'Loading'}
-      />
+    <div
+      data-liquid-type="spinner"
+      style={styles.wrapper}
+      role="status"
+      aria-live="polite"
+      aria-label={spinnerLabel || 'Loading'}
+    >
+      <div style={styles.spinner(size, color)} aria-hidden="true" />
       {spinnerLabel && <span style={styles.label}>{spinnerLabel}</span>}
     </div>
   );
@@ -147,12 +149,15 @@ export function StaticSpinner({
   className,
 }: StaticSpinnerProps): React.ReactElement {
   return (
-    <div data-liquid-type="spinner" style={styles.wrapper} className={className}>
-      <div
-        style={styles.spinner(size, color)}
-        role="status"
-        aria-label={label || 'Loading'}
-      />
+    <div
+      data-liquid-type="spinner"
+      style={styles.wrapper}
+      className={className}
+      role="status"
+      aria-live="polite"
+      aria-label={label || 'Loading'}
+    >
+      <div style={styles.spinner(size, color)} aria-hidden="true" />
       {label && <span style={styles.label}>{label}</span>}
     </div>
   );

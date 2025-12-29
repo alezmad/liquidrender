@@ -1,0 +1,57 @@
+# Atom: Brand Portfolio
+# Updated: 2025-12-29
+# Status: Knosia.com acquired
+
+id: brand-portfolio
+type: brand
+status: crystallized
+
+portfolio:
+  b2b:
+    name: Knosia
+    domain: knosia.com
+    slogan: "Know what matters."
+    tagline: "Your business, briefed daily."
+    audience: Business leaders
+    promise: Insight, not data
+
+  b2c:
+    name: Intent Is Enough
+    domain: intentisenough.com
+    slogan: "Describe it. We'll do it."
+    audience: Consumers
+    promise: Action from intent
+
+  infrastructure:
+    name: LiquidRender
+    domain: liquidrender.com
+    audience: Developers
+    promise: The engine
+
+knosia:
+  etymology:
+    know: English, core action
+    gnosis: Greek (γνῶσις), knowledge/insight
+  pronunciation: NO-see-ah
+  letters: 6
+  syllables: 3
+
+  core_shift:
+    from: "See your data"
+    to: "Know what matters"
+
+  emotional_promise:
+    before: "Drowning in data, starving for insight"
+    after: "Wake up knowing what needs attention"
+
+  anti_positioning:
+    - "Not a dashboard builder"
+    - "Not a BI tool"
+    - "Not a query interface"
+
+  positioning:
+    - "Your daily briefing"
+    - "An intelligence layer"
+    - "The data scientist you can't afford"
+
+artifact: .claude/artifacts/2025-12-28-2349-brand-messaging.md

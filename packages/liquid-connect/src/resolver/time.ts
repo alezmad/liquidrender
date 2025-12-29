@@ -7,7 +7,9 @@ import type {
   PeriodNode,
   SpecificDateNode,
   TimeRangeNode,
+  TimeAliasNode,
 } from '../compiler/ast';
+import { TIME_ALIASES } from '../compiler/tokens';
 import type { ResolverContext, ResolvedTimeRange, ResolverError } from './types';
 
 /**
@@ -28,12 +30,14 @@ export function resolveTime(
         return { range: resolveSpecificDate(node, timeField, context) };
       case 'TimeRange':
         return { range: resolveTimeRange(node, timeField, context) };
+      case 'TimeAlias':
+        return { range: resolveTimeAlias(node, timeField, context) };
       default:
         return {
           error: {
             code: 'E401',
             message: `Unknown time node kind: ${(node as TimeNode).kind}`,
-            span: node.span,
+            span: (node as TimeNode).span,
           },
         };
     }
@@ -42,7 +46,7 @@ export function resolveTime(
       error: {
         code: 'E401',
         message: err instanceof Error ? err.message : 'Invalid time expression',
-        span: node.span,
+        span: (node as TimeNode).span,
       },
     };
   }
@@ -195,6 +199,72 @@ function resolveTimeRange(
     end: toResult.range!.end,
     field: timeField,
     expression: `[${fromResult.range!.expression}..${toResult.range!.expression}]`,
+  };
+}
+
+/**
+ * Resolve time alias: ~today, ~last_month, ~YTD, etc.
+ */
+function resolveTimeAlias(
+  node: TimeAliasNode,
+  timeField: string,
+  context: ResolverContext
+): ResolvedTimeRange {
+  // Map alias to period or to-date range
+  const aliasInfo = TIME_ALIASES[node.alias];
+  if (!aliasInfo) {
+    throw new Error(`Unknown time alias: ${node.alias}`);
+  }
+
+  // Handle YTD, MTD, QTD - ranges from start of period to now
+  if (aliasInfo.period === 'YTD') {
+    return resolveToDate('Y', timeField, context);
+  }
+  if (aliasInfo.period === 'MTD') {
+    return resolveToDate('M', timeField, context);
+  }
+  if (aliasInfo.period === 'QTD') {
+    return resolveToDate('Q', timeField, context);
+  }
+
+  // Regular period alias - delegate to resolvePeriod
+  return resolvePeriod({
+    kind: 'Period',
+    unit: aliasInfo.period as 'D' | 'W' | 'M' | 'Q' | 'Y',
+    offset: aliasInfo.offset ?? 0,
+  }, timeField, context);
+}
+
+/**
+ * Resolve to-date ranges: YTD, MTD, QTD
+ */
+function resolveToDate(
+  unit: 'Y' | 'M' | 'Q',
+  timeField: string,
+  context: ResolverContext
+): ResolvedTimeRange {
+  const now = context.now;
+  let start: Date;
+
+  switch (unit) {
+    case 'Y':
+      start = startOfYear(now);
+      break;
+    case 'M':
+      start = startOfMonth(now);
+      break;
+    case 'Q':
+      start = startOfQuarter(now);
+      break;
+  }
+
+  const end = startOfDay(now);
+
+  return {
+    start: formatDate(start),
+    end: formatDate(end),
+    field: timeField,
+    expression: `${unit}TD`,
   };
 }
 

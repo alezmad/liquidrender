@@ -46,7 +46,7 @@ export function resolveFilter(
         error: {
           code: 'E204',
           message: `Unknown filter kind: ${(node as FilterExprNode).kind}`,
-          span: node.span,
+          span: (node as FilterExprNode).span,
         },
       };
   }
@@ -311,7 +311,7 @@ function resolveValue(
         error: {
           code: 'E502',
           message: `Unknown value kind: ${(node as ValueNode).kind}`,
-          span: node.span,
+          span: (node as ValueNode).span,
         },
       };
   }

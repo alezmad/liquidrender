@@ -1,0 +1,371 @@
+# LiquidConnect Semantic Layer - Northwind
+# Version: 0.1.0
+# Stage: 0 (Atoms)
+
+version: "0.1.0"
+
+# =============================================================================
+# SOURCES
+# =============================================================================
+
+sources:
+  northwind:
+    type: postgresql
+    host: localhost
+    port: 5433
+    database: northwind
+    user: superadmin
+    password: superadmin
+
+  # Future sources (for cross-engine parity testing)
+  # northwind_duckdb:
+  #   type: duckdb
+  #   attach: "postgres://superadmin:superadmin@localhost:5433/northwind"
+  #
+  # northwind_trino:
+  #   type: trino
+  #   catalog: postgresql
+  #   schema: public
+
+# =============================================================================
+# ENTITIES
+# =============================================================================
+
+entities:
+  customers:
+    source: northwind
+    table: customers
+    primary_key: customer_id
+    fields:
+      customer_id:
+        type: string
+        description: Unique customer identifier
+      company_name:
+        type: string
+        description: Company name
+      contact_name:
+        type: string
+        description: Contact person name
+      contact_title:
+        type: string
+        description: Contact person title
+      city:
+        type: string
+        description: City
+      region:
+        type: string
+        description: Region (nullable)
+      country:
+        type: string
+        description: Country
+      phone:
+        type: string
+        description: Phone number
+
+  orders:
+    source: northwind
+    table: orders
+    primary_key: order_id
+    fields:
+      order_id:
+        type: integer
+        description: Unique order identifier
+      customer_id:
+        type: string
+        foreign_key: customers.customer_id
+        description: Customer reference
+      employee_id:
+        type: integer
+        description: Employee who processed the order
+      order_date:
+        type: date
+        description: Date order was placed
+      required_date:
+        type: date
+        description: Date order was required
+      shipped_date:
+        type: date
+        description: Date order was shipped (nullable)
+      freight:
+        type: decimal
+        description: Shipping cost
+      ship_country:
+        type: string
+        description: Destination country
+
+  order_details:
+    source: northwind
+    table: order_details
+    primary_key: [order_id, product_id]
+    fields:
+      order_id:
+        type: integer
+        foreign_key: orders.order_id
+      product_id:
+        type: integer
+        foreign_key: products.product_id
+      unit_price:
+        type: decimal
+        description: Price per unit at time of order
+      quantity:
+        type: integer
+        description: Quantity ordered
+      discount:
+        type: decimal
+        description: Discount applied (0-1)
+
+  products:
+    source: northwind
+    table: products
+    primary_key: product_id
+    fields:
+      product_id:
+        type: integer
+        description: Unique product identifier
+      product_name:
+        type: string
+        description: Product name
+      category_id:
+        type: integer
+        foreign_key: categories.category_id
+      unit_price:
+        type: decimal
+        description: Current unit price
+      units_in_stock:
+        type: integer
+        description: Units currently in stock
+      discontinued:
+        type: boolean
+        description: Whether product is discontinued
+
+  categories:
+    source: northwind
+    table: categories
+    primary_key: category_id
+    fields:
+      category_id:
+        type: integer
+        description: Unique category identifier
+      category_name:
+        type: string
+        description: Category name
+      description:
+        type: string
+        description: Category description
+
+  employees:
+    source: northwind
+    table: employees
+    primary_key: employee_id
+    fields:
+      employee_id:
+        type: integer
+        description: Unique employee identifier
+      first_name:
+        type: string
+      last_name:
+        type: string
+      title:
+        type: string
+      hire_date:
+        type: date
+      country:
+        type: string
+
+# =============================================================================
+# METRICS (Stage 0: Simple aggregations only)
+# =============================================================================
+
+metrics:
+  revenue:
+    description: Total revenue from order details
+    expression: "SUM(order_details.unit_price * order_details.quantity * (1 - order_details.discount))"
+    type: currency
+    source_entity: order_details
+    time_field: orders.order_date
+
+  orders:
+    description: Count of orders
+    expression: "COUNT(DISTINCT orders.order_id)"
+    type: integer
+    source_entity: orders
+    time_field: orders.order_date
+
+  customers:
+    description: Count of customers
+    expression: "COUNT(DISTINCT customers.customer_id)"
+    type: integer
+    source_entity: customers
+
+  products:
+    description: Count of products
+    expression: "COUNT(DISTINCT products.product_id)"
+    type: integer
+    source_entity: products
+
+  avg_order_value:
+    description: Average order value
+    expression: "@revenue / @orders"
+    type: currency
+    derived: true
+
+  units_sold:
+    description: Total units sold
+    expression: "SUM(order_details.quantity)"
+    type: integer
+    source_entity: order_details
+    time_field: orders.order_date
+
+  freight_total:
+    description: Total freight costs
+    expression: "SUM(orders.freight)"
+    type: currency
+    source_entity: orders
+    time_field: orders.order_date
+
+# =============================================================================
+# DIMENSIONS (Stage 1 - defined but not active yet)
+# =============================================================================
+
+dimensions:
+  # Customer dimensions
+  country:
+    description: Customer country
+    field: customers.country
+    source_entity: customers
+
+  region:
+    description: Customer region
+    field: customers.region
+    source_entity: customers
+
+  # Product dimensions
+  category:
+    description: Product category
+    field: categories.category_name
+    source_entity: categories
+    join_path: [order_details, products, categories]
+
+  # Time dimensions
+  order_year:
+    description: Year of order
+    expression: "EXTRACT(YEAR FROM orders.order_date)"
+    type: integer
+    source_entity: orders
+
+  order_month:
+    description: Month of order
+    expression: "EXTRACT(MONTH FROM orders.order_date)"
+    type: integer
+    source_entity: orders
+
+  order_quarter:
+    description: Quarter of order
+    expression: "EXTRACT(QUARTER FROM orders.order_date)"
+    type: integer
+    source_entity: orders
+
+# =============================================================================
+# RELATIONSHIPS (for join resolution)
+# =============================================================================
+
+relationships:
+  - from: orders
+    to: customers
+    type: many_to_one
+    on: orders.customer_id = customers.customer_id
+
+  - from: order_details
+    to: orders
+    type: many_to_one
+    on: order_details.order_id = orders.order_id
+
+  - from: order_details
+    to: products
+    type: many_to_one
+    on: order_details.product_id = products.product_id
+
+  - from: products
+    to: categories
+    type: many_to_one
+    on: products.category_id = categories.category_id
+
+  - from: orders
+    to: employees
+    type: many_to_one
+    on: orders.employee_id = employees.employee_id
+
+# =============================================================================
+# NAMED FILTERS (Stage 2 - defined but not active yet)
+# =============================================================================
+
+filters:
+  shipped:
+    description: Orders that have been shipped
+    expression: "orders.shipped_date IS NOT NULL"
+
+  pending:
+    description: Orders pending shipment
+    expression: "orders.shipped_date IS NULL"
+
+  discontinued:
+    description: Discontinued products
+    expression: "products.discontinued = 1"
+
+  active:
+    description: Active products
+    expression: "products.discontinued = 0"
+
+  usa:
+    description: US customers/orders
+    expression: "customers.country = 'USA'"
+
+  europe:
+    description: European customers
+    expression: "customers.country IN ('Germany', 'France', 'UK', 'Spain', 'Italy', 'Austria', 'Belgium', 'Denmark', 'Finland', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Sweden', 'Switzerland')"
+
+# =============================================================================
+# STAGE 0 VOCABULARY (Active)
+# =============================================================================
+
+stage0:
+  active_metrics:
+    - revenue
+    - orders
+    - customers
+    - products
+    - units_sold
+    - freight_total
+
+  active_entities:
+    - customers
+    - orders
+    - products
+    - categories
+    - employees
+
+  # Examples for canon bootstrapping
+  examples:
+    - query: "Q @revenue"
+      description: "Total revenue"
+      expected_type: metric_query
+
+    - query: "Q @orders"
+      description: "Total order count"
+      expected_type: metric_query
+
+    - query: "Q @customers"
+      description: "Total customer count"
+      expected_type: metric_query
+
+    - query: "Q .customers"
+      description: "List all customers"
+      expected_type: entity_query
+
+    - query: "Q .orders"
+      description: "List all orders"
+      expected_type: entity_query
+
+    - query: "Q .products"
+      description: "List all products"
+      expected_type: entity_query

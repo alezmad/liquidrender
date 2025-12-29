@@ -22,6 +22,12 @@ export type TokenType =
   // Keywords
   | 'TOP'             // top:
   | 'VS'              // vs
+  | 'EXPLAIN'         // !explain
+
+  // Enterprise features (v7)
+  | 'SCOPE_PIN'       // Q@scope (scope disambiguation)
+  | 'TIME_OVERRIDE'   // @t:field (time override)
+  | 'PARAMETER'       // $paramName
 
   // Identifiers and literals
   | 'IDENTIFIER'      // metric_name, entity_name, etc.
@@ -57,11 +63,12 @@ export type TokenType =
   | 'DOT_DOT'         // ..
 
   // Time expressions
-  | 'DURATION'        // P30d, P6M
-  | 'PERIOD'          // Q-1, M-3, Y
+  | 'DURATION'        // P30d, P6M, 30d, 6M (v7: P optional)
+  | 'PERIOD'          // Q-1, M-3, Y, D, W, M, Q
   | 'DATE'            // 2024-01-15
   | 'YEAR_QUARTER'    // 2024-Q3
   | 'YEAR_MONTH'      // 2024-06
+  | 'TIME_ALIAS'      // today, yesterday, this_month, last_quarter, YTD, MTD, QTD
 
   // Special
   | 'WHITESPACE'      // spaces, tabs (usually skipped)
@@ -106,5 +113,42 @@ export function isBooleanOperator(type: TokenType): boolean {
  * Check if token is a time expression
  */
 export function isTimeToken(type: TokenType): boolean {
-  return ['DURATION', 'PERIOD', 'DATE', 'YEAR_QUARTER', 'YEAR_MONTH'].includes(type);
+  return ['DURATION', 'PERIOD', 'DATE', 'YEAR_QUARTER', 'YEAR_MONTH', 'TIME_ALIAS'].includes(type);
+}
+
+/**
+ * v7 Time aliases mapping
+ */
+export const TIME_ALIASES: Record<string, { period: string; offset?: number }> = {
+  // Day aliases
+  'today': { period: 'D', offset: 0 },
+  'yesterday': { period: 'D', offset: -1 },
+
+  // Week aliases
+  'this_week': { period: 'W', offset: 0 },
+  'last_week': { period: 'W', offset: -1 },
+
+  // Month aliases
+  'this_month': { period: 'M', offset: 0 },
+  'last_month': { period: 'M', offset: -1 },
+
+  // Quarter aliases
+  'this_quarter': { period: 'Q', offset: 0 },
+  'last_quarter': { period: 'Q', offset: -1 },
+
+  // Year aliases
+  'this_year': { period: 'Y', offset: 0 },
+  'last_year': { period: 'Y', offset: -1 },
+
+  // To-date aliases (ranges)
+  'YTD': { period: 'YTD' },
+  'MTD': { period: 'MTD' },
+  'QTD': { period: 'QTD' },
+};
+
+/**
+ * Check if identifier is a time alias
+ */
+export function isTimeAlias(value: string): boolean {
+  return value in TIME_ALIASES;
 }

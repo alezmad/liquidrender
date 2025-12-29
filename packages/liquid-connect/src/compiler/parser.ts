@@ -17,8 +17,14 @@ import type {
   ExplicitFilterNode,
   DurationNode,
   PeriodNode,
+  ParameterNode,
+  TimeRangeNode,
+  ScopePinNode,
+  TimeOverrideNode,
 } from './ast';
+import { TIME_ALIASES } from './tokens';
 import { LiquidError, ErrorCode } from './diagnostics';
+import type { FilterOperator } from '../types';
 
 /**
  * Parser for LiquidConnect queries
@@ -46,24 +52,34 @@ export class Parser {
     }
     this.advance(); // consume Q
 
+    // v7: Check for scope pin: Q@scopeName
+    let scopePin: ScopePinNode | undefined;
+    if (this.check('SCOPE_PIN')) {
+      const token = this.advance();
+      // SCOPE_PIN value is the scope/entity name (e.g., "sales" from Q@sales)
+      scopePin = { kind: 'ScopePin', entity: token.value };
+    }
+
     // Determine query type based on next token
     if (this.check('ENTITY')) {
-      return this.entityQuery();
+      return this.entityQuery(scopePin);
     } else if (this.check('METRIC')) {
-      return this.metricQuery();
+      return this.metricQuery(scopePin);
     } else {
       throw this.error(ErrorCode.E101, "Expected '@' or '.' after 'Q'");
     }
   }
 
-  private metricQuery(): QueryNode {
+  private metricQuery(scopePin?: ScopePinNode): QueryNode {
     const metrics = this.metrics();
     const dimensions = this.dimensions();
     const filter = this.filter();
     const time = this.time();
+    const timeOverride = this.timeOverride();
     const limit = this.limit();
     const orderBy = this.orderBy();
     const compare = this.compare();
+    const explain = this.explainMode();
 
     return {
       kind: 'Query',
@@ -72,17 +88,21 @@ export class Parser {
       dimensions: dimensions.length > 0 ? dimensions : undefined,
       filter,
       time,
+      timeOverride,
       limit,
       orderBy: orderBy.length > 0 ? orderBy : undefined,
       compare,
+      scopePin,
+      explain,
     };
   }
 
-  private entityQuery(): QueryNode {
+  private entityQuery(scopePin?: ScopePinNode): QueryNode {
     const entity = this.entity();
     const filter = this.filter();
     const limit = this.limit();
     const orderBy = this.orderBy();
+    const explain = this.explainMode();
 
     return {
       kind: 'Query',
@@ -91,6 +111,8 @@ export class Parser {
       filter,
       limit,
       orderBy: orderBy.length > 0 ? orderBy : undefined,
+      scopePin,
+      explain,
     };
   }
 
@@ -168,8 +190,18 @@ export class Parser {
   private andExpression(): FilterExprNode {
     let left = this.unaryExpression();
 
-    while (this.check('AND')) {
-      this.advance();
+    while (this.check('AND') || this.check('FILTER')) {
+      // v7: Enforce explicit & between filters (E104)
+      if (this.check('FILTER')) {
+        // Peek ahead to see if this is a consecutive filter without &
+        const nextToken = this.peek();
+        throw this.error(
+          ErrorCode.E104,
+          `Use & between filters at position ${nextToken.position.column}`
+        );
+      }
+
+      this.advance(); // consume &
       const right = this.unaryExpression();
       left = {
         kind: 'BinaryFilter',
@@ -252,7 +284,7 @@ export class Parser {
     };
   }
 
-  private filterOperator(): string {
+  private filterOperator(): FilterOperator {
     if (this.check('EQUALS')) { this.advance(); return '='; }
     if (this.check('NOT_EQUALS')) { this.advance(); return '!='; }
     if (this.check('GREATER_EQ')) { this.advance(); return '>='; }
@@ -277,8 +309,21 @@ export class Parser {
       const token = this.advance();
       return { kind: 'BooleanValue', value: token.value === 'true' };
     }
+    // v7: Parse parameter ($name)
+    if (this.check('PARAMETER')) {
+      return this.parameter();
+    }
 
     throw this.error(ErrorCode.E101, 'Expected value');
+  }
+
+  /**
+   * v7: Parse parameter reference ($paramName)
+   */
+  private parameter(): ParameterNode {
+    const token = this.advance();
+    // PARAMETER value is the param name (e.g., "region" from $region)
+    return { kind: 'Parameter', name: token.value };
   }
 
   private time(): TimeNode | undefined {
@@ -295,7 +340,8 @@ export class Parser {
 
     if (token.type === 'DURATION') {
       this.advance();
-      const match = token.value.match(/^P(\d+)([dwMY])$/i);
+      // v7: P is optional in duration (e.g., 30d, P30d)
+      const match = token.value.match(/^P?(\d+)([dwMY])$/i);
       if (match) {
         return {
           kind: 'Duration',
@@ -317,7 +363,60 @@ export class Parser {
       }
     }
 
+    // v7: Parse time aliases (today, yesterday, YTD, MTD, QTD, etc.)
+    if (token.type === 'TIME_ALIAS') {
+      this.advance();
+      return this.timeAliasToNode(token.value);
+    }
+
     throw this.error(ErrorCode.E103, 'Invalid time expression');
+  }
+
+  /**
+   * v7: Convert time alias to appropriate TimeNode
+   */
+  private timeAliasToNode(alias: string): TimeNode {
+    const aliasInfo = TIME_ALIASES[alias];
+    if (!aliasInfo) {
+      throw this.error(ErrorCode.E103, `Unknown time alias: ${alias}`);
+    }
+
+    // Handle to-date aliases (YTD, MTD, QTD) as ranges
+    if (aliasInfo.period === 'YTD') {
+      return this.createToDateRange('Y');
+    }
+    if (aliasInfo.period === 'MTD') {
+      return this.createToDateRange('M');
+    }
+    if (aliasInfo.period === 'QTD') {
+      return this.createToDateRange('Q');
+    }
+
+    // Regular period alias (today, yesterday, this_week, etc.)
+    return {
+      kind: 'Period',
+      unit: aliasInfo.period as 'D' | 'W' | 'M' | 'Q' | 'Y',
+      offset: aliasInfo.offset ?? 0,
+    };
+  }
+
+  /**
+   * v7: Create a to-date range node (e.g., YTD = start of year to today)
+   */
+  private createToDateRange(unit: 'Y' | 'M' | 'Q'): TimeRangeNode {
+    return {
+      kind: 'TimeRange',
+      from: {
+        kind: 'Period',
+        unit,
+        offset: 0, // Start of current period
+      },
+      to: {
+        kind: 'Period',
+        unit: 'D',
+        offset: 0, // Today
+      },
+    };
   }
 
   private limit(): LimitNode | undefined {
@@ -326,6 +425,15 @@ export class Parser {
     }
     this.advance(); // consume top
     this.consume('COLON', "Expected ':' after 'top'");
+
+    // v7: Support parameter in limit (top:$count)
+    if (this.check('PARAMETER')) {
+      const param = this.parameter();
+      return {
+        kind: 'Limit',
+        value: param,
+      };
+    }
 
     const token = this.consume('NUMBER', 'Expected number after top:');
     return {
@@ -388,6 +496,31 @@ export class Parser {
       kind: 'Compare',
       period,
     };
+  }
+
+  /**
+   * v7: Parse time override (@t:field)
+   * Allows specifying which time field to use for time-based queries
+   */
+  private timeOverride(): TimeOverrideNode | undefined {
+    if (!this.check('TIME_OVERRIDE')) {
+      return undefined;
+    }
+    const token = this.advance();
+    // TIME_OVERRIDE value is the field name (e.g., "created_at" from @t:created_at)
+    return { kind: 'TimeOverride', field: token.value };
+  }
+
+  /**
+   * v7: Parse explain mode (!explain at end of query)
+   * Returns execution plan instead of results
+   */
+  private explainMode(): boolean | undefined {
+    if (!this.check('EXPLAIN')) {
+      return undefined;
+    }
+    this.advance();
+    return true;
   }
 
   // === Token helpers ===

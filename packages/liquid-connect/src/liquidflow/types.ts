@@ -55,6 +55,9 @@ export interface LiquidFlow {
 
   /** Query metadata */
   metadata?: FlowMetadata;
+
+  /** v7: Explain mode - include query plan details */
+  explain?: boolean;
 }
 
 // =============================================================================

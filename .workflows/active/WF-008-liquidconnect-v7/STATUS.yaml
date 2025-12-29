@@ -1,0 +1,105 @@
+workflow:
+  id: WF-008
+  name: LiquidConnect v7 Compiler
+  status: approved
+  created: 2025-12-28T23:00:00Z
+
+git:
+  start_commit: ab43834
+  start_tag: WF-008-start
+  stash: "Pre-WF-008 stash"
+
+waves:
+  - id: 0
+    name: Foundation
+    type: sequential
+    status: pending
+    tasks:
+      - id: T0a
+        name: Add v7 tokens
+        file: src/compiler/tokens.ts
+        status: pending
+      - id: T0b
+        name: Add E104 error
+        file: src/compiler/diagnostics.ts
+        status: pending
+
+  - id: 1
+    name: Parsing
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1a
+        name: Update scanner
+        file: src/compiler/scanner.ts
+        status: completed
+      - id: T1b
+        name: Update parser
+        file: src/compiler/parser.ts
+        status: completed
+      - id: T1c
+        name: Add AST nodes
+        file: src/compiler/ast.ts
+        status: completed
+
+  - id: 2
+    name: Resolution
+    type: parallel
+    status: completed
+    tasks:
+      - id: T2a
+        name: Time resolver
+        file: src/resolver/time.ts
+        status: completed
+      - id: T2b
+        name: Filter resolver
+        file: src/resolver/filter.ts
+        status: completed
+        note: Already v7 compatible
+      - id: T2c
+        name: Main resolver
+        file: src/resolver/resolver.ts
+        status: completed
+
+  - id: 3
+    name: Emitters
+    type: parallel
+    status: completed
+    tasks:
+      - id: T3a
+        name: Base emitter
+        file: src/emitters/base.ts
+        status: completed
+      - id: T3b
+        name: DuckDB emitter
+        file: src/emitters/duckdb/index.ts
+        status: completed
+        note: Already v7 compatible
+      - id: T3c
+        name: Postgres emitter
+        file: src/emitters/postgres/index.ts
+        status: completed
+      - id: T3d
+        name: Trino emitter
+        file: src/emitters/trino/index.ts
+        status: completed
+        note: Already v7 compatible
+
+  - id: 4
+    name: Integration
+    type: sequential
+    status: completed
+    tasks:
+      - id: T4
+        name: LiquidFlow types
+        file: src/liquidflow/types.ts
+        status: completed
+        note: Already had explain field; fixed TypeScript errors
+
+current_wave: completed
+
+completion:
+  status: success
+  completed_at: 2025-12-28T23:30:00Z
+  files_modified: 13
+  typescript_errors_fixed: 9

@@ -3,6 +3,7 @@
 
 import type { Position } from '../types';
 import type { Token, TokenType } from './tokens';
+import { isTimeAlias } from './tokens';
 
 /**
  * Scanner for LiquidConnect queries
@@ -37,7 +38,24 @@ export class Scanner {
     switch (c) {
       // Single-character sigils
       case '@':
-        this.addToken('METRIC', c);
+        // Check for @t: time override pattern
+        if (this.peek() === 't' && this.peekNext() === ':') {
+          this.advance(); // consume 't'
+          this.advance(); // consume ':'
+          // Read the identifier after @t:
+          const startPos = this.getPosition();
+          let value = '';
+          while (this.isAlphaNumeric(this.peek()) || this.peek() === '_') {
+            value += this.advance();
+          }
+          this.tokens.push({
+            type: 'TIME_OVERRIDE',
+            value,
+            position: startPos,
+          });
+        } else {
+          this.addToken('METRIC', c);
+        }
         break;
       case '#':
         this.addToken('DIMENSION', c);
@@ -84,6 +102,8 @@ export class Scanner {
           this.addToken('CONTAINS', '~~');
         } else {
           this.addToken('TIME', c);
+          // After ~, scan for time alias or duration without P prefix
+          this.scanTimeExpression();
         }
         break;
 
@@ -105,7 +125,34 @@ export class Scanner {
         } else if (this.match(':')) {
           this.addToken('NOT_IN', '!:');
         } else {
-          this.addToken('NOT', c);
+          // Check for !explain keyword
+          if (this.peek() === 'e') {
+            const startPos = this.getPosition();
+            let keyword = '';
+            while (this.isAlpha(this.peek())) {
+              keyword += this.advance();
+            }
+            if (keyword === 'explain') {
+              this.tokens.push({
+                type: 'EXPLAIN',
+                value: '!explain',
+                position: startPos,
+              });
+            } else {
+              // Not !explain, treat ! as NOT and identifier separately
+              this.addToken('NOT', c);
+              // Put the identifier back as a token
+              if (keyword) {
+                this.tokens.push({
+                  type: 'IDENTIFIER',
+                  value: keyword,
+                  position: startPos,
+                });
+              }
+            }
+          } else {
+            this.addToken('NOT', c);
+          }
         }
         break;
 
@@ -146,6 +193,24 @@ export class Scanner {
       case '/':
         if (this.match('/')) {
           this.comment();
+        }
+        break;
+
+      case '$':
+        // Parameter: $identifier
+        {
+          const startPos = this.getPosition();
+          let paramName = '';
+          while (this.isAlphaNumeric(this.peek()) || this.peek() === '_') {
+            paramName += this.advance();
+          }
+          if (paramName) {
+            this.tokens.push({
+              type: 'PARAMETER',
+              value: paramName,
+              position: startPos,
+            });
+          }
         }
         break;
 
@@ -225,6 +290,29 @@ export class Scanner {
       value += this.advance();
     }
 
+    // Check for Q@ scope pin pattern - emit QUERY first, then SCOPE_PIN
+    if (value.toUpperCase() === 'Q' && this.peek() === '@') {
+      // First emit QUERY token
+      this.tokens.push({
+        type: 'QUERY',
+        value: 'Q',
+        position: startPosition,
+      });
+      // Then consume @ and scope name
+      this.advance(); // consume '@'
+      const scopeStartPos = this.getPosition();
+      let scopeName = '';
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === '_') {
+        scopeName += this.advance();
+      }
+      this.tokens.push({
+        type: 'SCOPE_PIN',
+        value: scopeName,
+        position: scopeStartPos,
+      });
+      return;
+    }
+
     // Check for keywords
     const tokenType = this.getKeywordType(value);
 
@@ -238,7 +326,8 @@ export class Scanner {
   private getKeywordType(value: string): TokenType {
     // Check for time expressions FIRST (before keywords)
     // This ensures ~Q parses as PERIOD, not QUERY
-    if (/^P\d+[dwMY]$/i.test(value)) {
+    // v7: Accept both P30d and 30d formats (P is optional)
+    if (/^P?\d+[dwMY]$/i.test(value)) {
       return 'DURATION';
     }
     if (/^[DWMQY](-\d+)?$/i.test(value)) {
@@ -259,9 +348,18 @@ export class Scanner {
       return 'YEAR_MONTH';
     }
 
+    // Check for time aliases
+    if (isTimeAlias(value)) {
+      return 'TIME_ALIAS';
+    }
+
     // Keywords
     switch (value.toUpperCase()) {
       case 'Q':
+        // Check for Q@ scope pin pattern
+        if (this.peek() === '@') {
+          return 'QUERY'; // Will be handled in identifier() for SCOPE_PIN
+        }
         return 'QUERY';
       case 'TOP':
         return 'TOP';
@@ -272,6 +370,65 @@ export class Scanner {
         return 'BOOLEAN';
       default:
         return 'IDENTIFIER';
+    }
+  }
+
+  /**
+   * Scan time expression after ~ sigil
+   * Handles time aliases (today, yesterday, etc.) and durations without P prefix
+   */
+  private scanTimeExpression(): void {
+    // Skip whitespace after ~
+    while (this.peek() === ' ' || this.peek() === '\t') {
+      this.advance();
+    }
+
+    const startPos = this.getPosition();
+
+    // Check if next token starts with a digit (duration like 30d)
+    if (this.isDigit(this.peek())) {
+      let value = '';
+      // Consume digits
+      while (this.isDigit(this.peek())) {
+        value += this.advance();
+      }
+      // Consume unit letter (d, w, M, Y)
+      if (this.isAlpha(this.peek())) {
+        value += this.advance();
+      }
+      // This is a duration without P prefix
+      this.tokens.push({
+        type: 'DURATION',
+        value,
+        position: startPos,
+      });
+      return;
+    }
+
+    // Check if next token starts with a letter (could be time alias or period)
+    if (this.isAlpha(this.peek())) {
+      let value = '';
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === '_' || this.peek() === '-') {
+        value += this.advance();
+      }
+
+      // Check if it's a time alias
+      if (isTimeAlias(value)) {
+        this.tokens.push({
+          type: 'TIME_ALIAS',
+          value,
+          position: startPos,
+        });
+        return;
+      }
+
+      // Check if it's a duration or period
+      const tokenType = this.getKeywordType(value);
+      this.tokens.push({
+        type: tokenType,
+        value,
+        position: startPos,
+      });
     }
   }
 

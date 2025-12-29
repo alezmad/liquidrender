@@ -9,6 +9,8 @@ import type {
   OrderByNode,
   CompareNode,
   LimitNode,
+  ScopePinNode,
+  TimeOverrideNode,
 } from '../compiler/ast';
 import type {
   LiquidFlow,
@@ -56,6 +58,8 @@ export class Resolver {
     sources: new Set(),
     joins: [],
   };
+  // v7: Time field override from TimeOverrideNode
+  private timeFieldOverride?: string;
 
   constructor(registry: SemanticRegistry, options?: ResolverOptions) {
     this.registry = registry;
@@ -76,6 +80,7 @@ export class Resolver {
     this.errors = [];
     this.warnings = [];
     this.sourceTracker = { sources: new Set(), joins: [] };
+    this.timeFieldOverride = undefined;
 
     try {
       const flow = this.resolveQuery(ast);
@@ -128,6 +133,23 @@ export class Resolver {
       version: LIQUIDFLOW_VERSION,
       type: ast.type,
     };
+
+    // v7: Handle scope pin - forces primary entity
+    if (ast.scopePin) {
+      this.sourceTracker.primary = ast.scopePin.entity;
+      this.sourceTracker.sources.add(ast.scopePin.entity);
+    }
+
+    // v7: Handle time override
+    if (ast.timeOverride) {
+      // Store for use in time field determination
+      this.timeFieldOverride = ast.timeOverride.field;
+    }
+
+    // v7: Handle explain mode
+    if (ast.explain) {
+      flow.explain = true;
+    }
 
     if (ast.type === 'metric') {
       flow.metrics = this.resolveMetrics(ast.metrics ?? []);
@@ -416,7 +438,8 @@ export class Resolver {
         start: compareResult.range!.start,
         end: compareResult.range!.end,
       },
-      computedColumns: ['delta', 'delta_percent'],
+      // v7: Updated column names
+      computedColumns: ['_compare', '_delta', '_pct'],
     };
   }
 
@@ -424,6 +447,11 @@ export class Resolver {
    * Determine the time field to use
    */
   private determineTimeField(flow: Partial<LiquidFlow>): string | undefined {
+    // v7: Time override takes precedence
+    if (this.timeFieldOverride) {
+      return this.timeFieldOverride;
+    }
+
     // For metric queries, use first metric's time field
     if (flow.type === 'metric' && flow.metrics && flow.metrics.length > 0) {
       return flow.metrics[0].timeField;

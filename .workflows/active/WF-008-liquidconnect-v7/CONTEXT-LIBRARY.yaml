@@ -1,0 +1,62 @@
+workflow: WF-008
+name: LiquidConnect v7 Compiler
+generated: 2025-12-28T23:00:00Z
+token_budget: 20000
+tokens_used: ~8500
+
+context_files:
+  - path: packages/liquid-connect/specs/SPEC-v7-SYNTHESIS.md
+    type: spec
+    priority: critical
+    tokens: ~4200
+    description: "v7 syntax specification - TIME, FILTER, ENTERPRISE features"
+
+  - path: packages/liquid-connect/specs/language.md
+    type: spec
+    priority: high
+    tokens: ~3000
+    description: "Current implementation reference"
+
+  - path: packages/liquid-connect/src/compiler/tokens.ts
+    type: source
+    priority: high
+    tokens: ~300
+    description: "Token type definitions"
+
+key_changes:
+  time_notation:
+    old: "~P30d, ~last_30_days"
+    new: "~30d, ~M-1, ~today (aliases)"
+
+  filter_syntax:
+    old: "implicit AND with spaces"
+    new: "explicit & required (E104 error)"
+
+  comparison_columns:
+    old: "delta, delta_percent"
+    new: "_compare, _delta, _pct"
+
+  enterprise_features:
+    - scope_pins: "Q@orders @revenue"
+    - time_override: "@t:signupDate"
+    - explain_mode: "!explain"
+
+files_to_modify:
+  wave_0:
+    - src/compiler/tokens.ts
+    - src/compiler/diagnostics.ts
+  wave_1:
+    - src/compiler/scanner.ts
+    - src/compiler/parser.ts
+    - src/compiler/ast.ts
+  wave_2:
+    - src/resolver/time.ts
+    - src/resolver/filter.ts
+    - src/resolver/resolver.ts
+  wave_3:
+    - src/emitters/base.ts
+    - src/emitters/duckdb/index.ts
+    - src/emitters/postgres/index.ts
+    - src/emitters/trino/index.ts
+  wave_4:
+    - src/liquidflow/types.ts

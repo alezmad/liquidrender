@@ -29,6 +29,9 @@ export interface QueryNode extends ASTNode {
   limit?: LimitNode;
   orderBy?: OrderByNode[];
   compare?: CompareNode;
+  scopePin?: ScopePinNode;
+  timeOverride?: TimeOverrideNode;
+  explain?: boolean;
 }
 
 /**
@@ -53,6 +56,22 @@ export interface EntityNode extends ASTNode {
 export interface DimensionNode extends ASTNode {
   kind: 'Dimension';
   name: string;
+}
+
+/**
+ * Scope pin: pins query to specific entity (v7 syntax)
+ */
+export interface ScopePinNode extends ASTNode {
+  kind: 'ScopePin';
+  entity: string;
+}
+
+/**
+ * Time override: overrides time field (v7 syntax)
+ */
+export interface TimeOverrideNode extends ASTNode {
+  kind: 'TimeOverride';
+  field: string;
 }
 
 // =============================================================================
@@ -167,7 +186,8 @@ export type TimeNode =
   | DurationNode
   | PeriodNode
   | SpecificDateNode
-  | TimeRangeNode;
+  | TimeRangeNode
+  | TimeAliasNode;
 
 /**
  * Duration: ~P30d, ~P6M
@@ -205,6 +225,14 @@ export interface TimeRangeNode extends ASTNode {
   kind: 'TimeRange';
   from: TimeNode;
   to: TimeNode;
+}
+
+/**
+ * Time alias: ~today, ~last_month, ~YTD, etc.
+ */
+export interface TimeAliasNode extends ASTNode {
+  kind: 'TimeAlias';
+  alias: string;  // 'today', 'last_month', 'YTD', etc.
 }
 
 // =============================================================================

@@ -320,6 +320,7 @@ function validateRelationships(
   errors: ValidationError[],
   warnings: ValidationWarning[]
 ): void {
+  if (!relationships) return;
   for (let i = 0; i < relationships.length; i++) {
     const rel = relationships[i];
 

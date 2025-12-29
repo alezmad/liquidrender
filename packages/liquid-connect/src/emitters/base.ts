@@ -156,7 +156,12 @@ export abstract class BaseEmitter {
   emit(flow: LiquidFlow): EmitResult {
     this.params = [];
     const parts = this.buildParts(flow);
-    const sql = this.assembleSql(parts);
+    let sql = this.assembleSql(parts);
+
+    // v7: Handle explain mode
+    if (flow.explain) {
+      sql = this.wrapExplain(sql);
+    }
 
     const result: EmitResult = {
       sql,
@@ -173,6 +178,14 @@ export abstract class BaseEmitter {
     }
 
     return result;
+  }
+
+  /**
+   * v7: Wrap SQL in EXPLAIN for explain mode
+   * Override in dialect-specific emitters for custom syntax
+   */
+  protected wrapExplain(sql: string): string {
+    return `EXPLAIN ${sql}`;
   }
 
   /**
@@ -216,6 +229,11 @@ export abstract class BaseEmitter {
         }
         selects.push(`${metricExpr} AS ${this.quoteIdentifier(metric.alias)}`);
       }
+
+      // v7: Add comparison columns if compare mode is enabled
+      if (flow.compare) {
+        selects.push(...this.buildComparisonSelect(flow));
+      }
     } else if (flow.type === 'entity') {
       // Add entity fields
       for (const field of flow.entity?.fields ?? []) {
@@ -224,6 +242,57 @@ export abstract class BaseEmitter {
     }
 
     return selects;
+  }
+
+  /**
+   * v7: Build comparison columns for compare mode
+   * Generates _compare, _delta, and _pct columns for period comparison
+   * Override in dialect-specific emitters for custom comparison logic
+   */
+  protected buildComparisonSelect(flow: LiquidFlow): string[] {
+    const comparisonSelects: string[] = [];
+
+    if (!flow.compare || !flow.metrics) {
+      return comparisonSelects;
+    }
+
+    // For each metric, add comparison columns
+    for (const metric of flow.metrics) {
+      if (metric.derived) continue; // Skip derived metrics for comparison
+
+      const baseAlias = metric.alias;
+      const compareAlias = `${baseAlias}_compare`;
+      const deltaAlias = `${baseAlias}_delta`;
+      const pctAlias = `${baseAlias}_pct`;
+
+      // The comparison value (from comparison period)
+      // This would typically come from a subquery or window function
+      // For now, we generate placeholder expressions that the resolver should fill in
+      const compareExpr = this.buildComparisonMetricExpr(metric, flow.compare);
+      comparisonSelects.push(`${compareExpr} AS ${this.quoteIdentifier(compareAlias)}`);
+
+      // Delta: current - comparison
+      const deltaExpr = `${this.quoteIdentifier(baseAlias)} - ${this.quoteIdentifier(compareAlias)}`;
+      comparisonSelects.push(`${deltaExpr} AS ${this.quoteIdentifier(deltaAlias)}`);
+
+      // Percentage change: ((current - comparison) / comparison) * 100
+      // Handle division by zero with NULLIF
+      const pctExpr = `CASE WHEN ${this.quoteIdentifier(compareAlias)} = 0 THEN NULL ELSE (${deltaExpr}) * 100.0 / ${this.quoteIdentifier(compareAlias)} END`;
+      comparisonSelects.push(`${pctExpr} AS ${this.quoteIdentifier(pctAlias)}`);
+    }
+
+    return comparisonSelects;
+  }
+
+  /**
+   * v7: Build comparison metric expression for a specific metric
+   * Override in dialect-specific emitters for optimized comparison queries
+   */
+  protected buildComparisonMetricExpr(metric: ResolvedMetric, compare: LiquidFlow['compare']): string {
+    // Default implementation uses LAG window function or subquery
+    // This is a placeholder that dialect-specific emitters should override
+    // for more efficient period-over-period comparison patterns
+    return `NULL /* comparison value for ${metric.ref} - implement in dialect */`;
   }
 
   /**

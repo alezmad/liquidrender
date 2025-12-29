@@ -1,0 +1,65 @@
+# Atom: LiquidRender Vision
+# Created: 2025-12-28
+# Source: Vision session with user
+
+id: liquidrender-vision
+type: product-vision
+status: crystallized
+
+# Core Insight
+insight: |
+  LiquidRender is not a BI tool. It's the data scientist every company
+  wants but can't afford. It doesn't wait for questions — it delivers
+  briefings. It doesn't show dashboards — it tells stories.
+
+# The Paradigm Shift
+shift:
+  from: "Build dashboards, write queries, discover insights"
+  to: "Connect data, receive briefings, ask anything"
+
+# The Three Modes
+modes:
+  proactive:
+    description: "Morning briefing delivered without asking"
+    example: "Revenue up 8%. Churn spiked. Here's why. Here's what to do."
+
+  conversational:
+    description: "Natural language Q&A with context"
+    example: "'Revenue last quarter?' → '$4.2M, up 12% YoY, driven by Enterprise.'"
+
+  exploratory:
+    description: "Collaborative deep-dive when needed"
+    example: "Why? → Show by region → Compare to last year → Correlate with spend"
+
+# The Intelligence Stack
+architecture:
+  interface: "Briefings, Conversations, Explorations"
+  brain: "Context + Memory + Reasoning"
+  connect: "Vocabulary + Resolution + Query Engine"
+  data: "Any database, any source"
+
+# Vocabulary as Invisible Infrastructure
+vocabulary:
+  old_frame: "Configuration file user creates and manages"
+  new_frame: "Institutional knowledge that emerges and evolves"
+  visibility: "Only surfaces at friction points (ambiguity, missing definition, drift)"
+
+# The Learning Journey
+learning:
+  day_1: "Instant understanding from schema"
+  day_7: "Pattern recognition from usage"
+  day_30: "Anticipation of needs"
+  day_90: "Proactive intelligence"
+  day_365: "Institutional memory"
+
+# Competitive Position
+positioning:
+  tableau_powerbi: "You build, you query → Briefings delivered"
+  thoughtspot: "You search, it answers → It anticipates, it briefs"
+  unique: "Proactive + Intelligent + Learning"
+
+# The Tagline
+tagline: "The data scientist every company deserves"
+
+# Files
+artifact: .claude/artifacts/2025-12-28-2254-liquidrender-vision.md

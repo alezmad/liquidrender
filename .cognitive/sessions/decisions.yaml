@@ -1,0 +1,32 @@
+_meta:
+  last_updated: 2025-12-28T22:10:00Z
+
+decisions:
+  - id: uvb-implementation
+    date: 2025-12-28
+    title: "Universal Vocabulary Builder - Deterministic Rules Approach"
+    context: |
+      Needed a way to generate semantic vocabulary from any database schema quickly.
+      Research in LiquidGym validated that 90% of vocabulary extraction is deterministic
+      (reading schema metadata) vs learning from data.
+    decision: |
+      Implement 7 hard rules for automatic detection:
+      1. Entity detection (tables with PKs, junction table detection)
+      2. Relationship detection (FK constraints)
+      3. Metric detection (numeric types + name patterns → SUM/AVG)
+      4. Dimension detection (short varchar + categorical patterns)
+      5. Time field detection (date/timestamp types)
+      6. Filter detection (boolean + is_/has_ patterns)
+      7. COUNT metric from PK per entity
+
+      User confirms ~5-10 questions to finalize vocabulary.
+      Total time: ~60 seconds vs weeks of ML training.
+    rationale:
+      - Schema metadata provides deterministic structure
+      - Name patterns work across languages (English + Spanish validated)
+      - Type-based detection is 100% accurate
+      - User confirmation handles the 10% ambiguous cases
+    outcome: "Backend complete in @repo/liquid-connect/uvb. React UI pending."
+    references:
+      - packages/liquid-connect/specs/UNIVERSAL-VOCABULARY-BUILDER.md
+      - packages/liquid-connect/specs/UVB-INTEGRATION-DESIGN.md

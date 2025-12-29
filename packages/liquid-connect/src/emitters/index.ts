@@ -14,7 +14,7 @@ export {
 
 export { DuckDBEmitter, createDuckDBEmitter } from './duckdb';
 export { TrinoEmitter, createTrinoEmitter } from './trino';
-export { PostgresEmitter, createPostgresEmitter } from './postgres';
+export { PostgresEmitter, createPostgresEmitter, type PostgresEmitterOptions } from './postgres';
 
 import type { LiquidFlow } from '../liquidflow/types';
 import type { EmitResult, EmitterOptions } from './base';

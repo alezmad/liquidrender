@@ -51,11 +51,19 @@ export type FilterOperator =
   | '<'
   | '<='
   | '~~'      // contains
+  | '!~~'     // not contains
   | 'in'
   | '!in'
   | 'range'
   | 'null'
-  | '!null';
+  | '!null'
+  | 'IS NULL'
+  | 'IS NOT NULL'
+  | 'LIKE'
+  | 'NOT LIKE'
+  | 'IN'
+  | 'NOT IN'
+  | 'BETWEEN';
 
 /**
  * Boolean operators for filter composition

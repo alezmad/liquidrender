@@ -1,0 +1,15 @@
+_meta:
+  last_updated: 2025-12-28T20:18:23Z
+  updated_by: init
+
+status: healthy
+confidence_levels: {}
+staleness: []
+issues: []
+metrics:
+  total_atoms: 0
+  linked_atoms: 0
+  orphan_atoms: 0
+  total_decisions: 0
+  open_questions: 0
+  avg_confidence: 1.0

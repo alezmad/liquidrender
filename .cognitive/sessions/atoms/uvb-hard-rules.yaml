@@ -1,0 +1,87 @@
+# Atom: Universal Vocabulary Builder - Hard Rules
+# Created: 2025-12-28
+# Source: UVB implementation in @repo/liquid-connect
+
+id: uvb-hard-rules
+type: implementation-pattern
+status: validated
+
+# Core Insight
+insight: |
+  90% of vocabulary extraction is READING schema metadata, not LEARNING from data.
+  7 deterministic rules can extract structure from any database in seconds.
+
+# The 7 Hard Rules
+rules:
+  entity_detection:
+    certainty: 100%
+    logic: "Table + PK = entity. Composite PK of all FKs = junction table."
+    code: isJunctionTable(), detectEntities()
+
+  relationship_detection:
+    certainty: 90%
+    logic: "FK constraints → many_to_one. Junction tables → many_to_many."
+    code: detectRelationships()
+
+  metric_detection:
+    certainty: 85-100%
+    logic: |
+      DECIMAL/MONEY types + name patterns (amount, price, total) → SUM
+      Rate/ratio/percent patterns → AVG
+      INTEGER + count/qty pattern → SUM
+      Every entity PK → COUNT DISTINCT
+    code: detectMetrics()
+
+  dimension_detection:
+    certainty: 90%
+    logic: |
+      VARCHAR ≤ 100 chars = likely dimension
+      Name patterns (name, type, status, category) = 100% dimension
+      Exclude long text (desc, note, comment, content)
+    code: detectDimensions()
+
+  time_field_detection:
+    certainty: 95%
+    logic: |
+      DATE/TIMESTAMP types = time field
+      Skip audit patterns (created_at, updated_at)
+      Business time patterns (order_date, fecha_operacion) = primary
+    code: detectTimeFields()
+
+  filter_detection:
+    certainty: 100%
+    logic: "BOOLEAN type OR is_/has_/active/enabled patterns"
+    code: detectFilters()
+
+# Usage Pattern
+usage: |
+  import { createPostgresAdapter, extractSchema, applyHardRules } from '@repo/liquid-connect/uvb'
+
+  const adapter = createPostgresAdapter('postgresql://...')
+  const schema = await extractSchema(adapter, { schema: 'public' })
+  const { detected, confirmations, stats } = applyHardRules(schema)
+
+  // detected = { entities, metrics, dimensions, timeFields, filters, relationships }
+  // confirmations = 5-10 questions for user
+  // stats = counts of each type
+
+# Validation Results (from LiquidGym research)
+validation:
+  schemas_tested: [Northwind, Chinook, Pagila, ECIJA]
+  largest_schema: "ECIJA: 508 tables, 326 metrics, 543 dimensions"
+  accuracy: "~90% deterministic from schema alone"
+  multilingual: "Works on Spanish column names (importe, precio, activo)"
+
+# Files
+files:
+  models: packages/liquid-connect/src/uvb/models.ts
+  rules: packages/liquid-connect/src/uvb/rules.ts
+  extractor: packages/liquid-connect/src/uvb/extractor.ts
+  postgres: packages/liquid-connect/src/uvb/adapters/postgres.ts
+  spec: packages/liquid-connect/specs/UNIVERSAL-VOCABULARY-BUILDER.md
+
+# Next Steps
+pending:
+  - React UI: VocabularyWizard component (4-step wizard)
+  - API routes: POST /api/vocabulary/extract, /validate, /save
+  - Additional adapters: MySQL, SQLite, DuckDB

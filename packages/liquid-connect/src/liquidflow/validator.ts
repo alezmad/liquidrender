@@ -6,6 +6,7 @@ import type {
   FlowValidation,
   FlowValidationError,
   FlowValidationWarning,
+  ResolvedFilter,
 } from './types';
 
 /**
@@ -155,7 +156,7 @@ export function validateFlow(flow: LiquidFlow): FlowValidation {
 }
 
 function validateFilter(
-  filter: LiquidFlow['filters'][number],
+  filter: ResolvedFilter,
   path: string,
   errors: FlowValidationError[]
 ): void {

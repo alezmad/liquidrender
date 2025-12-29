@@ -8,15 +8,57 @@ import {
 } from '../base';
 
 /**
+ * PostgreSQL emitter options
+ */
+export interface PostgresEmitterOptions extends EmitterOptions {
+  /**
+   * Use EXPLAIN ANALYZE for explain mode (executes query)
+   * Default: false (uses simple EXPLAIN)
+   */
+  explainAnalyze?: boolean;
+
+  /**
+   * Include buffer usage in EXPLAIN output
+   * Only applies when explainAnalyze is true
+   * Default: true
+   */
+  explainBuffers?: boolean;
+}
+
+/**
  * PostgreSQL-specific emitter
+ * v7 compatible: supports explain mode and comparison columns
  */
 export class PostgresEmitter extends BaseEmitter {
-  constructor(options: EmitterOptions = {}) {
+  private pgOptions: Required<PostgresEmitterOptions>;
+
+  constructor(options: PostgresEmitterOptions = {}) {
     super(options);
+    this.pgOptions = {
+      ...this.options,
+      explainAnalyze: options.explainAnalyze ?? false,
+      explainBuffers: options.explainBuffers ?? true,
+    };
   }
 
   getDialect(): string {
     return 'postgres';
+  }
+
+  /**
+   * v7: Wrap SQL in EXPLAIN for explain mode
+   * PostgreSQL supports EXPLAIN (ANALYZE, BUFFERS) for detailed execution plans
+   */
+  protected wrapExplain(sql: string): string {
+    if (this.pgOptions.explainAnalyze) {
+      const options = ['ANALYZE'];
+      if (this.pgOptions.explainBuffers) {
+        options.push('BUFFERS');
+      }
+      return `EXPLAIN (${options.join(', ')}) ${sql}`;
+    }
+    // Default: simple EXPLAIN (does not execute query)
+    return `EXPLAIN ${sql}`;
   }
 
   getTraits(): DialectTraits {
@@ -65,6 +107,6 @@ export class PostgresEmitter extends BaseEmitter {
 /**
  * Create a PostgreSQL emitter
  */
-export function createPostgresEmitter(options?: EmitterOptions): PostgresEmitter {
+export function createPostgresEmitter(options?: PostgresEmitterOptions): PostgresEmitter {
   return new PostgresEmitter(options);
 }

@@ -1,0 +1,56 @@
+id: WF-009
+name: LiquidRender B2B Marketing Pages
+status: approved
+created: 2025-12-29
+target: B2B Intelligence Clients
+
+git:
+  start_tag: WF-009-start
+  start_commit: ab43834
+
+waves:
+  - id: 0
+    name: Bootstrap
+    status: pending
+    tasks:
+      - types.ts
+      - copy.ts
+      - index.ts skeleton
+  - id: 1
+    name: Core Sections
+    status: pending
+    parallel: true
+    tasks:
+      - hero.tsx
+      - how-it-works.tsx
+      - three-modes.tsx
+  - id: 2
+    name: Differentiator Sections
+    status: pending
+    parallel: true
+    tasks:
+      - competitor-map.tsx
+      - learning-journey.tsx
+      - vocabulary-section.tsx
+  - id: 3
+    name: Integration
+    status: pending
+    tasks:
+      - page.tsx update
+      - final exports
+
+current_wave: 0
+
+context_files:
+  - .claude/artifacts/2025-12-28-2254-liquidrender-vision.md
+  - .claude/artifacts/2025-12-28-2349-brand-messaging.md
+  - .claude/artifacts/2025-12-28-1821-liquidconnect-vision.md
+  - .claude/artifacts/2025-12-29-product-assessment.md
+
+output_directory: apps/web/src/modules/marketing/liquidrender/
+
+decisions:
+  - Target audience: B2B intelligence clients (executives, data teams)
+  - Messaging: "Know what matters" - proactive intelligence, not dashboards
+  - Tone: Professional, confident, clarity-focused
+  - Name: LiquidRender (placeholder, will change for B2B)

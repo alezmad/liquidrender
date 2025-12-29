@@ -1,0 +1,160 @@
+# capabilities.yaml - What already exists
+# CHECK HERE BEFORE BUILDING ANYTHING NEW
+
+# Format: what_you_need → use_this
+
+ui_components:
+  # 42 LiquidRender components - packages/liquid-render/src/renderer/components/
+
+  tables:
+    data_table: liquid-render/components/data-table.tsx
+
+  charts:
+    line: liquid-render/components/line-chart.tsx
+    bar: liquid-render/components/bar-chart.tsx
+    area: liquid-render/components/area-chart.tsx
+    pie: liquid-render/components/pie-chart.tsx
+
+  forms:
+    button: liquid-render/components/button.tsx
+    checkbox: liquid-render/components/checkbox.tsx
+    date: liquid-render/components/date.tsx
+    daterange: liquid-render/components/daterange.tsx
+    form: liquid-render/components/form.tsx
+    input: liquid-render/components/input.tsx
+    radio: liquid-render/components/radio.tsx
+    range: liquid-render/components/range.tsx
+    select: liquid-render/components/select.tsx
+    switch: liquid-render/components/switch.tsx
+    textarea: liquid-render/components/textarea.tsx
+
+  layout:
+    accordion: liquid-render/components/accordion.tsx
+    card: liquid-render/components/card.tsx
+    container: liquid-render/components/container.tsx
+    grid: liquid-render/components/grid.tsx
+    header: liquid-render/components/header.tsx
+    list: liquid-render/components/list.tsx
+    modal: liquid-render/components/modal.tsx
+    nav: liquid-render/components/nav.tsx
+    sidebar: liquid-render/components/sidebar.tsx
+    stack: liquid-render/components/stack.tsx
+    stepper: liquid-render/components/stepper.tsx
+    tabs: liquid-render/components/tabs.tsx
+
+  feedback:
+    drawer: liquid-render/components/drawer.tsx
+    popover: liquid-render/components/popover.tsx
+    sheet: liquid-render/components/sheet.tsx
+    tooltip: liquid-render/components/tooltip.tsx
+
+  display:
+    avatar: liquid-render/components/avatar.tsx
+    badge: liquid-render/components/badge.tsx
+    breadcrumb: liquid-render/components/breadcrumb.tsx
+    heading: liquid-render/components/heading.tsx
+    icon: liquid-render/components/icon.tsx
+    image: liquid-render/components/image.tsx
+    kpi: liquid-render/components/kpi-card.tsx
+    progress: liquid-render/components/progress.tsx
+    tag: liquid-render/components/tag.tsx
+    text: liquid-render/components/text.tsx
+
+framework:  # TurboStarter - DO NOT REBUILD
+  auth: "@turbostarter/auth"
+  billing: "@turbostarter/billing"
+  database: "@turbostarter/db (Drizzle)"
+  api: "@turbostarter/api (Hono)"
+  email: "@turbostarter/email"
+  storage: "@turbostarter/storage"
+  i18n: "@turbostarter/i18n"
+  cms: "@turbostarter/cms"
+  analytics: packages/analytics
+  ai: "Built-in AI (OpenAI, Anthropic, Google, agents, chatbot, TTS)"
+  admin: "Super Admin dashboard"
+  organizations: "Multi-tenancy, RBAC, invitations"
+  background_tasks: "trigger.dev, Upstash QStash"
+  monitoring: "Sentry, PostHog"
+  deployment: "Vercel, Railway, Fly.io, Docker configs"
+  push_notifications: "Mobile push (Expo)"
+
+  _docs: ".context/turbostarter-framework-context/index.md"
+
+data_models:  # In packages/db - EXTEND, don't recreate
+  auth:
+    - user
+    - session
+    - account
+    - verification
+    - passkey
+    - two_factor
+  organizations:
+    - organization
+    - member
+    - invitation
+  billing:
+    - customer
+
+patterns:  # Already configured
+  forms: "react-hook-form + zod + @hookform/resolvers"
+  queries: "@tanstack/react-query"
+  validation: "zod schemas"
+  styling: "design tokens in utils.ts"
+
+uvb:  # Universal Vocabulary Builder - COMPLETE
+  # Generates semantic vocabulary from any database in 60 seconds
+  # 7 deterministic hard rules for automatic detection
+
+  core:
+    models: liquid-connect/src/uvb/models.ts           # TypeScript types
+    rules: liquid-connect/src/uvb/rules.ts             # 7 hard rules engine
+    extractor: liquid-connect/src/uvb/extractor.ts     # Schema extraction
+
+  adapters:
+    postgres: liquid-connect/src/uvb/adapters/postgres.ts  # PostgreSQL adapter
+    # mysql, sqlite, duckdb adapters pending
+
+  specs:
+    knowledge: liquid-connect/specs/UNIVERSAL-VOCABULARY-BUILDER.md
+    integration: liquid-connect/specs/UVB-INTEGRATION-DESIGN.md
+
+  usage: |
+    import { createPostgresAdapter, extractSchema, applyHardRules } from '@repo/liquid-connect/uvb'
+
+    const adapter = createPostgresAdapter('postgresql://user:pass@host:5432/db')
+    const schema = await extractSchema(adapter, { schema: 'public' })
+    const { detected, confirmations, stats } = applyHardRules(schema)
+
+  hard_rules:
+    - entity_detection: "Tables with PKs → entities (junction tables detected)"
+    - relationship_detection: "FK constraints → relationships"
+    - metric_detection: "Numeric columns + patterns → SUM/AVG metrics"
+    - dimension_detection: "Short varchar + patterns → dimensions"
+    - time_field_detection: "Date/timestamp → time fields"
+    - filter_detection: "Boolean + is_/has_ patterns → filters"
+    - count_metric: "PK → COUNT DISTINCT metric per entity"
+
+  pending:
+    - react_ui: "VocabularyWizard component (4-step wizard)"
+    - api_routes: "Hono routes for /api/vocabulary/*"
+    - mysql_adapter: "MySQL information_schema queries"
+    - sqlite_adapter: "SQLite PRAGMA queries"
+    - duckdb_adapter: "DuckDB schema extraction"
+
+packages_available:  # In package.json - USE THESE, don't add alternatives
+  charts: recharts
+  ui_primitives: "@radix-ui/* (popover, select, tooltip, radio-group)"
+  forms: react-hook-form
+  validation: zod
+  data_fetching: "@tanstack/react-query"
+  dates: date-fns
+  icons: lucide-react
+  classnames: clsx + tailwind-merge
+  http: hono (server)
+  database: drizzle-orm
+  auth: better-auth
+  mobile: expo + expo-router
+  testing: vitest + playwright + testing-library
+
+# RULE: Search this file before creating anything new
+# RULE: Don't add packages that duplicate what's already available

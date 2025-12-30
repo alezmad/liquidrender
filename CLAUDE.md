@@ -273,6 +273,7 @@ When browser interaction is needed (testing UI, scraping, automation), **always 
 
 | What              | Where                                                           |
 | ----------------- | --------------------------------------------------------------- |
+| **Next steps**    | `NEXT-STEPS.md`                                                 |
 | Knosia DB schema  | `packages/db/src/schema/knosia.ts`                              |
 | Knosia API router | `packages/api/src/modules/knosia/router.ts`                     |
 | Onboarding module | `apps/web/src/modules/onboarding/`                              |
@@ -926,6 +927,114 @@ pnpm typecheck && pnpm lint && pnpm format
 
 ---
 
+## Database Migration Best Practices
+
+### Common Migration Failures & Solutions
+
+#### 1. pgSchema-based tables not detected
+
+**Problem:** Drizzle-kit says "No schema changes" but tables don't exist.
+
+**Cause:** Tables using `pgSchema()` (namespaced schemas like `pdf.chat`, `image.generation`) must be DIRECTLY exported from `packages/db/src/schema/index.ts`.
+
+**Fix:** Add explicit exports:
+```typescript
+// index.ts - pgSchema modules need direct exports
+export * from "./chat";
+export * from "./pdf";
+export * from "./image";
+```
+
+#### 2. Export naming conflicts
+
+**Problem:** Migration creates some tables but silently skips others.
+
+**Cause:** Multiple schema files export the same names (e.g., both `chat.ts` and `pdf.ts` export `chat`, `message`). Later exports override earlier ones.
+
+**Fix:** Prefix exports to avoid conflicts:
+```typescript
+// pdf.ts - all exports prefixed with 'pdf'
+export const pdfSchema = pgSchema("pdf");
+export const pdfChat = pdfSchema.table("chat", {...});
+export const pdfMessage = pdfSchema.table("message", {...});
+```
+
+#### 3. Missing CREATE SCHEMA statements
+
+**Problem:** Migration fails with `schema "X" does not exist`.
+
+**Cause:** Drizzle-kit sometimes omits `CREATE SCHEMA` statements for pgSchema-based modules.
+
+**Fix:** Manually add at the TOP of the migration file:
+```sql
+CREATE SCHEMA "chat";
+--> statement-breakpoint
+CREATE SCHEMA "pdf";
+--> statement-breakpoint
+CREATE SCHEMA "image";
+--> statement-breakpoint
+-- rest of migration...
+```
+
+#### 4. Missing PostgreSQL extensions
+
+**Problem:** Migration fails with `type "vector" does not exist`.
+
+**Cause:** pgvector extension not installed in PostgreSQL.
+
+**Fix:**
+1. Use pgvector-enabled Docker image in `docker-compose.yml`:
+   ```yaml
+   db:
+     image: pgvector/pgvector:pg17  # NOT postgres:18-alpine
+   ```
+2. Add extension to migration:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ```
+3. If switching images, clear the volume (data loss!):
+   ```bash
+   docker compose down db -v && docker compose up -d db
+   ```
+
+### Pre-Migration Checklist
+
+Before running `db:generate`:
+
+1. **Check exports in `index.ts`** - All schema files must be exported
+2. **Check for naming conflicts** - Search for duplicate export names across schema files
+3. **Verify Docker image** - Ensure pgvector image if using vector types
+
+After running `db:generate`:
+
+4. **Review migration file** - Check for:
+   - All `CREATE SCHEMA` statements present
+   - All expected tables included
+   - Extension requirements (e.g., `vector`)
+
+5. **Test migration** - Run `db:migrate` against a fresh database first
+
+### Recovery: When Migrations Fail Mid-Apply
+
+If migration partially applied:
+
+```bash
+# 1. Check what was applied
+psql -c "\dt" -c "\dn"
+
+# 2. Option A: Fresh start (dev only)
+docker compose down db -v
+docker compose up -d db
+pnpm db:migrate
+
+# 3. Option B: Fix and rerun
+# Delete failed migration file and snapshot
+# Regenerate and fix issues
+# Apply again
+```
+
+---
+
 ## Knosia Data Model (V1 - 15 Tables)
 
 ```
@@ -991,21 +1100,63 @@ interface OnboardingProgress {
 
 ## Context System
 
+### CRITICAL: Check for Active Workflows on Session Start
+
+**After context reset, chat consolidation, or starting a new session:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  WORKFLOW CHECK (run immediately on session start)              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ls .workflows/active/                                          │
+│                                                                 │
+│  If workflow found:                                             │
+│  → Run /workflow:resume [ID] to continue with proper tracking   │
+│  → DO NOT continue work ad-hoc (loses structure)                │
+│                                                                 │
+│  WHY: Context resets interrupt workflows mid-execution.         │
+│  The /workflow:resume command restores:                         │
+│  • Wave/task tracking                                           │
+│  • Context files from CONTEXT-LIBRARY.yaml                      │
+│  • Proper TodoWrite wave-based structure                        │
+│  • Parallel execution coordination                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ### Read Order (for new tasks)
 
 1. **This file** (already loaded)
-2. `.cognitive/capabilities.yaml` - Before building anything
-3. `.cognitive/cache/answers/` - Check for cached wisdom
-4. `.artifacts/` - Vision docs when implementing features
+2. **Check `.workflows/active/`** - Resume any interrupted workflows first
+3. **`NEXT-STEPS.md`** - Check current priorities before starting new work
+4. `.cognitive/capabilities.yaml` - Before building anything
+5. `.cognitive/cache/answers/` - Check for cached wisdom
+6. `.artifacts/` - Vision docs when implementing features
 
 ### Deep References
 
-| Task               | Read                                                  |
-| ------------------ | ----------------------------------------------------- |
-| Creating component | `.cognitive/cache/answers/how-to-create-component.md` |
-| Creating chart     | `.cognitive/cache/answers/chart-patterns.md`          |
-| Entity lookup      | `.cognitive/knowledge.json`                           |
-| Framework docs     | `.context/turbostarter-framework-context/index.md`    |
+| Task                | Read                                                  |
+| ------------------- | ----------------------------------------------------- |
+| **What to do next** | `NEXT-STEPS.md`                                       |
+| Creating component  | `.cognitive/cache/answers/how-to-create-component.md` |
+| Creating chart      | `.cognitive/cache/answers/chart-patterns.md`          |
+| Entity lookup       | `.cognitive/knowledge.json`                           |
+| Framework docs      | `.context/turbostarter-framework-context/index.md`    |
+
+### NEXT-STEPS.md Usage
+
+**Read `NEXT-STEPS.md` when:**
+- Starting a new session
+- Finishing an implementation (to pick up the next item)
+- User asks "what's next?" or "what should we work on?"
+- Unsure about implementation order or dependencies
+
+**Update `NEXT-STEPS.md` when:**
+- Completing an item (mark as done, move to Completed table)
+- Discovering new work that should be queued
+- Scope changes or new dependencies emerge
+- Adding implementation specs to `.artifacts/`
 
 ---
 

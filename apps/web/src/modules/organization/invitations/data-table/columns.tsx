@@ -177,7 +177,7 @@ export const useColumns = (): ColumnDef<Invitation>[] => {
       },
       enableHiding: false,
       meta: {
-        placeholder: `${t("search")}...`,
+        placeholder: `${t("searchPlaceholder")}`,
         variant: "text",
       },
       enableColumnFilter: true,

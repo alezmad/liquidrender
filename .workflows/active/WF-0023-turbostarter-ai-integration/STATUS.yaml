@@ -1,0 +1,78 @@
+id: WF-0023
+name: Turbostarter AI Integration
+status: in_progress
+created: 2024-12-30
+git_checkpoint:
+  commit: 8e77354
+  tag: WF-0023-start
+
+waves:
+  - id: 0
+    name: Pre-flight & Bootstrap
+    type: sequential
+    status: in_progress
+    tasks:
+      - id: bootstrap
+        name: Create packages/ai structure and install dependencies
+        status: in_progress
+  - id: 1
+    name: Core Infrastructure
+    type: parallel
+    status: pending
+    tasks:
+      - id: T1
+        name: AI Package
+        files: packages/ai/
+        status: pending
+      - id: T2
+        name: DB Schemas
+        files: packages/db/src/schema/{chat,image,pdf}.ts
+        status: pending
+      - id: T3
+        name: i18n Translations
+        files: packages/i18n/.../ai.json
+        status: pending
+  - id: 2
+    name: Features Integration
+    type: parallel
+    status: pending
+    tasks:
+      - id: T4
+        name: API Router
+        files: packages/api/src/modules/ai/
+        status: pending
+      - id: T5
+        name: Chat Module
+        files: apps/web/src/modules/chat/
+        status: pending
+      - id: T6
+        name: PDF/Image/TTS Modules
+        files: apps/web/src/modules/{pdf,image,tts}/
+        status: pending
+      - id: T7
+        name: Web Routes
+        files: apps/web/src/app/[locale]/(apps)/
+        status: pending
+  - id: 3
+    name: Final Integration
+    type: sequential
+    status: pending
+    tasks:
+      - id: T8
+        name: Generate Migrations
+        status: pending
+      - id: validation
+        name: Typecheck and validation
+        status: pending
+
+source:
+  repo: /Users/agutierrez/Desktop/turbostarter-ai
+
+files_summary:
+  ai_package: 33
+  db_schemas: 3
+  api_routes: 5
+  web_modules: 99
+  web_routes: 16
+  i18n: 2
+  total: ~158

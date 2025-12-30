@@ -41,6 +41,16 @@
         "tryAgain": "Try Again"
       }
     },
+    "summary": {
+      "title": "Your data sources",
+      "description": "Review your connected sources before we analyze them.",
+      "addAnother": "Add another data source",
+      "addAnotherHint": "Have data in Snowflake, BigQuery, or another database? Connect it now for a complete picture.",
+      "continue": "Continue to analysis",
+      "addLater": "You can always add more sources later.",
+      "sourcesConnected": "{{count}} sources connected",
+      "tablesTotal": "{{count}} tables total"
+    },
     "analysis": {
       "title": "Analyzing your data…",
       "subtitle": "Usually ~5 seconds.",
@@ -114,7 +124,8 @@
       "categories": {
         "revenue": "REVENUE",
         "customers": "CUSTOMERS",
-        "time": "TIME"
+        "time": "TIME",
+        "other": "OTHER"
       }
     },
     "ready": {

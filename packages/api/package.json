@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./env": "./src/env.ts",
     "./utils": "./src/utils/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./modules/knosia/briefing": "./src/modules/knosia/briefing/index.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -18,9 +19,10 @@
   },
   "prettier": "@turbostarter/prettier-config",
   "dependencies": {
-    "@ai-sdk/openai": "2.0.59",
+    "@ai-sdk/openai": "2.0.68",
     "@hono/zod-validator": "0.7.4",
     "@repo/liquid-connect": "workspace:*",
+    "@turbostarter/ai": "workspace:*",
     "@turbostarter/auth": "workspace:*",
     "@turbostarter/billing": "workspace:*",
     "@turbostarter/db": "workspace:*",
@@ -29,7 +31,7 @@
     "@turbostarter/monitoring-web": "workspace:*",
     "@turbostarter/shared": "workspace:*",
     "@turbostarter/storage": "workspace:*",
-    "ai": "5.0.86",
+    "ai": "catalog:",
     "envin": "catalog:",
     "hono": "4.10.4",
     "zod": "catalog:"

@@ -49,6 +49,7 @@ export const getCustomers = async (input: GetCustomersInput) => {
         userId: customer.userId,
         plan: customer.plan,
         status: customer.status,
+        credits: customer.credits,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,
         user: {

@@ -1,0 +1,53 @@
+# Context Library for WF-0022: DuckDB Universal Adapter
+# Generated: 2025-12-30
+# Token Budget: 20,000
+
+version: "1.0"
+workflow_id: WF-0022
+workflow_name: DuckDB Universal Adapter
+
+# Primary context files - REQUIRED for all agents
+required_context:
+  - path: .artifacts/2025-12-29-duckdb-universal-adapter-implementation.md
+    purpose: Complete DuckDB adapter specification
+    tokens: ~3500
+
+  - path: packages/liquid-connect/src/uvb/adapters/postgres.ts
+    purpose: Existing adapter pattern to follow
+    tokens: ~500
+
+  - path: packages/liquid-connect/src/uvb/extractor.ts
+    purpose: DatabaseAdapter interface definition
+    tokens: ~2000
+
+  - path: packages/liquid-connect/src/uvb/models.ts
+    purpose: Type definitions (ExtractedSchema, Table, Column, etc.)
+    tokens: ~1500
+
+# Optional context - load if needed
+optional_context:
+  - path: packages/liquid-connect/src/uvb/adapters/index.ts
+    purpose: Adapter exports barrel
+    tokens: ~100
+
+  - path: packages/liquid-connect/package.json
+    purpose: Package dependencies
+    tokens: ~200
+
+# Total estimated tokens: ~7,800 (well under 20k budget)
+
+key_decisions:
+  - DuckDB connects to PostgreSQL via postgres_scanner extension
+  - Single adapter handles all database types
+  - QueryExecutor adds timeout and row limits
+  - Keep PostgresAdapter as fallback
+
+file_ownership:
+  exclusive:
+    - packages/liquid-connect/src/uvb/adapters/duckdb.ts
+    - packages/liquid-connect/src/executor/index.ts
+    - packages/liquid-connect/src/executor/timeout.ts
+    - packages/liquid-connect/src/uvb/adapters/__tests__/duckdb.test.ts
+  modify:
+    - packages/liquid-connect/src/uvb/adapters/index.ts
+    - packages/liquid-connect/package.json

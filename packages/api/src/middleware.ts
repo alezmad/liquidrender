@@ -5,6 +5,8 @@ import { createMiddleware } from "hono/factory";
 import { getAllRolesAtOrAbove, hasAdminPermission } from "@turbostarter/auth";
 import { MemberRole } from "@turbostarter/auth";
 import { auth } from "@turbostarter/auth/server";
+import { db } from "@turbostarter/db/server";
+import { customer } from "@turbostarter/db/schema/customer";
 import { makeZodI18nMap } from "@turbostarter/i18n";
 import {
   getLocaleFromRequest,
@@ -12,6 +14,7 @@ import {
 } from "@turbostarter/i18n/server";
 import { HttpStatusCode, NodeEnv } from "@turbostarter/shared/constants";
 import { HttpException } from "@turbostarter/shared/utils";
+import { eq, sql } from "drizzle-orm";
 
 import type { User } from "@turbostarter/auth";
 import type { TFunction } from "@turbostarter/i18n";
@@ -237,3 +240,82 @@ export const validate = <
       }
     },
   );
+
+/**
+ * Simple in-memory rate limiter middleware for AI endpoints.
+ * Limits requests per user per time window.
+ */
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+export const rateLimiter = createMiddleware<{
+  Variables: {
+    user: User;
+  };
+}>(async (c, next) => {
+  const user = c.var.user;
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 30; // 30 requests per minute
+
+  const now = Date.now();
+  const key = `rate-limit:${user.id}`;
+  const record = rateLimitStore.get(key);
+
+  if (!record || record.resetAt < now) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    await next();
+    return;
+  }
+
+  if (record.count >= maxRequests) {
+    throw new HttpException(HttpStatusCode.TOO_MANY_REQUESTS, {
+      code: "error.rateLimit",
+      message: "Too many requests. Please try again later.",
+    });
+  }
+
+  record.count += 1;
+  await next();
+});
+
+/**
+ * Middleware to deduct credits from a user's account before processing AI requests.
+ * Takes the amount of credits to deduct as a parameter.
+ */
+export const deductCredits = (amount: number) =>
+  createMiddleware<{
+    Variables: {
+      user: User;
+    };
+  }>(async (c, next) => {
+    const user = c.var.user;
+
+    // Find user's customer record
+    const [customerRecord] = await db
+      .select()
+      .from(customer)
+      .where(eq(customer.userId, user.id));
+
+    if (!customerRecord) {
+      throw new HttpException(HttpStatusCode.FORBIDDEN, {
+        code: "error.noCredits",
+        message: "No subscription found. Please subscribe to use AI features.",
+      });
+    }
+
+    if (customerRecord.credits < amount) {
+      throw new HttpException(HttpStatusCode.PAYMENT_REQUIRED, {
+        code: "error.insufficientCredits",
+        message: "Insufficient credits. Please add more credits to continue.",
+      });
+    }
+
+    // Deduct credits
+    await db
+      .update(customer)
+      .set({
+        credits: sql`${customer.credits} - ${amount}`,
+      })
+      .where(eq(customer.id, customerRecord.id));
+
+    await next();
+  });

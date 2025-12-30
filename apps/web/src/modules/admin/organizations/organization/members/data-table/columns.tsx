@@ -106,7 +106,7 @@ export const useColumns = (): ColumnDef<Member>[] => {
       id: "q",
       accessorKey: "q",
       meta: {
-        placeholder: `${t("search")}...`,
+        placeholder: `${t("searchPlaceholder")}`,
         variant: "text",
       },
       enableHiding: false,

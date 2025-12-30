@@ -1,0 +1,67 @@
+# Context Library for WF-0021: Knosia Dashboard + Guest Infrastructure
+# Generated: 2025-12-30
+
+token_budget: 20000
+estimated_tokens: 8500
+
+required_context:
+  - path: packages/api/src/modules/knosia/briefing/schemas.ts
+    purpose: BriefingResponse types for dashboard components
+    priority: critical
+    tokens: ~800
+
+  - path: packages/api/src/modules/knosia/briefing/queries.ts
+    purpose: Mock data patterns for briefing
+    priority: high
+    tokens: ~1500
+
+  - path: apps/web/src/app/[locale]/dashboard/(user)/layout.tsx
+    purpose: Layout pattern with sidebar
+    priority: critical
+    tokens: ~400
+
+  - path: apps/web/src/config/paths.ts
+    purpose: Route definitions (knosia.*)
+    priority: high
+    tokens: ~500
+
+  - path: packages/i18n/src/translations/en/knosia.json
+    purpose: i18n keys (briefing.*, sidebar.*, guest.warning.*)
+    priority: high
+    tokens: ~1200
+
+  - path: apps/web/src/modules/onboarding/components/layout/expiration-banner.tsx
+    purpose: ExpirationBanner component (reference, exists)
+    priority: medium
+    tokens: ~600
+
+  - path: packages/db/src/schema/knosia.ts
+    purpose: Database schema for guest TTL fields
+    priority: medium
+    tokens: ~2500
+
+deferred_context:
+  - path: .artifacts/2025-12-29-1355-knosia-architecture-vision.md
+    reason: Full architecture - load on demand
+    tokens: ~8000
+
+  - path: .artifacts/2025-12-29-0219-knosia-ux-flow-clickthrough.md
+    reason: UX spec - load on demand
+    tokens: ~6000
+
+key_patterns:
+  layout_pattern: |
+    - Use SidebarProvider + DashboardSidebar + DashboardInset
+    - Define menu array with label, items (title, href, icon)
+    - Auth check with getSession() and redirect
+
+  component_pattern: |
+    - "use client" for interactive components
+    - useTranslation("knosia") for i18n
+    - Import from @turbostarter/ui-web/* for primitives
+    - Use pathsConfig for navigation
+
+  api_hook_pattern: |
+    - useQuery from @tanstack/react-query
+    - api from ~/lib/api/client
+    - handle from @turbostarter/api/utils

@@ -118,7 +118,7 @@ export const AccountSwitcher = memo<AccountSwitcherProps>(({ user }) => {
               <Command
                 defaultValue={activeOrganization?.slug ?? "personal-account"}
               >
-                <CommandInput placeholder={t("search")} autoFocus />
+                <CommandInput placeholder={t("search.label")} autoFocus />
                 <CommandList>
                   <CommandGroup>
                     <CommandItem

@@ -110,7 +110,7 @@ export const useColumns = (): ColumnDef<
       id: "q",
       accessorKey: "q",
       meta: {
-        placeholder: `${t("search")}...`,
+        placeholder: `${t("searchPlaceholder")}`,
         variant: "text",
       },
       enableHiding: false,

@@ -5,6 +5,13 @@ import * as schema from "../schema";
 import type { SortPayload } from "@turbostarter/shared/schema";
 import type { PgTableWithColumns, TableConfig } from "drizzle-orm/pg-core";
 
+// Re-export drizzle-zod utilities (separate file to avoid circular deps)
+export {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "./drizzle-zod";
+
 export const getOrderByFromSort = <Schema extends TableConfig>({
   sort,
   defaultSchema,

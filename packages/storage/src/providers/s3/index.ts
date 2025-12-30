@@ -46,10 +46,19 @@ export const { getUploadUrl, getSignedUrl, getPublicUrl, getDeleteUrl } = {
   getPublicUrl: async ({ path, bucket }: GetObjectUrlInput) => {
     const client = getClient();
     const endpoint = await client.config.endpoint?.();
+    const forcePathStyle = await client.config.forcePathStyle;
 
     if (endpoint?.hostname.includes("supabase.co")) {
       return {
         url: `${endpoint.protocol}//${endpoint.hostname}/storage/v1/object/public/${bucket}/${path}`,
+      };
+    }
+
+    // Use path-style URL for MinIO and other S3-compatible storage (forcePathStyle: true)
+    if (forcePathStyle) {
+      const port = endpoint?.port ? `:${endpoint.port}` : "";
+      return {
+        url: `${endpoint?.protocol}//${endpoint?.hostname}${port}/${bucket}/${path}`,
       };
     }
 

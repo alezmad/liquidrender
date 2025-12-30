@@ -53,3 +53,30 @@ reference_files:
   design_tokens: packages/liquid-render/src/renderer/components/utils.ts
   dsl_spec: packages/liquid-render/specs/LIQUID-RENDER-SPEC.md
   component_guide: packages/liquid-render/docs/COMPONENT-GUIDE.md
+
+todowrite_patterns:
+  # For workflows: track WAVES not individual tasks
+  workflows:
+    - "Wave N [PARALLEL]: Description (T1,T2,T3)"
+    - "Wave N [SEQUENTIAL]: Description"
+    - NEVER list individual tasks as separate todos
+
+  # For typecheck errors: ONE TODO PER FILE (parallel fixes)
+  typecheck_errors:
+    description: |
+      When fixing TypeScript errors across multiple files, create ONE todo
+      per file to enable parallel mental model and organized tracking.
+    example:
+      - content: "Fix types in src/components/button.tsx (3 errors)"
+        status: in_progress
+        activeForm: "Fixing button.tsx types"
+      - content: "Fix types in src/hooks/use-auth.ts (2 errors)"
+        status: pending
+        activeForm: "Fixing use-auth.ts types"
+      - content: "Fix types in src/utils/format.ts (1 error)"
+        status: pending
+        activeForm: "Fixing format.ts types"
+    rationale: |
+      Each file's errors are independent and can be fixed in parallel.
+      Grouping by file provides clear progress visibility and prevents
+      jumping between files randomly.

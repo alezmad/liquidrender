@@ -130,6 +130,8 @@ const QUERIES = {
   },
 
   duckdb: {
+    // DuckDB queries use string interpolation since the driver doesn't support parameterized queries
+    // Use {TABLE_NAME} as placeholder, replaced at runtime
     tables: `
       SELECT table_name
       FROM information_schema.tables
@@ -145,22 +147,22 @@ const QUERIES = {
         numeric_precision,
         numeric_scale
       FROM information_schema.columns
-      WHERE table_schema = 'main' AND table_name = ?
+      WHERE table_schema = 'main' AND table_name = '{TABLE_NAME}'
       ORDER BY ordinal_position
     `,
     primaryKeys: `
-      SELECT column_name
+      SELECT unnest(constraint_column_names) AS column_name
       FROM duckdb_constraints()
-      WHERE table_name = ? AND constraint_type = 'PRIMARY KEY'
+      WHERE table_name = '{TABLE_NAME}' AND constraint_type = 'PRIMARY KEY'
     `,
     foreignKeys: `
       SELECT
-        constraint_column_names[1] AS column_name,
+        unnest(constraint_column_names) AS column_name,
         -- DuckDB FK introspection is limited, may need custom handling
         NULL AS referenced_table,
         NULL AS referenced_column
       FROM duckdb_constraints()
-      WHERE table_name = ? AND constraint_type = 'FOREIGN KEY'
+      WHERE table_name = '{TABLE_NAME}' AND constraint_type = 'FOREIGN KEY'
     `,
   },
 };
@@ -326,6 +328,22 @@ export class SchemaExtractor {
       numeric_scale: number | null;
     }
 
+    // DuckDB uses string interpolation (no parameterized queries in driver)
+    if (type === "duckdb") {
+      const sql = queries.columns.replace("{TABLE_NAME}", tableName);
+      const rows = await this.adapter.query<ColumnRow>(sql);
+      return rows.map((row) => ({
+        name: row.column_name,
+        dataType: row.data_type,
+        isPrimaryKey: false,
+        isForeignKey: false,
+        isNotNull: row.is_nullable === "NO",
+        charMaxLength: row.character_maximum_length ?? undefined,
+        numericPrecision: row.numeric_precision ?? undefined,
+        numericScale: row.numeric_scale ?? undefined,
+      }));
+    }
+
     const params = type === "postgres" ? [this.options.schema, tableName] : [tableName];
     const rows = await this.adapter.query<ColumnRow>(queries.columns, params);
 
@@ -360,6 +378,13 @@ export class SchemaExtractor {
       column_name: string;
     }
 
+    // DuckDB uses string interpolation (no parameterized queries in driver)
+    if (type === "duckdb") {
+      const sql = queries.primaryKeys.replace("{TABLE_NAME}", tableName);
+      const rows = await this.adapter.query<PKRow>(sql);
+      return rows.map((r) => r.column_name);
+    }
+
     const params = type === "postgres" ? [this.options.schema, tableName] : [tableName];
     const rows = await this.adapter.query<PKRow>(queries.primaryKeys, params);
     return rows.map((r) => r.column_name);
@@ -389,6 +414,19 @@ export class SchemaExtractor {
       column_name: string;
       referenced_table: string | null;
       referenced_column: string | null;
+    }
+
+    // DuckDB uses string interpolation (no parameterized queries in driver)
+    if (type === "duckdb") {
+      const sql = queries.foreignKeys.replace("{TABLE_NAME}", tableName);
+      const rows = await this.adapter.query<FKRow>(sql);
+      return rows
+        .filter((r) => r.referenced_table && r.referenced_column)
+        .map((r) => ({
+          column: r.column_name,
+          referencedTable: r.referenced_table!,
+          referencedColumn: r.referenced_column!,
+        }));
     }
 
     const params = type === "postgres" ? [this.options.schema, tableName] : [tableName];

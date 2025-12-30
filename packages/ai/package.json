@@ -1,0 +1,51 @@
+{
+  "name": "@turbostarter/ai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./chat/*": "./src/modules/chat/*.ts",
+    "./image/*": "./src/modules/image/*.ts",
+    "./pdf/*": "./src/modules/pdf/*.ts",
+    "./tts/*": "./src/modules/tts/*.ts",
+    "./stt/*": "./src/modules/stt/*.ts",
+    "./credits/*": "./src/modules/credits/*.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@turbostarter/eslint-config": "workspace:*",
+    "@turbostarter/prettier-config": "workspace:*",
+    "@turbostarter/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@turbostarter/prettier-config",
+  "dependencies": {
+    "@ai-sdk/anthropic": "2.0.41",
+    "@ai-sdk/deepseek": "1.0.27",
+    "@ai-sdk/fireworks": "1.0.27",
+    "@ai-sdk/google": "2.0.28",
+    "@ai-sdk/openai": "2.0.68",
+    "@ai-sdk/replicate": "1.0.17",
+    "@ai-sdk/xai": "2.0.31",
+    "@elevenlabs/elevenlabs-js": "2.9.0",
+    "@langchain/community": "1.0.0",
+    "@langchain/core": "1.0.3",
+    "@tavily/core": "0.5.12",
+    "@turbostarter/db": "workspace:*",
+    "@turbostarter/shared": "workspace:*",
+    "@turbostarter/storage": "workspace:*",
+    "ai": "catalog:",
+    "openai": "4.103.0",
+    "pdf-parse": "1.1.1",
+    "zod": "catalog:"
+  }
+}

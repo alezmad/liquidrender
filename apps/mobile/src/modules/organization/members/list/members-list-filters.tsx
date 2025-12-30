@@ -76,7 +76,7 @@ const Search = () => {
     <View className="flex-1 flex-row items-center">
       <Input
         className="flex-1 pr-10"
-        placeholder={`${t("search")}...`}
+        placeholder={`${t("searchPlaceholder")}`}
         value={value}
         onChangeText={(text) => {
           setFilter("q", text);

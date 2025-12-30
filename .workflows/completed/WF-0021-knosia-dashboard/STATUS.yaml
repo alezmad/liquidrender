@@ -1,0 +1,104 @@
+# Workflow Status: WF-0021 - Knosia Dashboard + Guest Infrastructure
+# Auto-generated: 2025-12-30
+
+workflow:
+  id: WF-0021
+  name: Knosia Dashboard + Guest Infrastructure
+  status: completed
+  created_at: "2025-12-30T00:00:00Z"
+  completed_at: "2025-12-30T08:00:00Z"
+  git_tag: WF-0021-start
+
+execution:
+  current_wave: 4
+  total_waves: 4
+
+waves:
+  wave_0:
+    name: Bootstrap
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Bootstrap types.ts + directory structure
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/types.ts
+          - apps/web/src/modules/dashboard/components/
+          - apps/web/src/modules/dashboard/hooks/
+
+  wave_1:
+    name: UI Components
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: Briefing Card
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/components/briefing-card.tsx
+      - id: T2
+        name: KPI Grid
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/components/kpi-grid.tsx
+      - id: T3
+        name: Alert List
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/components/alert-list.tsx
+      - id: T4
+        name: Ask Input
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/components/ask-input.tsx
+
+  wave_2:
+    name: Hook + Barrels
+    type: sequential
+    status: completed
+    tasks:
+      - id: T5
+        name: use-briefing.ts hook
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/hooks/use-briefing.ts
+      - id: barrel
+        name: Barrel exports
+        status: completed
+        files:
+          - apps/web/src/modules/dashboard/components/index.ts
+          - apps/web/src/modules/dashboard/hooks/index.ts
+          - apps/web/src/modules/dashboard/index.ts
+
+  wave_3:
+    name: Pages + Cron
+    type: sequential
+    status: completed
+    tasks:
+      - id: T6
+        name: Knosia Layout
+        status: completed
+        files:
+          - apps/web/src/app/[locale]/dashboard/knosia/layout.tsx
+      - id: T7
+        name: Knosia Page
+        status: completed
+        files:
+          - apps/web/src/app/[locale]/dashboard/knosia/page.tsx
+      - id: T8
+        name: Cron Cleanup Endpoint
+        status: completed
+        files:
+          - apps/web/src/app/api/cron/cleanup-expired-orgs/route.ts
+
+validation:
+  typecheck: passed
+  build: pending
+
+summary:
+  files_created: 10
+  components: 4
+  hooks: 1
+  pages: 2
+  api_endpoints: 1

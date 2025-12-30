@@ -46,7 +46,7 @@ export default function AI() {
   const { messages, error, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       fetch: expoFetch as unknown as typeof globalThis.fetch,
-      api: api.ai.chat.$url().toString(),
+      api: api.ai.chat.chats.$url().toString(),
     }),
     onError: (error) => logger.error(error),
   });

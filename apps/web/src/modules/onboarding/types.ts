@@ -241,7 +241,13 @@ export interface ConfirmationAnswer {
 
 /** Progress stored in localStorage for session continuity */
 export interface OnboardingProgress {
+  /** Legacy single connection - keep for backward compatibility */
   connectionId: string | null;
+
+  /** Multi-connection support */
+  connectionIds: string[];
+  primaryConnectionId: string | null;
+
   analysisId: string | null;
   workspaceId: string | null;
   selectedRole: UserRole | null;
@@ -252,12 +258,31 @@ export interface OnboardingProgress {
 /** Default empty progress state */
 export const DEFAULT_ONBOARDING_PROGRESS: OnboardingProgress = {
   connectionId: null,
+  connectionIds: [],
+  primaryConnectionId: null,
   analysisId: null,
   workspaceId: null,
   selectedRole: null,
   answers: [],
   completedSteps: [],
 };
+
+// =============================================================================
+// CONNECTION SUMMARY TYPES (for multi-connection display)
+// =============================================================================
+
+/** Connection summary for display in summary screen */
+export interface ConnectionSummary {
+  id: string;
+  type: ConnectionType;
+  name: string;
+  host: string;
+  port: number;
+  database: string;
+  tablesCount: number;
+  status: "connected" | "error";
+  connectedAt: Date;
+}
 
 /** Storage key for onboarding progress */
 export const ONBOARDING_STORAGE_KEY = "knosia-onboarding";

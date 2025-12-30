@@ -19,13 +19,30 @@ export { useConnectionTest, useCreateConnection, toConnectionTestResult } from "
 export { useAnalysis } from "./hooks/use-analysis";
 export { useOnboardingState } from "./hooks/use-onboarding-state";
 export { useKnosiaOrg } from "./hooks/use-knosia-org";
+export { useConnectionSummaries, toConnectionSummary } from "./hooks/use-connection-summaries";
 
 // Connect Components (Wave 2)
 export { ConnectionForm } from "./components/connect/connection-form";
 export { ConnectionTest } from "./components/connect/connection-test";
+
+// Multi-Connection Components (WF-0020)
+export { ConnectionSummaryCard } from "./components/connect/connection-summary-card";
+export { ConnectionSummary } from "./components/connect/connection-summary";
 
 // Review Components (Wave 2)
 export { AnalysisProgress } from "./components/review/analysis-progress";
 export { DetectionReview } from "./components/review/detection-review";
 export { BusinessTypeCard } from "./components/review/business-type-card";
 export { SchemaSummary } from "./components/review/schema-summary";
+
+// Role Components
+export { RoleCard } from "./components/role/role-card";
+export { RoleSelector } from "./components/role/role-selector";
+
+// Confirm Components
+export { QuestionCard } from "./components/confirm/question-card";
+export { ConfirmationCarousel } from "./components/confirm/confirmation-carousel";
+
+// Ready Components
+export { BriefingPreviewCard } from "./components/ready/briefing-preview";
+export { ReadyScreen } from "./components/ready/ready-screen";

@@ -41,6 +41,16 @@
         "tryAgain": "Intentar de nuevo"
       }
     },
+    "summary": {
+      "title": "Tus fuentes de datos",
+      "description": "Revisa tus fuentes conectadas antes de analizarlas.",
+      "addAnother": "Agregar otra fuente de datos",
+      "addAnotherHint": "Tienes datos en Snowflake, BigQuery u otra base de datos? Conectala ahora para una imagen completa.",
+      "continue": "Continuar al analisis",
+      "addLater": "Siempre puedes agregar mas fuentes despues.",
+      "sourcesConnected": "{{count}} fuentes conectadas",
+      "tablesTotal": "{{count}} tablas en total"
+    },
     "analysis": {
       "title": "Analizando tus datos…",
       "subtitle": "Generalmente ~5 segundos.",
@@ -114,7 +124,8 @@
       "categories": {
         "revenue": "INGRESOS",
         "customers": "CLIENTES",
-        "time": "TIEMPO"
+        "time": "TIEMPO",
+        "other": "OTRO"
       }
     },
     "ready": {

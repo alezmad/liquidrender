@@ -1,0 +1,94 @@
+id: WF-0020
+name: Progressive Connection Onboarding
+status: completed
+created_at: 2025-12-29T22:10:00Z
+completed_at: 2025-12-30T00:45:00Z
+git_checkpoint:
+  tag: WF-0020-start
+  commit: 8e77354
+
+waves:
+  - id: 0
+    name: Bootstrap Types
+    status: completed
+    type: sequential
+    tasks:
+      - id: T0
+        name: Extend types.ts with multi-connection types
+        status: completed
+        file: apps/web/src/modules/onboarding/types.ts
+
+  - id: 1
+    name: Core Hooks & Components
+    status: completed
+    type: parallel
+    tasks:
+      - id: T1a
+        name: Update use-onboarding-state.ts
+        status: completed
+        file: apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts
+      - id: T1b
+        name: Create use-connection-summaries.ts
+        status: completed
+        file: apps/web/src/modules/onboarding/hooks/use-connection-summaries.ts
+      - id: T1c
+        name: Create connection-summary-card.tsx
+        status: completed
+        file: apps/web/src/modules/onboarding/components/connect/connection-summary-card.tsx
+
+  - id: 2
+    name: Screen Components
+    status: completed
+    type: parallel
+    tasks:
+      - id: T2a
+        name: Create connection-summary.tsx
+        status: completed
+        file: apps/web/src/modules/onboarding/components/connect/connection-summary.tsx
+      - id: T2b
+        name: Update connect/page.tsx
+        status: completed
+        file: apps/web/src/app/[locale]/onboarding/connect/page.tsx
+
+  - id: 3
+    name: Integration
+    status: completed
+    type: sequential
+    tasks:
+      - id: T3a
+        name: Add i18n strings
+        status: completed
+        files:
+          - packages/i18n/src/translations/en/knosia.json
+          - packages/i18n/src/translations/es/knosia.json
+      - id: T3b
+        name: Update module exports
+        status: completed
+        file: apps/web/src/modules/onboarding/index.ts
+      - id: T3c
+        name: Typecheck validation
+        status: completed
+        notes: Fixed Icons (added Database, Snowflake, Cloud) and use-connection-summaries.ts API call
+
+current_wave: 3
+total_tasks: 9
+completed_tasks: 9
+
+context_files:
+  - .artifacts/2025-12-29-progressive-connection-implementation.md
+  - apps/web/src/modules/onboarding/types.ts
+  - apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts
+
+summary: |
+  WF-0020 Progressive Connection Onboarding is complete.
+
+  Changes made:
+  - Extended types.ts with connectionIds[], primaryConnectionId, ConnectionSummary interface
+  - Updated use-onboarding-state.ts with addConnection, removeConnection, setPrimaryConnection helpers
+  - Created use-connection-summaries.ts hook for fetching connection details
+  - Created connection-summary-card.tsx component (compact and full variants)
+  - Created connection-summary.tsx screen with "Add Another" flow
+  - Updated connect/page.tsx with step logic (form → test → summary)
+  - Added i18n strings (en/es) for summary section
+  - Updated module exports in index.ts
+  - Added Database, Snowflake, Cloud icons to Icons export

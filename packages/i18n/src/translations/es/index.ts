@@ -11,4 +11,5 @@ export const es = {
   dashboard: () => import("./dashboard.json"),
   validation: () => import("./validation.json"),
   knosia: () => import("./knosia.json"),
+  ai: () => import("./ai.json"),
 } as const;

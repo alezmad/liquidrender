@@ -91,6 +91,26 @@ On confirmation:
 - Launch parallel subtasks if applicable
 - Follow standard workflow execution
 
+**CRITICAL: TodoWrite Wave Tracking**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Track WAVES as single todos, NOT individual tasks:             │
+│                                                                 │
+│  ✅ CORRECT (include execution type in title):                  │
+│  - "Wave 0 [SEQUENTIAL]: Bootstrap" [completed]                 │
+│  - "Wave 1 [PARALLEL]: Components (T1,T2,T3)" [in_progress]     │
+│  - "Wave 2 [SEQUENTIAL]: Integration" [pending]                 │
+│                                                                 │
+│  ❌ WRONG (forces sequential execution):                        │
+│  - "T1: Button" [in_progress]                                   │
+│  - "T2: Input" [pending]                                        │
+│  - "T3: Modal" [pending]                                        │
+│                                                                 │
+│  [PARALLEL] and [SEQUENTIAL] labels reinforce execution model.  │
+│  Waves are the unit of parallelism - tasks within run together. │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ### 7. Error Handling
 
 If launcher file not found:

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
 
 import { useTranslation } from "@turbostarter/i18n";
 import { Icons } from "@turbostarter/ui-web/icons";
@@ -17,24 +17,42 @@ import {
   useKnosiaOrg,
   toConnectionTestResult,
 } from "~/modules/onboarding";
+import { ConnectionSummary } from "~/modules/onboarding/components/connect/connection-summary";
 
 import type { ConnectionType, ConnectionFormValues, ConnectionTestResult } from "~/modules/onboarding";
 
-type Step = "select" | "form";
+type Step = "select" | "form" | "summary";
 
 /**
- * Connect page - database selection and connection form.
+ * Connect page - database selection, connection form, and summary.
+ *
+ * Flow:
+ * - If `?summary=true` and has connections → show ConnectionSummary
+ * - Otherwise show database selector → form → summary
  */
 export default function ConnectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation("knosia");
 
   const [step, setStep] = useState<Step>("select");
   const [selectedDatabase, setSelectedDatabase] = useState<ConnectionType | undefined>(undefined);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
-  const { setConnectionId, progress } = useOnboardingState();
+  const { addConnection, hasConnections, isHydrated } = useOnboardingState();
   const { orgId, isLoading: isOrgLoading } = useKnosiaOrg();
+
+  // Check URL param and existing connections to determine initial step
+  const showSummary = searchParams.get("summary") === "true";
+
+  // Set step to summary if URL param is set and user has connections
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    if (showSummary && hasConnections) {
+      setStep("summary");
+    }
+  }, [isHydrated, showSummary, hasConnections]);
 
   const connectionTest = useConnectionTest();
   const createConnection = useCreateConnection();
@@ -61,7 +79,7 @@ export default function ConnectPage() {
         setTestResult(testRes);
 
         if (testRes.success && orgId) {
-          // Create the connection and proceed
+          // Create the connection and proceed to summary
           // Generate a name from the database type and host
           const connectionName = `${values.type} - ${values.host}`;
           const connection = await createConnection.mutateAsync({
@@ -69,8 +87,13 @@ export default function ConnectPage() {
             name: connectionName,
             orgId,
           });
-          setConnectionId(connection.id);
-          router.push(pathsConfig.onboarding.review);
+
+          // Add connection to multi-connection state
+          addConnection(connection.id);
+
+          // Go to summary step with URL param
+          setStep("summary");
+          router.replace(`${pathsConfig.onboarding.connect}?summary=true`);
         }
       } catch (error) {
         setTestResult({
@@ -82,7 +105,7 @@ export default function ConnectPage() {
         });
       }
     },
-    [connectionTest, createConnection, setConnectionId, router, orgId]
+    [connectionTest, createConnection, addConnection, router, orgId]
   );
 
   const handleRetry = useCallback(() => {
@@ -91,6 +114,21 @@ export default function ConnectPage() {
 
   const isLoading = connectionTest.isPending || createConnection.isPending || isOrgLoading;
 
+  // Wait for hydration before rendering state-dependent UI
+  if (!isHydrated) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Icons.Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Summary step: show ConnectionSummary component
+  if (step === "summary") {
+    return <ConnectionSummary />;
+  }
+
+  // Select and Form steps
   return (
     <div className="space-y-8">
       <div className="text-center">

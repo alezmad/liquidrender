@@ -55,9 +55,47 @@ export function useOnboardingState() {
     }
   }, [progress, isHydrated]);
 
-  /** Update connection ID */
+  /** Update connection ID (legacy single connection) */
   const setConnectionId = useCallback((connectionId: string | null) => {
     setProgress((prev) => ({ ...prev, connectionId }));
+  }, []);
+
+  /** Add a connection to the connectionIds array */
+  const addConnection = useCallback((connectionId: string) => {
+    setProgress((prev) => {
+      const newIds = [...prev.connectionIds, connectionId];
+      return {
+        ...prev,
+        connectionIds: newIds,
+        primaryConnectionId: prev.primaryConnectionId ?? connectionId,
+        connectionId: prev.connectionId ?? connectionId,
+      };
+    });
+  }, []);
+
+  /** Remove a connection from the connectionIds array */
+  const removeConnection = useCallback((connectionId: string) => {
+    setProgress((prev) => {
+      const newIds = prev.connectionIds.filter((id) => id !== connectionId);
+      const newPrimary = prev.primaryConnectionId === connectionId
+        ? newIds[0] ?? null
+        : prev.primaryConnectionId;
+      return {
+        ...prev,
+        connectionIds: newIds,
+        primaryConnectionId: newPrimary,
+        connectionId: newPrimary,
+      };
+    });
+  }, []);
+
+  /** Set the primary connection */
+  const setPrimaryConnection = useCallback((connectionId: string) => {
+    setProgress((prev) => ({
+      ...prev,
+      primaryConnectionId: connectionId,
+      connectionId: connectionId,
+    }));
   }, []);
 
   /** Update analysis ID */
@@ -133,6 +171,10 @@ export function useOnboardingState() {
     };
   }, [progress]);
 
+  // Computed values for multi-connection support
+  const connectionCount = progress.connectionIds.length;
+  const hasConnections = progress.connectionIds.length > 0;
+
   return {
     // Current step (from URL)
     step,
@@ -141,8 +183,15 @@ export function useOnboardingState() {
     progress,
     isHydrated,
 
+    // Multi-connection computed values
+    connectionCount,
+    hasConnections,
+
     // Setters
     setConnectionId,
+    addConnection,
+    removeConnection,
+    setPrimaryConnection,
     setAnalysisId,
     setWorkspaceId,
     setSelectedRole,

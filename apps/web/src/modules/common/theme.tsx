@@ -132,3 +132,26 @@ export const ThemeControls = () => {
     </ThemeControlsProvider>
   );
 };
+
+// Simple theme toggle for AI apps
+export function ThemeSwitcher() {
+  const { t } = useTranslation("common");
+  const { setTheme: setMode, theme: mode } = useTheme();
+
+  const toggleTheme = () => {
+    setMode(mode === "dark" ? "light" : "dark");
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="group relative"
+      onClick={toggleTheme}
+      aria-label={t("theme.toggle")}
+    >
+      <Icons.Sun className="text-muted-foreground group-hover:text-foreground size-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Icons.Moon className="text-muted-foreground group-hover:text-foreground absolute size-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+    </Button>
+  );
+}

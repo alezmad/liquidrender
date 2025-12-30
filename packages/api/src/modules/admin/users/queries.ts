@@ -172,6 +172,7 @@ export const getUserPlans = async ({
         customerId: customer.customerId,
         plan: customer.plan,
         status: customer.status,
+        credits: customer.credits,
         createdAt: customer.createdAt,
         updatedAt: customer.updatedAt,
         user: {

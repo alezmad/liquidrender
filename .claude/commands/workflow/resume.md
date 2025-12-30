@@ -156,6 +156,23 @@ Read STATUS.yaml and determine:
    ```
 
 ### Step 7: On Approval - Launch Agents
+
+**CRITICAL: TodoWrite Wave Tracking**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Track WAVES as single todos, NOT individual tasks:             │
+│                                                                 │
+│  ✅ CORRECT (include execution type in title):                  │
+│  - "Wave 1 [PARALLEL]: Components (T1,T2,T3)" [in_progress]     │
+│  - "Wave 2 [SEQUENTIAL]: Integration" [pending]                 │
+│                                                                 │
+│  ❌ WRONG (forces sequential execution):                        │
+│  - "T1: Button" [in_progress]                                   │
+│  - "T2: Input" [pending]                                        │
+│  - "T3: Modal" [pending]                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
    - Skip completed waves
    - Re-launch failed tasks (up to max 3 attempts)
    - **Launch pending tasks as PARALLEL SUBTASKS** (if no conflicts):

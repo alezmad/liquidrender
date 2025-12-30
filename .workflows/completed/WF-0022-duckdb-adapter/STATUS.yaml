@@ -1,0 +1,67 @@
+# Workflow Status: WF-0022 - DuckDB Universal Adapter
+# Auto-generated - Do not edit manually during execution
+
+workflow:
+  id: WF-0022
+  name: DuckDB Universal Adapter
+  status: in_progress
+  created_at: "2025-12-30T00:00:00Z"
+  started_at: "2025-12-30T00:10:00Z"
+  completed_at: ""
+
+git:
+  start_tag: WF-0022-start
+  start_commit: 8e77354
+  current_branch: main
+
+progress:
+  current_wave: 0
+  total_waves: 3
+  completed_tasks: 0
+  total_tasks: 5
+
+waves:
+  - id: 0
+    name: "Bootstrap"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: "Add duckdb dependency"
+        status: completed
+        file: "packages/liquid-connect/package.json"
+
+  - id: 1
+    name: "Core Implementation"
+    type: parallel
+    status: pending
+    tasks:
+      - id: T1
+        name: "DuckDBAdapter class"
+        status: pending
+        file: "packages/liquid-connect/src/uvb/adapters/duckdb.ts"
+      - id: T2
+        name: "QueryExecutor service"
+        status: pending
+        files:
+          - "packages/liquid-connect/src/executor/index.ts"
+          - "packages/liquid-connect/src/executor/timeout.ts"
+
+  - id: 2
+    name: "Integration"
+    type: sequential
+    status: pending
+    tasks:
+      - id: T3
+        name: "Update adapter exports"
+        status: pending
+        file: "packages/liquid-connect/src/uvb/adapters/index.ts"
+      - id: T4
+        name: "DuckDB adapter tests"
+        status: pending
+        file: "packages/liquid-connect/src/uvb/adapters/__tests__/duckdb.test.ts"
+
+validation:
+  last_typecheck: ""
+  last_build: ""
+  errors: []

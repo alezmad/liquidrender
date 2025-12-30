@@ -7,8 +7,34 @@ const ONBOARDING_PREFIX = "/onboarding";
 
 const API_PREFIX = "/api";
 
+// AI apps routes (no prefix - top-level routes)
+const APPS_CHAT = "/chat";
+const APPS_IMAGE = "/image";
+const APPS_TTS = "/tts";
+const APPS_PDF = "/pdf";
+const APPS_AGENT = "/agent";
+
 const pathsConfig = {
   index: "/",
+  apps: {
+    chat: {
+      index: APPS_CHAT,
+      chat: (id: string) => `${APPS_CHAT}/${id}`,
+    },
+    image: {
+      index: APPS_IMAGE,
+      history: `${APPS_IMAGE}/history`,
+      detail: (id: string) => `${APPS_IMAGE}/${id}`,
+      generation: (id: string) => `${APPS_IMAGE}/generation/${id}`,
+    },
+    tts: APPS_TTS,
+    pdf: {
+      index: APPS_PDF,
+      detail: (id: string) => `${APPS_PDF}/${id}`,
+      chat: (id: string) => `${APPS_PDF}/${id}`,
+    },
+    agent: APPS_AGENT,
+  },
   onboarding: {
     index: ONBOARDING_PREFIX,
     connect: `${ONBOARDING_PREFIX}/connect`,

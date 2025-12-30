@@ -20,6 +20,11 @@ const INTERNAL_PACKAGES = [
 
 const config: NextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: [
+    "duckdb",
+    "better-sqlite3",
+    "@mapbox/node-pre-gyp",
+  ],
   turbopack: {
     rules: {
       "*.svg": {

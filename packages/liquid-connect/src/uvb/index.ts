@@ -74,4 +74,10 @@ export {
   PostgresAdapter,
   createPostgresAdapter,
   type PostgresConfig,
+  // DuckDB Universal Adapter
+  DuckDBAdapter,
+  createDuckDBAdapter,
+  createAdapter,
+  type DuckDBConnectionConfig,
+  type QueryResult,
 } from "./adapters";

@@ -78,7 +78,50 @@ Present this structure for approval:
 - **Wave 1-N**: Parallel tasks with exclusive file ownership - **USE SUBTASKS**
 - **Final Wave**: Integration (wire exports, final validation) - SEQUENTIAL
 
-### 3.1 CRITICAL: Parallel Execution with Subtasks
+### 3.1 CRITICAL: TodoWrite Wave Tracking
+
+**IMPORTANT: Track WAVES, not individual tasks, in TodoWrite to enable parallel execution.**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TODOWRITE WAVE RULE                                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ✅ CORRECT: One todo per WAVE with execution type              │
+│  ─────────────────────────────                                  │
+│  [{"content": "Wave 0 [SEQUENTIAL]: Bootstrap types & structure",│
+│    "status": "completed", "activeForm": "Bootstrapping..."}]    │
+│  [{"content": "Wave 1 [PARALLEL]: Components (T1,T2,T3)",       │
+│    "status": "in_progress", "activeForm": "Building parallel..."}]│
+│  [{"content": "Wave 2 [SEQUENTIAL]: Integration & exports",     │
+│    "status": "pending", "activeForm": "Integrating..."}]        │
+│                                                                 │
+│  ❌ WRONG: Individual tasks in todo (forces sequential)         │
+│  ─────────────────────────────                                  │
+│  [{"content": "T1: Button", "status": "in_progress"...}]        │
+│  [{"content": "T2: Input", "status": "pending"...}]   ← WRONG!  │
+│  [{"content": "T3: Modal", "status": "pending"...}]   ← WRONG!  │
+│                                                                 │
+│  WHY: TodoWrite with individual tasks creates a mental model    │
+│  of sequential execution. Waves are the unit of parallelism.    │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  EXCEPTION: TypeCheck Errors → ONE TODO PER FILE                │
+│  ─────────────────────────────────────────────────              │
+│  When fixing TypeScript errors across multiple files:           │
+│                                                                 │
+│  ✅ CORRECT (parallel per file):                                │
+│  - "Fix types in button.tsx (3 errors)" [in_progress]           │
+│  - "Fix types in use-auth.ts (2 errors)" [pending]              │
+│  - "Fix types in format.ts (1 error)" [pending]                 │
+│                                                                 │
+│  Each file is independent → can fix in parallel                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 CRITICAL: Parallel Execution with Subtasks
 
 **When tasks have NO file conflicts, ALWAYS launch them as parallel subtasks:**
 

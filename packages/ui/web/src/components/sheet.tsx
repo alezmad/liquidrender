@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog as SheetPrimitive } from "radix-ui";
+import { Dialog as SheetPrimitive, VisuallyHidden } from "radix-ui";
 import * as React from "react";
 
 import { useTranslation } from "@turbostarter/i18n";
@@ -49,9 +49,11 @@ function SheetContent({
   className,
   children,
   side = "right",
+  title,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left";
+  title?: string;
 }) {
   const { t } = useTranslation("common");
   return (
@@ -73,6 +75,9 @@ function SheetContent({
         )}
         {...props}
       >
+        <VisuallyHidden.Root>
+          <SheetPrimitive.Title>{title ?? t("menu")}</SheetPrimitive.Title>
+        </VisuallyHidden.Root>
         {children}
         <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <Icons.X className="size-4" />

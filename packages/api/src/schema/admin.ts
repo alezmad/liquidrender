@@ -122,6 +122,7 @@ export const getUserPlansResponseSchema = z.object({
       customerId: z.string(),
       plan: z.enum(PricingPlanType).nullable(),
       status: z.enum(BillingStatus).nullable(),
+      credits: z.number(),
       createdAt: z.coerce.date(),
       updatedAt: z.coerce.date(),
       user: z.object({
@@ -333,6 +334,7 @@ export const getCustomersResponseSchema = z.object({
       userId: z.string(),
       plan: z.enum(PricingPlanType).nullable(),
       status: z.enum(BillingStatus).nullable(),
+      credits: z.number(),
       createdAt: z.coerce.date(),
       updatedAt: z.coerce.date(),
       user: z.object({

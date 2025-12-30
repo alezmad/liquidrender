@@ -1,5 +1,5 @@
-next_id: 19
-last_sync: '2025-12-29T18:15:00.000000'
+next_id: 24
+last_sync: '2025-12-30T00:00:00.000000'
 workflows:
   WF-0001:
     name: 'Quality Audit: liquid-render vs shadcn'
@@ -169,6 +169,19 @@ workflows:
     current_wave: 0
     total_tasks: 10
     completed_tasks: 0
+  WF-0020:
+    name: Progressive Connection Onboarding
+    dirname: WF-0020-progressive-connection
+    location: active
+    status: approved
+    created_at: '2025-12-29T22:10:00Z'
+    updated_at: '2025-12-29T22:10:00Z'
+    started_at: ''
+    completed_at: ''
+    current_wave: 0
+    total_tasks: 9
+    completed_tasks: 0
+    git_tag: WF-0020-start
 WF-0018:
   name: Knosia LiquidConnect Integration
   dirname: WF-0018-knosia-liquidconnect
@@ -182,9 +195,49 @@ WF-0018:
   total_tasks: 8
   completed_tasks: 0
   git_tag: WF-0018-start
+WF-0021:
+  name: Knosia Dashboard + Guest Infrastructure
+  dirname: WF-0021-knosia-dashboard
+  location: active
+  status: approved
+  created_at: '2025-12-30T00:00:00Z'
+  updated_at: '2025-12-30T00:00:00Z'
+  started_at: ''
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 9
+  completed_tasks: 0
+  git_tag: WF-0021-start
+WF-0022:
+  name: DuckDB Universal Adapter
+  dirname: WF-0022-duckdb-adapter
+  location: completed
+  status: completed
+  created_at: '2025-12-30T00:10:00Z'
+  updated_at: '2025-12-30T07:30:00Z'
+  started_at: '2025-12-30T00:10:00Z'
+  completed_at: '2025-12-30T07:30:00Z'
+  current_wave: 2
+  total_tasks: 5
+  completed_tasks: 5
+  git_tag: WF-0022-start
+  duration: 7h 20m
+WF-0023:
+  name: Turbostarter AI Integration
+  dirname: WF-0023-turbostarter-ai-integration
+  location: active
+  status: in_progress
+  created_at: '2025-12-30T08:00:00Z'
+  updated_at: '2025-12-30T08:00:00Z'
+  started_at: '2025-12-30T08:00:00Z'
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 10
+  completed_tasks: 0
+  git_tag: WF-0023-start
 stats:
-  total_workflows: 13
+  total_workflows: 15
   queued: 0
-  active: 5
-  completed: 8
+  active: 6
+  completed: 9
   failed: 0

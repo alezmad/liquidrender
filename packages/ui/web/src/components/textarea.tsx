@@ -1,6 +1,9 @@
 import * as React from "react";
+import TextareaAutosize from "react-textarea-autosize";
 
 import { cn } from "@turbostarter/ui";
+
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
@@ -15,4 +18,4 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   );
 }
 
-export { Textarea };
+export { Textarea, TextareaAutosize };

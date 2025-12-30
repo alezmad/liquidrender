@@ -170,6 +170,20 @@ export {
 } from './emitters';
 
 // =============================================================================
+// QUERY EXECUTOR
+// =============================================================================
+
+export {
+  QueryExecutor,
+  createExecutor,
+  executeQuery,
+  TimeoutError,
+  type ExecutorConfig,
+  type ExecutorStatus,
+  type QueryResult as ExecutorQueryResult,
+} from './executor';
+
+// =============================================================================
 // VOCABULARY (Query Engine - Wave 1)
 // =============================================================================
 

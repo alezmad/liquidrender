@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { generateId } from "@turbostarter/shared/utils";
 
@@ -40,6 +40,7 @@ export const customer = pgTable("customer", {
   customerId: text().notNull().unique(),
   status: billingStatusEnum(),
   plan: pricingPlanTypeEnum(),
+  credits: integer().default(100).notNull(),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()

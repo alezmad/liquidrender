@@ -20,7 +20,7 @@ const createVocabItem = (
   category: null,
   semantics: null,
   currentVersion: 1,
-  status: "active",
+  status: "approved",
   governance: null,
   aggregation: "SUM",
   aggregationConfidence: 85,

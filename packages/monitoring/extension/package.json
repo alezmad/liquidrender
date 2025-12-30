@@ -18,6 +18,7 @@
     "@turbostarter/eslint-config": "workspace:*",
     "@turbostarter/prettier-config": "workspace:*",
     "@turbostarter/tsconfig": "workspace:*",
+    "@types/chrome": "^0.0.304",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

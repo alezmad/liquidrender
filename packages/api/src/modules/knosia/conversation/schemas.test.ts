@@ -187,13 +187,13 @@ describe("queryContextSchema", () => {
 // ============================================================================
 
 describe("conversationQueryInputSchema", () => {
-  const validUuid = "550e8400-e29b-41d4-a716-446655440000";
+  const validConnectionId = "connabc123def456";
 
   it("should accept valid query input", () => {
     const input = {
       query: "What is our revenue?",
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(conversationQueryInputSchema.parse(input)).toEqual(input);
   });
@@ -201,8 +201,8 @@ describe("conversationQueryInputSchema", () => {
   it("should accept query with optional context", () => {
     const input = {
       query: "Show me sales data",
-      connectionId: validUuid,
-      workspaceId: "ws_456",
+      connectionId: validConnectionId,
+      workspaceId: "ws45678",
       context: {
         pageId: "dashboard",
         filters: [{ field: "year", operator: "eq" as const, value: 2024 }],
@@ -214,8 +214,8 @@ describe("conversationQueryInputSchema", () => {
   it("should accept query without context", () => {
     const input = {
       query: "What are the top products?",
-      connectionId: validUuid,
-      workspaceId: "workspace_789",
+      connectionId: validConnectionId,
+      workspaceId: "workspace789",
     };
     const result = conversationQueryInputSchema.parse(input);
     expect(result.context).toBeUndefined();
@@ -224,8 +224,8 @@ describe("conversationQueryInputSchema", () => {
   it("should reject empty query", () => {
     const input = {
       query: "",
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
@@ -233,8 +233,8 @@ describe("conversationQueryInputSchema", () => {
   it("should reject query exceeding 1000 characters", () => {
     const input = {
       query: "a".repeat(1001),
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
@@ -242,25 +242,25 @@ describe("conversationQueryInputSchema", () => {
   it("should accept query at max length (1000 characters)", () => {
     const input = {
       query: "a".repeat(1000),
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(conversationQueryInputSchema.parse(input).query).toHaveLength(1000);
   });
 
-  it("should reject invalid connectionId (not UUID)", () => {
+  it("should reject invalid connectionId (contains invalid characters)", () => {
     const input = {
       query: "What is revenue?",
-      connectionId: "not-a-uuid",
-      workspaceId: "ws_123",
+      connectionId: "not-valid-id",
+      workspaceId: "ws12345",
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
 
   it("should reject missing query", () => {
     const input = {
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
@@ -268,7 +268,7 @@ describe("conversationQueryInputSchema", () => {
   it("should reject missing connectionId", () => {
     const input = {
       query: "What is revenue?",
-      workspaceId: "ws_123",
+      workspaceId: "ws12345",
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
@@ -276,7 +276,7 @@ describe("conversationQueryInputSchema", () => {
   it("should reject missing workspaceId", () => {
     const input = {
       query: "What is revenue?",
-      connectionId: validUuid,
+      connectionId: validConnectionId,
     };
     expect(() => conversationQueryInputSchema.parse(input)).toThrow();
   });
@@ -284,8 +284,8 @@ describe("conversationQueryInputSchema", () => {
   it("should handle unicode characters in query", () => {
     const input = {
       query: "What is the revenue in \u20AC and \u00A5?",
-      connectionId: validUuid,
-      workspaceId: "ws_123",
+      connectionId: validConnectionId,
+      workspaceId: "ws12345",
     };
     expect(conversationQueryInputSchema.parse(input)).toEqual(input);
   });

@@ -52,13 +52,13 @@ describe("getPreferencesInputSchema", () => {
 
 describe("updatePreferencesSchema", () => {
   describe("defaultConnectionId", () => {
-    it("should accept valid UUID", () => {
-      const input = { defaultConnectionId: "550e8400-e29b-41d4-a716-446655440000" };
+    it("should accept valid alphanumeric ID", () => {
+      const input = { defaultConnectionId: "HK9SO1TUY54PPAUDxJHFUgupuXTUqjA7" };
       expect(updatePreferencesSchema.parse(input)).toEqual(input);
     });
 
-    it("should reject invalid UUID format", () => {
-      const input = { defaultConnectionId: "not-a-uuid" };
+    it("should reject invalid ID format with special characters", () => {
+      const input = { defaultConnectionId: "not-a-valid-id" };
       expect(() => updatePreferencesSchema.parse(input)).toThrow(ZodError);
     });
 
@@ -266,7 +266,7 @@ describe("updatePreferencesSchema", () => {
 
     it("should accept all fields together", () => {
       const input = {
-        defaultConnectionId: "550e8400-e29b-41d4-a716-446655440000",
+        defaultConnectionId: "HK9SO1TUY54PPAUDxJHFUgupuXTUqjA7",
         role: "manager",
         comparisonPeriod: "YoY" as const,
         briefingTime: "10:00",

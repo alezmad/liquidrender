@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { getAnalysisSchema, runAnalysisSchema } from "./schemas";
 
 describe("runAnalysisSchema", () => {
-  it("should accept valid input with UUID connectionId", () => {
-    const input = { connectionId: "550e8400-e29b-41d4-a716-446655440000" };
+  it("should accept valid input with alphanumeric connectionId", () => {
+    const input = { connectionId: "connabc123def456" };
     expect(runAnalysisSchema.parse(input)).toEqual(input);
   });
 
@@ -12,9 +12,9 @@ describe("runAnalysisSchema", () => {
     expect(() => runAnalysisSchema.parse({})).toThrow();
   });
 
-  it("should reject invalid UUID format for connectionId", () => {
+  it("should reject invalid format for connectionId (contains special characters)", () => {
     expect(() =>
-      runAnalysisSchema.parse({ connectionId: "not-a-uuid" }),
+      runAnalysisSchema.parse({ connectionId: "not-a-valid-id" }),
     ).toThrow();
   });
 
@@ -28,12 +28,12 @@ describe("runAnalysisSchema", () => {
 
   it("should strip extra fields", () => {
     const input = {
-      connectionId: "550e8400-e29b-41d4-a716-446655440000",
+      connectionId: "connabc123def456",
       extraField: "should be ignored",
     };
     const result = runAnalysisSchema.parse(input);
     expect(result).toEqual({
-      connectionId: "550e8400-e29b-41d4-a716-446655440000",
+      connectionId: "connabc123def456",
     });
     expect(result).not.toHaveProperty("extraField");
   });
@@ -41,12 +41,12 @@ describe("runAnalysisSchema", () => {
 
 describe("getAnalysisSchema", () => {
   it("should accept valid input with string id", () => {
-    const input = { id: "analysis_123" };
+    const input = { id: "analysis123" };
     expect(getAnalysisSchema.parse(input)).toEqual(input);
   });
 
-  it("should accept UUID format id", () => {
-    const input = { id: "550e8400-e29b-41d4-a716-446655440000" };
+  it("should accept alphanumeric id", () => {
+    const input = { id: "analysisabc123def456" };
     expect(getAnalysisSchema.parse(input)).toEqual(input);
   });
 
@@ -67,11 +67,11 @@ describe("getAnalysisSchema", () => {
 
   it("should strip extra fields", () => {
     const input = {
-      id: "analysis_123",
+      id: "analysis123",
       extraField: "should be ignored",
     };
     const result = getAnalysisSchema.parse(input);
-    expect(result).toEqual({ id: "analysis_123" });
+    expect(result).toEqual({ id: "analysis123" });
     expect(result).not.toHaveProperty("extraField");
   });
 });

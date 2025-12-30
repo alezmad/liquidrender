@@ -29,7 +29,7 @@ describe("getBriefingSchema", () => {
     });
 
     it("should accept valid connectionId only", () => {
-      const input = { connectionId: "550e8400-e29b-41d4-a716-446655440000" };
+      const input = { connectionId: "connabc123def456" };
       const result = getBriefingSchema.parse(input);
       expect(result).toEqual(input);
     });
@@ -42,25 +42,25 @@ describe("getBriefingSchema", () => {
 
     it("should accept both connectionId and date", () => {
       const input = {
-        connectionId: "550e8400-e29b-41d4-a716-446655440000",
+        connectionId: "connabc123def456",
         date: "2024-12-29",
       };
       const result = getBriefingSchema.parse(input);
       expect(result).toEqual(input);
     });
 
-    it("should accept various valid UUID formats", () => {
-      const validUUIDs = [
-        "550e8400-e29b-41d4-a716-446655440000",
-        "00000000-0000-0000-0000-000000000000",
-        "ffffffff-ffff-ffff-ffff-ffffffffffff",
-        "a1b2c3d4-e5f6-4789-abcd-ef1234567890",
+    it("should accept various valid alphanumeric formats", () => {
+      const validIds = [
+        "connabc123def456",
+        "conn123456789012",
+        "abc123XYZ789",
+        "ConnectionID01",
       ];
 
-      validUUIDs.forEach((uuid) => {
-        const input = { connectionId: uuid };
+      validIds.forEach((id) => {
+        const input = { connectionId: id };
         const result = getBriefingSchema.parse(input);
-        expect(result.connectionId).toBe(uuid);
+        expect(result.connectionId).toBe(id);
       });
     });
 
@@ -81,13 +81,12 @@ describe("getBriefingSchema", () => {
   });
 
   describe("invalid inputs", () => {
-    it("should reject invalid UUID format", () => {
+    it("should reject invalid alphanumeric format (contains special characters)", () => {
       const invalidInputs = [
-        { connectionId: "not-a-uuid" },
-        { connectionId: "12345" },
-        { connectionId: "550e8400-e29b-41d4-a716" }, // incomplete
-        { connectionId: "550e8400e29b41d4a716446655440000" }, // no dashes
-        { connectionId: "" },
+        { connectionId: "not-a-valid-id" }, // contains hyphens
+        { connectionId: "idwithspecial!" }, // contains special chars
+        { connectionId: "id with spaces" }, // contains spaces
+        { connectionId: "" }, // empty string
       ];
 
       invalidInputs.forEach((input) => {
@@ -141,7 +140,7 @@ describe("getBriefingSchema", () => {
   describe("type inference", () => {
     it("should infer correct types from schema", () => {
       const input = {
-        connectionId: "550e8400-e29b-41d4-a716-446655440000",
+        connectionId: "connabc123def456",
         date: "2024-12-29",
       };
       const result = getBriefingSchema.parse(input);
@@ -497,7 +496,7 @@ describe("Edge Cases", () => {
   describe("getBriefingSchema edge cases", () => {
     it("should strip unknown properties", () => {
       const input = {
-        connectionId: "550e8400-e29b-41d4-a716-446655440000",
+        connectionId: "connabc123def456",
         unknownField: "should be stripped",
         anotherUnknown: 123,
       };
@@ -505,7 +504,7 @@ describe("Edge Cases", () => {
       const result = getBriefingSchema.parse(input);
 
       expect(result).toEqual({
-        connectionId: "550e8400-e29b-41d4-a716-446655440000",
+        connectionId: "connabc123def456",
       });
       expect((result as Record<string, unknown>).unknownField).toBeUndefined();
     });

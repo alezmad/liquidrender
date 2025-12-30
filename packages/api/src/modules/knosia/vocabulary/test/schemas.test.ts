@@ -9,15 +9,15 @@ import {
 
 describe("getVocabularySchema", () => {
   it("should accept valid analysisId", () => {
-    const input = { analysisId: "analysis_123" };
+    const input = { analysisId: "analysis123" };
     expect(getVocabularySchema.parse(input)).toEqual(input);
   });
 
-  it("should accept analysisId with various formats", () => {
+  it("should accept analysisId with various alphanumeric formats", () => {
     const inputs = [
-      { analysisId: "analysis_abc123" },
+      { analysisId: "analysisabc123" },
       { analysisId: "a" },
-      { analysisId: "uuid-like-12345678-1234-1234-1234-123456789012" },
+      { analysisId: "analysisId12345678901234567890" },
     ];
     for (const input of inputs) {
       expect(getVocabularySchema.parse(input)).toEqual(input);
@@ -161,9 +161,9 @@ describe("confirmVocabularySchema", () => {
   it("should accept multiple valid answers", () => {
     const input = {
       answers: [
-        { questionId: "question_1", selectedOptionId: "option_a" },
-        { questionId: "question_2", selectedOptionId: "option_b" },
-        { questionId: "question_3", selectedOptionId: "option_c" },
+        { questionId: "question1", selectedOptionId: "optionA" },
+        { questionId: "question2", selectedOptionId: "optionB" },
+        { questionId: "question3", selectedOptionId: "optionC" },
       ],
     };
     const result = confirmVocabularySchema.parse(input);
@@ -174,7 +174,7 @@ describe("confirmVocabularySchema", () => {
 describe("reportMismatchSchema", () => {
   it("should accept valid mismatch report with wrong_mapping issue", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "wrong_mapping" as const,
     };
     expect(reportMismatchSchema.parse(input)).toEqual(input);
@@ -182,7 +182,7 @@ describe("reportMismatchSchema", () => {
 
   it("should accept valid mismatch report with wrong_name issue", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "wrong_name" as const,
     };
     expect(reportMismatchSchema.parse(input)).toEqual(input);
@@ -190,7 +190,7 @@ describe("reportMismatchSchema", () => {
 
   it("should accept valid mismatch report with missing issue", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "missing" as const,
     };
     expect(reportMismatchSchema.parse(input)).toEqual(input);
@@ -198,7 +198,7 @@ describe("reportMismatchSchema", () => {
 
   it("should accept valid mismatch report with other issue", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "other" as const,
     };
     expect(reportMismatchSchema.parse(input)).toEqual(input);
@@ -207,14 +207,14 @@ describe("reportMismatchSchema", () => {
   it.each(["wrong_mapping", "wrong_name", "missing", "other"] as const)(
     "should accept issue type: %s",
     (issue) => {
-      const input = { itemId: "item_123", issue };
+      const input = { itemId: "item123", issue };
       expect(reportMismatchSchema.parse(input)).toEqual(input);
     }
   );
 
   it("should accept optional description", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "wrong_mapping" as const,
       description: "The column was mapped incorrectly to another entity",
     };
@@ -223,7 +223,7 @@ describe("reportMismatchSchema", () => {
 
   it("should accept empty description", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "other" as const,
       description: "",
     };
@@ -232,7 +232,7 @@ describe("reportMismatchSchema", () => {
 
   it("should reject description exceeding 500 characters", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "other" as const,
       description: "x".repeat(501),
     };
@@ -241,7 +241,7 @@ describe("reportMismatchSchema", () => {
 
   it("should accept description at exactly 500 characters", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "other" as const,
       description: "x".repeat(500),
     };
@@ -274,13 +274,13 @@ describe("reportMismatchSchema", () => {
   });
 
   it("should reject missing issue", () => {
-    const input = { itemId: "item_123" };
+    const input = { itemId: "item123" };
     expect(() => reportMismatchSchema.parse(input)).toThrow(ZodError);
   });
 
   it("should reject invalid issue type", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "invalid_issue",
     };
     expect(() => reportMismatchSchema.parse(input)).toThrow(ZodError);
@@ -293,7 +293,7 @@ describe("reportMismatchSchema", () => {
     [""],
     ["unknown"],
   ])("should reject invalid issue type: %s", (issue) => {
-    const input = { itemId: "item_123", issue };
+    const input = { itemId: "item123", issue };
     expect(() => reportMismatchSchema.parse(input)).toThrow(ZodError);
   });
 
@@ -308,7 +308,7 @@ describe("reportMismatchSchema", () => {
 
   it("should reject non-string description", () => {
     const input = {
-      itemId: "item_123",
+      itemId: "item123",
       issue: "other" as const,
       description: 123,
     };

@@ -18,6 +18,8 @@
    - [Block Versioning](#block-versioning)
    - [Version Dropdown](#version-dropdown)
    - [Branch from Old Version](#branch-from-old-version)
+   - [Block Trust Metadata](#block-trust-metadata)
+   - [Vocabulary Definitions On-Demand](#vocabulary-definitions-on-demand)
 6. [Branching & Navigation](#6-branching--navigation)
 7. [Collaboration](#7-collaboration)
 8. [Gallery & Discovery](#8-gallery--discovery)
@@ -31,7 +33,8 @@
 16. [Onboarding](#16-onboarding)
 17. [Empty & Error States](#17-empty--error-states)
 18. [Accessibility](#18-accessibility)
-19. [Implementation Roadmap](#19-implementation-roadmap)
+19. [Intelligence & Learning](#19-intelligence--learning)
+20. [Implementation Roadmap](#20-implementation-roadmap)
 
 ---
 
@@ -381,6 +384,75 @@ Traditional UIs have fixed layouts. Knosia adapts to what you're doing.
 | Fork | Right-click → Fork | Copy to new notebook |
 | View history | Click version indicator | Open version dropdown |
 | Restore version | Click "Restore" in dropdown | Make old version current |
+
+### Block Trust Metadata
+
+**Every block MUST expose trust metadata.** Without this, users cannot verify or trust any visualization.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  ┌─── BLOCK: Revenue Chart ─────────────────────────────── v2 ▼ ─┐  │
+│  │                                                                │  │
+│  │  📊 Monthly Revenue by Region                                  │  │
+│  │                                                                │  │
+│  │  [interactive chart]                                           │  │
+│  │                                                                │  │
+│  ├────────────────────────────────────────────────────────────────┤  │
+│  │  🕐 As of Dec 28, 2:30 PM                    ████████░░ Exact  │  │
+│  │  ┌─ More info ─────────────────────────────────────────────┐   │  │
+│  │  │ Source: Stripe.subscriptions → filter → join → sum      │   │  │
+│  │  │ Assumptions: USD, Excludes refunds & taxes              │   │  │
+│  │  │ Query: 847 rows, 0.3s                                   │   │  │
+│  │  └─────────────────────────────────────────────────────────┘   │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Trust Metadata Fields
+
+| Field | Example | Access | Why Essential |
+|-------|---------|--------|---------------|
+| **Data Freshness** | "As of Dec 28, 2:30 PM" | Always visible | Users must know if data is stale |
+| **Confidence Level** | ████████░░ Exact / Estimated / Predicted | Always visible | Distinguishes facts from forecasts |
+| **Source Lineage** | "Stripe.subscriptions → filter → join → sum" | Expandable | Audit trail for trust |
+| **Assumptions** | "Currency: USD, Excludes: refunds, taxes" | Expandable | Prevents misinterpretation |
+| **Query Info** | "847 rows, 0.3s execution" | Expandable | Debugging & performance awareness |
+
+#### Confidence Levels
+
+| Level | Visual | Meaning |
+|-------|--------|---------|
+| Exact | ██████████ | Direct from source, no transformation |
+| Calculated | ████████░░ | Derived from exact data |
+| Estimated | ██████░░░░ | Uses sampling or approximation |
+| Predicted | ████░░░░░░ | ML/AI forecast |
+
+#### Vocabulary Definitions On-Demand
+
+Click any metric label to see its definition:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  MRR: $2.4M                                                         │
+│        ▲                                                            │
+│        └── Click                                                    │
+│                                                                     │
+│  ┌─ MRR (Monthly Recurring Revenue) ──────────────────────────────┐ │
+│  │                                                                 │ │
+│  │  Formula: SUM(subscription.amount) WHERE status = 'active'      │ │
+│  │                                                                 │ │
+│  │  Source: Stripe subscriptions table                             │ │
+│  │  Owner: Finance Team                                            │ │
+│  │  Last updated: Dec 15, 2025                                     │ │
+│  │                                                                 │ │
+│  │  ⚠️ Note: Excludes pilot customers per Finance policy           │ │
+│  │                                                                 │ │
+│  │  [View usage history]  [Suggest correction]                     │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+This solves Knosia's core value proposition: **everyone sees the same definition**, regardless of role.
 
 ### Block Versioning
 
@@ -1740,7 +1812,253 @@ Connect → Test → Analyze → Review → Role → Confirm → Ready → Dashb
 
 ---
 
-## 19. Implementation Roadmap
+## 19. Intelligence & Learning
+
+Knosia isn't just a query tool — it's a **thinking partner** that learns, anticipates, and adapts. These intelligence features differentiate Knosia from traditional BI.
+
+### Conversation Intelligence
+
+#### Smart Clarification
+
+When a query is ambiguous, Knosia **shows its best guess AND offers alternatives** — never blocking the user.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "Show me revenue"                                               │
+│                                                                     │
+│  🤖 Showing MRR (Monthly Recurring Revenue)                         │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  📊 MRR: $2.4M                                                  ││
+│  │  [chart]                                                        ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  💡 Did you mean something else?                                    │
+│  [ARR] [Total Revenue] [Revenue by Region] [Revenue by Product]     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Key principle:** Flow preservation. Blocking questions kill momentum.
+
+| Approach | Bad UX | Good UX (Knosia) |
+|----------|--------|------------------|
+| Ambiguous query | "Which revenue do you mean?" (blocks) | Show best guess + alternatives |
+| Multiple interpretations | "Please select one..." (modal) | Inline suggestions below result |
+| Unknown term | "I don't understand..." | "Interpreting as X. Did you mean Y?" |
+
+#### Follow-Up Detection
+
+Knosia maintains conversational context. "Break that down" knows "that" = the previous answer.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "What's our churn rate?"                                        │
+│  🤖 Churn rate is 2.1% (down from 2.4% last month)                  │
+│                                                                     │
+│  Q: "Break that down by region"                                     │
+│  🤖 ✓ "that" = churn rate                                           │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  Churn by Region:                                               ││
+│  │  • APAC: 4.2% ⚠️                                                ││
+│  │  • EMEA: 1.8%                                                   ││
+│  │  • NA: 1.2%                                                     ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  Q: "Why is that so high?"                                          │
+│  🤖 ✓ "that" = APAC churn (4.2%)                                    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Context stack:** Knosia tracks the conversation and resolves pronouns/references intelligently.
+
+#### Incremental Complexity
+
+Users explore data in layers. Knosia matches this natural pattern:
+
+```
+Level 1: "Show revenue"           → Single KPI
+Level 2: "Break down by region"   → Add ONE dimension
+Level 3: "Add monthly trend"      → Add time series
+Level 4: "Compare to last year"   → Add comparison
+```
+
+**Each response adds ONE layer of complexity.** Never overwhelm with everything at once.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "Show revenue"                                                  │
+│                                                                     │
+│  🤖 Revenue: $2.4M                                                  │
+│                                                                     │
+│  [Break down ▼] [Add trend] [Compare to...] [See drivers]          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Learning & Adaptation
+
+#### Teach Mode
+
+Users correct Knosia, and it **learns and remembers** for the organization:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  🤖 MRR: $2.4M                                                      │
+│                                                                     │
+│  👤 "That's wrong — MRR should exclude pilot customers"             │
+│                                                                     │
+│  🤖 Got it! I'll update the MRR definition.                         │
+│                                                                     │
+│  ┌─ Vocabulary Update ────────────────────────────────────────────┐ │
+│  │                                                                 │ │
+│  │  MRR (Monthly Recurring Revenue)                                │ │
+│  │                                                                 │ │
+│  │  OLD: SUM(subscriptions.amount) WHERE active = true             │ │
+│  │  NEW: SUM(subscriptions.amount) WHERE active = true             │ │
+│  │       AND customer.type != 'pilot'                              │ │
+│  │                                                                 │ │
+│  │  Changed by: You • Just now                                     │ │
+│  │  Affects: 3 other dashboards                                    │ │
+│  │                                                                 │ │
+│  │  [Confirm] [Edit further] [Cancel]                              │ │
+│  └─────────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Core differentiator:** Knosia's vocabulary evolves with the organization.
+
+#### Abbreviation Learning
+
+Companies have jargon. Knosia learns it:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "What's our TTV?"                                               │
+│                                                                     │
+│  🤖 I don't recognize "TTV". What does it mean in your context?     │
+│                                                                     │
+│  👤 "Time to Value — days from signup to first key action"          │
+│                                                                     │
+│  🤖 Got it! I've added TTV to your vocabulary.                      │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  TTV (Time to Value): 4.2 days (avg)                            ││
+│  │  [chart showing TTV distribution]                               ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  💡 I'll remember "TTV" for everyone in your organization.          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Goal Awareness
+
+#### Goal Tracking
+
+Data without goals is noise. Knosia shows progress toward targets:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "How are we tracking on Q4 goals?"                              │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  Q4 Revenue Goal: $5M                                           ││
+│  │                                                                 ││
+│  │  Progress: ████████████████░░░░░░░░░░░░░░░░ 62%                 ││
+│  │  Current: $3.1M                                                 ││
+│  │  Remaining: $1.9M                                               ││
+│  │                                                                 ││
+│  │  📈 Need $82K/day to hit target (12 days left)                  ││
+│  │                                                                 ││
+│  │  ⚠️ Current daily avg: $68K — at risk of missing by $168K       ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  [What's driving the gap?] [What-if scenarios] [Alert me if...]    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Query Awareness
+
+#### Query Cost Transparency
+
+Protect users from expensive mistakes:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Q: "Show me all transactions for the past 5 years"                 │
+│                                                                     │
+│  ⚠️ This query would scan ~4.2M rows                                │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  Estimated:                                                     ││
+│  │  • Rows: 4.2M                                                   ││
+│  │  • Time: ~30 seconds                                            ││
+│  │  • Cost: ~$0.12                                                 ││
+│  │                                                                 ││
+│  │  Suggestions:                                                   ││
+│  │  • Add date filter (last 1 year = 800K rows)                    ││
+│  │  • Aggregate by month (60 rows)                                 ││
+│  │  • Sample 10% of data (420K rows)                               ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  [Run anyway] [Aggregate monthly] [Last year only]                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Proactive Intelligence
+
+#### Anomaly Memory
+
+Knosia remembers patterns and connects past to present:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  ⚠️ APAC churn spiked to 4.2%                                       │
+│                                                                     │
+│  🤖 I've seen this pattern before.                                  │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  Similar Event: March 2024                                      ││
+│  │                                                                 ││
+│  │  • APAC churn hit 4.5%                                          ││
+│  │  • Root cause: Competitor launched in Singapore                 ││
+│  │  • Resolution: Adjusted pricing + feature push                  ││
+│  │  • Recovery time: 6 weeks                                       ││
+│  │                                                                 ││
+│  │  Differences this time:                                         ││
+│  │  • No known competitor launch                                   ││
+│  │  • Recent pricing change (2 weeks ago)                          ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                                                                     │
+│  [Investigate pricing correlation] [Compare to March 2024]         │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**High perceived intelligence:** Connecting historical context to current events creates "wow" moments.
+
+### Intelligence Summary
+
+| Feature | Category | Impact |
+|---------|----------|--------|
+| Smart Clarification | Conversation | Never blocks user flow |
+| Follow-Up Detection | Conversation | Natural dialogue |
+| Incremental Complexity | Conversation | Gradual exploration |
+| Teach Mode | Learning | Vocabulary evolution |
+| Abbreviation Learning | Learning | Org-specific jargon |
+| Goal Tracking | Goals | Data → Action |
+| Query Cost Awareness | Protection | Prevents expensive errors |
+| Anomaly Memory | Proactive | Historical pattern matching |
+
+---
+
+## 20. Implementation Roadmap
 
 ### Phase 1: Foundation (V1-V2)
 

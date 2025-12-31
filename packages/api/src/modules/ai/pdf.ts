@@ -13,6 +13,11 @@ import {
 } from "@turbostarter/ai/pdf/api";
 import { pdfMessageSchema } from "@turbostarter/ai/pdf/schema";
 import {
+  searchWithCitations,
+  getCitationUnitsForChunk,
+  getCitationUnitById,
+} from "@turbostarter/ai/pdf/search";
+import {
   insertPdfChatSchema,
   insertPdfDocumentSchema,
 } from "@turbostarter/db/schema/pdf";
@@ -28,6 +33,19 @@ const createChatSchema = z.object({
 });
 
 type CreateChatInput = z.infer<typeof createChatSchema>;
+
+// ============================================================================
+// Search Schemas
+// ============================================================================
+
+const searchInputSchema = z.object({
+  query: z.string().min(1),
+  documentId: z.string(),
+  limit: z.number().min(1).max(20).optional(),
+  threshold: z.number().min(0).max(1).optional(),
+});
+
+type SearchInput = z.infer<typeof searchInputSchema>;
 
 const chatsRouter = new Hono<{
   Variables: {
@@ -111,6 +129,43 @@ const embeddingsRouter = new Hono<{
   });
 
 // ============================================================================
+// Search Router (WF-0028 Dual-Resolution Search)
+// ============================================================================
+
+const searchRouter = new Hono<{
+  Variables: {
+    user: User;
+  };
+}>()
+  .post(
+    "/",
+    enforceAuth,
+    validate("json", searchInputSchema),
+    async (c) => {
+      const input = c.req.valid("json") as SearchInput;
+      const results = await searchWithCitations(input.query, input.documentId, {
+        limit: input.limit,
+        threshold: input.threshold,
+      });
+      return c.json({ data: results });
+    },
+  )
+  // NOTE: More specific route must come BEFORE generic :chunkId route
+  .get("/citation-units/single/:id", enforceAuth, async (c) => {
+    const unitId = c.req.param("id");
+    const unit = await getCitationUnitById(unitId);
+    if (!unit) {
+      return c.json({ error: "Citation unit not found" }, 404);
+    }
+    return c.json({ data: unit });
+  })
+  .get("/citation-units/:chunkId", enforceAuth, async (c) => {
+    const chunkId = c.req.param("chunkId");
+    const units = await getCitationUnitsForChunk(chunkId);
+    return c.json({ data: units });
+  });
+
+// ============================================================================
 // Diagnostics Router (for debugging embedding issues)
 // ============================================================================
 
@@ -173,4 +228,5 @@ const diagnosticsRouter = new Hono<{
 export const pdfRouter = new Hono()
   .route("/chats", chatsRouter)
   .route("/embeddings", embeddingsRouter)
+  .route("/search", searchRouter)
   .route("/diagnostics", diagnosticsRouter);

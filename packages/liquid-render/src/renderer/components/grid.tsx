@@ -73,7 +73,7 @@ function getGridTemplateColumns(
   minChildWidth: string = '200px'
 ): string {
   if (typeof columns === 'number') {
-    // Explicit column count with equal-width columns
+    // Explicit column count with equal distribution within grid
     return `repeat(${columns}, minmax(0, 1fr))`;
   }
 
@@ -331,7 +331,7 @@ export function ResponsiveGrid({
     display: 'grid',
     gridTemplateColumns: `repeat(auto-fit, minmax(${minItemWidth}, 1fr))`,
     gap: getGapValue(gap),
-    width: '100%',
+    // Don't force width: 100% - let parent container control sizing
   };
 
   const combinedStyles = mergeStyles(baseStyles(), gridStyles, customStyle);

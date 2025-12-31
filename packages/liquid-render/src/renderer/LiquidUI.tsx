@@ -254,24 +254,21 @@ function BlockRenderer({ block, data, typeComponents, customComponents }: BlockR
     );
   }
 
-  // Render children helper - returns null if no children to avoid empty Fragment
+  // Render children helper - returns array for proper React.Children handling
+  // Note: Returns array (not Fragment) so React.Children.toArray works correctly in Tabs
   const renderChildren = () => {
     if (!block.children || block.children.length === 0) {
       return null;
     }
-    return (
-      <>
-        {block.children.map((child, i) => (
-          <BlockRenderer
-            key={child.uid || i}
-            block={child}
-            data={data}
-            typeComponents={typeComponents}
-            customComponents={customComponents}
-          />
-        ))}
-      </>
-    );
+    return block.children.map((child, i) => (
+      <BlockRenderer
+        key={child.uid || i}
+        block={child}
+        data={data}
+        typeComponents={typeComponents}
+        customComponents={customComponents}
+      />
+    ));
   };
 
   // Check for type override (props), registered component (legacy registry), or theme component

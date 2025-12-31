@@ -1,5 +1,14 @@
 import { relations } from "drizzle-orm";
-import { index, integer, pgSchema, text, timestamp, vector } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgSchema,
+  real,
+  text,
+  timestamp,
+  uniqueIndex,
+  vector,
+} from "drizzle-orm/pg-core";
 
 import { generateId } from "@turbostarter/shared/utils";
 
@@ -82,6 +91,139 @@ export const pdfEmbeddingRelations = relations(pdfEmbedding, ({ one }) => ({
   }),
 }));
 
+// =============================================================================
+// DUAL-RESOLUTION CHUNKING (WF-0028)
+// =============================================================================
+
+/**
+ * Unit type enum for citation units
+ */
+export const pdfUnitTypeEnum = pdfSchema.enum("unit_type", [
+  "prose",
+  "heading",
+  "list",
+  "table",
+  "code",
+]);
+
+/**
+ * Retrieval chunks: semantic units for vector search
+ * Groups 3-5 citation units for efficient embedding search
+ */
+export const pdfRetrievalChunk = pdfSchema.table(
+  "retrieval_chunk",
+  {
+    id: text().primaryKey().notNull().$defaultFn(generateId),
+    documentId: text()
+      .references(() => pdfDocument.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      })
+      .notNull(),
+
+    // Content (concatenated from citation units)
+    content: text().notNull(),
+
+    // Embedding for vector search
+    embedding: vector({ dimensions: 1536 }),
+
+    // Boundaries
+    pageStart: integer().notNull(),
+    pageEnd: integer().notNull(),
+
+    // Semantic context
+    sectionHierarchy: text().array(),
+    chunkType: text().default("prose"),
+
+    createdAt: timestamp().defaultNow(),
+  },
+  (table) => ({
+    documentIdx: index("idx_rc_document").on(table.documentId),
+    embeddingIdx: index("idx_rc_embedding").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops"),
+    ),
+  }),
+);
+
+/**
+ * Citation units: paragraph-level with precise bounding boxes
+ * Each unit is a single paragraph with exact position for pixel-perfect highlighting
+ */
+export const pdfCitationUnit = pdfSchema.table(
+  "citation_unit",
+  {
+    id: text().primaryKey().notNull().$defaultFn(generateId),
+    documentId: text()
+      .references(() => pdfDocument.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      })
+      .notNull(),
+    retrievalChunkId: text().references(() => pdfRetrievalChunk.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+
+    // Content
+    content: text().notNull(),
+
+    // Position (precise)
+    pageNumber: integer().notNull(),
+    paragraphIndex: integer().notNull(), // 0-based within page
+    charStart: integer().notNull(), // Within page text
+    charEnd: integer().notNull(),
+
+    // Bounding box (for pixel-perfect highlighting)
+    bboxX: real(),
+    bboxY: real(),
+    bboxWidth: real(),
+    bboxHeight: real(),
+
+    // Metadata
+    sectionTitle: text(),
+    unitType: pdfUnitTypeEnum().default("prose"),
+
+    createdAt: timestamp().defaultNow(),
+  },
+  (table) => ({
+    documentIdx: index("idx_cu_document").on(table.documentId),
+    retrievalIdx: index("idx_cu_retrieval").on(table.retrievalChunkId),
+    pageIdx: index("idx_cu_page").on(table.documentId, table.pageNumber),
+    uniqueParaIdx: uniqueIndex("idx_cu_unique").on(
+      table.documentId,
+      table.pageNumber,
+      table.paragraphIndex,
+    ),
+  }),
+);
+
+// Relations for dual-resolution tables
+export const pdfRetrievalChunkRelations = relations(
+  pdfRetrievalChunk,
+  ({ one, many }) => ({
+    document: one(pdfDocument, {
+      fields: [pdfRetrievalChunk.documentId],
+      references: [pdfDocument.id],
+    }),
+    citationUnits: many(pdfCitationUnit),
+  }),
+);
+
+export const pdfCitationUnitRelations = relations(
+  pdfCitationUnit,
+  ({ one }) => ({
+    document: one(pdfDocument, {
+      fields: [pdfCitationUnit.documentId],
+      references: [pdfDocument.id],
+    }),
+    retrievalChunk: one(pdfRetrievalChunk, {
+      fields: [pdfCitationUnit.retrievalChunkId],
+      references: [pdfRetrievalChunk.id],
+    }),
+  }),
+);
+
 export const selectPdfChatSchema = createSelectSchema(pdfChat);
 export const insertPdfChatSchema = createInsertSchema(pdfChat);
 export const selectPdfMessageSchema = createSelectSchema(pdfMessage);
@@ -99,3 +241,16 @@ export type SelectPdfDocument = typeof pdfDocument.$inferSelect;
 export type InsertPdfDocument = typeof pdfDocument.$inferInsert;
 export type SelectPdfEmbedding = typeof pdfEmbedding.$inferSelect;
 export type InsertPdfEmbedding = typeof pdfEmbedding.$inferInsert;
+
+// Dual-resolution schemas and types
+export const selectPdfRetrievalChunkSchema =
+  createSelectSchema(pdfRetrievalChunk);
+export const insertPdfRetrievalChunkSchema =
+  createInsertSchema(pdfRetrievalChunk);
+export const selectPdfCitationUnitSchema = createSelectSchema(pdfCitationUnit);
+export const insertPdfCitationUnitSchema = createInsertSchema(pdfCitationUnit);
+
+export type SelectPdfRetrievalChunk = typeof pdfRetrievalChunk.$inferSelect;
+export type InsertPdfRetrievalChunk = typeof pdfRetrievalChunk.$inferInsert;
+export type SelectPdfCitationUnit = typeof pdfCitationUnit.$inferSelect;
+export type InsertPdfCitationUnit = typeof pdfCitationUnit.$inferInsert;

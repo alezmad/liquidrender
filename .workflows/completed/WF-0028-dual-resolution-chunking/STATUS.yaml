@@ -1,0 +1,101 @@
+id: WF-0028
+name: Dual-Resolution PDF Chunking
+status: completed
+created_at: '2025-12-31T18:15:00Z'
+updated_at: '2025-12-31T21:30:00Z'
+started_at: '2025-12-31T18:34:00Z'
+completed_at: '2025-12-31T21:30:00Z'
+
+git:
+  start_tag: WF-0028-start
+  start_commit: 94732840bf6670a4ec866c304d2e04f21e9f19bb
+  branch: main
+
+waves:
+  total: 4
+  current: 4
+  completed: [0, 1, 2, 3]
+
+tasks:
+  T0:
+    name: Bootstrap Schema
+    wave: 0
+    status: completed
+    files:
+      - packages/db/src/schema/pdf.ts
+    dependencies: []
+
+  T1:
+    name: Generate Migration
+    wave: 0
+    status: completed
+    files:
+      - packages/db/migrations/0015_absent_black_crow.sql
+    dependencies: [T0]
+
+  T2:
+    name: Layout Parser
+    wave: 1
+    status: completed
+    files:
+      - packages/ai/src/modules/pdf/layout-parser.ts
+    dependencies: [T0]
+
+  T3:
+    name: Chunking Strategy
+    wave: 1
+    status: completed
+    files:
+      - packages/ai/src/modules/pdf/chunking.ts
+    dependencies: [T0]
+
+  T4:
+    name: Dual Embeddings
+    wave: 2
+    status: completed
+    files:
+      - packages/ai/src/modules/pdf/dual-embeddings.ts
+    dependencies: [T2, T3]
+
+  T5:
+    name: Search with Citations
+    wave: 2
+    status: completed
+    files:
+      - packages/ai/src/modules/pdf/search.ts
+    dependencies: [T0]
+
+  T6:
+    name: Highlight Layer Update
+    wave: 3
+    status: completed
+    files:
+      - apps/web/src/modules/pdf/layout/preview/highlight-layer.tsx
+      - apps/web/src/modules/pdf/hooks/use-citation-unit.ts
+      - apps/web/src/modules/pdf/hooks/index.ts
+    dependencies: [T5]
+
+  T7:
+    name: API Endpoints
+    wave: 3
+    status: completed
+    files:
+      - packages/api/src/modules/ai/pdf.ts
+    dependencies: [T4, T5]
+
+  T8:
+    name: Integration & Wiring
+    wave: 3
+    status: completed
+    files:
+      - packages/ai/src/modules/pdf/index.ts
+    dependencies: [T4, T5, T6, T7]
+
+summary:
+  total_tasks: 9
+  completed_tasks: 9
+
+notes:
+  - "Adds citationUnit and retrievalChunk tables to existing pdf schema"
+  - "Non-breaking migration - keeps existing embedding table working"
+  - "Key innovation: bounding-box highlighting for pixel-perfect citations"

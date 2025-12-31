@@ -34,6 +34,13 @@ const queries = {
             query: { path },
           }),
       }),
+      getStatus: (documentId: string) => ({
+        queryKey: [KEY, "documents", documentId, "status"],
+        queryFn: () =>
+          handle(api.ai.pdf.documents[":id"].status.$get)({
+            param: { id: documentId },
+          }),
+      }),
     },
   },
 };

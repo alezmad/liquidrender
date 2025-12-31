@@ -25,6 +25,17 @@ export const pdfMessageRoleEnum = pdfSchema.enum("role", [
   "system",
 ]);
 
+/**
+ * Document processing status enum
+ * Tracks the state of embedding generation for RAG
+ */
+export const pdfProcessingStatusEnum = pdfSchema.enum("processing_status", [
+  "pending",    // Just uploaded, processing not started
+  "processing", // Dual-resolution chunking in progress
+  "ready",      // Embeddings generated, searchable
+  "failed",     // Processing failed
+]);
+
 export const pdfChat = pdfSchema.table("chat", {
   id: text().primaryKey().notNull().$defaultFn(generateId),
   name: text(),
@@ -54,6 +65,10 @@ export const pdfDocument = pdfSchema.table("document", {
     .notNull(),
   name: text().notNull(),
   path: text().notNull(),
+  /** Processing status for embedding generation */
+  processingStatus: pdfProcessingStatusEnum().default("pending").notNull(),
+  /** Error message if processing failed */
+  processingError: text(),
   createdAt: timestamp().defaultNow(),
 });
 

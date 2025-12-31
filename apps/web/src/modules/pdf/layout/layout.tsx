@@ -105,11 +105,43 @@ const DocumentPreview = ({
   );
 };
 
+const ProcessingIndicator = () => {
+  const { t } = useTranslation("ai");
+
+  return (
+    <div className="bg-background/95 absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <Icons.Loader2 className="text-primary size-6 animate-spin" />
+        <span className="text-muted-foreground text-sm font-medium">
+          {t("pdf.processing.indexing")}
+        </span>
+      </div>
+      <p className="text-muted-foreground max-w-xs text-center text-xs">
+        {t("pdf.processing.indexingDescription")}
+      </p>
+    </div>
+  );
+};
+
 const Documents = ({ id }: { id: string }) => {
   const { t } = useTranslation("ai");
 
   const documents = useQuery(pdf.queries.chats.documents.getAll(id));
   const document = documents.data?.[0];
+
+  // Poll for document processing status
+  const status = useQuery({
+    ...pdf.queries.chats.documents.getStatus(document?.id ?? ""),
+    enabled: !!document?.id,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      // Stop polling once ready or failed
+      if (data?.processingStatus === "ready" || data?.processingStatus === "failed") {
+        return false;
+      }
+      return 2000; // Poll every 2 seconds while processing
+    },
+  });
 
   const url = useQuery({
     ...pdf.queries.chats.documents.getUrl(document?.path ?? ""),
@@ -130,7 +162,15 @@ const Documents = ({ id }: { id: string }) => {
     );
   }
 
-  return <PdfPreview url={url.data.url} />;
+  const isProcessing = status.data?.processingStatus !== "ready" &&
+                       status.data?.processingStatus !== "failed";
+
+  return (
+    <div className="relative h-full w-full">
+      <PdfPreview url={url.data.url} />
+      {isProcessing && <ProcessingIndicator />}
+    </div>
+  );
 };
 
 export const PdfLayout = ({

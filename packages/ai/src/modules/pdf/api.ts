@@ -36,6 +36,23 @@ import type {
   InsertPdfMessage,
 } from "@turbostarter/db/schema/pdf";
 
+/**
+ * Update document processing status
+ */
+const updateDocumentStatus = async (
+  documentId: string,
+  status: "pending" | "processing" | "ready" | "failed",
+  error?: string,
+) => {
+  await db
+    .update(pdfDocument)
+    .set({
+      processingStatus: status,
+      processingError: error ?? null,
+    })
+    .where(eq(pdfDocument.id, documentId));
+};
+
 const createDocument = async (data: InsertPdfDocument) => {
   const [documentData] = await db.insert(pdfDocument).values(data).returning();
 
@@ -46,6 +63,9 @@ const createDocument = async (data: InsertPdfDocument) => {
   // Process with dual-resolution chunking (citation units + retrieval chunks)
   void (async () => {
     try {
+      // Set status to processing
+      await updateDocumentStatus(documentData.id, "processing");
+
       const result = await processPdfWithDualResolution(
         documentData.id,
         documentData.path,
@@ -53,8 +73,17 @@ const createDocument = async (data: InsertPdfDocument) => {
       console.log(
         `[api] Dual-resolution processing complete: ${result.storage.stats.totalCitationUnits} citation units, ${result.storage.stats.totalRetrievalChunks} retrieval chunks`,
       );
+
+      // Set status to ready
+      await updateDocumentStatus(documentData.id, "ready");
     } catch (error) {
       console.error(`[api] Failed to process PDF with dual-resolution:`, error);
+      // Set status to failed with error message
+      await updateDocumentStatus(
+        documentData.id,
+        "failed",
+        error instanceof Error ? error.message : "Unknown error",
+      );
     }
   })();
 
@@ -139,6 +168,11 @@ export const getChatDocuments = async (id: string) =>
   db.query["pdf.pdfDocument"].findMany({
     where: eq(pdfDocument.chatId, id),
     orderBy: (document, { asc }) => [asc(document.createdAt)],
+  });
+
+export const getDocument = async (id: string) =>
+  db.query["pdf.pdfDocument"].findFirst({
+    where: eq(pdfDocument.id, id),
   });
 
 // ============================================================================

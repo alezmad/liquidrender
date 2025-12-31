@@ -8,6 +8,7 @@ import {
   getChat,
   getChatDocuments,
   getChatMessages,
+  getDocument,
   getUserChats,
   streamChatWithDocuments,
 } from "@turbostarter/ai/pdf/api";
@@ -166,6 +167,27 @@ const searchRouter = new Hono<{
   });
 
 // ============================================================================
+// Documents Router (document status and management)
+// ============================================================================
+
+const documentsRouter = new Hono<{
+  Variables: {
+    user: User;
+  };
+}>()
+  .get("/:id/status", enforceAuth, async (c) => {
+    const document = await getDocument(c.req.param("id"));
+    if (!document) {
+      return c.json({ error: "Document not found" }, 404);
+    }
+    return c.json({
+      id: document.id,
+      processingStatus: document.processingStatus,
+      processingError: document.processingError,
+    });
+  });
+
+// ============================================================================
 // Diagnostics Router (for debugging embedding issues)
 // ============================================================================
 
@@ -227,6 +249,7 @@ const diagnosticsRouter = new Hono<{
 
 export const pdfRouter = new Hono()
   .route("/chats", chatsRouter)
+  .route("/documents", documentsRouter)
   .route("/embeddings", embeddingsRouter)
   .route("/search", searchRouter)
   .route("/diagnostics", diagnosticsRouter);

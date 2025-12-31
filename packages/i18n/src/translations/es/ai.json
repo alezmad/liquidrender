@@ -123,7 +123,13 @@
       },
       "error": {
         "api": "Failed to upload the PDF file. Please try again.",
-        "notFound": "Could not access the PDF file. Please check the URL and try again."
+        "notFound": "Could not access the PDF file. Please check the URL and try again.",
+        "unauthorized": "Por favor inicia sesión para subir archivos PDF."
+      },
+      "signIn": {
+        "title": "Inicio de sesión requerido",
+        "description": "Crea una cuenta gratuita o inicia sesión para subir y chatear con tus documentos PDF.",
+        "cta": "Iniciar sesión"
       },
       "success": "The PDF file has been uploaded successfully!",
       "confirm": {
@@ -155,6 +161,10 @@
     },
     "download": {
       "success": "The PDF file has been downloaded!"
+    },
+    "processing": {
+      "indexing": "Indexando documento...",
+      "indexingDescription": "Estamos analizando tu documento para habilitar búsqueda inteligente y Q&A. Esto generalmente toma unos segundos."
     }
   },
   "tts": {

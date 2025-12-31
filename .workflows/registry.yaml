@@ -1,5 +1,5 @@
-next_id: 24
-last_sync: '2025-12-30T00:00:00.000000'
+next_id: 28
+last_sync: '2025-12-30T22:00:00.000000'
 workflows:
   WF-0001:
     name: 'Quality Audit: liquid-render vs shadcn'
@@ -235,9 +235,61 @@ WF-0023:
   total_tasks: 10
   completed_tasks: 0
   git_tag: WF-0023-start
+WF-0024:
+  name: Credits Management System
+  dirname: WF-0024-credits-management
+  location: active
+  status: in_progress
+  created_at: '2025-12-30T12:00:00Z'
+  updated_at: '2025-12-30T12:00:00Z'
+  started_at: '2025-12-30T12:00:00Z'
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 11
+  completed_tasks: 0
+  git_tag: WF-0024-start
+WF-0025:
+  name: Interactive PDF Citations
+  dirname: WF-0025-interactive-pdf-citations
+  location: active
+  status: in_progress
+  created_at: '2024-12-30T18:30:00Z'
+  updated_at: '2024-12-30T18:30:00Z'
+  started_at: '2024-12-30T18:30:00Z'
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 12
+  completed_tasks: 0
+  git_tag: WF-0025-start
+WF-0026:
+  name: Liquid Protocol Phase 1
+  dirname: WF-0026-liquid-protocol-phase1
+  location: active
+  status: approved
+  created_at: '2025-12-30T21:00:00Z'
+  updated_at: '2025-12-30T21:00:00Z'
+  started_at: ''
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 8
+  completed_tasks: 0
+  git_tag: WF-0026-start
+WF-0027:
+  name: Component Intelligence Layer
+  dirname: WF-0027-component-intelligence
+  location: active
+  status: in_progress
+  created_at: '2025-12-30T22:00:00Z'
+  updated_at: '2025-12-30T22:00:00Z'
+  started_at: '2025-12-30T22:00:00Z'
+  completed_at: ''
+  current_wave: 0
+  total_tasks: 12
+  completed_tasks: 0
+  git_tag: WF-0027-start
 stats:
-  total_workflows: 15
+  total_workflows: 18
   queued: 0
-  active: 6
+  active: 9
   completed: 9
   failed: 0

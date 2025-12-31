@@ -13,16 +13,25 @@ import {
 } from "better-auth/plugins";
 
 import * as schema from "@turbostarter/db/schema";
+import { creditTransaction, customer } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 import { EmailTemplate } from "@turbostarter/email";
 import { sendEmail } from "@turbostarter/email/server";
 import { getLocaleFromRequest } from "@turbostarter/i18n/server";
 import { NodeEnv } from "@turbostarter/shared/constants";
 import { logger } from "@turbostarter/shared/logger";
+import { generateId } from "@turbostarter/shared/utils";
 
 import { env } from "./env";
+
 import { getUrl } from "./lib/utils";
 import { AuthProvider, SocialProvider, VerificationType } from "./types";
+
+/**
+ * Default credits for new free-tier users.
+ * Higher in dev for testing convenience.
+ */
+const FREE_TIER_CREDITS = env.NODE_ENV === NodeEnv.DEVELOPMENT ? 10000 : 100;
 
 export const auth = betterAuth({
   appName: "TurboStarter",
@@ -111,6 +120,41 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          // Auto-create customer record with free credits on signup
+          const customerId = generateId();
+          try {
+            await db.transaction(async (tx) => {
+              await tx.insert(customer).values({
+                id: customerId,
+                userId: user.id,
+                customerId: `free_${user.id}`,
+                status: "active",
+                plan: "free",
+                credits: FREE_TIER_CREDITS,
+              });
+
+              await tx.insert(creditTransaction).values({
+                id: generateId(),
+                customerId,
+                amount: FREE_TIER_CREDITS,
+                type: "signup",
+                reason: "Welcome credits for new user",
+                balanceAfter: FREE_TIER_CREDITS,
+              });
+            });
+            logger.info(`Created customer with ${FREE_TIER_CREDITS} credits for user ${user.id}`);
+          } catch (error) {
+            // Log but don't fail user creation if customer creation fails
+            logger.error("Failed to create customer for user", { userId: user.id, error });
+          }
+        },
+      },
+    },
+  },
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }, ctx) =>

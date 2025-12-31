@@ -115,7 +115,12 @@ function getColorStyle(color?: string): React.CSSProperties {
 
 export function Text({ block, data, children }: LiquidComponentProps): React.ReactElement {
   const value = resolveBinding(block.binding, data);
-  const content = children || block.label || (typeof value === 'string' ? value : formatDisplayValue(value));
+
+  // Check if children has actual content (not just an empty fragment)
+  const hasChildren = React.Children.count(children) > 0;
+  const content = hasChildren
+    ? children
+    : block.label || (typeof value === 'string' ? value : formatDisplayValue(value));
 
   const variant = getVariantFromBlock(block);
   const size = getSizeFromBlock(block);

@@ -147,10 +147,19 @@ export function Breadcrumb({ block, data }: LiquidComponentProps): React.ReactEl
     // Binding to data array
     const value = resolveBinding(block.binding, data);
     if (Array.isArray(value)) {
-      crumbs = value.map((item) => ({
-        label: typeof item === 'string' ? item : formatDisplayValue(item),
-        signal: undefined,
-      }));
+      crumbs = value.map((item) => {
+        // Handle different item formats
+        let label: string;
+        if (typeof item === 'string') {
+          label = item;
+        } else if (item && typeof item === 'object' && 'label' in item) {
+          // Object with label property (e.g., { label: "Home", href: "/" })
+          label = String((item as { label: unknown }).label);
+        } else {
+          label = formatDisplayValue(item);
+        }
+        return { label, signal: undefined };
+      });
     }
   }
 
@@ -167,7 +176,9 @@ export function Breadcrumb({ block, data }: LiquidComponentProps): React.ReactEl
     );
   }
 
-  const separator = block.label || '/';
+  // Use style.separator if provided, otherwise default to '/'
+  // Note: block.label is often auto-set from field names, so we don't use it for separator
+  const separator = (block.style as Record<string, unknown> | undefined)?.separator as string || '/';
 
   return (
     <nav data-liquid-type="breadcrumb" aria-label="Breadcrumb" style={styles.nav}>

@@ -19,6 +19,7 @@ import { Form } from './components/form';
 import { Avatar } from './components/avatar';
 import { Sidebar } from './components/sidebar';
 import { Tabs } from './components/tabs';
+import { Tab } from './components/tab';
 import { DateRange } from './components/daterange';
 import { Header } from './components/header';
 import { Badge } from './components/badge';
@@ -77,6 +78,7 @@ export const componentRegistry: ComponentRegistry = {
   // Dashboard components (WF-0003)
   sidebar: Sidebar,
   tabs: Tabs,
+  tab: Tab,
   daterange: DateRange,
   header: Header,
   badge: Badge,

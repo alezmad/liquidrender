@@ -31,7 +31,7 @@ const generationsRouter = new Hono<{
       const creditsAmount = input.options.count * Credits.COST.DEFAULT;
 
       // Deduct credits
-      await deductCredits(creditsAmount)(c, async () => {});
+      await deductCredits(creditsAmount, "image-generation")(c, async () => {});
 
       return c.json(
         await createGeneration({

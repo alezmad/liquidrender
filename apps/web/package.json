@@ -20,6 +20,7 @@
     "@hookform/resolvers": "5.2.2",
     "@next/bundle-analyzer": "16.0.10",
     "@number-flow/react": "0.5.10",
+    "@repo/liquid-render": "workspace:^",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-table": "catalog:",

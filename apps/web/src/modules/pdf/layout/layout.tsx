@@ -20,6 +20,7 @@ import {
 import { Header } from "~/modules/common/layout/header";
 import { ThemeSwitcher } from "~/modules/common/theme";
 
+import { PdfViewerProvider } from "../context";
 import { ChatHistory } from "../history";
 import { pdf } from "../lib/api";
 
@@ -142,20 +143,22 @@ export const PdfLayout = ({
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden">
-      <div className="relative flex h-full grow flex-col">
-        <Header>
-          <div className="flex items-center gap-1">
-            <ChatHistory />
-            <ThemeSwitcher />
-            <Trigger open={open} onOpenChange={setOpen} />
-          </div>
-        </Header>
+    <PdfViewerProvider>
+      <div className="relative flex h-full w-full overflow-hidden">
+        <div className="relative flex h-full grow flex-col">
+          <Header>
+            <div className="flex items-center gap-1">
+              <ChatHistory />
+              <ThemeSwitcher />
+              <Trigger open={open} onOpenChange={setOpen} />
+            </div>
+          </Header>
 
-        {children}
+          {children}
+        </div>
+
+        <DocumentPreview open={open} onOpenChange={setOpen} id={id} />
       </div>
-
-      <DocumentPreview open={open} onOpenChange={setOpen} id={id} />
-    </div>
+    </PdfViewerProvider>
   );
 };

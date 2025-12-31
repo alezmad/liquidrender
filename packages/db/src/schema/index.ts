@@ -1,5 +1,6 @@
 import * as auth from "./auth";
 import * as chat from "./chat";
+import * as creditTransactions from "./credit-transaction";
 import * as customers from "./customer";
 import * as image from "./image";
 import * as knosia from "./knosia";
@@ -26,6 +27,7 @@ export const prefix = <T extends Record<string, unknown>, P extends string>(
 
 export const schema = {
   ...auth,
+  ...creditTransactions,
   ...customers,
   ...knosia,
   ...vocabulary,
@@ -36,6 +38,7 @@ export const schema = {
 
 // Direct exports for backward compatibility
 export * from "./auth";
+export * from "./credit-transaction";
 export * from "./customer";
 export * from "./knosia";
 export * from "./vocabulary";

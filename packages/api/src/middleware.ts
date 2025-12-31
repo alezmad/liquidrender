@@ -6,14 +6,14 @@ import { getAllRolesAtOrAbove, hasAdminPermission } from "@turbostarter/auth";
 import { MemberRole } from "@turbostarter/auth";
 import { auth } from "@turbostarter/auth/server";
 import { db } from "@turbostarter/db/server";
-import { customer } from "@turbostarter/db/schema/customer";
+import { creditTransaction, customer } from "@turbostarter/db/schema";
 import { makeZodI18nMap } from "@turbostarter/i18n";
 import {
   getLocaleFromRequest,
   getTranslation,
 } from "@turbostarter/i18n/server";
 import { HttpStatusCode, NodeEnv } from "@turbostarter/shared/constants";
-import { HttpException } from "@turbostarter/shared/utils";
+import { generateId, HttpException } from "@turbostarter/shared/utils";
 import { eq, sql } from "drizzle-orm";
 
 import type { User } from "@turbostarter/auth";
@@ -279,9 +279,9 @@ export const rateLimiter = createMiddleware<{
 
 /**
  * Middleware to deduct credits from a user's account before processing AI requests.
- * Takes the amount of credits to deduct as a parameter.
+ * Takes the amount of credits to deduct and optional feature name for audit logging.
  */
-export const deductCredits = (amount: number) =>
+export const deductCredits = (amount: number, feature?: string) =>
   createMiddleware<{
     Variables: {
       user: User;
@@ -309,13 +309,30 @@ export const deductCredits = (amount: number) =>
       });
     }
 
-    // Deduct credits
-    await db
-      .update(customer)
-      .set({
-        credits: sql`${customer.credits} - ${amount}`,
-      })
-      .where(eq(customer.id, customerRecord.id));
+    const newBalance = customerRecord.credits - amount;
+
+    // Deduct credits and log transaction
+    await db.transaction(async (tx) => {
+      await tx
+        .update(customer)
+        .set({
+          credits: sql`${customer.credits} - ${amount}`,
+        })
+        .where(eq(customer.id, customerRecord.id));
+
+      await tx.insert(creditTransaction).values({
+        id: generateId(),
+        customerId: customerRecord.id,
+        amount: -amount,
+        type: "usage",
+        reason: feature ?? "AI feature usage",
+        balanceAfter: newBalance,
+        metadata: JSON.stringify({
+          endpoint: c.req.path,
+          feature,
+        }),
+      });
+    });
 
     await next();
   });

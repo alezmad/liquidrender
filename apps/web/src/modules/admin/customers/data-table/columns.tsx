@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ import { authClient } from "~/lib/auth/client";
 import { admin } from "~/modules/admin/lib/api";
 import { TurboLink } from "~/modules/common/turbo-link";
 
+import { CreditsDialog } from "../components/credits-dialog";
 import { invalidateCustomers } from "../server/invalidate";
 import { UpdateCustomerPlanModal } from "../update-customer-plan";
 
@@ -35,10 +37,11 @@ import type { Customer } from "@turbostarter/billing";
 export const CustomerActions = ({
   customer,
 }: {
-  customer: Customer & { user: Pick<User, "name"> };
+  customer: Customer & { user: Pick<User, "name">; credits: number };
 }) => {
   const { t } = useTranslation(["common", "admin", "billing"]);
   const queryClient = useQueryClient();
+  const [creditsDialogOpen, setCreditsDialogOpen] = useState(false);
 
   const deleteCustomer = useMutation({
     ...admin.mutations.customers.delete,
@@ -54,53 +57,65 @@ export const CustomerActions = ({
   });
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <span className="sr-only">{t("actions")}</span>
-          <Icons.Ellipsis className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
-        <UpdateCustomerPlanModal
-          customer={customer}
-          key={`update-plan-${customer.id}`}
-        >
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            {t("updatePlan")}
-          </DropdownMenuItem>
-        </UpdateCustomerPlanModal>
-        <DropdownMenuSeparator />
-        {(() => {
-          const isPending =
-            deleteCustomer.isPending &&
-            deleteCustomer.variables.id === customer.id;
-
-          return (
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() =>
-                deleteCustomer.mutate({
-                  id: customer.id,
-                })
-              }
-              disabled={isPending}
-              key={`remove-${customer.id}`}
-            >
-              {t("delete")}
-              {isPending && (
-                <Icons.Loader2 className="ml-auto animate-spin text-current" />
-              )}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <span className="sr-only">{t("actions")}</span>
+            <Icons.Ellipsis className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <UpdateCustomerPlanModal
+            customer={customer}
+            key={`update-plan-${customer.id}`}
+          >
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              {t("updatePlan")}
             </DropdownMenuItem>
-          );
-        })()}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </UpdateCustomerPlanModal>
+          <DropdownMenuItem onSelect={() => setCreditsDialogOpen(true)}>
+            <Icons.HandCoins className="mr-2 size-4" />
+            Manage Credits
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {(() => {
+            const isPending =
+              deleteCustomer.isPending &&
+              deleteCustomer.variables.id === customer.id;
+
+            return (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() =>
+                  deleteCustomer.mutate({
+                    id: customer.id,
+                  })
+                }
+                disabled={isPending}
+                key={`remove-${customer.id}`}
+              >
+                {t("delete")}
+                {isPending && (
+                  <Icons.Loader2 className="ml-auto animate-spin text-current" />
+                )}
+              </DropdownMenuItem>
+            );
+          })()}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <CreditsDialog
+        open={creditsDialogOpen}
+        onOpenChange={setCreditsDialogOpen}
+        customer={customer}
+      />
+    </>
   );
 };
 
 export const useColumns = (): ColumnDef<
-  Customer & { user: Pick<User, "name" | "image"> }
+  Customer & { user: Pick<User, "name" | "image">; credits: number }
 >[] => {
   const { t, i18n } = useTranslation(["common", "billing"]);
   const { data: session } = authClient.useSession();
@@ -220,6 +235,26 @@ export const useColumns = (): ColumnDef<
         }),
       },
       enableColumnFilter: true,
+    },
+    {
+      id: "credits",
+      accessorKey: "credits",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Credits" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-1.5">
+            <Icons.HandCoins className="size-4 text-muted-foreground" />
+            <span className="font-medium tabular-nums">
+              {row.original.credits.toLocaleString()}
+            </span>
+          </div>
+        );
+      },
+      meta: {
+        label: "Credits",
+      },
     },
     {
       id: "createdAt",

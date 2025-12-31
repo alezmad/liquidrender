@@ -1,0 +1,93 @@
+id: WF-0024
+name: Credits Management System
+status: completed
+created_at: '2025-12-30T12:00:00Z'
+updated_at: '2025-12-30T16:30:00Z'
+started_at: '2025-12-30T12:00:00Z'
+completed_at: '2025-12-30T16:30:00Z'
+git_tag: WF-0024-start
+git_commit: 04b1108
+
+execution:
+  current_wave: 3
+  total_waves: 3
+
+waves:
+  - id: 0
+    name: Schema + Migration
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Credit Transaction Schema
+        status: completed
+        files:
+          - packages/db/src/schema/credit-transaction.ts
+          - packages/db/src/schema/index.ts
+
+  - id: 1
+    name: Infrastructure
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1a
+        name: Credits Config
+        status: completed
+        files:
+          - packages/ai/src/modules/credits/config.ts
+      - id: T1b
+        name: Auth Hook Integration
+        status: completed
+        files:
+          - packages/auth/src/server.ts
+      - id: T1c
+        name: Backfill Script
+        status: completed
+        files:
+          - packages/db/src/scripts/backfill-customers.ts
+
+  - id: 2
+    name: API Layer
+    type: parallel
+    status: completed
+    tasks:
+      - id: T2a
+        name: Admin Mutations & Queries
+        status: completed
+        files:
+          - packages/api/src/modules/admin/customers/mutations.ts
+          - packages/api/src/modules/admin/customers/queries.ts
+          - packages/api/src/schema/admin.ts
+      - id: T2b
+        name: Router Endpoints
+        status: completed
+        files:
+          - packages/api/src/modules/admin/customers/router.ts
+
+  - id: 3
+    name: UI + Middleware
+    type: sequential
+    status: completed
+    tasks:
+      - id: T3a
+        name: Credits Dialog UI
+        status: completed
+        files:
+          - apps/web/src/modules/admin/customers/components/credits-dialog.tsx
+      - id: T3b
+        name: Column & Middleware Updates
+        status: completed
+        files:
+          - apps/web/src/modules/admin/customers/data-table/columns.tsx
+          - packages/api/src/middleware.ts
+          - packages/api/src/modules/ai/tts.ts
+          - packages/api/src/modules/ai/chat.ts
+          - packages/api/src/modules/ai/image.ts
+          - packages/api/src/modules/ai/stt.ts
+          - packages/api/src/modules/ai/pdf.ts
+
+context_files:
+  - .artifacts/2025-12-30-credits-management-implementation.md
+  - packages/db/src/schema/customer.ts
+  - packages/api/src/modules/admin/customers/router.ts
+  - packages/api/src/middleware.ts

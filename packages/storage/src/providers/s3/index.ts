@@ -5,13 +5,19 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as getSignedUrlCommand } from "@aws-sdk/s3-request-presigner";
 
+import { getObjectUrlSchema } from "../../lib/schema";
+
 import { getClient } from "./client";
 
 import type { GetObjectUrlInput } from "../../lib/schema";
 import type { StorageProviderStrategy } from "../types";
 
+// Helper to apply schema defaults (bucket from env)
+const withDefaults = (input: GetObjectUrlInput) => getObjectUrlSchema.parse(input);
+
 export const { getUploadUrl, getSignedUrl, getPublicUrl, getDeleteUrl } = {
-  getUploadUrl: async ({ path, bucket }: GetObjectUrlInput) => {
+  getUploadUrl: async (input: GetObjectUrlInput) => {
+    const { path, bucket } = withDefaults(input);
     const client = getClient();
 
     const url = await getSignedUrlCommand(
@@ -27,7 +33,8 @@ export const { getUploadUrl, getSignedUrl, getPublicUrl, getDeleteUrl } = {
 
     return { url };
   },
-  getSignedUrl: async ({ path, bucket }: GetObjectUrlInput) => {
+  getSignedUrl: async (input: GetObjectUrlInput) => {
+    const { path, bucket } = withDefaults(input);
     const client = getClient();
 
     const url = await getSignedUrlCommand(
@@ -43,7 +50,8 @@ export const { getUploadUrl, getSignedUrl, getPublicUrl, getDeleteUrl } = {
 
     return { url };
   },
-  getPublicUrl: async ({ path, bucket }: GetObjectUrlInput) => {
+  getPublicUrl: async (input: GetObjectUrlInput) => {
+    const { path, bucket } = withDefaults(input);
     const client = getClient();
     const endpoint = await client.config.endpoint?.();
     const forcePathStyle = await client.config.forcePathStyle;
@@ -66,7 +74,8 @@ export const { getUploadUrl, getSignedUrl, getPublicUrl, getDeleteUrl } = {
       url: `${endpoint?.protocol}//${bucket}.${endpoint?.hostname}/${path}`,
     };
   },
-  getDeleteUrl: async ({ path, bucket }: GetObjectUrlInput) => {
+  getDeleteUrl: async (input: GetObjectUrlInput) => {
+    const { path, bucket } = withDefaults(input);
     const client = getClient();
 
     const url = await getSignedUrlCommand(

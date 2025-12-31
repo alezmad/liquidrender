@@ -35,7 +35,7 @@ export const sttRouter = new Hono<{
 
   // Deduct credits
   console.log("[STT] Deducting credits...");
-  await deductCredits(Credits.COST.DEFAULT)(c, async () => {});
+  await deductCredits(Credits.COST.DEFAULT, "speech-to-text")(c, async () => {});
   console.log("[STT] Credits deducted, calling OpenAI Whisper...");
 
   try {

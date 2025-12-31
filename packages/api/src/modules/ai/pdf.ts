@@ -9,7 +9,7 @@ import {
   getChatDocuments,
   getChatMessages,
   getUserChats,
-  streamChat,
+  streamChatWithDocuments,
 } from "@turbostarter/ai/pdf/api";
 import { pdfMessageSchema } from "@turbostarter/ai/pdf/schema";
 import {
@@ -43,7 +43,7 @@ const chatsRouter = new Hono<{
       const input = c.req.valid("json") as CreateChatInput;
 
       // Deduct credits
-      await deductCredits(Credits.COST.DEFAULT)(c, async () => {});
+      await deductCredits(Credits.COST.DEFAULT, "pdf-chat")(c, async () => {});
 
       return c.json(
         await createChat({
@@ -67,14 +67,21 @@ const chatsRouter = new Hono<{
     validate("json", pdfMessageSchema),
     async (c) => {
       const input = c.req.valid("json") as PdfMessageInput;
+      const chatId = c.req.param("id");
+
+      // Get documents for this chat to enable document-specific search
+      const documents = await getChatDocuments(chatId);
+      const documentIds = documents.map((d) => d.id);
+      console.log(`📝 POST /:id/messages - chatId: ${chatId}, documents found: ${documents.length}, documentIds:`, documentIds);
 
       // Deduct credits
-      await deductCredits(Credits.COST.DEFAULT)(c, async () => {});
+      await deductCredits(Credits.COST.DEFAULT, "pdf-chat")(c, async () => {});
 
-      return streamChat({
+      return streamChatWithDocuments({
         ...input,
         signal: c.req.raw.signal,
-        chatId: c.req.param("id"),
+        chatId,
+        documentIds,
       });
     },
   )
@@ -85,4 +92,85 @@ const chatsRouter = new Hono<{
     c.json(await getChatDocuments(c.req.param("id"))),
   );
 
-export const pdfRouter = new Hono().route("/chats", chatsRouter);
+// ============================================================================
+// Embeddings Router
+// ============================================================================
+
+const embeddingsRouter = new Hono<{
+  Variables: {
+    user: User;
+  };
+}>()
+  .get("/:id", enforceAuth, async (c) => {
+    const { getEmbeddingById } = await import("@turbostarter/ai/pdf/embeddings");
+    const embedding = await getEmbeddingById(c.req.param("id"));
+    if (!embedding) {
+      return c.json({ error: "Embedding not found" }, 404);
+    }
+    return c.json(embedding);
+  });
+
+// ============================================================================
+// Diagnostics Router (for debugging embedding issues)
+// ============================================================================
+
+const diagnosticsRouter = new Hono<{
+  Variables: {
+    user: User;
+  };
+}>()
+  .get("/chat/:chatId", enforceAuth, async (c) => {
+    const { sql } = await import("@turbostarter/db");
+    const { db } = await import("@turbostarter/db/server");
+
+    const chatId = c.req.param("chatId");
+
+    // Get documents for this chat
+    const documents = await getChatDocuments(chatId);
+
+    if (documents.length === 0) {
+      return c.json({ error: "No documents found for chat", chatId });
+    }
+
+    // Get embedding counts per document
+    const diagnostics = await Promise.all(
+      documents.map(async (doc) => {
+        const countResult = await db.execute<{ count: string }>(sql`
+          SELECT COUNT(*) as count FROM pdf.embedding WHERE document_id = ${doc.id}
+        `);
+        const rows = Array.isArray(countResult) ? countResult : [];
+        const count = parseInt(rows[0]?.count ?? "0", 10);
+
+        // Get sample content
+        const sampleResult = await db.execute<{ content: string; page_number: number }>(sql`
+          SELECT LEFT(content, 100) as content, page_number
+          FROM pdf.embedding
+          WHERE document_id = ${doc.id}
+          LIMIT 2
+        `);
+        const samples = Array.isArray(sampleResult) ? sampleResult : [];
+
+        return {
+          documentId: doc.id,
+          documentName: doc.name,
+          embeddingCount: count,
+          samples: samples.map(s => ({
+            preview: s.content,
+            page: s.page_number,
+          })),
+        };
+      })
+    );
+
+    return c.json({
+      chatId,
+      documentCount: documents.length,
+      documents: diagnostics,
+      totalEmbeddings: diagnostics.reduce((sum, d) => sum + d.embeddingCount, 0),
+    });
+  });
+
+export const pdfRouter = new Hono()
+  .route("/chats", chatsRouter)
+  .route("/embeddings", embeddingsRouter)
+  .route("/diagnostics", diagnosticsRouter);

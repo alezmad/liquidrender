@@ -350,3 +350,36 @@ export type GetCustomersResponse = z.infer<typeof getCustomersResponseSchema>;
 
 export { updateCustomerSchema as updateCustomerInputSchema };
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+
+// ============================================================================
+// Credit Management Schemas
+// ============================================================================
+
+export const updateCreditsSchema = z.object({
+  action: z.enum(["set", "add", "deduct"]),
+  amount: z.number().int().positive(),
+  reason: z.string().max(500).optional(),
+});
+
+export type UpdateCreditsInput = z.infer<typeof updateCreditsSchema>;
+
+export const getTransactionsSchema = z.object({
+  customerId: z.string(),
+  page: z.number().int().positive().default(1),
+  perPage: z.number().int().positive().max(100).default(20),
+  type: z
+    .enum([
+      "signup",
+      "purchase",
+      "usage",
+      "admin_grant",
+      "admin_deduct",
+      "refund",
+      "promo",
+      "referral",
+      "expiry",
+    ])
+    .optional(),
+});
+
+export type GetTransactionsInput = z.infer<typeof getTransactionsSchema>;

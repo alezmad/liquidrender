@@ -23,7 +23,7 @@ export const ttsRouter = new Hono<{
       const input = c.req.valid("json") as TtsInput;
 
       // Deduct credits
-      await deductCredits(Credits.COST.HIGH)(c, async () => {});
+      await deductCredits(Credits.COST.HIGH, "text-to-speech")(c, async () => {});
 
       return new Response(
         (await textToSpeech(input)) as unknown as ConstructorParameters<

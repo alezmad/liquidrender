@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { index, pgSchema, text, timestamp, vector } from "drizzle-orm/pg-core";
+import { index, integer, pgSchema, text, timestamp, vector } from "drizzle-orm/pg-core";
 
 import { generateId } from "@turbostarter/shared/utils";
 
@@ -60,6 +60,11 @@ export const pdfEmbedding = pdfSchema.table(
       .notNull(),
     content: text().notNull(),
     embedding: vector({ dimensions: 1536 }).notNull(),
+    // Citation metadata for page navigation
+    pageNumber: integer(),
+    charStart: integer(),
+    charEnd: integer(),
+    sectionTitle: text(),
     createdAt: timestamp().defaultNow(),
   },
   (table) => ({
@@ -83,6 +88,8 @@ export const selectPdfMessageSchema = createSelectSchema(pdfMessage);
 export const insertPdfMessageSchema = createInsertSchema(pdfMessage);
 export const selectPdfDocumentSchema = createSelectSchema(pdfDocument);
 export const insertPdfDocumentSchema = createInsertSchema(pdfDocument);
+export const selectPdfEmbeddingSchema = createSelectSchema(pdfEmbedding);
+export const insertPdfEmbeddingSchema = createInsertSchema(pdfEmbedding);
 
 export type SelectPdfChat = typeof pdfChat.$inferSelect;
 export type InsertPdfChat = typeof pdfChat.$inferInsert;
@@ -90,3 +97,5 @@ export type SelectPdfMessage = typeof pdfMessage.$inferSelect;
 export type InsertPdfMessage = typeof pdfMessage.$inferInsert;
 export type SelectPdfDocument = typeof pdfDocument.$inferSelect;
 export type InsertPdfDocument = typeof pdfDocument.$inferInsert;
+export type SelectPdfEmbedding = typeof pdfEmbedding.$inferSelect;
+export type InsertPdfEmbedding = typeof pdfEmbedding.$inferInsert;

@@ -1,0 +1,88 @@
+workflow_id: WF-0025
+name: Interactive PDF Citations
+status: in_progress
+created_at: '2024-12-30T18:30:00Z'
+started_at: '2024-12-30T18:30:00Z'
+
+git:
+  start_tag: WF-0025-start
+  start_commit: HEAD
+
+current_wave: 0
+total_waves: 4
+
+waves:
+  - id: 0
+    name: Bootstrap
+    type: sequential
+    status: in_progress
+    tasks:
+      - id: bootstrap
+        name: Pre-flight + types + schema
+        status: in_progress
+
+  - id: 1
+    name: Core Infrastructure
+    type: parallel
+    status: pending
+    tasks:
+      - id: T1-T2
+        name: Schema migration + Embedding metadata
+        status: pending
+        files:
+          - packages/db/migrations/0014_*.sql
+          - packages/ai/src/modules/pdf/embeddings.ts
+      - id: T3
+        name: AI citation response format
+        status: pending
+        files:
+          - packages/ai/src/modules/pdf/api.ts
+          - packages/ai/src/modules/pdf/types.ts
+      - id: T4
+        name: PDF viewer context
+        status: pending
+        files:
+          - apps/web/src/modules/pdf/context/pdf-viewer-context.tsx
+
+  - id: 2
+    name: UI Components
+    type: parallel
+    status: pending
+    tasks:
+      - id: T5-T6
+        name: Citation components
+        status: pending
+        files:
+          - apps/web/src/modules/pdf/thread/citation.tsx
+          - apps/web/src/modules/pdf/thread/citation-preview.tsx
+      - id: T7
+        name: Highlight layer
+        status: pending
+        files:
+          - apps/web/src/modules/pdf/layout/preview/highlight-layer.tsx
+      - id: T8-T9
+        name: Navigation hook + controls
+        status: pending
+        files:
+          - apps/web/src/modules/pdf/hooks/use-pdf-navigation.ts
+          - apps/web/src/modules/pdf/layout/preview/navigation-controls.tsx
+
+  - id: 3
+    name: Integration
+    type: sequential
+    status: pending
+    tasks:
+      - id: T10
+        name: Wire citations to assistant
+        status: pending
+        files:
+          - apps/web/src/modules/pdf/thread/assistant.tsx
+      - id: T11
+        name: Integration validation
+        status: pending
+      - id: T12
+        name: Type exports
+        status: pending
+
+vision_doc: .artifacts/2024-12-30-interactive-pdf-chat-vision.md
+context_doc: .artifacts/2024-12-30-pdf-feature-context.md

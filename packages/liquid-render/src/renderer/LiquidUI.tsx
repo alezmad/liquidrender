@@ -4,17 +4,8 @@ import type { LiquidSchema, Block, Layer } from '../compiler/ui-emitter';
 import type { DataContext } from './data-context';
 import { resolveBinding } from './data-context';
 import { getComponent, type LiquidComponentProps } from './component-registry';
-
-// Import built-in components for fallback rendering
-import { Container } from './components/container';
-import { KPICard } from './components/kpi-card';
-import { LineChartComponent } from './components/line-chart';
-import { BarChartComponent } from './components/bar-chart';
-import { PieChartComponent } from './components/pie-chart';
-import { DataTable } from './components/data-table';
-import { Card } from './components/card';
-import { Text } from './components/text';
-import { Button } from './components/button';
+import { useLiquidTheme } from '../context/theme-context';
+import { isLegacyComponent, isComponentAdapter } from '../types/theme';
 
 // ============================================================================
 // Signal State
@@ -148,6 +139,7 @@ interface BlockRendererProps {
 
 function BlockRenderer({ block, data, typeComponents, customComponents }: BlockRendererProps): React.ReactElement | null {
   const { signals } = useLiquidContext();
+  const theme = useLiquidTheme();
 
   // Check signal condition - skip rendering if condition not met
   if (block.condition?.signal) {
@@ -262,13 +254,14 @@ function BlockRenderer({ block, data, typeComponents, customComponents }: BlockR
     );
   }
 
-  // Check for type override or registered component
-  const TypeComponent = typeComponents?.[block.type] ?? getComponent(block.type);
-
-  if (TypeComponent) {
+  // Render children helper - returns null if no children to avoid empty Fragment
+  const renderChildren = () => {
+    if (!block.children || block.children.length === 0) {
+      return null;
+    }
     return (
-      <TypeComponent block={block} data={data}>
-        {block.children?.map((child, i) => (
+      <>
+        {block.children.map((child, i) => (
           <BlockRenderer
             key={child.uid || i}
             block={child}
@@ -277,48 +270,58 @@ function BlockRenderer({ block, data, typeComponents, customComponents }: BlockR
             customComponents={customComponents}
           />
         ))}
+      </>
+    );
+  };
+
+  // Check for type override (props), registered component (legacy registry), or theme component
+  const TypeComponent = typeComponents?.[block.type] ?? getComponent(block.type);
+
+  if (TypeComponent) {
+    return (
+      <TypeComponent block={block} data={data}>
+        {renderChildren()}
       </TypeComponent>
     );
   }
 
-  // Render children helper
-  const renderChildren = () => (
-    <>
-      {block.children?.map((child, i) => (
-        <BlockRenderer
-          key={child.uid || i}
-          block={child}
-          data={data}
-          typeComponents={typeComponents}
-          customComponents={customComponents}
-        />
-      ))}
-    </>
-  );
+  // Use theme-based component lookup
+  const themeComponent = theme.components[block.type] ?? theme.fallback;
 
-  // Default rendering based on type using standalone components
-  switch (block.type) {
-    case 'container':
-      return <Container block={block} data={data}>{renderChildren()}</Container>;
-    case 'kpi':
-      return <KPICard block={block} data={data} />;
-    case 'line':
-      return <LineChartComponent block={block} data={data} />;
-    case 'bar':
-      return <BarChartComponent block={block} data={data} />;
-    case 'pie':
-      return <PieChartComponent block={block} data={data} />;
-    case 'card':
-      return <Card block={block} data={data}>{renderChildren()}</Card>;
-    case 'table':
-      return <DataTable block={block} data={data} />;
-    case 'text':
-      return <Text block={block} data={data} />;
-    case 'button':
-      return <Button block={block} data={data} />;
-    default:
-      return <FallbackBlock block={block} data={data} typeComponents={typeComponents} customComponents={customComponents} />;
+  if (themeComponent) {
+    // Handle legacy component format (function that receives block, data)
+    if (isLegacyComponent(themeComponent)) {
+      const LegacyComponent = themeComponent;
+      return (
+        <LegacyComponent block={block} data={data}>
+          {renderChildren()}
+        </LegacyComponent>
+      );
+    }
+
+    // Handle new adapter format (object with component and optional mapProps)
+    if (isComponentAdapter(themeComponent)) {
+      const { component: AdapterComponent, mapProps } = themeComponent;
+
+      // Create resolve function for binding expressions
+      const resolve = <T,>(expr: string | T): T => {
+        if (typeof expr === "string" && expr.startsWith("{{") && expr.endsWith("}}")) {
+          return resolveBinding({ kind: 'field', value: expr.slice(2, -2) }, data) as T;
+        }
+        return expr as T;
+      };
+
+      // Map props if mapper provided, otherwise pass block props directly
+      const props = mapProps
+        ? mapProps(block as unknown as Record<string, unknown>, data as Record<string, unknown>, resolve)
+        : { block, data, children: renderChildren() };
+
+      return <AdapterComponent {...props} />;
+    }
   }
+
+  // Final fallback for unknown types
+  return <FallbackBlock block={block} data={data} typeComponents={typeComponents} customComponents={customComponents} />;
 }
 
 // ============================================================================

@@ -1,0 +1,46 @@
+workflow_id: WF-0025
+name: Interactive PDF Citations
+generated_at: '2024-12-30T18:30:00Z'
+
+token_budget: 20000
+total_tokens: ~8500
+
+sources:
+  core:
+    - path: .artifacts/2024-12-30-interactive-pdf-chat-vision.md
+      purpose: Full vision document with architecture
+      tokens: ~3500
+
+    - path: .artifacts/2024-12-30-pdf-feature-context.md
+      purpose: Current PDF feature file paths and flows
+      tokens: ~800
+
+    - path: packages/db/src/schema/pdf.ts
+      purpose: Current database schema
+      tokens: ~600
+
+    - path: packages/ai/src/modules/pdf/embeddings.ts
+      purpose: Embedding generation logic to modify
+      tokens: ~800
+
+    - path: packages/ai/src/modules/pdf/api.ts
+      purpose: Chat API to add citation support
+      tokens: ~1600
+
+    - path: apps/web/src/modules/pdf/layout/preview/index.tsx
+      purpose: PDF viewer component to enhance
+      tokens: ~400
+
+    - path: apps/web/src/modules/pdf/thread/assistant.tsx
+      purpose: Assistant message to add citations
+      tokens: ~300
+
+  reference:
+    - path: apps/web/src/modules/pdf/thread/index.tsx
+      purpose: Thread structure reference
+      tokens: ~500
+
+deferred:
+  - path: .artifacts/2025-12-29-1355-knosia-architecture-vision.md
+    reason: Not relevant to PDF feature
+    tokens: ~8000

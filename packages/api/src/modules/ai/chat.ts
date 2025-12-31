@@ -30,7 +30,7 @@ const chatsRouter = new Hono<{
       const creditsAmount = getCreditsDeduction(input.metadata.options, input.parts);
 
       // Deduct credits
-      await deductCredits(creditsAmount)(c, async () => {});
+      await deductCredits(creditsAmount, "chat")(c, async () => {});
 
       return streamChat({
         ...input,

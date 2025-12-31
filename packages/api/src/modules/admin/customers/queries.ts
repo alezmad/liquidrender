@@ -5,15 +5,16 @@ import {
   asc,
   between,
   count,
+  desc,
   eq,
   getOrderByFromSort,
   ilike,
   inArray,
 } from "@turbostarter/db";
-import { customer, user } from "@turbostarter/db/schema";
+import { creditTransaction, customer, user } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 
-import type { GetCustomersInput } from "../../../schema";
+import type { GetCustomersInput, GetTransactionsInput } from "../../../schema";
 
 export const getCustomersCount = async () =>
   db
@@ -77,4 +78,35 @@ export const getCustomers = async (input: GetCustomersInput) => {
       total,
     };
   });
+};
+
+/**
+ * Get credit transaction history for a customer with pagination.
+ */
+export const getCustomerTransactions = async (input: GetTransactionsInput) => {
+  const offset = (input.page - 1) * input.perPage;
+
+  const where = and(
+    eq(creditTransaction.customerId, input.customerId),
+    input.type ? eq(creditTransaction.type, input.type) : undefined,
+  );
+
+  const [data, totalResult] = await Promise.all([
+    db
+      .select()
+      .from(creditTransaction)
+      .where(where)
+      .orderBy(desc(creditTransaction.createdAt))
+      .limit(input.perPage)
+      .offset(offset),
+    db
+      .select({ count: count() })
+      .from(creditTransaction)
+      .where(where),
+  ]);
+
+  return {
+    data,
+    total: totalResult[0]?.count ?? 0,
+  };
 };

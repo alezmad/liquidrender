@@ -26,7 +26,7 @@ export const queryContextSchema = z.object({
 // INPUT SCHEMAS
 // ============================================================================
 
-export const conversationQueryInputSchema = z.object({
+export const threadQueryInputSchema = z.object({
   query: z.string().min(1).max(1000),
   connectionId: connectionIdSchema,
   workspaceId: workspaceIdSchema,
@@ -37,15 +37,16 @@ export const clarifyInputSchema = z.object({
   queryId: z.string(),
   selectedOptionId: z.string(),
   remember: z.boolean().optional().default(false),
+  workspaceId: workspaceIdSchema,
 });
 
-export const getConversationInputSchema = z.object({
+export const getThreadInputSchema = z.object({
   id: z.string(),
   userId: z.string(),
   workspaceId: z.string(),
 });
 
-export const getConversationsInputSchema = z.object({
+export const getThreadsInputSchema = z.object({
   userId: z.string(),
   workspaceId: z.string(),
   page: z.number().min(1).default(1),
@@ -53,11 +54,19 @@ export const getConversationsInputSchema = z.object({
   status: z.enum(["active", "archived", "shared"]).optional(),
 });
 
-export const getConversationMessagesInputSchema = z.object({
-  conversationId: z.string(),
+export const getThreadMessagesInputSchema = z.object({
+  threadId: z.string(),
   userId: z.string(),
   limit: z.number().min(1).max(100).default(50),
   offset: z.number().min(0).default(0),
+});
+
+export const archiveThreadInputSchema = z.object({
+  workspaceId: workspaceIdSchema,
+});
+
+export const workspaceIdQuerySchema = z.object({
+  workspaceId: workspaceIdSchema,
 });
 
 // ============================================================================
@@ -121,7 +130,7 @@ export interface AppliedFilter {
   removable: boolean;
 }
 
-export interface ConversationResponse {
+export interface ThreadResponse {
   queryId: string;
   type: "visualization" | "explanation" | "clarification" | "error";
   visualization?: VisualizationData;
@@ -138,8 +147,8 @@ export interface ConversationResponse {
 
 export type Filter = z.infer<typeof filterSchema>;
 export type QueryContext = z.infer<typeof queryContextSchema>;
-export type ConversationQueryInput = z.infer<typeof conversationQueryInputSchema>;
+export type ThreadQueryInput = z.infer<typeof threadQueryInputSchema>;
 export type ClarifyInput = z.infer<typeof clarifyInputSchema>;
-export type GetConversationInput = z.infer<typeof getConversationInputSchema>;
-export type GetConversationsInput = z.infer<typeof getConversationsInputSchema>;
-export type GetConversationMessagesInput = z.infer<typeof getConversationMessagesInputSchema>;
+export type GetThreadInput = z.infer<typeof getThreadInputSchema>;
+export type GetThreadsInput = z.infer<typeof getThreadsInputSchema>;
+export type GetThreadMessagesInput = z.infer<typeof getThreadMessagesInputSchema>;

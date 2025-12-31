@@ -1,14 +1,15 @@
 import { SidebarInset } from "@turbostarter/ui-web/sidebar";
 
 import { DashboardActionBar } from "./action-bar";
+import { ScrollContainer } from "./scroll-container";
 
 export const DashboardInset = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SidebarInset className="mx-auto w-full max-w-[80rem]">
+    <SidebarInset className="relative flex h-dvh flex-col sm:h-[calc(100dvh-1rem)]">
       <DashboardActionBar />
-      <div className="flex w-full flex-1 flex-col items-start gap-6 p-4 !pt-0 md:p-6 lg:p-7">
+      <ScrollContainer>
         {children}
-      </div>
+      </ScrollContainer>
     </SidebarInset>
   );
 };

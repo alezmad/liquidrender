@@ -138,11 +138,34 @@
     "title": "Briefing",
     "description": "Esto es lo que esta pasando con tu negocio",
     "greeting": "Buenos dias",
+    "headline": "¿Qué te gustaría saber sobre tus datos?",
     "dataThrough": "Basado en datos hasta {{date}}",
     "lastUpdated": "Ultima actualizacion: {{time}}",
     "attentionNeeded": "Atencion requerida",
     "insight": "Insight",
-    "askPlaceholder": "Haz una pregunta…"
+    "askPlaceholder": "Haz una pregunta…",
+    "example": {
+      "performance": {
+        "label": "Rendimiento",
+        "prompt": "¿Cómo está funcionando mi negocio este mes comparado con el mes pasado?"
+      },
+      "customers": {
+        "label": "Clientes",
+        "prompt": "¿Quiénes son mis 10 principales clientes por ingresos y cómo ha cambiado su gasto?"
+      },
+      "compare": {
+        "label": "Comparar",
+        "prompt": "Compara las métricas de este trimestre con el mismo trimestre del año pasado"
+      },
+      "anomalies": {
+        "label": "Anomalías",
+        "prompt": "¿Hay patrones inusuales o anomalías en mis datos recientes?"
+      },
+      "insights": {
+        "label": "Insights",
+        "prompt": "¿Cuáles son los insights clave que debería conocer ahora mismo?"
+      }
+    }
   },
   "conversation": {
     "title": "Preguntar",

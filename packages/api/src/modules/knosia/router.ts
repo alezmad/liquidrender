@@ -1,9 +1,13 @@
 import { Hono } from "hono";
 
+import { activityRouter } from "./activity";
 import { analysisRouter } from "./analysis";
 import { briefingRouter } from "./briefing";
+import { canvasRouter } from "./canvas";
+import { commentRouter } from "./comment";
 import { connectionsRouter } from "./connections";
-import { conversationRouter } from "./conversation";
+import { notificationRouter } from "./notification";
+import { threadRouter } from "./thread";
 import { knosiaOrganizationRouter } from "./organization";
 import { preferencesRouter } from "./preferences";
 import { knosiaVocabularyRouter } from "./vocabulary";
@@ -20,10 +24,14 @@ type Variables = {
  * Mounts all Knosia-related sub-routers
  */
 export const knosiaRouter = new Hono<{ Variables: Variables }>()
+  .route("/activity", activityRouter)
   .route("/analysis", analysisRouter)
   .route("/briefing", briefingRouter)
+  .route("/canvas", canvasRouter)
+  .route("/comment", commentRouter)
   .route("/connections", connectionsRouter)
-  .route("/conversation", conversationRouter)
+  .route("/notification", notificationRouter)
+  .route("/thread", threadRouter)
   .route("/organization", knosiaOrganizationRouter)
   .route("/preferences", preferencesRouter)
   .route("/vocabulary", knosiaVocabularyRouter);

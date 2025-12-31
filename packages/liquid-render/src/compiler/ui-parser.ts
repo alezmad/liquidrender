@@ -228,6 +228,13 @@ export class UIParser {
         const componentToken = this.advance();
         block.componentId = componentToken.value;
       }
+
+      // Special handling for Grid: next UI_TYPE_INDEX is column count
+      // e.g., `Gd 3 [...]` where 3 is tokenized as UI_TYPE_INDEX
+      if (block.type === 'grid' && this.check('UI_TYPE_INDEX')) {
+        const columnToken = this.advance();
+        block.gridColumns = parseInt(columnToken.value, 10);
+      }
     } else {
       // Not a block start
       return null;

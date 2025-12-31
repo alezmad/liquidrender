@@ -8,33 +8,42 @@ import { getSession } from "~/lib/auth/server";
 import { DashboardInset } from "~/modules/common/layout/dashboard/inset";
 import { DashboardSidebar } from "~/modules/common/layout/dashboard/sidebar";
 
+/**
+ * Knosia sidebar menu configuration.
+ * Uses i18n keys from knosia.json via sidebar.* namespace.
+ */
 const menu = [
   {
     label: "platform",
     items: [
       {
-        title: "home",
-        href: pathsConfig.dashboard.user.index,
+        title: "briefing",
+        href: pathsConfig.knosia.index,
         icon: Icons.Home,
       },
       {
-        title: "ai",
-        href: pathsConfig.dashboard.user.ai,
-        icon: Icons.Brain,
-      },
-      {
-        title: "vocabulary",
-        href: pathsConfig.dashboard.user.vocabulary,
-        icon: Icons.BookOpen,
+        title: "ask",
+        href: pathsConfig.knosia.ask,
+        icon: Icons.MessageCircle,
       },
     ],
   },
   {
-    label: "account",
+    label: "manage",
     items: [
       {
+        title: "connections",
+        href: pathsConfig.knosia.connections,
+        icon: Icons.Database,
+      },
+      {
+        title: "vocabulary",
+        href: pathsConfig.knosia.vocabulary,
+        icon: Icons.BookOpen,
+      },
+      {
         title: "settings",
-        href: pathsConfig.dashboard.user.settings.index,
+        href: pathsConfig.knosia.settings,
         icon: Icons.Settings,
       },
     ],

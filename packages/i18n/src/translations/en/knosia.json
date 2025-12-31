@@ -138,11 +138,34 @@
     "title": "Briefing",
     "description": "Here's what's happening with your business",
     "greeting": "Good morning",
+    "headline": "What would you like to know about your data?",
     "dataThrough": "Based on data through {{date}}",
     "lastUpdated": "Last updated: {{time}}",
     "attentionNeeded": "Attention needed",
     "insight": "Insight",
-    "askPlaceholder": "Ask a question…"
+    "askPlaceholder": "Ask a question…",
+    "example": {
+      "performance": {
+        "label": "Performance",
+        "prompt": "How is my business performing this month compared to last month?"
+      },
+      "customers": {
+        "label": "Customers",
+        "prompt": "Who are my top 10 customers by revenue and how has their spending changed?"
+      },
+      "compare": {
+        "label": "Compare",
+        "prompt": "Compare this quarter's metrics with the same quarter last year"
+      },
+      "anomalies": {
+        "label": "Anomalies",
+        "prompt": "Are there any unusual patterns or anomalies in my recent data?"
+      },
+      "insights": {
+        "label": "Insights",
+        "prompt": "What are the key insights I should know about right now?"
+      }
+    }
   },
   "conversation": {
     "title": "Ask",

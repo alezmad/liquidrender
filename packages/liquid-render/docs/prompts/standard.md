@@ -26,6 +26,14 @@ LiquidCode is a compact DSL for building UI components with minimal syntax. Opti
 | `Md` | Modal | `Gd` | Grid |
 | `Sk` | Stack | `Ac` | Accordion |
 
+**Grid Options:**
+- `Gd N` - Fixed N columns (1-9): `Gd 3 [...]`
+- `Gd ~fit` - Auto-fit responsive
+- `Gd ~200` - Custom min-width (px)
+- `%gap` - Gap size (xs/sm/md/lg/xl)
+- `^c/^e/^sb` - Last row alignment
+- `_` - Empty cell placeholder
+
 **Content:**
 | Code | Type | Code | Type |
 |------|------|------|------|
@@ -163,4 +171,11 @@ Tb :results <query
 **Conditional color:**
 ```liquid
 Kp :score #?>=80:green,<80:red
+```
+
+**Grid layouts:**
+```liquid
+Gd 3 %md [Kp :a, Kp :b, Kp :c]    # 3-column grid
+Gd ~fit [Cd :items]               # Responsive auto-fit
+Gd 3 ^c [Cd Cd Cd, Cd _ Cd]       # Centered last row with empty cell
 ```

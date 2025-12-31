@@ -45,7 +45,7 @@ export const DashboardSidebar = memo<DashboardSidebarProps>(
 
     return (
       <Sidebar
-        collapsible="icon"
+        variant="inset"
         className="top-(--banner-height) h-[calc(100svh-var(--banner-height))]"
       >
         <SidebarHeader>

@@ -1,21 +1,24 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 
 import { enforceAuth } from "../../../middleware";
 
 import {
   processQuery,
   processClarification,
-  getConversation,
-  getConversations,
-  getConversationMessages,
-  archiveConversation,
-  deleteConversation,
+  getThread,
+  getThreads,
+  getThreadMessages,
+  archiveThread,
+  deleteThread,
 } from "./queries";
 import {
-  conversationQueryInputSchema,
+  threadQueryInputSchema,
   clarifyInputSchema,
-  getConversationsInputSchema,
-  getConversationMessagesInputSchema,
+  getThreadsInputSchema,
+  getThreadMessagesInputSchema,
+  archiveThreadInputSchema,
+  workspaceIdQuerySchema,
 } from "./schemas";
 
 import type { Session, User } from "@turbostarter/auth";
@@ -25,7 +28,7 @@ type Variables = {
   session: Session;
 };
 
-export const conversationRouter = new Hono<{ Variables: Variables }>()
+export const threadRouter = new Hono<{ Variables: Variables }>()
   .use(enforceAuth)
 
   // ============================================================================
@@ -34,22 +37,20 @@ export const conversationRouter = new Hono<{ Variables: Variables }>()
 
   /**
    * POST /query - Process a natural language query
-   * Creates or continues a conversation and returns visualization/clarification
+   * Creates or continues a thread and returns visualization/clarification
    */
-  .post("/query", async (c) => {
+  .post("/query", zValidator("json", threadQueryInputSchema), async (c) => {
     const user = c.get("user");
-    const body = await c.req.json();
-
-    const input = conversationQueryInputSchema.parse(body);
+    const input = c.req.valid("json");
 
     try {
-      const { conversation, response } = await processQuery({
+      const { thread, response } = await processQuery({
         ...input,
         userId: user.id,
       });
 
       return c.json({
-        conversationId: conversation.id,
+        threadId: thread.id,
         ...response,
       });
     } catch (error) {
@@ -76,24 +77,16 @@ export const conversationRouter = new Hono<{ Variables: Variables }>()
 
   /**
    * POST /clarify - Answer a clarification question
-   * Continues the conversation with the selected option
+   * Continues the thread with the selected option
    */
-  .post("/clarify", async (c) => {
+  .post("/clarify", zValidator("json", clarifyInputSchema), async (c) => {
     const user = c.get("user");
-    const body = await c.req.json();
-
-    const input = clarifyInputSchema.parse(body);
-    const workspaceId = body.workspaceId;
-
-    if (!workspaceId) {
-      return c.json({ error: "workspaceId is required" }, 400);
-    }
+    const input = c.req.valid("json");
 
     try {
       const response = await processClarification({
         ...input,
         userId: user.id,
-        workspaceId,
       });
 
       return c.json(response);
@@ -116,11 +109,11 @@ export const conversationRouter = new Hono<{ Variables: Variables }>()
   })
 
   // ============================================================================
-  // CONVERSATION MANAGEMENT ENDPOINTS
+  // THREAD MANAGEMENT ENDPOINTS
   // ============================================================================
 
   /**
-   * GET / - List conversations for the current user in a workspace
+   * GET / - List threads for the current user in a workspace
    */
   .get("/", async (c) => {
     const user = c.get("user");
@@ -131,7 +124,7 @@ export const conversationRouter = new Hono<{ Variables: Variables }>()
       return c.json({ error: "workspaceId query parameter is required" }, 400);
     }
 
-    const input = getConversationsInputSchema.parse({
+    const input = getThreadsInputSchema.parse({
       userId: user.id,
       workspaceId,
       page: query.page ? parseInt(query.page) : 1,
@@ -139,105 +132,92 @@ export const conversationRouter = new Hono<{ Variables: Variables }>()
       status: query.status as "active" | "archived" | "shared" | undefined,
     });
 
-    const result = await getConversations(input);
+    const result = await getThreads(input);
     return c.json(result);
   })
 
   /**
-   * GET /:id - Get a single conversation
+   * GET /:id - Get a single thread
    */
-  .get("/:id", async (c) => {
+  .get("/:id", zValidator("query", workspaceIdQuerySchema), async (c) => {
     const user = c.get("user");
     const id = c.req.param("id");
-    const workspaceId = c.req.query("workspaceId");
+    const { workspaceId } = c.req.valid("query");
 
-    if (!workspaceId) {
-      return c.json({ error: "workspaceId query parameter is required" }, 400);
-    }
-
-    const conversation = await getConversation({
+    const thread = await getThread({
       id,
       userId: user.id,
       workspaceId,
     });
 
-    if (!conversation) {
-      return c.json({ error: "Conversation not found" }, 404);
+    if (!thread) {
+      return c.json({ error: "Thread not found" }, 404);
     }
 
-    return c.json(conversation);
+    return c.json(thread);
   })
 
   /**
-   * GET /:id/messages - Get messages for a conversation
+   * GET /:id/messages - Get messages for a thread
    */
   .get("/:id/messages", async (c) => {
     const user = c.get("user");
-    const conversationId = c.req.param("id");
+    const threadId = c.req.param("id");
     const query = c.req.query();
 
-    const input = getConversationMessagesInputSchema.parse({
-      conversationId,
+    const input = getThreadMessagesInputSchema.parse({
+      threadId,
       userId: user.id,
       limit: query.limit ? parseInt(query.limit) : 50,
       offset: query.offset ? parseInt(query.offset) : 0,
     });
 
-    const messages = await getConversationMessages(input);
+    const messages = await getThreadMessages(input);
 
     if (messages === null) {
-      return c.json({ error: "Conversation not found" }, 404);
+      return c.json({ error: "Thread not found" }, 404);
     }
 
     return c.json({ messages });
   })
 
   /**
-   * POST /:id/archive - Archive a conversation
+   * POST /:id/archive - Archive a thread
    */
-  .post("/:id/archive", async (c) => {
+  .post("/:id/archive", zValidator("json", archiveThreadInputSchema), async (c) => {
     const user = c.get("user");
     const id = c.req.param("id");
-    const body = await c.req.json().catch(() => ({}));
-    const workspaceId = body.workspaceId;
+    const { workspaceId } = c.req.valid("json");
 
-    if (!workspaceId) {
-      return c.json({ error: "workspaceId is required" }, 400);
-    }
-
-    const conversation = await archiveConversation({
+    const thread = await archiveThread({
       id,
       userId: user.id,
       workspaceId,
     });
 
-    if (!conversation) {
-      return c.json({ error: "Conversation not found" }, 404);
+    if (!thread) {
+      return c.json({ error: "Thread not found" }, 404);
     }
 
-    return c.json(conversation);
+    return c.json(thread);
   })
 
   /**
-   * DELETE /:id - Delete a conversation
+   * DELETE /:id - Delete a thread
    */
-  .delete("/:id", async (c) => {
+  .delete("/:id", zValidator("query", workspaceIdQuerySchema), async (c) => {
     const user = c.get("user");
     const id = c.req.param("id");
-    const workspaceId = c.req.query("workspaceId");
+    const { workspaceId } = c.req.valid("query");
 
-    if (!workspaceId) {
-      return c.json({ error: "workspaceId query parameter is required" }, 400);
-    }
-
-    const conversation = await deleteConversation({
+    const thread = await deleteThread({
       id,
       userId: user.id,
       workspaceId,
     });
 
-    if (!conversation) {
-      return c.json({ error: "Conversation not found" }, 404);
+    if (!thread) {
+      return c.json({ error: "Thread not found" }, 404);
     }
 
     return c.json({ success: true });

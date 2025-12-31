@@ -10,6 +10,7 @@ export {
   KPIGrid,
   AlertList,
   AskInput,
+  DashboardPrompter,
 } from "./components";
 
 // Hooks

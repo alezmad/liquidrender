@@ -18,18 +18,40 @@ const HIGHLIGHT_DURATION_MS = 5000;
 /** Minimum word match percentage to consider a span relevant (legacy fallback) */
 const MIN_MATCH_PERCENTAGE = 0.3;
 
-/** CSS class applied to highlighted spans (legacy fallback) */
+/** CSS class for primary highlight (exact citation - violet) */
+const HIGHLIGHT_PRIMARY_CLASS = "pdf-citation-primary";
+
+/** CSS class for secondary highlight (context - yellow) */
+const HIGHLIGHT_SECONDARY_CLASS = "pdf-citation-secondary";
+
+/** Legacy class name for backward compatibility */
 const HIGHLIGHT_CLASS = "pdf-citation-highlight";
 
-/** Data attribute to mark highlighted spans (legacy fallback) */
+/** Data attribute to mark highlighted spans */
 const HIGHLIGHT_ATTR = "data-citation-highlight";
 
 // ============================================================================
 // Styles
 // ============================================================================
 
-/** Injected styles for text span highlighting (works with both bbox and legacy modes) */
+/** Injected styles for text span highlighting (two-level: primary + secondary) */
 const HIGHLIGHT_STYLES = `
+/* Secondary highlight - yellow/amber for context */
+.${HIGHLIGHT_SECONDARY_CLASS} {
+  background-color: rgba(250, 204, 21, 0.25) !important;
+  border-radius: 2px;
+  transition: background-color 300ms ease-in-out;
+}
+
+/* Primary highlight - violet for exact citation (overrides secondary) */
+.${HIGHLIGHT_PRIMARY_CLASS} {
+  background-color: rgba(139, 92, 246, 0.4) !important;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.5);
+  transition: background-color 300ms ease-in-out;
+}
+
+/* Legacy highlight class (backward compatibility) */
 .${HIGHLIGHT_CLASS} {
   background-color: rgba(250, 204, 21, 0.4) !important;
   border-radius: 2px;
@@ -167,13 +189,15 @@ function applyHighlightsToSpans(
 }
 
 /**
- * Remove all highlights from the document
+ * Remove all highlights from the document (clears all highlight classes)
  */
 function clearAllHighlights(container: Element | null): void {
   if (!container) return;
 
   const highlighted = container.querySelectorAll(`[${HIGHLIGHT_ATTR}]`);
   for (const el of highlighted) {
+    el.classList.remove(HIGHLIGHT_PRIMARY_CLASS);
+    el.classList.remove(HIGHLIGHT_SECONDARY_CLASS);
     el.classList.remove(HIGHLIGHT_CLASS);
     el.removeAttribute(HIGHLIGHT_ATTR);
   }
@@ -192,11 +216,27 @@ function parsePercentage(style: string, property: string): number | null {
   return match?.[1] ? parseFloat(match[1]) : null;
 }
 
+/** Margin settings for highlight levels */
+interface HighlightMargins {
+  horizontal: number;
+  vertical: number;
+}
+
+/** Tight margins for primary highlight (exact citation) */
+const PRIMARY_MARGINS: HighlightMargins = { horizontal: 1, vertical: 0.5 };
+
+/** Wider margins for secondary highlight (context) */
+const SECONDARY_MARGINS: HighlightMargins = { horizontal: 5, vertical: 3 };
+
 /**
  * Check if a span's position overlaps with the bbox region
  * Both bbox (0-1 normalized) and span positions (0-100 percentage) need alignment
  */
-function spanOverlapsBbox(span: HTMLElement, bbox: BoundingBox): boolean {
+function spanOverlapsBbox(
+  span: HTMLElement,
+  bbox: BoundingBox,
+  margins: HighlightMargins = SECONDARY_MARGINS,
+): boolean {
   const style = span.getAttribute("style") ?? "";
 
   // Parse span position from inline style (percentage-based)
@@ -213,26 +253,26 @@ function spanOverlapsBbox(span: HTMLElement, bbox: BoundingBox): boolean {
   const bboxRight = (bbox.x + bbox.width) * 100;
   const bboxBottom = (bbox.y + bbox.height) * 100;
 
-  // Estimate span dimensions (spans don't have explicit width/height in percentage)
-  // Use a generous overlap check - if span starts within or near the bbox region
-  const horizontalMargin = 5; // 5% margin for horizontal tolerance
-  const verticalMargin = 3;   // 3% margin for vertical tolerance
-
-  const spanInHorizontalRange = spanLeft >= (bboxLeft - horizontalMargin) &&
-                                 spanLeft <= (bboxRight + horizontalMargin);
-  const spanInVerticalRange = spanTop >= (bboxTop - verticalMargin) &&
-                               spanTop <= (bboxBottom + verticalMargin);
+  const spanInHorizontalRange = spanLeft >= (bboxLeft - margins.horizontal) &&
+                                 spanLeft <= (bboxRight + margins.horizontal);
+  const spanInVerticalRange = spanTop >= (bboxTop - margins.vertical) &&
+                               spanTop <= (bboxBottom + margins.vertical);
 
   return spanInHorizontalRange && spanInVerticalRange;
 }
 
+/** Highlight level for two-tier highlighting */
+type HighlightLevel = "primary" | "secondary";
+
 /**
  * Find and highlight text layer spans that fall within a bounding box
+ * Supports two-level highlighting: primary (exact citation) and secondary (context)
  */
 function applyBboxHighlightsToSpans(
   container: Element,
   bbox: BoundingBox,
   pageNumber: number,
+  level: HighlightLevel = "primary",
 ): number {
   // Find the specific page's text layer
   const pageElement = container.querySelector(`[data-page-number="${pageNumber}"]`);
@@ -247,18 +287,22 @@ function applyBboxHighlightsToSpans(
   const spans = textLayer.querySelectorAll("span");
   let highlightCount = 0;
 
+  // Select margins and class based on level
+  const margins = level === "primary" ? PRIMARY_MARGINS : SECONDARY_MARGINS;
+  const highlightClass = level === "primary" ? HIGHLIGHT_PRIMARY_CLASS : HIGHLIGHT_SECONDARY_CLASS;
+
   for (const span of spans) {
     const spanText = span.textContent ?? "";
     if (spanText.trim().length < 1) continue;
 
-    if (spanOverlapsBbox(span as HTMLElement, bbox)) {
-      span.classList.add(HIGHLIGHT_CLASS);
-      span.setAttribute(HIGHLIGHT_ATTR, "true");
+    if (spanOverlapsBbox(span as HTMLElement, bbox, margins)) {
+      span.classList.add(highlightClass);
+      span.setAttribute(HIGHLIGHT_ATTR, level);
       highlightCount++;
     }
   }
 
-  console.debug(`[HighlightLayer] Highlighted ${highlightCount} spans via bbox`);
+  console.debug(`[HighlightLayer] Highlighted ${highlightCount} spans via bbox (${level})`);
   return highlightCount;
 }
 
@@ -307,6 +351,7 @@ export const HighlightLayer = memo(function HighlightLayer() {
   }, []);
 
   // Apply bbox-based highlights (CSS on text spans within bounding box)
+  // Two-level highlighting: secondary (yellow, context) then primary (violet, exact citation)
   const applyBboxHighlights = useCallback(() => {
     const container = containerRef.current?.parentElement;
     if (!container || !citationUnit?.bbox) {
@@ -317,8 +362,26 @@ export const HighlightLayer = memo(function HighlightLayer() {
     // Clear existing highlights first
     clearAllHighlights(container);
 
-    // Apply highlights to spans within the bounding box
-    applyBboxHighlightsToSpans(container, citationUnit.bbox, citationUnit.pageNumber);
+    // First: Apply secondary highlights (yellow) with wider margins for context
+    const secondaryCount = applyBboxHighlightsToSpans(
+      container,
+      citationUnit.bbox,
+      citationUnit.pageNumber,
+      "secondary",
+    );
+
+    // Second: Apply primary highlights (violet) with tight margins for exact citation
+    // This overlays secondary highlights on matching spans (CSS priority handles override)
+    const primaryCount = applyBboxHighlightsToSpans(
+      container,
+      citationUnit.bbox,
+      citationUnit.pageNumber,
+      "primary",
+    );
+
+    console.debug(
+      `[HighlightLayer] Two-level highlights: ${primaryCount} primary (violet), ${secondaryCount} secondary (yellow)`,
+    );
   }, [citationUnit]);
 
   // Apply legacy highlights to matching text (word overlap)

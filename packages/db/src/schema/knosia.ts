@@ -93,10 +93,11 @@ export const knosiaAnalysisStatusEnum = pgEnum("knosia_analysis_status", [
   "failed",
 ]);
 
-export const knosiaConversationStatusEnum = pgEnum(
-  "knosia_conversation_status",
-  ["active", "archived", "shared"],
-);
+export const knosiaThreadStatusEnum = pgEnum("knosia_thread_status", [
+  "active",
+  "archived",
+  "shared",
+]);
 
 export const knosiaMessageRoleEnum = pgEnum("knosia_message_role", [
   "user",
@@ -115,6 +116,73 @@ export const knosiaMismatchStatusEnum = pgEnum("knosia_mismatch_status", [
   "reviewed",
   "resolved",
   "dismissed",
+]);
+
+// ============================================================================
+// CANVAS ENUMS
+// ============================================================================
+
+export const knosiaCanvasStatusEnum = pgEnum("knosia_canvas_status", [
+  "draft",
+  "active",
+  "archived",
+]);
+
+export const knosiaCanvasBlockTypeEnum = pgEnum("knosia_canvas_block_type", [
+  // Data visualization (delegated to LiquidRender)
+  "kpi",
+  "line_chart",
+  "bar_chart",
+  "area_chart",
+  "pie_chart",
+  "table",
+  // Canvas-native blocks
+  "hero_metric",
+  "watch_list",
+  "comparison",
+  "insight",
+  "text",
+]);
+
+// ============================================================================
+// COLLABORATION ENUMS
+// ============================================================================
+
+export const knosiaCommentTargetEnum = pgEnum("knosia_comment_target", [
+  "thread_message",
+  "canvas_block",
+  "thread",
+]);
+
+// ============================================================================
+// NOTIFICATION ENUMS
+// ============================================================================
+
+export const knosiaNotificationTypeEnum = pgEnum("knosia_notification_type", [
+  "alert", // Canvas threshold crossed
+  "mention", // @mentioned in comment
+  "share", // Thread/Canvas shared with you
+  "ai_insight", // AI found something
+  "thread_activity", // Activity on your Thread
+  "digest", // Scheduled digest
+]);
+
+export const knosiaAiInsightStatusEnum = pgEnum("knosia_ai_insight_status", [
+  "pending", // Waiting for user to see
+  "viewed", // User saw it
+  "engaged", // User clicked to investigate
+  "dismissed", // User dismissed
+  "converted", // Became a Thread
+]);
+
+export const knosiaActivityTypeEnum = pgEnum("knosia_activity_type", [
+  "thread_created",
+  "thread_shared",
+  "canvas_created",
+  "canvas_shared",
+  "canvas_updated",
+  "comment_added",
+  "insight_converted",
 ]);
 
 // ============================================================================
@@ -539,9 +607,10 @@ export const knosiaAnalysis = pgTable("knosia_analysis", {
 });
 
 /**
- * Conversations - Chat sessions
+ * Threads - Chat sessions (renamed from Conversations)
+ * Threads are persistent question-answer chains with forking and snapshot support.
  */
-export const knosiaConversation = pgTable("knosia_conversation", {
+export const knosiaThread = pgTable("knosia_thread", {
   id: text().primaryKey().$defaultFn(generateId),
   userId: text()
     .references(() => user.id, { onDelete: "cascade" })
@@ -555,7 +624,7 @@ export const knosiaConversation = pgTable("knosia_conversation", {
     timeRange?: { start?: string; end?: string };
     vocabularyFocus?: string[];
   }>(),
-  status: knosiaConversationStatusEnum().notNull().default("active"),
+  status: knosiaThreadStatusEnum().notNull().default("active"),
   sharing: jsonb().$type<{
     sharedWith?: string[];
     publicLink?: string;
@@ -566,6 +635,11 @@ export const knosiaConversation = pgTable("knosia_conversation", {
     decisionsMade?: string[];
     followUpScheduled?: string;
   }>(),
+  // NEW: Thread-specific columns
+  isAiInitiated: boolean().default(false),
+  starred: boolean().default(false),
+  parentThreadId: text(), // Self-reference for forking (FK added after table def)
+  forkedFromMessageId: text(),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
@@ -573,29 +647,39 @@ export const knosiaConversation = pgTable("knosia_conversation", {
 });
 
 /**
- * Conversation Messages - Individual messages in a conversation
+ * Thread Messages - Individual messages in a thread
+ * Enhanced with Block Trust Metadata (provenance) for transparency.
  */
-export const knosiaConversationMessage = pgTable(
-  "knosia_conversation_message",
-  {
-    id: text().primaryKey().$defaultFn(generateId),
-    conversationId: text()
-      .references(() => knosiaConversation.id, { onDelete: "cascade" })
-      .notNull(),
-    role: knosiaMessageRoleEnum().notNull(),
-    content: text().notNull(),
-    intent: text(), // causal_analysis, data_retrieval, comparison, forecast
-    grounding: jsonb().$type<string[]>(), // vocabulary item IDs
-    sqlGenerated: text(),
-    visualization: jsonb().$type<{
-      type?: string;
-      data?: unknown;
-      config?: unknown;
-    }>(),
-    confidence: real(),
-    createdAt: timestamp().notNull().defaultNow(),
-  },
-);
+export const knosiaThreadMessage = pgTable("knosia_thread_message", {
+  id: text().primaryKey().$defaultFn(generateId),
+  threadId: text()
+    .references(() => knosiaThread.id, { onDelete: "cascade" })
+    .notNull(),
+  role: knosiaMessageRoleEnum().notNull(),
+  content: text().notNull(),
+  intent: text(), // causal_analysis, data_retrieval, comparison, forecast
+  grounding: jsonb().$type<string[]>(), // vocabulary item IDs
+  sqlGenerated: text(),
+  visualization: jsonb().$type<{
+    type?: string;
+    data?: unknown;
+    config?: unknown;
+  }>(),
+  confidence: real(),
+  // NEW: Block Trust Metadata (provenance)
+  provenance: jsonb().$type<{
+    freshness: string; // "As of Dec 31, 2:30 PM"
+    sources: {
+      name: string; // "Stripe.subscriptions"
+      query?: string; // SQL preview
+    }[];
+    assumptions?: string[]; // ["USD only", "excludes refunds"]
+    confidenceLevel: "exact" | "calculated" | "estimated" | "predicted";
+    confidenceScore: number; // 0-100
+  }>(),
+  commentCount: integer().default(0),
+  createdAt: timestamp().notNull().defaultNow(),
+});
 
 // ============================================================================
 // GOVERNANCE TABLES
@@ -622,6 +706,285 @@ export const knosiaMismatchReport = pgTable("knosia_mismatch_report", {
   resolutionNotes: text(),
   createdAt: timestamp().notNull().defaultNow(),
   resolvedAt: timestamp(),
+});
+
+// ============================================================================
+// THREAD EXTENSION TABLES
+// ============================================================================
+
+/**
+ * Thread Snapshots - Frozen states of a Thread
+ */
+export const knosiaThreadSnapshot = pgTable("knosia_thread_snapshot", {
+  id: text().primaryKey().$defaultFn(generateId),
+  threadId: text()
+    .references(() => knosiaThread.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text().notNull(),
+  description: text(),
+  messageCount: integer().notNull(),
+  snapshotData: jsonb()
+    .$type<{
+      messages: unknown[];
+      context: unknown;
+    }>()
+    .notNull(),
+  createdBy: text().references(() => user.id),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+// ============================================================================
+// CANVAS TABLES
+// ============================================================================
+
+/**
+ * Canvases - Living business views
+ */
+export const knosiaCanvas = pgTable("knosia_canvas", {
+  id: text().primaryKey().$defaultFn(generateId),
+  workspaceId: text()
+    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+    .notNull(),
+  createdBy: text()
+    .references(() => user.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text().notNull(),
+  description: text(),
+  icon: text(),
+  status: knosiaCanvasStatusEnum().notNull().default("active"),
+  isAiGenerated: boolean().default(false),
+  // Layout configuration
+  layout: jsonb()
+    .$type<{
+      type: "grid" | "freeform";
+      columns?: number;
+      rows?: number;
+    }>()
+    .default({ type: "grid", columns: 12 }),
+  // Sharing
+  visibility: knosiaWorkspaceVisibilityEnum().notNull().default("private"),
+  sharedWith: jsonb().$type<string[]>().default([]),
+  // Metadata
+  lastViewedAt: timestamp(),
+  viewCount: integer().default(0),
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+/**
+ * Canvas Blocks - Individual blocks within a Canvas
+ */
+export const knosiaCanvasBlock = pgTable("knosia_canvas_block", {
+  id: text().primaryKey().$defaultFn(generateId),
+  canvasId: text()
+    .references(() => knosiaCanvas.id, { onDelete: "cascade" })
+    .notNull(),
+  type: knosiaCanvasBlockTypeEnum().notNull(),
+  title: text(),
+  // Position (grid-based)
+  position: jsonb()
+    .$type<{
+      x: number; // Column start (0-based)
+      y: number; // Row start (0-based)
+      width: number; // Columns span
+      height: number; // Rows span
+    }>()
+    .notNull(),
+  // Block configuration
+  config: jsonb().$type<{
+    // For data blocks
+    metric?: string; // Vocabulary item slug
+    dimensions?: string[]; // Group by
+    timeRange?: string; // Last 7 days, MTD, etc.
+    comparison?: string; // WoW, MoM, etc.
+    // For hero_metric
+    target?: number;
+    targetLabel?: string;
+    // For watch_list
+    maxItems?: number;
+    severityFilter?: string[];
+    // For LiquidRender delegation
+    liquidRenderType?: string;
+    liquidRenderConfig?: unknown;
+  }>(),
+  // Data binding
+  dataSource: jsonb().$type<{
+    type: "vocabulary" | "query" | "static";
+    vocabularyId?: string;
+    sql?: string;
+    staticData?: unknown;
+  }>(),
+  // Cache
+  cachedData: jsonb(),
+  cachedAt: timestamp(),
+  // Metadata
+  sortOrder: integer().default(0),
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+/**
+ * Canvas Alerts - Threshold-based notifications for Canvas blocks
+ */
+export const knosiaCanvasAlert = pgTable("knosia_canvas_alert", {
+  id: text().primaryKey().$defaultFn(generateId),
+  canvasId: text()
+    .references(() => knosiaCanvas.id, { onDelete: "cascade" })
+    .notNull(),
+  blockId: text().references(() => knosiaCanvasBlock.id, { onDelete: "cascade" }),
+  name: text().notNull(),
+  condition: jsonb()
+    .$type<{
+      metric: string;
+      operator: "gt" | "lt" | "eq" | "gte" | "lte" | "change_gt" | "change_lt";
+      threshold: number;
+      timeWindow?: string;
+    }>()
+    .notNull(),
+  channels: jsonb().$type<("in_app" | "email" | "slack")[]>().default(["in_app"]),
+  enabled: boolean().default(true),
+  lastTriggeredAt: timestamp(),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+// ============================================================================
+// COLLABORATION TABLES
+// ============================================================================
+
+/**
+ * Comments - Annotations on messages, blocks, or threads
+ */
+export const knosiaComment = pgTable("knosia_comment", {
+  id: text().primaryKey().$defaultFn(generateId),
+  targetType: knosiaCommentTargetEnum().notNull(),
+  targetId: text().notNull(), // ID of the target (message, block, thread)
+  userId: text()
+    .references(() => user.id, { onDelete: "cascade" })
+    .notNull(),
+  content: text().notNull(),
+  mentions: jsonb().$type<string[]>().default([]), // User IDs mentioned
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+/**
+ * Activity - Team activity feed
+ */
+export const knosiaActivity = pgTable("knosia_activity", {
+  id: text().primaryKey().$defaultFn(generateId),
+  workspaceId: text()
+    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: text()
+    .references(() => user.id, { onDelete: "cascade" })
+    .notNull(),
+  type: knosiaActivityTypeEnum().notNull(),
+  // Target
+  targetType: text().notNull(), // "thread", "canvas", etc.
+  targetId: text().notNull(),
+  targetName: text(),
+  // Details
+  metadata: jsonb().$type<{
+    sharedWith?: string[];
+    oldValue?: unknown;
+    newValue?: unknown;
+  }>(),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+// ============================================================================
+// NOTIFICATION TABLES
+// ============================================================================
+
+/**
+ * Notifications - User notifications
+ */
+export const knosiaNotification = pgTable("knosia_notification", {
+  id: text().primaryKey().$defaultFn(generateId),
+  userId: text()
+    .references(() => user.id, { onDelete: "cascade" })
+    .notNull(),
+  workspaceId: text().references(() => knosiaWorkspace.id, { onDelete: "cascade" }),
+  type: knosiaNotificationTypeEnum().notNull(),
+  title: text().notNull(),
+  body: text(),
+  // Link to source
+  sourceType: text(), // "thread", "canvas", "alert", etc.
+  sourceId: text(),
+  // Status
+  read: boolean().default(false),
+  dismissed: boolean().default(false),
+  // Actions
+  actions: jsonb().$type<{
+    primary?: { label: string; href: string };
+    secondary?: { label: string; href: string };
+  }>(),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+/**
+ * Digests - Scheduled notification bundles
+ */
+export const knosiaDigest = pgTable("knosia_digest", {
+  id: text().primaryKey().$defaultFn(generateId),
+  userId: text()
+    .references(() => user.id, { onDelete: "cascade" })
+    .notNull(),
+  workspaceId: text()
+    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text().notNull(),
+  schedule: text().notNull(), // Cron expression
+  channels: jsonb().$type<("email" | "slack")[]>().default(["email"]),
+  // What to include
+  include: jsonb().$type<{
+    canvasIds?: string[];
+    metrics?: string[];
+    includeAlerts?: boolean;
+    includeAiInsights?: boolean;
+  }>(),
+  enabled: boolean().default(true),
+  lastSentAt: timestamp(),
+  nextSendAt: timestamp(),
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+/**
+ * AI Insights - Proactive AI-generated observations
+ */
+export const knosiaAiInsight = pgTable("knosia_ai_insight", {
+  id: text().primaryKey().$defaultFn(generateId),
+  workspaceId: text()
+    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+    .notNull(),
+  targetUserId: text().references(() => user.id), // null = all workspace users
+  // Content
+  headline: text().notNull(),
+  explanation: text().notNull(),
+  evidence: jsonb().$type<{
+    metric: string;
+    currentValue: number;
+    previousValue?: number;
+    changePercent?: number;
+    pattern?: string;
+  }>(),
+  // Classification
+  severity: text().default("info"), // info, warning, critical
+  category: text(), // anomaly, trend, pattern, correlation
+  // User interaction
+  status: knosiaAiInsightStatusEnum().notNull().default("pending"),
+  threadId: text().references(() => knosiaThread.id), // If converted to Thread
+  // Metadata
+  surfacedAt: timestamp().notNull().defaultNow(),
+  viewedAt: timestamp(),
+  engagedAt: timestamp(),
+  dismissedAt: timestamp(),
 });
 
 // ============================================================================
@@ -771,32 +1134,23 @@ export const updateKnosiaAnalysisSchema = createUpdateSchema(knosiaAnalysis);
 export type InsertKnosiaAnalysis = z.infer<typeof insertKnosiaAnalysisSchema>;
 export type SelectKnosiaAnalysis = z.infer<typeof selectKnosiaAnalysisSchema>;
 
-// Conversations
-export const insertKnosiaConversationSchema =
-  createInsertSchema(knosiaConversation);
-export const selectKnosiaConversationSchema =
-  createSelectSchema(knosiaConversation);
-export const updateKnosiaConversationSchema =
-  createUpdateSchema(knosiaConversation);
-export type InsertKnosiaConversation = z.infer<
-  typeof insertKnosiaConversationSchema
->;
-export type SelectKnosiaConversation = z.infer<
-  typeof selectKnosiaConversationSchema
->;
+// Threads (renamed from Conversations)
+export const insertKnosiaThreadSchema = createInsertSchema(knosiaThread);
+export const selectKnosiaThreadSchema = createSelectSchema(knosiaThread);
+export const updateKnosiaThreadSchema = createUpdateSchema(knosiaThread);
+export type InsertKnosiaThread = z.infer<typeof insertKnosiaThreadSchema>;
+export type SelectKnosiaThread = z.infer<typeof selectKnosiaThreadSchema>;
 
-// Conversation Messages
-export const insertKnosiaConversationMessageSchema = createInsertSchema(
-  knosiaConversationMessage,
-);
-export const selectKnosiaConversationMessageSchema = createSelectSchema(
-  knosiaConversationMessage,
-);
-export type InsertKnosiaConversationMessage = z.infer<
-  typeof insertKnosiaConversationMessageSchema
+// Thread Messages (renamed from Conversation Messages)
+export const insertKnosiaThreadMessageSchema =
+  createInsertSchema(knosiaThreadMessage);
+export const selectKnosiaThreadMessageSchema =
+  createSelectSchema(knosiaThreadMessage);
+export type InsertKnosiaThreadMessage = z.infer<
+  typeof insertKnosiaThreadMessageSchema
 >;
-export type SelectKnosiaConversationMessage = z.infer<
-  typeof selectKnosiaConversationMessageSchema
+export type SelectKnosiaThreadMessage = z.infer<
+  typeof selectKnosiaThreadMessageSchema
 >;
 
 // Workspace Connections
@@ -826,3 +1180,91 @@ export type InsertKnosiaMismatchReport = z.infer<
 export type SelectKnosiaMismatchReport = z.infer<
   typeof selectKnosiaMismatchReportSchema
 >;
+
+// Thread Snapshots
+export const insertKnosiaThreadSnapshotSchema =
+  createInsertSchema(knosiaThreadSnapshot);
+export const selectKnosiaThreadSnapshotSchema =
+  createSelectSchema(knosiaThreadSnapshot);
+export type InsertKnosiaThreadSnapshot = z.infer<
+  typeof insertKnosiaThreadSnapshotSchema
+>;
+export type SelectKnosiaThreadSnapshot = z.infer<
+  typeof selectKnosiaThreadSnapshotSchema
+>;
+
+// Canvases
+export const insertKnosiaCanvasSchema = createInsertSchema(knosiaCanvas);
+export const selectKnosiaCanvasSchema = createSelectSchema(knosiaCanvas);
+export const updateKnosiaCanvasSchema = createUpdateSchema(knosiaCanvas);
+export type InsertKnosiaCanvas = z.infer<typeof insertKnosiaCanvasSchema>;
+export type SelectKnosiaCanvas = z.infer<typeof selectKnosiaCanvasSchema>;
+
+// Canvas Blocks
+export const insertKnosiaCanvasBlockSchema =
+  createInsertSchema(knosiaCanvasBlock);
+export const selectKnosiaCanvasBlockSchema =
+  createSelectSchema(knosiaCanvasBlock);
+export const updateKnosiaCanvasBlockSchema =
+  createUpdateSchema(knosiaCanvasBlock);
+export type InsertKnosiaCanvasBlock = z.infer<
+  typeof insertKnosiaCanvasBlockSchema
+>;
+export type SelectKnosiaCanvasBlock = z.infer<
+  typeof selectKnosiaCanvasBlockSchema
+>;
+
+// Canvas Alerts
+export const insertKnosiaCanvasAlertSchema =
+  createInsertSchema(knosiaCanvasAlert);
+export const selectKnosiaCanvasAlertSchema =
+  createSelectSchema(knosiaCanvasAlert);
+export const updateKnosiaCanvasAlertSchema =
+  createUpdateSchema(knosiaCanvasAlert);
+export type InsertKnosiaCanvasAlert = z.infer<
+  typeof insertKnosiaCanvasAlertSchema
+>;
+export type SelectKnosiaCanvasAlert = z.infer<
+  typeof selectKnosiaCanvasAlertSchema
+>;
+
+// Comments
+export const insertKnosiaCommentSchema = createInsertSchema(knosiaComment);
+export const selectKnosiaCommentSchema = createSelectSchema(knosiaComment);
+export const updateKnosiaCommentSchema = createUpdateSchema(knosiaComment);
+export type InsertKnosiaComment = z.infer<typeof insertKnosiaCommentSchema>;
+export type SelectKnosiaComment = z.infer<typeof selectKnosiaCommentSchema>;
+
+// Activity
+export const insertKnosiaActivitySchema = createInsertSchema(knosiaActivity);
+export const selectKnosiaActivitySchema = createSelectSchema(knosiaActivity);
+export type InsertKnosiaActivity = z.infer<typeof insertKnosiaActivitySchema>;
+export type SelectKnosiaActivity = z.infer<typeof selectKnosiaActivitySchema>;
+
+// Notifications
+export const insertKnosiaNotificationSchema =
+  createInsertSchema(knosiaNotification);
+export const selectKnosiaNotificationSchema =
+  createSelectSchema(knosiaNotification);
+export const updateKnosiaNotificationSchema =
+  createUpdateSchema(knosiaNotification);
+export type InsertKnosiaNotification = z.infer<
+  typeof insertKnosiaNotificationSchema
+>;
+export type SelectKnosiaNotification = z.infer<
+  typeof selectKnosiaNotificationSchema
+>;
+
+// Digests
+export const insertKnosiaDigestSchema = createInsertSchema(knosiaDigest);
+export const selectKnosiaDigestSchema = createSelectSchema(knosiaDigest);
+export const updateKnosiaDigestSchema = createUpdateSchema(knosiaDigest);
+export type InsertKnosiaDigest = z.infer<typeof insertKnosiaDigestSchema>;
+export type SelectKnosiaDigest = z.infer<typeof selectKnosiaDigestSchema>;
+
+// AI Insights
+export const insertKnosiaAiInsightSchema = createInsertSchema(knosiaAiInsight);
+export const selectKnosiaAiInsightSchema = createSelectSchema(knosiaAiInsight);
+export const updateKnosiaAiInsightSchema = createUpdateSchema(knosiaAiInsight);
+export type InsertKnosiaAiInsight = z.infer<typeof insertKnosiaAiInsightSchema>;
+export type SelectKnosiaAiInsight = z.infer<typeof selectKnosiaAiInsightSchema>;

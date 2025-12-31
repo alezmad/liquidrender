@@ -194,6 +194,18 @@ workflows:
     current_wave: 0
     total_tasks: 9
     completed_tasks: 0
+  WF-0030:
+    name: Knosia Vision Implementation
+    dirname: WF-0030-knosia-vision
+    location: active
+    status: pending
+    created_at: '2025-12-31T13:52:20.642957'
+    updated_at: '2025-12-31T13:52:20.642957'
+    started_at: ''
+    completed_at: ''
+    current_wave: 0
+    total_tasks: 14
+    completed_tasks: 0
 WF-0018:
   name: Knosia LiquidConnect Integration
   dirname: WF-0018-knosia-liquidconnect

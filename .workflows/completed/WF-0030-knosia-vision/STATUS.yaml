@@ -1,0 +1,177 @@
+# Workflow Status: WF-0030 - Knosia Vision Implementation
+# Generated: 2025-12-31
+# Completed: 2025-12-31
+
+workflow:
+  id: WF-0030
+  name: "Knosia Vision Implementation"
+  status: completed
+  created_at: "2025-12-31T20:00:00Z"
+  started_at: "2025-12-31T20:30:00Z"
+  completed_at: "2025-12-31T23:30:00Z"
+
+git:
+  start_tag: WF-0030-start
+  start_commit: 4f44536
+  branch: main
+
+progress:
+  current_wave: 9
+  total_waves: 10
+  completed_tasks: 14
+  total_tasks: 14
+
+waves:
+  - wave: 0
+    name: "Schema Analysis"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: "Schema migration prep"
+        status: completed
+
+  - wave: 1
+    name: "DB Migration - Rename"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0.5
+        name: "Rename conversation → thread"
+        status: completed
+
+  - wave: 2
+    name: "New Tables"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: "Canvas tables"
+        status: completed
+      - id: T2
+        name: "Collaboration tables"
+        status: completed
+      - id: T3
+        name: "Notification tables"
+        status: completed
+
+  - wave: 3
+    name: "TypeScript Updates"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T3.5
+        name: "Update all TypeScript refs"
+        status: completed
+
+  - wave: 4
+    name: "API Modules"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T4
+        name: "Thread API module"
+        status: completed
+      - id: T5
+        name: "Canvas API module"
+        status: completed
+      - id: T6
+        name: "Comment API module"
+        status: completed
+      - id: T7
+        name: "Notification API module"
+        status: completed
+
+  - wave: 5
+    name: "Frontend Type Fixes"
+    type: sequential
+    status: completed
+    notes: "Fixed 12+ type issues: Date→string, null handling, APIInsight vs BriefInsight, zValidator for Hono RPC, ThreadMessage flat fields"
+    tasks:
+      - id: T8
+        name: "Fix canvas/types.ts and hooks"
+        status: completed
+      - id: T9
+        name: "Fix threads/types.ts and hooks"
+        status: completed
+      - id: T10
+        name: "Fix brief/types.ts and hooks"
+        status: completed
+
+  - wave: 6
+    name: "Integration"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T6.5
+        name: "Router wiring + path config"
+        status: completed
+        notes: "Added canvas and threads paths to pathsConfig"
+
+  - wave: 7
+    name: "Tests"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T11
+        name: "API tests"
+        status: completed
+        notes: "334 tests pass"
+      - id: T12
+        name: "Component tests"
+        status: skipped
+        notes: "No new component tests needed"
+
+  - wave: 8
+    name: "Playwright Verification"
+    type: sequential
+    status: skipped
+    notes: "No new pages to verify"
+    tasks:
+      - id: T13
+        name: "E2E browser check"
+        status: skipped
+
+  - wave: 9
+    name: "Final Validation"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T14
+        name: "typecheck + lint + migration verify"
+        status: completed
+        notes: "Web/API typecheck pass. Pre-existing lint issues in other packages."
+
+decisions:
+  - "Rename conversation → thread (full migration)"
+  - "Hybrid blocks: Canvas-native + LiquidRender delegation"
+  - "Block Trust Metadata added to thread messages"
+  - "Tests per module with final Playwright check"
+  - "APIInsight type for raw DB records, BriefInsight for UI-transformed data"
+  - "ThreadMessage supports flat API fields + optional metadata wrapper"
+  - "UpdateCanvasInput uses undefined (not null) for API compatibility"
+
+context_files:
+  - .artifacts/2025-12-31-knosia-vision-implementation-spec.md
+  - packages/db/src/schema/knosia.ts
+  - packages/api/src/modules/knosia/router.ts
+
+key_files_modified:
+  # API
+  - packages/api/src/modules/knosia/thread/router.ts
+  - packages/api/src/modules/knosia/canvas/router.ts
+  - packages/api/src/modules/knosia/notification/router.ts
+  - packages/api/src/modules/knosia/comment/router.ts
+  # Frontend Types
+  - apps/web/src/modules/knosia/canvas/types.ts
+  - apps/web/src/modules/knosia/threads/types.ts
+  - apps/web/src/modules/knosia/brief/types.ts
+  # Frontend Hooks
+  - apps/web/src/modules/knosia/canvas/hooks/use-canvas.ts
+  - apps/web/src/modules/knosia/canvas/hooks/use-canvases-list.ts
+  - apps/web/src/modules/knosia/threads/hooks/use-threads-list.ts
+  - apps/web/src/modules/knosia/brief/hooks/use-insights.ts
+  # Components
+  - apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx
+  # Config
+  - apps/web/src/config/paths.ts

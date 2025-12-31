@@ -44,13 +44,23 @@ const pathsConfig = {
     ready: `${ONBOARDING_PREFIX}/ready`,
   },
   knosia: {
-    index: `${DASHBOARD_PREFIX}/knosia`,
-    briefing: `${DASHBOARD_PREFIX}/knosia/briefing`,
-    ask: `${DASHBOARD_PREFIX}/knosia/ask`,
-    page: (slug: string) => `${DASHBOARD_PREFIX}/knosia/p/${slug}`,
-    connections: `${DASHBOARD_PREFIX}/knosia/connections`,
-    vocabulary: `${DASHBOARD_PREFIX}/knosia/vocabulary`,
-    settings: `${DASHBOARD_PREFIX}/knosia/settings`,
+    index: DASHBOARD_PREFIX,
+    briefing: DASHBOARD_PREFIX,
+    ask: "/ask",
+    page: (slug: string) => `${DASHBOARD_PREFIX}/p/${slug}`,
+    connections: `${DASHBOARD_PREFIX}/connections`,
+    vocabulary: `${DASHBOARD_PREFIX}/vocabulary`,
+    settings: `${DASHBOARD_PREFIX}/settings`,
+    // Canvas routes
+    canvas: {
+      index: `${DASHBOARD_PREFIX}/canvas`,
+      detail: (id: string) => `${DASHBOARD_PREFIX}/canvas/${id}`,
+    },
+    // Thread routes
+    threads: {
+      index: `${DASHBOARD_PREFIX}/threads`,
+      detail: (id: string) => `${DASHBOARD_PREFIX}/threads/${id}`,
+    },
   },
   admin: {
     index: ADMIN_PREFIX,

@@ -1,6 +1,10 @@
 export { knosiaRouter } from "./router";
+export * from "./activity";
 export * from "./briefing";
+export * from "./canvas";
+export * from "./comment";
 export * from "./connections";
-export * from "./conversation";
+export * from "./notification";
+export * from "./thread";
 export * from "./preferences";
 export * from "./vocabulary";

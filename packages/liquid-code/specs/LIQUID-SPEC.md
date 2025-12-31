@@ -22,9 +22,10 @@
 Program     := Signal* Statement+
 Statement   := Block | Layer | Mutation
 
-Block       := Type Binding* Modifier* Children?
+Block       := Type Binding* Modifier* Children? | Placeholder
 Type        := Index | Code
 Binding     := Index | Field | Expr | Literal
+Placeholder := '_'
 Modifier    := Layout | Signal | Style | State | Action
 Children    := '[' (Block ',')* Block? ']'
 
@@ -83,6 +84,20 @@ Two-character codes for additional types:
 | `Pp` | popover | Popover/dropdown |
 | `Tl` | tooltip | Tooltip |
 | `Ac` | accordion | Collapsible sections |
+
+**Grid Options:**
+| Syntax | Description | Example |
+|--------|-------------|---------|
+| `Gd N` | Fixed N columns (1-9) | `Gd 3 [Cd Cd Cd]` |
+| `Gd ~fit` | Auto-fit responsive | `Gd ~fit [Cd Cd Cd]` |
+| `Gd ~fill` | Auto-fill responsive | `Gd ~fill [...]` |
+| `Gd ~N` | Custom min-width (px) | `Gd ~200 [...]` |
+| `%gap` | Gap size modifier | `Gd 3 %lg [...]` |
+| `^align` | Last row alignment | `Gd 3 ^c [...]` |
+| `_` | Empty cell placeholder | `Gd 3 [Cd _ Cd]` |
+
+Gap values: `%xs` (4px), `%sm` (8px), `%md` (16px), `%lg` (24px), `%xl` (32px)
+Alignment: `^s` (start), `^c` (center), `^e` (end), `^sb` (space-between), `^sa` (space-around)
 
 **Data Display:**
 | Code | Type | Description |
@@ -194,10 +209,13 @@ Bt "Submit"                  # Button label
 ^f    # Fixed size
 ^s    # Shrink
 ^g    # Grow
-^c    # Collapse
+^c    # Collapse (general) / Center (grid align)
 ^ms   # Masonry
 ^sp   # Split
 ^st   # Sticky
+^e    # End (grid last-row alignment)
+^sb   # Space-between (grid last-row alignment)
+^sa   # Space-around (grid last-row alignment)
 ```
 
 **Span:** `*` controls width
@@ -461,7 +479,7 @@ Sp :history *7              # 7-point sparkline
 ### §10.4 E-commerce Card Grid
 ```
 @cart
-Gd 4 :products [
+Gd 4 %md :products [
   8 [
     Im :.image
     Tx :.name %lg
@@ -469,6 +487,15 @@ Gd 4 :products [
     Rt :.rating *5
     Bt "Add to Cart" >cart=:.id
   ]
+]
+
+# Responsive grid with custom min-width
+Gd ~250 %lg :products [Cd :.]
+
+# Asymmetric layout with empty cells
+Gd 3 ^c [
+  Cd "Featured", _, _
+  Cd "A", Cd "B", Cd "C"
 ]
 ```
 

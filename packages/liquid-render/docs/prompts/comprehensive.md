@@ -21,6 +21,19 @@ LiquidCode is a compact, token-efficient DSL for building dashboards, forms, cha
 ### Layout & Structure
 `Gd` Grid | `Sk` Stack | `Sp` Split | `Dw` Drawer | `Sh` Sheet | `Pp` Popover | `Tl` Tooltip | `Ac` Accordion
 
+### Grid Layout Options
+| Syntax | Description | Example |
+|--------|-------------|---------|
+| `Gd N` | Fixed N columns (1-9) | `Gd 3 [Cd Cd Cd]` |
+| `Gd ~fit` | Auto-fit responsive | `Gd ~fit [Cd Cd Cd Cd]` |
+| `Gd ~fill` | Auto-fill responsive | `Gd ~fill [...]` |
+| `Gd ~200` | Custom min-width (px) | `Gd ~200 [...]` |
+| `%gap` | Gap size (xs/sm/md/lg/xl) | `Gd 3 %lg [...]` |
+| `^align` | Last row alignment | `Gd 3 ^c [...]` |
+| `_` | Empty cell placeholder | `Gd 3 [Cd _ Cd]` |
+
+Alignment values: `^c` (center), `^e` (end), `^s` (start), `^sb` (space-between), `^sa` (space-around)
+
 ### Data Display
 `Tx` Text | `Hd` Heading | `Ic` Icon | `Im` Image | `Av` Avatar | `Tg` Tag/Badge | `Pg` Progress | `Gn` Gauge | `Rt` Rating | `Sl` Sparkline
 
@@ -281,6 +294,26 @@ Tb :products [
     Se :status [:active :inactive :discontinued]
     Bt "Cancel" /<, Bt "Save" !submit #primary
   ]
+]
+```
+
+### Grid Layouts
+```liquid
+# Fixed 3-column grid
+Gd 3 [
+  Kp :revenue, Kp :orders, Kp :customers
+  Ln :trend *f, Br :breakdown *f, Pi :share *f
+]
+
+# Responsive auto-fit with custom min-width
+Gd ~200 %lg [
+  Cd :products
+]
+
+# Grid with empty placeholder for asymmetric layouts
+Gd 3 ^c [
+  Cd "A", Cd "B", Cd "C"
+  Cd "D", _, Cd "E"
 ]
 ```
 

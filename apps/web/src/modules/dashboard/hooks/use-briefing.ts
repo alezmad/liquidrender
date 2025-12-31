@@ -27,7 +27,8 @@ async function fetchBriefing(options: UseBriefingOptions): Promise<BriefingRespo
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error((error as { error?: string }).error ?? "Failed to fetch briefing");
+    const errorBody = error as { message?: string; error?: string; code?: string };
+    throw new Error(errorBody.message ?? errorBody.error ?? "Failed to fetch briefing");
   }
 
   return response.json() as Promise<BriefingResponse>;

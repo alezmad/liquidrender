@@ -21,7 +21,11 @@ export class HttpException extends Error {
 
 export const getStatusCode = (e: unknown) => {
   if (typeof e === "object" && e && "status" in e) {
-    return Number(e.status);
+    const status = Number(e.status);
+    // Guard against NaN or invalid status codes
+    if (!Number.isNaN(status) && status >= 200 && status <= 599) {
+      return status;
+    }
   }
 
   return HttpStatusCode.INTERNAL_SERVER_ERROR;

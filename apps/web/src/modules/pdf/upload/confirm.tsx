@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ import { Icons } from "@turbostarter/ui-web/icons";
 import { Input } from "@turbostarter/ui-web/input";
 
 import { pathsConfig } from "~/config/paths";
+import { authClient } from "~/lib/auth/client";
 import { useAIError } from "~/modules/common/hooks/use-ai-error";
 
 import { pdf } from "../lib/api";
@@ -51,6 +53,7 @@ interface PdfUploadConfirmProps {
 export const PdfUploadConfirm = ({ file, onCancel }: PdfUploadConfirmProps) => {
   const { onError } = useAIError();
   const { t } = useTranslation(["common", "ai"]);
+  const { data: session, isPending: isSessionLoading } = authClient.useSession();
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,6 +73,31 @@ export const PdfUploadConfirm = ({ file, onCancel }: PdfUploadConfirmProps) => {
     },
     onError,
   });
+
+  // Show sign-in prompt for non-authenticated users
+  if (!isSessionLoading && !session?.user) {
+    return (
+      <Card className="relative z-10 flex w-full max-w-xl flex-col justify-center gap-3 overflow-hidden">
+        <CardHeader className="flex flex-col items-center gap-1 py-8">
+          <Icons.Lock className="mb-2 size-10 text-muted-foreground" />
+          <CardTitle>{t("pdf.upload.signIn.title")}</CardTitle>
+          <CardDescription className="text-center">
+            {t("pdf.upload.signIn.description")}
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex justify-center gap-2 pb-8">
+          <Button variant="outline" onClick={onCancel}>
+            {t("cancel")}
+          </Button>
+          <Button asChild>
+            <Link href={pathsConfig.auth.login}>
+              {t("pdf.upload.signIn.cta")}
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   const data = [
     {

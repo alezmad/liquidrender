@@ -1,7 +1,7 @@
 import { and, desc, eq, count } from "@turbostarter/db";
 import {
-  knosiaConversation,
-  knosiaConversationMessage,
+  knosiaThread,
+  knosiaThreadMessage,
   knosiaWorkspace,
   knosiaUserPreference,
   knosiaConnection,
@@ -14,18 +14,17 @@ import {
   compile,
   emit,
   type CompiledVocabulary,
-  type SemanticLayer,
 } from "@repo/liquid-connect";
 import { PostgresAdapter } from "@repo/liquid-connect/uvb";
 
 import { buildSemanticLayer } from "../shared/semantic";
 
 import type {
-  ConversationQueryInput,
-  ConversationResponse,
-  GetConversationInput,
-  GetConversationsInput,
-  GetConversationMessagesInput,
+  ThreadQueryInput,
+  ThreadResponse,
+  GetThreadInput,
+  GetThreadsInput,
+  GetThreadMessagesInput,
   ClarifyInput,
 } from "./schemas";
 
@@ -40,7 +39,7 @@ import type {
 function generateMockVisualizationResponse(
   queryId: string,
   query: string,
-): ConversationResponse {
+): ThreadResponse {
   // Detect query intent from keywords
   const queryLower = query.toLowerCase();
   const isComparison = queryLower.includes("compare") || queryLower.includes("vs");
@@ -144,7 +143,7 @@ function generateMockChartData(type: "bar" | "line" | "table" | "kpi" | "pie"): 
 function generateMockClarificationResponse(
   queryId: string,
   query: string,
-): ConversationResponse {
+): ThreadResponse {
   return {
     queryId,
     type: "clarification",
@@ -193,33 +192,33 @@ function generateMockClarificationResponse(
  * 6. Return visualization response
  */
 export const processQuery = async (
-  input: ConversationQueryInput & { userId: string },
-): Promise<{ conversation: typeof knosiaConversation.$inferSelect; response: ConversationResponse }> => {
+  input: ThreadQueryInput & { userId: string },
+): Promise<{ thread: typeof knosiaThread.$inferSelect; response: ThreadResponse }> => {
   const queryId = crypto.randomUUID();
 
-  // Create or get existing conversation
-  let conversationId = input.context?.previousQueryId;
-  let conversation: typeof knosiaConversation.$inferSelect | undefined;
+  // Create or get existing thread
+  let existingThreadId = input.context?.previousQueryId;
+  let thread: typeof knosiaThread.$inferSelect | undefined;
 
-  if (conversationId) {
-    // Get existing conversation
+  if (existingThreadId) {
+    // Get existing thread
     const existing = await db
       .select()
-      .from(knosiaConversation)
+      .from(knosiaThread)
       .where(
         and(
-          eq(knosiaConversation.id, conversationId),
-          eq(knosiaConversation.userId, input.userId),
+          eq(knosiaThread.id, existingThreadId),
+          eq(knosiaThread.userId, input.userId),
         ),
       )
       .limit(1);
-    conversation = existing[0];
+    thread = existing[0];
   }
 
-  if (!conversation) {
-    // Create new conversation
+  if (!thread) {
+    // Create new thread
     const result = await db
-      .insert(knosiaConversation)
+      .insert(knosiaThread)
       .values({
         userId: input.userId,
         workspaceId: input.workspaceId,
@@ -230,12 +229,12 @@ export const processQuery = async (
         status: "active",
       })
       .returning();
-    conversation = result[0]!;
+    thread = result[0]!;
   }
 
   // Store user message
-  await db.insert(knosiaConversationMessage).values({
-    conversationId: conversation.id,
+  await db.insert(knosiaThreadMessage).values({
+    threadId: thread.id,
     role: "user",
     content: input.query,
   });
@@ -249,8 +248,8 @@ export const processQuery = async (
   );
 
   // Store assistant message
-  await db.insert(knosiaConversationMessage).values({
-    conversationId: conversation.id,
+  await db.insert(knosiaThreadMessage).values({
+    threadId: thread.id,
     role: "assistant",
     content: response.type === "visualization"
       ? response.visualization?.title ?? "Visualization generated"
@@ -260,20 +259,20 @@ export const processQuery = async (
       ? response.error?.message ?? "Error occurred"
       : "Response generated",
     intent: response.type,
-    visualization: response.visualization as typeof knosiaConversationMessage.$inferInsert.visualization,
+    visualization: response.visualization as typeof knosiaThreadMessage.$inferInsert.visualization,
     grounding: response.visualization?.grounding?.path?.map(p => p.vocabularyItemId),
     sqlGenerated: response.visualization?.sql,
   });
 
-  // Update conversation title if this is the first query
+  // Update thread title if this is the first query
   if (!input.context?.previousQueryId) {
     await db
-      .update(knosiaConversation)
+      .update(knosiaThread)
       .set({ title: input.query.slice(0, 100) })
-      .where(eq(knosiaConversation.id, conversation.id));
+      .where(eq(knosiaThread.id, thread.id));
   }
 
-  return { conversation, response };
+  return { thread, response };
 };
 
 /**
@@ -284,7 +283,7 @@ async function processWithQueryEngine(
   query: string,
   workspaceId: string,
   userId: string,
-): Promise<ConversationResponse> {
+): Promise<ThreadResponse> {
   try {
     // 1. Load workspace with compiled vocabulary
     const workspace = await db.query.knosiaWorkspace.findFirst({
@@ -553,7 +552,7 @@ function generateFollowUpSuggestions(
  */
 export const processClarification = async (
   input: ClarifyInput & { userId: string; workspaceId: string },
-): Promise<ConversationResponse> => {
+): Promise<ThreadResponse> => {
   const queryId = crypto.randomUUID();
 
   // In a real implementation, this would:
@@ -603,17 +602,17 @@ export const processClarification = async (
 };
 
 /**
- * Get a conversation by ID.
+ * Get a thread by ID.
  */
-export const getConversation = async (input: GetConversationInput) => {
+export const getThread = async (input: GetThreadInput) => {
   const result = await db
     .select()
-    .from(knosiaConversation)
+    .from(knosiaThread)
     .where(
       and(
-        eq(knosiaConversation.id, input.id),
-        eq(knosiaConversation.userId, input.userId),
-        eq(knosiaConversation.workspaceId, input.workspaceId),
+        eq(knosiaThread.id, input.id),
+        eq(knosiaThread.userId, input.userId),
+        eq(knosiaThread.workspaceId, input.workspaceId),
       ),
     )
     .limit(1);
@@ -622,28 +621,28 @@ export const getConversation = async (input: GetConversationInput) => {
 };
 
 /**
- * Get conversations for a user in a workspace.
+ * Get threads for a user in a workspace.
  */
-export const getConversations = async (input: GetConversationsInput) => {
+export const getThreads = async (input: GetThreadsInput) => {
   const offset = (input.page - 1) * input.perPage;
 
   const where = and(
-    eq(knosiaConversation.userId, input.userId),
-    eq(knosiaConversation.workspaceId, input.workspaceId),
-    input.status ? eq(knosiaConversation.status, input.status) : undefined,
+    eq(knosiaThread.userId, input.userId),
+    eq(knosiaThread.workspaceId, input.workspaceId),
+    input.status ? eq(knosiaThread.status, input.status) : undefined,
   );
 
   const data = await db
     .select()
-    .from(knosiaConversation)
+    .from(knosiaThread)
     .where(where)
-    .orderBy(desc(knosiaConversation.updatedAt))
+    .orderBy(desc(knosiaThread.updatedAt))
     .limit(input.perPage)
     .offset(offset);
 
   const total = await db
     .select({ count: count() })
-    .from(knosiaConversation)
+    .from(knosiaThread)
     .where(where)
     .then((res) => res[0]?.count ?? 0);
 
@@ -651,30 +650,30 @@ export const getConversations = async (input: GetConversationsInput) => {
 };
 
 /**
- * Get messages for a conversation.
+ * Get messages for a thread.
  */
-export const getConversationMessages = async (input: GetConversationMessagesInput) => {
-  // First verify user has access to this conversation
-  const conversation = await db
+export const getThreadMessages = async (input: GetThreadMessagesInput) => {
+  // First verify user has access to this thread
+  const thread = await db
     .select()
-    .from(knosiaConversation)
+    .from(knosiaThread)
     .where(
       and(
-        eq(knosiaConversation.id, input.conversationId),
-        eq(knosiaConversation.userId, input.userId),
+        eq(knosiaThread.id, input.threadId),
+        eq(knosiaThread.userId, input.userId),
       ),
     )
     .limit(1);
 
-  if (!conversation[0]) {
+  if (!thread[0]) {
     return null;
   }
 
   const messages = await db
     .select()
-    .from(knosiaConversationMessage)
-    .where(eq(knosiaConversationMessage.conversationId, input.conversationId))
-    .orderBy(knosiaConversationMessage.createdAt)
+    .from(knosiaThreadMessage)
+    .where(eq(knosiaThreadMessage.threadId, input.threadId))
+    .orderBy(knosiaThreadMessage.createdAt)
     .limit(input.limit)
     .offset(input.offset);
 
@@ -682,17 +681,17 @@ export const getConversationMessages = async (input: GetConversationMessagesInpu
 };
 
 /**
- * Archive a conversation.
+ * Archive a thread.
  */
-export const archiveConversation = async (input: GetConversationInput) => {
+export const archiveThread = async (input: GetThreadInput) => {
   const result = await db
-    .update(knosiaConversation)
+    .update(knosiaThread)
     .set({ status: "archived" })
     .where(
       and(
-        eq(knosiaConversation.id, input.id),
-        eq(knosiaConversation.userId, input.userId),
-        eq(knosiaConversation.workspaceId, input.workspaceId),
+        eq(knosiaThread.id, input.id),
+        eq(knosiaThread.userId, input.userId),
+        eq(knosiaThread.workspaceId, input.workspaceId),
       ),
     )
     .returning();
@@ -701,16 +700,16 @@ export const archiveConversation = async (input: GetConversationInput) => {
 };
 
 /**
- * Delete a conversation and its messages.
+ * Delete a thread and its messages.
  */
-export const deleteConversation = async (input: GetConversationInput) => {
+export const deleteThread = async (input: GetThreadInput) => {
   const result = await db
-    .delete(knosiaConversation)
+    .delete(knosiaThread)
     .where(
       and(
-        eq(knosiaConversation.id, input.id),
-        eq(knosiaConversation.userId, input.userId),
-        eq(knosiaConversation.workspaceId, input.workspaceId),
+        eq(knosiaThread.id, input.id),
+        eq(knosiaThread.userId, input.userId),
+        eq(knosiaThread.workspaceId, input.workspaceId),
       ),
     )
     .returning();

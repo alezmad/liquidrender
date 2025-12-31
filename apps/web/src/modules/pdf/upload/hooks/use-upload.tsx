@@ -16,7 +16,11 @@ export const useUpload = () => {
 
   return useMutation({
     mutationFn: async (data: { file: FileInput }) => {
-      const path = `documents/${session?.user.id}/${generateId()}.pdf`;
+      if (!session?.user?.id) {
+        throw new Error(t("pdf.upload.error.unauthorized"));
+      }
+
+      const path = `documents/${session.user.id}/${generateId()}.pdf`;
 
       const { url: uploadUrl } = await handle(api.storage.upload.$get)({
         query: { path },

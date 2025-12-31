@@ -22,6 +22,9 @@ Type :field "label" #color !priority
 - `,` comma = same row
 - newline = new row
 - `[...]` = nested children
+- `Gd N` = N-column grid (e.g., `Gd 3 [...]`)
+- `Gd ~fit` = responsive auto-fit
+- `_` = empty grid cell
 
 ## Examples
 
@@ -49,6 +52,11 @@ Fm [
 Bt "Overview" >tab=0, Bt "Details" >tab=1
 ?tab=0: Kp :revenue, Ln :trend
 ?tab=1: Tb :orders [:id :amount]
+```
+
+**Grid:**
+```liquid
+Gd 3 [Kp :a, Kp :b, Kp :c]
 ```
 
 ## Tips

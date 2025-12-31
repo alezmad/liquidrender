@@ -12,7 +12,6 @@ import { eq } from "@turbostarter/db";
 import {
   pdfChat,
   pdfDocument,
-  pdfEmbedding,
   pdfMessage,
 } from "@turbostarter/db/schema/pdf";
 import { db } from "@turbostarter/db/server";
@@ -21,13 +20,16 @@ import { getDeleteUrl } from "@turbostarter/storage/server";
 import { repairToolCall } from "../../utils/llm";
 
 import { PROMPTS } from "./constants";
-import { findRelevantContent, generateDocumentEmbeddings } from "./embeddings";
+import { processPdfWithDualResolution } from "./dual-embeddings";
+import { findRelevantContent } from "./embeddings";
+import { searchWithCitations } from "./search";
 import { modelStrategies } from "./strategies";
 import { Role } from "./types";
 
 import type { PdfMessagePayload } from "./schema";
 import type { Citation, CitationResponse } from "./types";
 import type { EmbeddingSearchResult } from "./embeddings";
+import type { SearchResult } from "./search";
 import type {
   InsertPdfChat,
   InsertPdfDocument,
@@ -41,28 +43,19 @@ const createDocument = async (data: InsertPdfDocument) => {
     return null;
   }
 
+  // Process with dual-resolution chunking (citation units + retrieval chunks)
   void (async () => {
-    const generated = await generateDocumentEmbeddings(documentData.path);
-
-    if (!generated.length) {
-      return;
+    try {
+      const result = await processPdfWithDualResolution(
+        documentData.id,
+        documentData.path,
+      );
+      console.log(
+        `[api] Dual-resolution processing complete: ${result.storage.stats.totalCitationUnits} citation units, ${result.storage.stats.totalRetrievalChunks} retrieval chunks`,
+      );
+    } catch (error) {
+      console.error(`[api] Failed to process PDF with dual-resolution:`, error);
     }
-
-    await db
-      .insert(pdfEmbedding)
-      .values(
-        generated.map((chunk) => ({
-          content: chunk.content,
-          documentId: documentData.id,
-          embedding: chunk.embedding,
-          // Citation metadata for page navigation
-          pageNumber: chunk.metadata.pageNumber,
-          charStart: chunk.metadata.charStart,
-          charEnd: chunk.metadata.charEnd,
-          sectionTitle: chunk.metadata.sectionTitle,
-        })),
-      )
-      .onConflictDoNothing();
   })();
 
   return documentData;
@@ -148,6 +141,66 @@ export const getChatDocuments = async (id: string) =>
     orderBy: (document, { asc }) => [asc(document.createdAt)],
   });
 
+// ============================================================================
+// Hybrid Search (new dual-resolution with legacy fallback)
+// ============================================================================
+
+/**
+ * Unified search result for tool responses
+ */
+interface UnifiedSearchResult {
+  id: string;
+  content: string;
+  pageNumber: number;
+  similarity: number;
+  /** Citation unit ID for pixel-perfect highlighting (new system) */
+  citationUnitId?: string;
+  /** Source type: 'dual' for new system, 'legacy' for old embeddings */
+  source: "dual" | "legacy";
+}
+
+/**
+ * Hybrid search: tries new dual-resolution system first, falls back to legacy
+ */
+async function hybridSearch(
+  query: string,
+  documentId: string,
+  limit = 6,
+): Promise<UnifiedSearchResult[]> {
+  // Try new dual-resolution search first
+  try {
+    const newResults = await searchWithCitations(query, documentId, { limit });
+    if (newResults.length > 0) {
+      console.log(`[hybridSearch] Using dual-resolution: ${newResults.length} results`);
+      // Convert to unified format, using first citation unit for precise citing
+      return newResults.map((r) => {
+        const firstUnit = r.citationUnits[0];
+        return {
+          id: firstUnit?.id ?? r.retrievalChunkId,
+          content: r.content,
+          pageNumber: firstUnit?.pageNumber ?? r.pageStart,
+          similarity: r.similarity,
+          citationUnitId: firstUnit?.id,
+          source: "dual" as const,
+        };
+      });
+    }
+  } catch (error) {
+    console.warn(`[hybridSearch] Dual-resolution search failed, trying legacy:`, error);
+  }
+
+  // Fall back to legacy embeddings for old documents
+  console.log(`[hybridSearch] Falling back to legacy embeddings`);
+  const legacyResults = await findRelevantContent(query, documentId);
+  return legacyResults.slice(0, limit).map((r) => ({
+    id: r.id,
+    content: r.name,
+    pageNumber: r.pageNumber,
+    similarity: r.similarity,
+    source: "legacy" as const,
+  }));
+}
+
 // Create tools with optional document filtering
 const createTools = (documentIds?: string[]) => {
   console.log(`🛠️ createTools called with documentIds:`, documentIds);
@@ -165,7 +218,7 @@ const createTools = (documentIds?: string[]) => {
         if (documentIds && documentIds.length > 0) {
           console.log(`🛠️ Searching in ${documentIds.length} documents:`, documentIds);
           const results = await Promise.all(
-            documentIds.map((docId) => findRelevantContent(query, docId))
+            documentIds.map((docId) => hybridSearch(query, docId, 6))
           );
           const combined = results.flat().slice(0, 6);
           console.log(`🛠️ Combined results:`, combined.length);
@@ -175,9 +228,16 @@ const createTools = (documentIds?: string[]) => {
             citationInstructions: "IMPORTANT: Cite each source using [[cite:ID:PAGE]] format where ID is the source's id and PAGE is pageNumber.",
           };
         }
+        // No specific documents - search across all (legacy behavior)
         const results = await findRelevantContent(query);
         return {
-          results,
+          results: results.map((r) => ({
+            id: r.id,
+            content: r.name,
+            pageNumber: r.pageNumber,
+            similarity: r.similarity,
+            source: "legacy" as const,
+          })),
           citationInstructions: "IMPORTANT: Cite each source using [[cite:ID:PAGE]] format where ID is the source's id and PAGE is pageNumber.",
         };
       },
@@ -199,18 +259,30 @@ export const tools = createTools();
 const CITATION_REGEX = /\[\[cite:([a-zA-Z0-9]+):(\d+)\]\]/g;
 
 /**
+ * Common search result interface for citation parsing
+ * Works with both legacy EmbeddingSearchResult and new UnifiedSearchResult
+ */
+interface CitableSearchResult {
+  id: string;
+  content?: string;  // New format
+  name?: string;     // Legacy format
+  similarity: number;
+  pageNumber: number;
+}
+
+/**
  * Parses AI response content containing [[cite:id:page]] markers and converts
  * them to numbered citations [1], [2], etc.
  *
  * @param content - Raw AI response with [[cite:id:page]] markers
- * @param embeddings - Array of embedding results for looking up excerpts
+ * @param searchResults - Array of search results (legacy or unified format)
  * @returns CitationResponse with parsed content and citation array
  *
  * @example
  * ```typescript
  * const response = parseCitations(
  *   "The document states X [[cite:abc123:5]] and Y [[cite:def456:8]].",
- *   embeddingResults
+ *   searchResults
  * );
  * // response.content = "The document states X [1] and Y [2]."
  * // response.citations = [{ index: 1, embeddingId: "abc123", ... }, ...]
@@ -218,40 +290,41 @@ const CITATION_REGEX = /\[\[cite:([a-zA-Z0-9]+):(\d+)\]\]/g;
  */
 export function parseCitations(
   content: string,
-  embeddings: EmbeddingSearchResult[]
+  searchResults: CitableSearchResult[]
 ): CitationResponse {
   const citations: Citation[] = [];
-  const seenIds = new Map<string, number>(); // embeddingId -> citation index
+  const seenIds = new Map<string, number>(); // id -> citation index
 
-  // Create a lookup map for embeddings
-  const embeddingMap = new Map(
-    embeddings.map((e) => [e.id, e])
+  // Create a lookup map for results
+  const resultMap = new Map(
+    searchResults.map((r) => [r.id, r])
   );
 
   // Replace all citation markers with numbered references
-  const parsedContent = content.replace(CITATION_REGEX, (_match, embeddingId: string, pageNumStr: string) => {
+  const parsedContent = content.replace(CITATION_REGEX, (_match, resultId: string, pageNumStr: string) => {
     const pageNumber = parseInt(pageNumStr, 10);
 
-    // If we've already seen this embedding, reuse the same citation number
-    if (seenIds.has(embeddingId)) {
-      return `[${seenIds.get(embeddingId)}]`;
+    // If we've already seen this ID, reuse the same citation number
+    if (seenIds.has(resultId)) {
+      return `[${seenIds.get(resultId)}]`;
     }
 
     // Create new citation
     const index = citations.length + 1;
-    seenIds.set(embeddingId, index);
+    seenIds.set(resultId, index);
 
-    // Look up the embedding for excerpt and relevance
-    const embedding = embeddingMap.get(embeddingId);
+    // Look up the result for excerpt and relevance
+    const result = resultMap.get(resultId);
+    const textContent = result?.content ?? result?.name ?? "";
 
     citations.push({
       index,
-      embeddingId,
-      relevance: embedding?.similarity ?? 0,
-      pageNumber: embedding?.pageNumber ?? pageNumber,
+      embeddingId: resultId,  // Keep field name for API compatibility
+      relevance: result?.similarity ?? 0,
+      pageNumber: result?.pageNumber ?? pageNumber,
       // Create excerpt: first 150 chars of content
-      excerpt: embedding?.name
-        ? embedding.name.substring(0, 150) + (embedding.name.length > 150 ? "..." : "")
+      excerpt: textContent
+        ? textContent.substring(0, 150) + (textContent.length > 150 ? "..." : "")
         : `[Content from page ${pageNumber}]`,
     });
 
@@ -265,26 +338,28 @@ export function parseCitations(
 }
 
 /**
- * Formats embedding results as context for the AI with citation metadata.
+ * Formats search results as context for the AI with citation metadata.
  * This helps the AI understand how to cite the sources.
+ * Works with both legacy EmbeddingSearchResult and new UnifiedSearchResult.
  *
- * @param embeddings - Array of embedding search results
+ * @param results - Array of search results (legacy or unified format)
  * @returns Formatted string with citation instructions per result
  */
-export function formatEmbeddingsForCitation(embeddings: EmbeddingSearchResult[]): string {
-  if (embeddings.length === 0) {
+export function formatEmbeddingsForCitation(results: CitableSearchResult[]): string {
+  if (results.length === 0) {
     return "No relevant content found in the document.";
   }
 
-  return embeddings
-    .map((e, i) => {
+  return results
+    .map((r, i) => {
+      const textContent = r.content ?? r.name ?? "[No content]";
       return `[Source ${i + 1}]
-ID: ${e.id}
-Page: ${e.pageNumber}
-Relevance: ${(e.similarity * 100).toFixed(1)}%
-Content: ${e.name}
+ID: ${r.id}
+Page: ${r.pageNumber}
+Relevance: ${(r.similarity * 100).toFixed(1)}%
+Content: ${textContent}
 ---
-To cite this source, use: [[cite:${e.id}:${e.pageNumber}]]`;
+To cite this source, use: [[cite:${r.id}:${r.pageNumber}]]`;
     })
     .join("\n\n");
 }

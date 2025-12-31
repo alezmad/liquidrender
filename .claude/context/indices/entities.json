@@ -4,92 +4,92 @@
     "schemas": 0,
     "endpoints": 0,
     "generated": "2025-12-31",
-    "from_commit": "9473284"
+    "from_commit": "c8a47c8"
   },
   "categories": {
     "components": {
       "_index": [
-        "Accordion",
-        "Alert",
+        "StaticAccordion",
+        "StaticAlert",
         "AlertDialog",
         "StaticAreaChart",
-        "StaticAudio",
-        "StaticAvatar",
+        "Audio",
+        "Avatar",
         "StaticBadge",
         "BarChartComponent",
         "Breadcrumb",
-        "StaticButton",
-        "Calendar",
-        "CardDescription",
+        "Button",
+        "StaticCalendar",
+        "CardContent",
         "Carousel",
-        "Checkbox",
+        "StaticCheckbox",
         "Collapsible",
-        "Color",
-        "Command",
+        "StaticColor",
+        "CommandDialog",
         "GridContainer",
         "ContextMenu",
-        "StaticTable",
-        "DatePicker",
-        "DateRange",
-        "Drawer",
+        "DataTable",
+        "NativeDatePicker",
+        "StaticDateRange",
+        "StaticDrawer",
         "Dropdown",
         "Empty",
-        "Flow",
-        "Form",
+        "StaticFlow",
+        "FormField",
         "Gauge",
-        "Grid",
-        "Header",
-        "StaticHeading",
+        "ResponsiveGrid",
+        "StaticHeader",
+        "Heading",
         "Heatmap",
         "HoverCard",
-        "StaticIcon",
+        "Icon",
         "Image",
-        "Input",
-        "Kanban",
+        "SearchInput",
+        "StaticKanban",
         "KPICard",
         "StaticLightbox",
-        "LineChartComponent",
-        "GridList",
-        "StaticMap",
-        "Modal",
-        "Nav",
+        "StaticLineChart",
+        "StaticList",
+        "Map",
+        "ControlledModal",
+        "StaticNav",
         "StaticOrg",
-        "StaticOTP",
-        "Pagination",
+        "OTP",
+        "StaticPagination",
         "StaticPieChart",
         "StaticPopover",
         "StaticProgress",
-        "StaticRadio",
+        "Radio",
         "StaticRange",
         "StaticRating",
         "StaticSankey",
-        "StaticScatter",
-        "Select",
+        "Scatter",
+        "StaticSelect",
         "StaticSeparator",
-        "Sheet",
+        "StaticSheet",
         "Sidebar",
-        "StaticSkeleton",
-        "Sparkline",
-        "StaticSpinner",
-        "SplitPanel",
-        "Stack",
+        "Skeleton",
+        "StaticSparkline",
+        "Spinner",
+        "Split",
+        "StaticHStack",
         "StaticStepper",
         "StaticSwitch",
         "Tab",
-        "StaticTabs",
+        "Tabs",
         "StaticTag",
         "StaticText",
-        "StaticTextarea",
-        "StaticTime",
+        "Textarea",
+        "NativeTimePicker",
         "StaticTimeline",
         "Toast",
-        "StaticTooltip",
-        "StaticTree",
+        "Tooltip",
+        "Tree",
         "UnknownComponent",
-        "StaticUpload",
+        "Upload",
         "Video"
       ],
-      "Accordion": {
+      "StaticAccordion": {
         "tier1": "Expandable/collapsible section",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/accordion.tsx",
@@ -103,12 +103,12 @@
             "react"
           ],
           "exports": [
-            "Accordion",
-            "StaticAccordion"
+            "StaticAccordion",
+            "Accordion"
           ]
         }
       },
-      "Alert": {
+      "StaticAlert": {
         "tier1": "Feedback message with variants",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/alert.tsx",
@@ -125,8 +125,8 @@
             "react"
           ],
           "exports": [
-            "Alert",
-            "StaticAlert"
+            "StaticAlert",
+            "Alert"
           ]
         }
       },
@@ -147,8 +147,8 @@
             "closeOnBackdropClick"
           ],
           "deps": [
-            "react-dom",
-            "react"
+            "react",
+            "react-dom"
           ],
           "exports": [
             "AlertDialog",
@@ -171,8 +171,8 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
             "StaticAreaChart",
@@ -180,7 +180,7 @@
           ]
         }
       },
-      "StaticAudio": {
+      "Audio": {
         "tier1": "HTML5 audio player with custom controls",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/audio.tsx",
@@ -200,30 +200,27 @@
             "react"
           ],
           "exports": [
-            "StaticAudio",
-            "Audio"
+            "Audio",
+            "StaticAudio"
           ]
         }
       },
-      "StaticAvatar": {
+      "Avatar": {
         "tier1": "User avatar with image/initials fallback",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/avatar.tsx",
           "props": [
             "src",
             "initials",
-            "name",
             "size",
-            "alt",
-            "className",
-            "style"
+            "alt"
           ],
           "deps": [
             "react"
           ],
           "exports": [
-            "StaticAvatar",
-            "Avatar"
+            "Avatar",
+            "StaticAvatar"
           ]
         }
       },
@@ -263,8 +260,8 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
             "BarChartComponent",
@@ -290,7 +287,7 @@
           ]
         }
       },
-      "StaticButton": {
+      "Button": {
         "tier1": "Interactive buttons with signal emission",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/button.tsx",
@@ -309,12 +306,12 @@
             "react"
           ],
           "exports": [
-            "StaticButton",
-            "Button"
+            "Button",
+            "StaticButton"
           ]
         }
       },
-      "Calendar": {
+      "StaticCalendar": {
         "tier1": "Full calendar view with month navigation",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/calendar.tsx",
@@ -330,12 +327,12 @@
             "react"
           ],
           "exports": [
-            "Calendar",
-            "StaticCalendar"
+            "StaticCalendar",
+            "Calendar"
           ]
         }
       },
-      "CardDescription": {
+      "CardContent": {
         "tier1": "Content container with optional header/footer",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/card.tsx",
@@ -347,11 +344,11 @@
             "react"
           ],
           "exports": [
-            "CardDescription",
+            "CardContent",
+            "CardHeader",
             "SimpleCard",
             "CardTitle",
-            "CardContent",
-            "CardFooter"
+            "Card"
           ]
         }
       },
@@ -380,7 +377,7 @@
           ]
         }
       },
-      "Checkbox": {
+      "StaticCheckbox": {
         "tier1": "Standard checkbox with label and custom styling",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/checkbox.tsx",
@@ -400,8 +397,8 @@
             "react"
           ],
           "exports": [
-            "Checkbox",
-            "StaticCheckbox"
+            "StaticCheckbox",
+            "Checkbox"
           ]
         }
       },
@@ -427,7 +424,7 @@
           ]
         }
       },
-      "Color": {
+      "StaticColor": {
         "tier1": "Color picker with swatch, presets, and hex input",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/color.tsx",
@@ -445,34 +442,33 @@
             "react"
           ],
           "exports": [
-            "Color",
-            "StaticColor"
+            "StaticColor",
+            "Color"
           ]
         }
       },
-      "Command": {
+      "CommandDialog": {
         "tier1": "Command palette / search interface (like Cmd+K)",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/command.tsx",
           "props": [
+            "isOpen",
+            "onClose",
             "groups",
             "placeholder",
             "onSelect",
             "item",
             "onSearchChange",
             "value",
-            "emptyMessage",
-            "style",
-            "default",
-            "debounceMs"
+            "emptyMessage"
           ],
           "deps": [
             "react"
           ],
           "exports": [
-            "Command",
             "CommandDialog",
-            "StaticCommand"
+            "StaticCommand",
+            "Command"
           ]
         }
       },
@@ -518,7 +514,7 @@
           ]
         }
       },
-      "StaticTable": {
+      "DataTable": {
         "tier1": "Sortable, responsive table with auto-column detection",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/data-table.tsx",
@@ -527,12 +523,12 @@
             "react"
           ],
           "exports": [
-            "StaticTable",
-            "DataTable"
+            "DataTable",
+            "StaticTable"
           ]
         }
       },
-      "DatePicker": {
+      "NativeDatePicker": {
         "tier1": "Single date picker",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/date.tsx",
@@ -548,13 +544,13 @@
             "react"
           ],
           "exports": [
-            "DatePicker",
             "NativeDatePicker",
+            "DatePicker",
             "StaticDatePicker"
           ]
         }
       },
-      "DateRange": {
+      "StaticDateRange": {
         "tier1": "Date range picker with month/year dropdowns and presets",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/daterange.tsx",
@@ -570,12 +566,12 @@
             "react"
           ],
           "exports": [
-            "DateRange",
-            "StaticDateRange"
+            "StaticDateRange",
+            "DateRange"
           ]
         }
       },
-      "Drawer": {
+      "StaticDrawer": {
         "tier1": "Slide-in panel",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/drawer.tsx",
@@ -591,8 +587,8 @@
             "react"
           ],
           "exports": [
-            "Drawer",
-            "StaticDrawer"
+            "StaticDrawer",
+            "Drawer"
           ]
         }
       },
@@ -643,7 +639,7 @@
           ]
         }
       },
-      "Flow": {
+      "StaticFlow": {
         "tier1": "Node-based flow/diagram editor view (read-only display)",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/flow.tsx",
@@ -658,25 +654,31 @@
             "react"
           ],
           "exports": [
-            "Flow",
-            "StaticFlow"
+            "StaticFlow",
+            "Flow"
           ]
         }
       },
-      "Form": {
+      "FormField": {
         "tier1": "Form container with validation and submission",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/form.tsx",
-          "props": [],
+          "props": [
+            "name",
+            "label",
+            "required",
+            "children",
+            "style"
+          ],
           "deps": [
             "react"
           ],
           "exports": [
-            "Form",
-            "FormRow",
+            "FormField",
             "FormActions",
             "ControlledForm",
-            "FormField"
+            "FormRow",
+            "Form"
           ]
         }
       },
@@ -705,17 +707,14 @@
           ]
         }
       },
-      "Grid": {
+      "ResponsiveGrid": {
         "tier1": "CSS Grid layout container",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/grid.tsx",
           "props": [
             "children",
-            "columns",
+            "minItemWidth",
             "gap",
-            "align",
-            "justify",
-            "minChildWidth",
             "style",
             "className"
           ],
@@ -723,14 +722,14 @@
             "react"
           ],
           "exports": [
-            "Grid",
             "ResponsiveGrid",
+            "StaticGrid",
             "GridItem",
-            "StaticGrid"
+            "Grid"
           ]
         }
       },
-      "Header": {
+      "StaticHeader": {
         "tier1": "Fixed top navigation bar with title and actions",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/header.tsx",
@@ -748,12 +747,12 @@
             "react"
           ],
           "exports": [
-            "Header",
-            "StaticHeader"
+            "StaticHeader",
+            "Header"
           ]
         }
       },
-      "StaticHeading": {
+      "Heading": {
         "tier1": "Semantic headings h1-h6",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/heading.tsx",
@@ -767,8 +766,8 @@
             "react"
           ],
           "exports": [
-            "StaticHeading",
-            "Heading"
+            "Heading",
+            "StaticHeading"
           ]
         }
       },
@@ -811,7 +810,7 @@
           ]
         }
       },
-      "StaticIcon": {
+      "Icon": {
         "tier1": "Renders inline SVG icons with color variants",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/icon.tsx",
@@ -825,8 +824,8 @@
             "react"
           ],
           "exports": [
-            "StaticIcon",
-            "Icon"
+            "Icon",
+            "StaticIcon"
           ]
         }
       },
@@ -853,7 +852,7 @@
           ]
         }
       },
-      "Input": {
+      "SearchInput": {
         "tier1": "Text input with variants and states",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/input.tsx",
@@ -862,14 +861,14 @@
             "react"
           ],
           "exports": [
-            "Input",
+            "SearchInput",
             "Textarea",
             "ControlledInput",
-            "SearchInput"
+            "Input"
           ]
         }
       },
-      "Kanban": {
+      "StaticKanban": {
         "tier1": "Column-based board layout with drag and drop",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/kanban.tsx",
@@ -889,8 +888,8 @@
             "react"
           ],
           "exports": [
-            "Kanban",
-            "StaticKanban"
+            "StaticKanban",
+            "Kanban"
           ]
         }
       },
@@ -931,7 +930,7 @@
           ]
         }
       },
-      "LineChartComponent": {
+      "StaticLineChart": {
         "tier1": "Responsive line chart with Recharts",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/line-chart.tsx",
@@ -944,16 +943,16 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
-            "LineChartComponent",
-            "StaticLineChart"
+            "StaticLineChart",
+            "LineChartComponent"
           ]
         }
       },
-      "GridList": {
+      "StaticList": {
         "tier1": "Repeating list/iterator",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/list.tsx",
@@ -973,13 +972,13 @@
             "react"
           ],
           "exports": [
+            "StaticList",
             "GridList",
-            "List",
-            "StaticList"
+            "List"
           ]
         }
       },
-      "StaticMap": {
+      "Map": {
         "tier1": "Geographic map display with markers and popups",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/map.tsx",
@@ -995,26 +994,37 @@
             "react"
           ],
           "exports": [
-            "StaticMap",
-            "Map"
+            "Map",
+            "StaticMap"
           ]
         }
       },
-      "Modal": {
+      "ControlledModal": {
         "tier1": "Dialog overlay with focus trap",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/modal.tsx",
-          "props": [],
+          "props": [
+            "isOpen",
+            "onClose",
+            "title",
+            "size",
+            "showCloseButton",
+            "closeOnOverlayClick",
+            "closeOnEscape",
+            "children",
+            "footer",
+            "style"
+          ],
           "deps": [
             "react"
           ],
           "exports": [
-            "Modal",
-            "ControlledModal"
+            "ControlledModal",
+            "Modal"
           ]
         }
       },
-      "Nav": {
+      "StaticNav": {
         "tier1": "Navigation menu item with optional submenu",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/nav.tsx",
@@ -1031,8 +1041,8 @@
             "react"
           ],
           "exports": [
-            "Nav",
-            "StaticNav"
+            "StaticNav",
+            "Nav"
           ]
         }
       },
@@ -1057,7 +1067,7 @@
           ]
         }
       },
-      "StaticOTP": {
+      "OTP": {
         "tier1": "One-Time Password input with configurable length",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/otp.tsx",
@@ -1077,12 +1087,12 @@
             "react"
           ],
           "exports": [
-            "StaticOTP",
-            "OTP"
+            "OTP",
+            "StaticOTP"
           ]
         }
       },
-      "Pagination": {
+      "StaticPagination": {
         "tier1": "Page navigation with smart ellipsis",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/pagination.tsx",
@@ -1102,8 +1112,8 @@
             "react"
           ],
           "exports": [
-            "Pagination",
-            "StaticPagination"
+            "StaticPagination",
+            "Pagination"
           ]
         }
       },
@@ -1122,8 +1132,8 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
             "StaticPieChart",
@@ -1173,7 +1183,7 @@
           ]
         }
       },
-      "StaticRadio": {
+      "Radio": {
         "tier1": "Radio button group",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/radio.tsx",
@@ -1193,8 +1203,8 @@
             "react"
           ],
           "exports": [
-            "StaticRadio",
-            "Radio"
+            "Radio",
+            "StaticRadio"
           ]
         }
       },
@@ -1262,8 +1272,8 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
             "StaticSankey",
@@ -1271,7 +1281,7 @@
           ]
         }
       },
-      "StaticScatter": {
+      "Scatter": {
         "tier1": "X/Y scatter plot with Recharts",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/scatter.tsx",
@@ -1288,16 +1298,16 @@
             "style"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
-            "StaticScatter",
-            "Scatter"
+            "Scatter",
+            "StaticScatter"
           ]
         }
       },
-      "Select": {
+      "StaticSelect": {
         "tier1": "Dropdown select with options",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/select.tsx",
@@ -1306,8 +1316,8 @@
             "react"
           ],
           "exports": [
-            "Select",
-            "StaticSelect"
+            "StaticSelect",
+            "Select"
           ]
         }
       },
@@ -1329,7 +1339,7 @@
           ]
         }
       },
-      "Sheet": {
+      "StaticSheet": {
         "tier1": "Slide-out panel overlay",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/sheet.tsx",
@@ -1349,8 +1359,8 @@
             "react"
           ],
           "exports": [
-            "Sheet",
-            "StaticSheet"
+            "StaticSheet",
+            "Sheet"
           ]
         }
       },
@@ -1375,7 +1385,7 @@
           ]
         }
       },
-      "StaticSkeleton": {
+      "Skeleton": {
         "tier1": "Placeholder loading state with shimmer animation",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/skeleton.tsx",
@@ -1391,12 +1401,12 @@
             "react"
           ],
           "exports": [
-            "StaticSkeleton",
-            "Skeleton"
+            "Skeleton",
+            "StaticSkeleton"
           ]
         }
       },
-      "Sparkline": {
+      "StaticSparkline": {
         "tier1": "Tiny inline chart for embedding in text or tables",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/sparkline.tsx",
@@ -1406,16 +1416,16 @@
             "key"
           ],
           "deps": [
-            "recharts",
-            "react"
+            "react",
+            "recharts"
           ],
           "exports": [
-            "Sparkline",
-            "StaticSparkline"
+            "StaticSparkline",
+            "Sparkline"
           ]
         }
       },
-      "StaticSpinner": {
+      "Spinner": {
         "tier1": "Circular spinning loader with size variants",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/spinner.tsx",
@@ -1429,17 +1439,24 @@
             "react"
           ],
           "exports": [
-            "StaticSpinner",
-            "Spinner"
+            "Spinner",
+            "StaticSpinner"
           ]
         }
       },
-      "SplitPanel": {
+      "Split": {
         "tier1": "Resizable split panel layout",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/split.tsx",
           "props": [
             "children",
+            "split",
+            "direction",
+            "defaultSize",
+            "minSize",
+            "maxSize",
+            "resizable",
+            "showHandle",
             "style",
             "className"
           ],
@@ -1447,37 +1464,27 @@
             "react"
           ],
           "exports": [
-            "SplitPanel",
+            "Split",
             "StaticSplit",
-            "NestedSplit",
-            "Split"
+            "SplitPanel",
+            "NestedSplit"
           ]
         }
       },
-      "Stack": {
+      "StaticHStack": {
         "tier1": "Flexbox stacking layout",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/stack.tsx",
-          "props": [
-            "children",
-            "direction",
-            "gap",
-            "align",
-            "justify",
-            "wrap",
-            "divider",
-            "style",
-            "className"
-          ],
+          "props": [],
           "deps": [
             "react"
           ],
           "exports": [
-            "Stack",
-            "StaticStack",
+            "StaticHStack",
             "StaticVStack",
+            "StaticStack",
             "HStack",
-            "StaticHStack"
+            "Stack"
           ]
         }
       },
@@ -1535,7 +1542,7 @@
           ]
         }
       },
-      "StaticTabs": {
+      "Tabs": {
         "tier1": "Tabbed interface with keyboard navigation",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/tabs.tsx",
@@ -1552,8 +1559,8 @@
             "react"
           ],
           "exports": [
-            "StaticTabs",
-            "Tabs"
+            "Tabs",
+            "StaticTabs"
           ]
         }
       },
@@ -1597,7 +1604,7 @@
           ]
         }
       },
-      "StaticTextarea": {
+      "Textarea": {
         "tier1": "Multi-line text input",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/textarea.tsx",
@@ -1606,12 +1613,12 @@
             "react"
           ],
           "exports": [
-            "StaticTextarea",
-            "Textarea"
+            "Textarea",
+            "StaticTextarea"
           ]
         }
       },
-      "StaticTime": {
+      "NativeTimePicker": {
         "tier1": "Time picker with 12h/24h support",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/time.tsx",
@@ -1629,8 +1636,8 @@
             "react"
           ],
           "exports": [
-            "StaticTime",
             "NativeTimePicker",
+            "StaticTime",
             "Time"
           ]
         }
@@ -1682,7 +1689,7 @@
           ]
         }
       },
-      "StaticTooltip": {
+      "Tooltip": {
         "tier1": "Hover text display",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/tooltip.tsx",
@@ -1697,12 +1704,12 @@
             "react"
           ],
           "exports": [
-            "StaticTooltip",
-            "Tooltip"
+            "Tooltip",
+            "StaticTooltip"
           ]
         }
       },
-      "StaticTree": {
+      "Tree": {
         "tier1": "Hierarchical tree view with expand/collapse",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/tree.tsx",
@@ -1722,8 +1729,8 @@
             "react"
           ],
           "exports": [
-            "StaticTree",
-            "Tree"
+            "Tree",
+            "StaticTree"
           ]
         }
       },
@@ -1740,7 +1747,7 @@
           ]
         }
       },
-      "StaticUpload": {
+      "Upload": {
         "tier1": "Drag and drop file upload with previews",
         "tier2": {
           "path": "packages/liquid-render/src/renderer/components/upload.tsx",
@@ -1760,8 +1767,8 @@
             "react"
           ],
           "exports": [
-            "StaticUpload",
-            "Upload"
+            "Upload",
+            "StaticUpload"
           ]
         }
       },

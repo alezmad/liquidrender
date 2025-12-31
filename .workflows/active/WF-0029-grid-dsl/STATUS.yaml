@@ -1,0 +1,88 @@
+id: WF-0029
+name: Grid DSL Enhancement
+status: completed
+created: 2025-12-31
+completed: 2025-12-31
+git:
+  startTag: WF-0029-start
+  startCommit: 4a94246
+
+waves:
+  - id: 0
+    name: Type Extensions
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Extend BlockAST & Layout interfaces
+        status: completed
+        files:
+          - packages/liquid-render/src/compiler/ui-parser.ts
+          - packages/liquid-render/src/compiler/ui-emitter.ts
+
+  - id: 1
+    name: Scanner, Parser, Emitter
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: Scanner PLACEHOLDER token
+        status: completed
+        files:
+          - packages/liquid-render/src/compiler/ui-scanner.ts
+      - id: T2
+        name: Parser grid columns & rows
+        status: completed
+        files:
+          - packages/liquid-render/src/compiler/ui-parser.ts
+      - id: T3
+        name: Emitter grid layout output
+        status: completed
+        files:
+          - packages/liquid-render/src/compiler/ui-emitter.ts
+
+  - id: 2
+    name: Grid Component + Integration
+    type: sequential
+    status: completed
+    tasks:
+      - id: T4
+        name: Grid component auto-fit default
+        status: completed
+        files:
+          - packages/liquid-render/src/renderer/components/grid.tsx
+      - id: T5
+        name: GridEmpty component
+        status: completed
+        files:
+          - packages/liquid-render/src/renderer/components/grid-empty.tsx
+          - packages/liquid-render/src/renderer/components/index.ts
+          - packages/liquid-render/src/renderer/component-registry.ts
+
+  - id: 3
+    name: Verification
+    type: sequential
+    status: completed
+    tasks:
+      - id: T6
+        name: Run existing tests
+        status: completed
+        notes: 1055 passed, 1 unrelated failure (breadcrumb)
+      - id: T7
+        name: Final build verification
+        status: completed
+
+currentWave: complete
+
+summary: |
+  Grid DSL Enhancement completed successfully.
+
+  New Features:
+  - Column specification: `Gd N [...]` for fixed, `Gd ~fit`, `Gd ~fill`, `Gd ~250` for responsive
+  - Row-based layout: newlines define rows, first row sets column count
+  - Gap control: %xs %sm %md %lg %xl
+  - Alignment: ^c ^e ^sb ^sa for incomplete rows
+  - Empty cell placeholder: `_` token → GridEmpty component
+
+  Breaking Change:
+  - Default changed from 12 fixed columns → auto-fit responsive with 200px min width

@@ -22,13 +22,65 @@ export const snippets: DemoSnippet[] = [
     data: {},
   },
   {
-    name: "Grid Layout",
+    name: "Grid Layout (Fixed)",
     category: "layout",
-    description: "Responsive 3-column grid",
-    dsl: `Gd *3 [
+    description: "Fixed 3-column grid",
+    dsl: `Gd 3 [
   Cd [Tx "Card 1"]
   Cd [Tx "Card 2"]
   Cd [Tx "Card 3"]
+]`,
+    data: {},
+  },
+  {
+    name: "Grid Auto-Fit",
+    category: "layout",
+    description: "Responsive grid with auto-fit (default)",
+    dsl: `Gd ~fit %lg [
+  Cd [Tx "Auto-sizes based on container"]
+  Cd [Tx "Expands to fill space"]
+  Cd [Tx "Wraps responsively"]
+  Cd [Tx "Minimum 200px each"]
+]`,
+    data: {},
+  },
+  {
+    name: "Grid Custom Min Width",
+    category: "layout",
+    description: "Auto-fit with 300px minimum",
+    dsl: `Gd ~300 %md [
+  Cd [Hd "Feature 1" Tx "300px minimum width"]
+  Cd [Hd "Feature 2" Tx "Responsive wrapping"]
+  Cd [Hd "Feature 3" Tx "Large gap spacing"]
+]`,
+    data: {},
+  },
+  {
+    name: "Grid with Empty Cells",
+    category: "layout",
+    description: "Grid with placeholder empty cells",
+    dsl: `Gd 3 %sm [
+  Cd [Tx "Top Left"]
+  _
+  Cd [Tx "Top Right"]
+  _
+  Cd [Tx "Center"]
+  _
+  Cd [Tx "Bottom Left"]
+  _
+  Cd [Tx "Bottom Right"]
+]`,
+    data: {},
+  },
+  {
+    name: "Grid Centered Last Row",
+    category: "layout",
+    description: "Incomplete row centered with ^c",
+    dsl: `Gd 3 %md ^c [
+  Cd [Tx "Row 1 - Col 1"]
+  Cd [Tx "Row 1 - Col 2"]
+  Cd [Tx "Row 1 - Col 3"]
+  Cd [Tx "Centered"]
 ]`,
     data: {},
   },
@@ -48,7 +100,7 @@ export const snippets: DemoSnippet[] = [
     name: "KPI Cards",
     category: "data-display",
     description: "Key metrics display",
-    dsl: `Gd *3 [
+    dsl: `Gd 3 %md [
   Kp :metrics.revenue
   Kp :metrics.users
   Kp :metrics.orders
@@ -268,13 +320,13 @@ export const snippets: DemoSnippet[] = [
     description: "Full dashboard with multiple sections",
     dsl: `Sk [
   Hd "Analytics Dashboard"
-  Gd *4 [
+  Gd 4 %md [
     Kp :stats.revenue
     Kp :stats.users
     Kp :stats.orders
     Kp :stats.growth
   ]
-  Gd *2 [
+  Gd 2 %lg [
     Cd [
       Hd "Revenue Trend"
       Ln :revenueChart

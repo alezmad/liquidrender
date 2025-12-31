@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 
 import { usePdfViewer } from "../../context";
 import { useCitationUnit } from "../../hooks/use-citation-unit";
@@ -28,7 +28,7 @@ const HIGHLIGHT_ATTR = "data-citation-highlight";
 // Styles
 // ============================================================================
 
-/** Injected styles for legacy text span highlighting */
+/** Injected styles for text span highlighting (works with both bbox and legacy modes) */
 const HIGHLIGHT_STYLES = `
 .${HIGHLIGHT_CLASS} {
   background-color: rgba(250, 204, 21, 0.4) !important;
@@ -37,27 +37,6 @@ const HIGHLIGHT_STYLES = `
   transition: background-color 300ms ease-in-out;
 }
 `;
-
-/** Styles for bounding box overlay highlights */
-const bboxOverlayStyles = {
-  container: {
-    position: "absolute" as const,
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    pointerEvents: "none" as const,
-    zIndex: 10,
-  },
-  highlight: {
-    position: "absolute" as const,
-    backgroundColor: "rgba(250, 204, 21, 0.4)",
-    borderRadius: "2px",
-    boxShadow: "0 0 4px rgba(250, 204, 21, 0.6)",
-    transition: "opacity 300ms ease-in-out",
-    pointerEvents: "none" as const,
-  },
-};
 
 // ============================================================================
 // Utilities - Legacy Word Overlap Matching
@@ -201,148 +180,112 @@ function clearAllHighlights(container: Element | null): void {
 }
 
 // ============================================================================
-// Utilities - Bounding Box Highlighting
+// Utilities - Bounding Box to Text Span Highlighting
 // ============================================================================
 
-interface PageDimensions {
-  width: number;
-  height: number;
+/**
+ * Parse percentage value from CSS style string (e.g., "left: 31.1%" -> 31.1)
+ */
+function parsePercentage(style: string, property: string): number | null {
+  const regex = new RegExp(`${property}:\\s*([\\d.]+)%`);
+  const match = style.match(regex);
+  return match?.[1] ? parseFloat(match[1]) : null;
 }
 
 /**
- * Get the dimensions of the visible PDF page element
+ * Check if a span's position overlaps with the bbox region
+ * Both bbox (0-1 normalized) and span positions (0-100 percentage) need alignment
  */
-function getPageDimensions(container: Element, pageNumber: number): PageDimensions | null {
-  // lector renders pages with data-page-number attribute
-  const pageElement = container.querySelector(
-    `[data-page-number="${pageNumber}"]`
-  ) as HTMLElement | null;
+function spanOverlapsBbox(span: HTMLElement, bbox: BoundingBox): boolean {
+  const style = span.getAttribute("style") ?? "";
 
-  if (!pageElement) {
-    // Fallback: try to find the canvas layer which has actual dimensions
-    const canvasLayer = container.querySelector(".canvasWrapper canvas") as HTMLCanvasElement | null;
-    if (canvasLayer) {
-      return {
-        width: canvasLayer.clientWidth,
-        height: canvasLayer.clientHeight,
-      };
-    }
-    return null;
+  // Parse span position from inline style (percentage-based)
+  const spanLeft = parsePercentage(style, "left");
+  const spanTop = parsePercentage(style, "top");
+
+  if (spanLeft === null || spanTop === null) {
+    return false;
   }
 
-  return {
-    width: pageElement.clientWidth,
-    height: pageElement.clientHeight,
-  };
+  // Convert bbox normalized coords (0-1) to percentage (0-100) for comparison
+  const bboxLeft = bbox.x * 100;
+  const bboxTop = bbox.y * 100;
+  const bboxRight = (bbox.x + bbox.width) * 100;
+  const bboxBottom = (bbox.y + bbox.height) * 100;
+
+  // Estimate span dimensions (spans don't have explicit width/height in percentage)
+  // Use a generous overlap check - if span starts within or near the bbox region
+  const horizontalMargin = 5; // 5% margin for horizontal tolerance
+  const verticalMargin = 3;   // 3% margin for vertical tolerance
+
+  const spanInHorizontalRange = spanLeft >= (bboxLeft - horizontalMargin) &&
+                                 spanLeft <= (bboxRight + horizontalMargin);
+  const spanInVerticalRange = spanTop >= (bboxTop - verticalMargin) &&
+                               spanTop <= (bboxBottom + verticalMargin);
+
+  return spanInHorizontalRange && spanInVerticalRange;
 }
 
 /**
- * Convert normalized bbox (0-1) to pixel coordinates
+ * Find and highlight text layer spans that fall within a bounding box
  */
-function bboxToPixels(
+function applyBboxHighlightsToSpans(
+  container: Element,
   bbox: BoundingBox,
-  dimensions: PageDimensions
-): { left: number; top: number; width: number; height: number } {
-  return {
-    left: bbox.x * dimensions.width,
-    top: bbox.y * dimensions.height,
-    width: bbox.width * dimensions.width,
-    height: bbox.height * dimensions.height,
-  };
-}
+  pageNumber: number,
+): number {
+  // Find the specific page's text layer
+  const pageElement = container.querySelector(`[data-page-number="${pageNumber}"]`);
+  const textLayer = pageElement?.querySelector(".textLayer") ??
+                    container.querySelector(".textLayer");
 
-// ============================================================================
-// Bounding Box Overlay Component
-// ============================================================================
+  if (!textLayer) {
+    console.debug("[HighlightLayer] No TextLayer found for bbox highlight");
+    return 0;
+  }
 
-interface BboxOverlayProps {
-  bbox: BoundingBox;
-  pageNumber: number;
-  containerRef: React.RefObject<HTMLDivElement | null>;
-}
+  const spans = textLayer.querySelectorAll("span");
+  let highlightCount = 0;
 
-/**
- * Renders a single bounding box highlight overlay
- */
-const BboxOverlay = memo(function BboxOverlay({
-  bbox,
-  pageNumber,
-  containerRef,
-}: BboxOverlayProps) {
-  const [pixelRect, setPixelRect] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  for (const span of spans) {
+    const spanText = span.textContent ?? "";
+    if (spanText.trim().length < 1) continue;
 
-  useEffect(() => {
-    const updatePosition = () => {
-      const container = containerRef.current?.parentElement;
-      if (!container) return;
-
-      const dimensions = getPageDimensions(container, pageNumber);
-      if (!dimensions) {
-        console.debug(`[HighlightLayer] Could not get dimensions for page ${pageNumber}`);
-        return;
-      }
-
-      const rect = bboxToPixels(bbox, dimensions);
-      setPixelRect(rect);
-    };
-
-    // Initial calculation
-    updatePosition();
-
-    // Recalculate on resize
-    const resizeObserver = new ResizeObserver(updatePosition);
-    const container = containerRef.current?.parentElement;
-    if (container) {
-      resizeObserver.observe(container);
+    if (spanOverlapsBbox(span as HTMLElement, bbox)) {
+      span.classList.add(HIGHLIGHT_CLASS);
+      span.setAttribute(HIGHLIGHT_ATTR, "true");
+      highlightCount++;
     }
+  }
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [bbox, pageNumber, containerRef]);
-
-  if (!pixelRect) return null;
-
-  return (
-    <div
-      style={{
-        ...bboxOverlayStyles.highlight,
-        left: `${pixelRect.left}px`,
-        top: `${pixelRect.top}px`,
-        width: `${pixelRect.width}px`,
-        height: `${pixelRect.height}px`,
-      }}
-      data-bbox-highlight
-      aria-hidden="true"
-    />
-  );
-});
+  console.debug(`[HighlightLayer] Highlighted ${highlightCount} spans via bbox`);
+  return highlightCount;
+}
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
 /**
- * HighlightLayer - Applies highlights to PDF content based on citations
+ * HighlightLayer - Applies CSS highlights to PDF TextLayer spans based on citations
  *
- * Supports two highlighting modes:
- * 1. Bounding Box (WF-0028): Uses precise bbox coordinates from citation units
+ * All highlighting is done by applying CSS classes directly to the PDF.js TextLayer
+ * span elements, ensuring highlights scroll naturally with the document.
+ *
+ * Supports two highlight detection modes:
+ * 1. Bounding Box (WF-0028): Uses bbox coordinates to find spans within the region
  * 2. Word Overlap (legacy): Falls back to text matching when bbox unavailable
  *
  * When `activeHighlight` is set in the PdfViewerContext, this component:
  * 1. Fetches the citation unit data (or legacy embedding)
- * 2. If bbox available: Renders overlay rectangles at precise positions
- * 3. If no bbox: Searches TextLayer for matching text spans
+ * 2. If bbox available: Finds TextLayer spans within the bounding box region
+ * 3. If no bbox: Searches TextLayer for spans with matching text content
+ * 4. Applies CSS classes to matching spans for highlighting
  *
  * The highlight auto-clears after 5 seconds.
  */
 export const HighlightLayer = memo(function HighlightLayer() {
-  const { activeHighlight, clearHighlight, currentPage } = usePdfViewer();
+  const { activeHighlight, clearHighlight } = usePdfViewer();
 
   // Try citation unit first (WF-0028)
   const { data: citationUnit, isLoading: citationLoading } = useCitationUnit(activeHighlight);
@@ -358,12 +301,27 @@ export const HighlightLayer = memo(function HighlightLayer() {
   const hasBbox = citationUnit?.bbox != null;
   const fallbackContent = citationUnit?.content ?? embedding?.content;
 
-  // Ensure styles are injected for legacy mode
+  // Ensure styles are injected (used by both bbox and legacy modes)
   useEffect(() => {
     ensureStylesInjected();
   }, []);
 
-  // Apply legacy highlights to matching text
+  // Apply bbox-based highlights (CSS on text spans within bounding box)
+  const applyBboxHighlights = useCallback(() => {
+    const container = containerRef.current?.parentElement;
+    if (!container || !citationUnit?.bbox) {
+      if (container) clearAllHighlights(container);
+      return;
+    }
+
+    // Clear existing highlights first
+    clearAllHighlights(container);
+
+    // Apply highlights to spans within the bounding box
+    applyBboxHighlightsToSpans(container, citationUnit.bbox, citationUnit.pageNumber);
+  }, [citationUnit]);
+
+  // Apply legacy highlights to matching text (word overlap)
   const applyLegacyHighlights = useCallback(() => {
     const container = containerRef.current?.parentElement;
     if (!container || !fallbackContent) {
@@ -374,29 +332,33 @@ export const HighlightLayer = memo(function HighlightLayer() {
     // Clear existing highlights first
     clearAllHighlights(container);
 
-    // Apply new highlights
+    // Apply new highlights using word overlap matching
     applyHighlightsToSpans(container, fallbackContent);
   }, [fallbackContent]);
 
-  // Update legacy highlights when content changes
+  // Apply highlights when data changes (unified for both modes)
   useEffect(() => {
-    // Skip if using bbox mode
-    if (hasBbox) return;
-
-    if (!activeHighlight || !fallbackContent) {
+    if (!activeHighlight) {
       clearAllHighlights(containerRef.current?.parentElement ?? null);
       return;
     }
 
+    // Choose highlight method based on available data
+    const applyHighlights = hasBbox ? applyBboxHighlights : applyLegacyHighlights;
+
+    // Wait for condition to be ready
+    if (hasBbox && !citationUnit?.bbox) return;
+    if (!hasBbox && !fallbackContent) return;
+
     // Give the TextLayer time to render after page navigation
-    const initialTimeout = setTimeout(applyLegacyHighlights, 100);
+    const initialTimeout = setTimeout(applyHighlights, 100);
 
     const container = containerRef.current?.parentElement;
     if (!container) return;
 
     // Observe DOM changes in case TextLayer loads later
     const observer = new MutationObserver(() => {
-      applyLegacyHighlights();
+      applyHighlights();
     });
 
     observer.observe(container, {
@@ -408,14 +370,7 @@ export const HighlightLayer = memo(function HighlightLayer() {
       clearTimeout(initialTimeout);
       observer.disconnect();
     };
-  }, [activeHighlight, fallbackContent, hasBbox, applyLegacyHighlights]);
-
-  // Clear legacy highlights when switching to bbox mode
-  useEffect(() => {
-    if (hasBbox) {
-      clearAllHighlights(containerRef.current?.parentElement ?? null);
-    }
-  }, [hasBbox]);
+  }, [activeHighlight, hasBbox, citationUnit, fallbackContent, applyBboxHighlights, applyLegacyHighlights]);
 
   // Auto-clear highlight after duration
   useEffect(() => {
@@ -447,30 +402,15 @@ export const HighlightLayer = memo(function HighlightLayer() {
     };
   }, []);
 
-  // Only show bbox highlight if on the correct page
-  const showBboxHighlight = hasBbox && citationUnit && currentPage === citationUnit.pageNumber;
-
+  // This component no longer renders any visible elements
+  // All highlighting is done via CSS classes on TextLayer spans
   return (
-    <>
-      {/* Hidden reference element for container access */}
-      <div
-        ref={containerRef}
-        data-highlight-layer
-        style={{ display: "none" }}
-        aria-hidden="true"
-      />
-
-      {/* Bounding box overlay for WF-0028 citation units */}
-      {showBboxHighlight && citationUnit.bbox && (
-        <div style={bboxOverlayStyles.container} data-bbox-overlay>
-          <BboxOverlay
-            bbox={citationUnit.bbox}
-            pageNumber={citationUnit.pageNumber}
-            containerRef={containerRef}
-          />
-        </div>
-      )}
-    </>
+    <div
+      ref={containerRef}
+      data-highlight-layer
+      style={{ display: "none" }}
+      aria-hidden="true"
+    />
   );
 });
 

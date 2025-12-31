@@ -29,6 +29,7 @@ import { List } from './components/list';
 import { Image } from './components/image';
 import { Sheet } from './components/sheet';
 import { Grid } from './components/grid';
+import { GridEmpty } from './components/grid-empty';
 import { Stack, VStack, HStack } from './components/stack';
 import { AreaChartComponent } from './components/area-chart';
 import { Heading } from './components/heading';
@@ -93,6 +94,7 @@ export const componentRegistry: ComponentRegistry = {
   image: Image,
   sheet: Sheet,
   grid: Grid,
+  'grid-empty': GridEmpty,
   stack: Stack,
   vstack: VStack,
   hstack: HStack,

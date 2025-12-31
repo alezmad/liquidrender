@@ -62,6 +62,12 @@ export interface Layout {
   priority?: number | string;
   flex?: string;
   span?: number | string;
+  // Grid-specific layout properties
+  columns?: number | 'auto' | 'auto-fit' | 'auto-fill';  // Grid column specification
+  gridMinWidth?: string;                                  // Min-width for auto modes
+  gap?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';                // Gap size
+  justifyContent?: 'start' | 'center' | 'end' | 'space-between' | 'space-around';  // Incomplete row alignment
+  rowSpan?: number;                                       // Grid row span
 }
 
 export interface SignalBinding {
@@ -303,6 +309,26 @@ export class UIEmitter {
 
     // Layout modifiers
     const layout = this.extractLayout(astBlock.modifiers);
+
+    // Grid-specific layout properties
+    if (astBlock.type === 'grid') {
+      if (astBlock.gridColumns !== undefined) {
+        layout.columns = astBlock.gridColumns;
+      } else if (astBlock.gridMode) {
+        // Auto-fit or auto-fill mode
+        layout.columns = astBlock.gridMode === 'fill' ? 'auto-fill' : 'auto-fit';
+      }
+      if (astBlock.gridMinWidth) {
+        layout.gridMinWidth = astBlock.gridMinWidth;
+      }
+      if (astBlock.gridGap) {
+        layout.gap = astBlock.gridGap;
+      }
+      if (astBlock.gridAlign) {
+        layout.justifyContent = astBlock.gridAlign;
+      }
+    }
+
     if (Object.keys(layout).length > 0) {
       block.layout = layout;
     }

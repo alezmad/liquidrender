@@ -354,6 +354,7 @@ import { List } from './list';
 import { Image } from './image';
 import { Stack, VStack, HStack } from './stack';
 import { Grid } from './grid';
+import { GridEmpty } from './grid-empty';
 // Wave 1 imports
 import { Alert } from './alert';
 import { Calendar } from './calendar';
@@ -448,6 +449,7 @@ export const liquidComponents: Record<string, ComponentType<LiquidComponentProps
   vstack: VStack,
   hstack: HStack,
   grid: Grid,
+  'grid-empty': GridEmpty,
   // Wave 1 components
   alert: Alert,
   calendar: Calendar,

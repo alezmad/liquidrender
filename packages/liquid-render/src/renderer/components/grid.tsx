@@ -12,12 +12,15 @@ type AlignItems = 'start' | 'center' | 'end' | 'stretch';
 type JustifyItems = 'start' | 'center' | 'end' | 'stretch';
 type ColumnSpec = number | 'auto' | 'auto-fit' | 'auto-fill';
 
+type JustifyContent = 'start' | 'center' | 'end' | 'space-between' | 'space-around';
+
 interface GridLayoutConfig {
   columns?: ColumnSpec;
   gap?: GapSize;
   align?: AlignItems;
   justify?: JustifyItems;
   minChildWidth?: string;
+  justifyContent?: JustifyContent;
 }
 
 // ============================================================================
@@ -94,20 +97,26 @@ function getGridTemplateColumns(
 
 /**
  * Extract grid configuration from block.layout
+ * Default changed from 12 fixed columns to auto-fit responsive (breaking change)
  */
 function extractGridConfig(
   layout?: Record<string, unknown>
 ): GridLayoutConfig {
   if (!layout) {
-    return { columns: 12, gap: 'md', align: 'stretch' };
+    // NEW DEFAULT: auto-fit responsive with 200px min width
+    return { columns: 'auto-fit', gap: 'md', align: 'stretch', minChildWidth: '200px' };
   }
 
   return {
-    columns: (layout.columns as ColumnSpec) ?? 12,
+    // columns can be number or 'auto-fit'/'auto-fill' from emitter
+    columns: (layout.columns as ColumnSpec) ?? 'auto-fit',
     gap: (layout.gap as GapSize) ?? 'md',
     align: (layout.align as AlignItems) ?? 'stretch',
     justify: layout.justify as JustifyItems | undefined,
-    minChildWidth: layout.minChildWidth as string | undefined,
+    // Support both minChildWidth (legacy) and gridMinWidth (from emitter)
+    minChildWidth: (layout.gridMinWidth as string) ?? (layout.minChildWidth as string) ?? '200px',
+    // justifyContent for incomplete row alignment
+    justifyContent: layout.justifyContent as JustifyContent | undefined,
   };
 }
 
@@ -117,11 +126,12 @@ function extractGridConfig(
 
 function getGridStyles(config: GridLayoutConfig): React.CSSProperties {
   const {
-    columns = 12,
+    columns = 'auto-fit',
     gap = 'md',
     align = 'stretch',
     justify,
-    minChildWidth,
+    minChildWidth = '200px',
+    justifyContent,
   } = config;
 
   const style: React.CSSProperties = {
@@ -134,6 +144,11 @@ function getGridStyles(config: GridLayoutConfig): React.CSSProperties {
 
   if (justify) {
     style.justifyItems = getJustifyValue(justify);
+  }
+
+  // justifyContent controls alignment of incomplete rows
+  if (justifyContent) {
+    style.justifyContent = justifyContent;
   }
 
   return mergeStyles(baseStyles(), style);

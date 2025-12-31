@@ -1,0 +1,40 @@
+# Context Library for WF-0029: Grid DSL Enhancement
+# Token budget: 20,000
+
+files:
+  # Specification (required)
+  - path: .artifacts/2025-12-31-grid-dsl-enhancement-spec.md
+    priority: critical
+    tokens: ~2500
+    reason: Implementation specification
+
+  # Target files (required for understanding current state)
+  - path: packages/liquid-render/src/compiler/ui-scanner.ts
+    priority: high
+    tokens: ~4000
+    sections: [token types, scan methods]
+
+  - path: packages/liquid-render/src/compiler/ui-parser.ts
+    priority: high
+    tokens: ~4500
+    sections: [BlockAST interface, parseBlock, parseChildren]
+
+  - path: packages/liquid-render/src/compiler/ui-emitter.ts
+    priority: high
+    tokens: ~5000
+    sections: [Layout interface, emitBlock, grid handling]
+
+  - path: packages/liquid-render/src/renderer/components/grid.tsx
+    priority: high
+    tokens: ~2000
+    reason: Grid component to modify
+
+  # Supporting context
+  - path: packages/liquid-render/src/compiler/constants.ts
+    priority: medium
+    tokens: ~500
+    reason: Type codes reference
+
+totalTokens: ~18500
+budget: 20000
+status: within_budget

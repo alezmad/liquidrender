@@ -53,6 +53,13 @@ export interface BlockAST {
   step?: number;
   // Custom component (LLM-generated)
   componentId?: string;  // For type='custom': the registered component identifier
+  // Grid layout parameters
+  gridColumns?: number;                    // Explicit column count (Gd N [...])
+  gridMode?: 'fit' | 'fill';               // Auto-fit vs auto-fill mode
+  gridMinWidth?: string;                   // Custom min-width for auto modes (Gd ~250)
+  gridRows?: BlockAST[][];                 // Children organized by rows (newline-separated)
+  gridGap?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';  // Gap size modifier
+  gridAlign?: 'start' | 'center' | 'end' | 'space-between' | 'space-around';  // Incomplete row alignment
 }
 
 export interface ConditionAST {
@@ -67,7 +74,7 @@ export interface BindingAST {
 }
 
 export interface ModifierAST {
-  kind: 'priority' | 'flex' | 'span' | 'emit' | 'receive' | 'both' | 'color' | 'size' | 'state' | 'action' | 'stream' | 'fidelity';
+  kind: 'priority' | 'flex' | 'span' | 'emit' | 'receive' | 'both' | 'color' | 'size' | 'state' | 'action' | 'stream' | 'fidelity' | 'gridMode';
   raw: string;
   value?: string | number;
   target?: string;  // For signals
@@ -234,11 +241,56 @@ export class UIParser {
       this.parseRangeParameters(block);
     }
 
+    // Extract grid-specific fields from modifiers
+    if (block.type === 'grid') {
+      // Check for explicit column count (NUMBER before brackets)
+      // This was parsed as a binding, convert to gridColumns
+      const numBinding = block.bindings.find(b => b.kind === 'index' && /^\d+$/.test(b.value));
+      if (numBinding) {
+        block.gridColumns = parseInt(numBinding.value, 10);
+        block.bindings = block.bindings.filter(b => b !== numBinding);
+      }
+
+      // Extract gap from SIZE modifier (%xs, %sm, %md, %lg, %xl)
+      const sizeModifier = block.modifiers.find(m => m.kind === 'size');
+      if (sizeModifier && ['xs', 'sm', 'md', 'lg', 'xl'].includes(sizeModifier.value as string)) {
+        block.gridGap = sizeModifier.value as 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+      }
+
+      // Extract alignment from FLEX modifier (^c, ^e, ^sb, ^sa, ^s)
+      const flexModifier = block.modifiers.find(m => m.kind === 'flex');
+      if (flexModifier) {
+        const alignMap: Record<string, 'start' | 'center' | 'end' | 'space-between' | 'space-around'> = {
+          's': 'start',
+          'start': 'start',
+          'c': 'center',
+          'center': 'center',
+          'e': 'end',
+          'end': 'end',
+          'sb': 'space-between',
+          'space-between': 'space-between',
+          'sa': 'space-around',
+          'space-around': 'space-around',
+        };
+        const alignValue = alignMap[flexModifier.value as string];
+        if (alignValue) {
+          block.gridAlign = alignValue;
+        }
+      }
+    }
+
     // Parse children [...] or columns for tables
     if (this.check('LBRACKET')) {
       if (block.type === 'table') {
         // For tables, brackets contain column definitions
         block.columns = this.parseColumns();
+      } else if (block.type === 'grid') {
+        // For grids, parse children with row awareness (newlines define rows)
+        const result = this.parseGridChildren();
+        block.children = result.children;
+        if (result.rows.length > 0) {
+          block.gridRows = result.rows;
+        }
       } else {
         block.children = this.parseChildren();
       }
@@ -511,6 +563,29 @@ export class UIParser {
         continue;
       }
 
+      // Grid mode modifier: ~fit, ~fill, ~250 (for grid blocks)
+      if (this.check('GRID_MODE')) {
+        const token = this.advance();
+        const raw = token.value.slice(1); // Remove ~
+        const modifier: ModifierAST = {
+          kind: 'gridMode',
+          raw: token.value,
+          value: raw,
+        };
+        // Parse grid mode type
+        if (raw === 'fit') {
+          block.gridMode = 'fit';
+        } else if (raw === 'fill') {
+          block.gridMode = 'fill';
+        } else if (/^\d+$/.test(raw)) {
+          // Custom min-width: ~250 -> 250px
+          block.gridMode = 'fit'; // Default to fit for custom widths
+          block.gridMinWidth = `${raw}px`;
+        }
+        block.modifiers.push(modifier);
+        continue;
+      }
+
       // Fidelity modifier: $lo, $hi, $auto, $skeleton, $defer
       if (this.check('FIDELITY')) {
         const token = this.advance();
@@ -618,6 +693,85 @@ export class UIParser {
     }
 
     return children;
+  }
+
+  /**
+   * Parse grid children with row awareness.
+   * Newlines within brackets define rows; first row sets column count.
+   * PLACEHOLDER tokens (_) create grid-empty blocks.
+   */
+  private parseGridChildren(): { children: BlockAST[]; rows: BlockAST[][] } {
+    const children: BlockAST[] = [];
+    const rows: BlockAST[][] = [];
+    let currentRow: BlockAST[] = [];
+
+    this.advance(); // consume [
+
+    while (!this.check('RBRACKET') && !this.isAtEnd()) {
+      // Skip commas
+      if (this.check('COMMA')) {
+        this.advance();
+        continue;
+      }
+
+      // Newline starts a new row
+      if (this.check('NEWLINE')) {
+        this.advance();
+        // Only add non-empty rows
+        if (currentRow.length > 0) {
+          rows.push(currentRow);
+          currentRow = [];
+        }
+        continue;
+      }
+
+      // Handle placeholder tokens (_) for empty grid cells
+      if (this.check('PLACEHOLDER')) {
+        const token = this.advance();
+        const emptyBlock: BlockAST = {
+          uid: this.generateUid(),
+          type: 'grid-empty',
+          bindings: [],
+          modifiers: [],
+          line: token.line,
+        };
+        children.push(emptyBlock);
+        currentRow.push(emptyBlock);
+        continue;
+      }
+
+      // Handle conditional blocks inside children
+      if (this.check('CONDITION')) {
+        const conditionalBlocks = this.parseConditionalBlock();
+        if (conditionalBlocks) {
+          children.push(...conditionalBlocks);
+          currentRow.push(...conditionalBlocks);
+          continue;
+        }
+      }
+
+      const block = this.parseBlock();
+      if (block) {
+        children.push(block);
+        currentRow.push(block);
+      } else {
+        // Not a block, skip token
+        if (!this.check('RBRACKET')) {
+          this.advance();
+        }
+      }
+    }
+
+    // Add final row if non-empty
+    if (currentRow.length > 0) {
+      rows.push(currentRow);
+    }
+
+    if (this.check('RBRACKET')) {
+      this.advance();
+    }
+
+    return { children, rows };
   }
 
   private parseColumns(): string[] {

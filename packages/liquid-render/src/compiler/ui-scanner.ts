@@ -81,6 +81,9 @@ export type UITokenType =
   | 'SURVEY_START'     // Survey {
   | 'LBRACE'           // {
   | 'RBRACE'           // }
+  // Grid-specific
+  | 'PLACEHOLDER'      // _ (empty grid cell)
+  | 'GRID_MODE'        // ~fit, ~fill, ~250 (grid column mode)
   // General
   | 'IDENTIFIER'       // generic identifier
   | 'NEWLINE'          // \n
@@ -332,6 +335,11 @@ export class UIScanner {
         // Otherwise ignore standalone minus (not valid in DSL)
         break;
 
+      case '_':
+        // Empty grid cell placeholder
+        this.addToken('PLACEHOLDER', c);
+        break;
+
       default:
         if (this.isDigit(c)) {
           this.numberOrType(c);
@@ -446,7 +454,52 @@ export class UIScanner {
 
   private stream(): void {
     let value = '~';
-    // Stream can be: ~5s, ~1m, ~ws://url, ~sse://url, ~poll
+    // First, check for grid mode keywords: ~fit, ~fill, or ~<number> (without time suffix)
+    // Grid modes: ~fit, ~fill, ~250, ~300px
+    // Stream modes: ~5s, ~1m, ~ws://url, ~sse://url, ~poll
+
+    // Peek ahead to determine if this is a grid mode or stream
+    const peekValue = this.peekWord();
+
+    // Grid mode patterns:
+    // - ~fit, ~fill (keywords)
+    // - ~250, ~300px, ~15rem (number with optional unit, but NOT time units like s/m/h)
+    if (peekValue === 'fit' || peekValue === 'fill') {
+      // Consume the keyword
+      while (this.isAlpha(this.peek())) {
+        value += this.advance();
+      }
+      this.addToken('GRID_MODE', value);
+      return;
+    }
+
+    // Check for numeric grid mode: ~250, ~300px (number without time suffix)
+    if (this.isDigit(this.peek())) {
+      // Consume digits
+      while (this.isDigit(this.peek())) {
+        value += this.advance();
+      }
+      // Check if followed by time suffix (s, m, h) -> STREAM, or size unit (px, rem, em) -> GRID_MODE
+      const suffix = this.peekWord();
+      if (suffix === 's' || suffix === 'm' || suffix === 'h' || suffix === 'ms') {
+        // Time suffix -> this is a STREAM (poll interval)
+        while (this.isAlpha(this.peek())) {
+          value += this.advance();
+        }
+        this.addToken('STREAM', value);
+        return;
+      }
+      // Optional size unit (px, rem, em, %)
+      if (suffix === 'px' || suffix === 'rem' || suffix === 'em') {
+        while (this.isAlpha(this.peek())) {
+          value += this.advance();
+        }
+      }
+      this.addToken('GRID_MODE', value);
+      return;
+    }
+
+    // Stream: ~ws://url, ~sse://url, ~poll, etc.
     // Consume until whitespace, comma, bracket, or prefix (but allow : for URLs)
     while (!this.isAtEnd() && !' \t\n,[]'.includes(this.peek())) {
       const c = this.peek();
@@ -467,6 +520,28 @@ export class UIScanner {
     }
 
     this.addToken('STREAM', value);
+  }
+
+  /**
+   * Peek ahead to get a word (letters only) without consuming
+   */
+  private peekWord(): string {
+    let word = '';
+    let offset = 0;
+    while (this.current + offset < this.source.length) {
+      const c = this.source[this.current + offset]!;
+      if (this.isAlphaChar(c)) {
+        word += c;
+        offset++;
+      } else {
+        break;
+      }
+    }
+    return word;
+  }
+
+  private isAlphaChar(c: string): boolean {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   }
 
   private fidelity(): void {

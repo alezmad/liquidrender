@@ -8,13 +8,6 @@ import * as z from "zod";
 import { cn } from "@turbostarter/ui";
 import { Button } from "@turbostarter/ui-web/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@turbostarter/ui-web/card";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -137,17 +130,8 @@ export const ConnectStep = memo<ConnectStepProps>(
     const isFormDisabled = isLoading || testingConnection;
 
     return (
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl">Connect Your Database</CardTitle>
-          <CardDescription>
-            Enter your database connection details to get started. Your
-            credentials are encrypted and never stored in plain text.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Form {...form}>
+      <div className="w-full">
+        <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
               className="flex flex-col gap-6"
@@ -333,8 +317,7 @@ export const ConnectStep = memo<ConnectStepProps>(
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+      </div>
     );
   },
 );

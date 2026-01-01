@@ -701,18 +701,7 @@ export function ReviewStep({
   }, [entities, metrics, dimensions, detected, onNext]);
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="text-center">
-        {/* eslint-disable-next-line i18next/no-literal-string */}
-        <h3 className="text-lg font-semibold">Review Detected Items</h3>
-        {/* eslint-disable-next-line i18next/no-literal-string */}
-        <p className="text-muted-foreground mt-1 text-sm">
-          Review and customize the automatically detected entities, metrics, and
-          dimensions. Uncheck items you want to exclude.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <Card>

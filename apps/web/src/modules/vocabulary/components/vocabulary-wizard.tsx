@@ -42,10 +42,10 @@ interface VocabularyCreateResponse {
 }
 
 const STEPS: { id: WizardStep; label: string; description: string }[] = [
-  { id: "connect", label: "Connect", description: "Database connection" },
-  { id: "review", label: "Review", description: "Review detected items" },
-  { id: "confirm", label: "Confirm", description: "Answer questions" },
-  { id: "save", label: "Save", description: "Name and save" },
+  { id: "connect", label: "Connect", description: "Enter your database connection details. Credentials are encrypted." },
+  { id: "review", label: "Review", description: "Review and customize detected entities, metrics, and dimensions." },
+  { id: "confirm", label: "Confirm", description: "Answer a few questions to improve accuracy." },
+  { id: "save", label: "Save", description: "Name your vocabulary and save it." },
 ];
 
 interface VocabularyWizardProps {

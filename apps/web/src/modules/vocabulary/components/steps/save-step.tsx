@@ -11,13 +11,6 @@ import { useState } from "react";
 
 import { cn } from "@turbostarter/ui";
 import { Button } from "@turbostarter/ui-web/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@turbostarter/ui-web/card";
 import { Icons } from "@turbostarter/ui-web/icons";
 import { Input } from "@turbostarter/ui-web/input";
 import { Label } from "@turbostarter/ui-web/label";
@@ -99,49 +92,38 @@ export const SaveStep = ({
 
   if (isSaved) {
     return (
-      <Card className="w-full max-w-2xl">
-        <CardContent className="flex flex-col items-center gap-6 py-12">
-          <div className="bg-success/10 flex h-20 w-20 items-center justify-center rounded-full">
-            <Icons.CheckCircle2
-              className="text-success h-12 w-12"
-              strokeWidth={1.5}
-            />
-          </div>
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Vocabulary Saved Successfully
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Your vocabulary &ldquo;{name}&rdquo; has been created and is ready
-              to use.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleCreateAnother}>
-              <Icons.Plus className="mr-2 h-4 w-4" />
-              Create Another
-            </Button>
-            <Button>
-              <Icons.Eye className="mr-2 h-4 w-4" />
-              View Vocabulary
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center gap-6 py-8">
+        <div className="bg-success/10 flex h-20 w-20 items-center justify-center rounded-full">
+          <Icons.CheckCircle2
+            className="text-success h-12 w-12"
+            strokeWidth={1.5}
+          />
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Vocabulary Saved Successfully
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            Your vocabulary &ldquo;{name}&rdquo; has been created and is ready
+            to use.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleCreateAnother}>
+            <Icons.Plus className="mr-2 h-4 w-4" />
+            Create Another
+          </Button>
+          <Button>
+            <Icons.Eye className="mr-2 h-4 w-4" />
+            View Vocabulary
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>Save Your Vocabulary</CardTitle>
-        <CardDescription>
-          Give your vocabulary a name and optionally add a description to help
-          you identify it later.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
+    <div className="w-full space-y-6">
           {/* Stats Summary */}
           <div className="border-border bg-muted/30 rounded-lg border p-4">
             <h3 className="text-foreground mb-4 text-sm font-medium">
@@ -236,8 +218,6 @@ export const SaveStep = ({
               </Button>
             </div>
           </form>
-        </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 };

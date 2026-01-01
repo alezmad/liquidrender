@@ -10,6 +10,13 @@ import {
   getWorkspaceMetrics,
 } from "./queries";
 
+import {
+  calculateStats,
+  calculatePearsonCorrelation,
+  calculateLinearTrend,
+  zScoreAnomalyDetection,
+} from "./helpers";
+
 import type {
   GenerateInsightsInput,
   GeneratedInsight,
@@ -134,12 +141,13 @@ export async function generateDailyInsights(
 /**
  * Detect anomalies in metric values
  *
- * In a real implementation, this would:
+ * Uses z-score analysis to identify values outside 2 standard deviations.
+ * In production with real data sources, this would:
  * 1. Query actual metric data from connected data sources
  * 2. Calculate mean and standard deviation
  * 3. Identify values outside 2 std deviations
  *
- * For now, returns simulated insights based on vocabulary metrics.
+ * Currently uses simulated historical data for demonstration.
  */
 async function detectAnomalies(
   workspaceId: string,
@@ -152,42 +160,67 @@ async function detectAnomalies(
 ): Promise<GeneratedInsight[]> {
   const insights: GeneratedInsight[] = [];
 
-  // TODO: Replace with actual data source queries
-  // This is a placeholder that demonstrates the structure
+  for (const metric of metrics) {
+    // TODO: Replace with actual data source queries
+    // In production, fetch historical values from connected databases
+    const historicalValues = generateSimulatedHistoricalData();
+    const currentValue = historicalValues[historicalValues.length - 1] ?? 0;
+    const previousValue = historicalValues[historicalValues.length - 2] ?? currentValue;
 
-  // Simulate detecting an anomaly on a random metric
-  // In production, this would query real data and apply statistical analysis
-  if (metrics.length > 0) {
-    const metricIndex = Math.floor(Math.random() * metrics.length);
-    const metric = metrics[metricIndex];
+    // Calculate statistics using helpers
+    const { mean, stdDev } = calculateStats(historicalValues);
+    const { isAnomaly, zScore } = zScoreAnomalyDetection(currentValue, mean, stdDev);
 
-    // Guard against undefined (shouldn't happen but satisfies TypeScript)
-    if (!metric) return insights;
+    if (isAnomaly) {
+      const changePercent = previousValue !== 0
+        ? ((currentValue - previousValue) / previousValue) * 100
+        : 0;
 
-    // Simulate anomaly data
-    const currentValue = 150;
-    const previousValue = 100;
-    const changePercent = ((currentValue - previousValue) / previousValue) * 100;
-
-    // Only surface if change is significant (>20%)
-    if (Math.abs(changePercent) > 20) {
       insights.push({
-        headline: `Unusual spike in ${metric.canonicalName}`,
-        explanation: `${metric.canonicalName} has increased by ${changePercent.toFixed(1)}% compared to the previous period. This is outside the normal range based on historical data.`,
+        headline: `${zScore > 0 ? "Unusual spike" : "Unusual drop"} in ${metric.canonicalName}`,
+        explanation: `${metric.canonicalName} is ${Math.abs(zScore).toFixed(1)} standard deviations ${zScore > 0 ? "above" : "below"} the 30-day average. Current value: ${currentValue.toFixed(2)}, Average: ${mean.toFixed(2)}.`,
         evidence: {
           metric: metric.slug,
           currentValue,
           previousValue,
           changePercent,
-          pattern: "spike",
+          pattern: zScore > 0 ? "spike" : "drop",
+          zScore,
         },
-        severity: changePercent > 50 ? "warning" : "info",
+        severity: Math.abs(zScore) > 3 ? "critical" : "warning",
         category: "anomaly",
       });
+
+      // Limit to one anomaly per batch to avoid flooding
+      if (insights.length >= 2) break;
     }
   }
 
   return insights;
+}
+
+/**
+ * Generate simulated historical data for testing
+ * In production, this would be replaced with actual data source queries
+ */
+function generateSimulatedHistoricalData(): number[] {
+  const baseValue = 100 + Math.random() * 50;
+  const values: number[] = [];
+
+  // Generate 30 days of "normal" data
+  for (let i = 0; i < 30; i++) {
+    values.push(baseValue + (Math.random() - 0.5) * 20);
+  }
+
+  // 20% chance to inject an anomaly at the end
+  if (Math.random() < 0.2) {
+    const lastValue = values[values.length - 1] ?? baseValue;
+    values.push(lastValue * (1 + (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5)));
+  } else {
+    values.push(baseValue + (Math.random() - 0.5) * 20);
+  }
+
+  return values;
 }
 
 // ============================================================================
@@ -197,10 +230,11 @@ async function detectAnomalies(
 /**
  * Detect patterns in historical data
  *
- * In a real implementation, this would:
- * 1. Analyze time-series data for trends
- * 2. Look for correlations between metrics
- * 3. Identify recurring patterns (weekly, monthly)
+ * Uses Pearson correlation and linear regression to find:
+ * 1. Correlations between metrics (|r| > 0.7)
+ * 2. Significant trends (>10% change over 30 days)
+ *
+ * Currently uses simulated data for demonstration.
  */
 async function detectPatterns(
   workspaceId: string,
@@ -213,28 +247,70 @@ async function detectPatterns(
 ): Promise<GeneratedInsight[]> {
   const insights: GeneratedInsight[] = [];
 
-  // TODO: Replace with actual pattern detection
-  // This is a placeholder that demonstrates the structure
+  // Generate time series data for each metric
+  // TODO: Replace with actual data source queries
+  const timeSeries = metrics.slice(0, 5).map((metric) => ({
+    metric,
+    values: generateSimulatedHistoricalData(),
+  }));
 
-  if (metrics.length >= 2) {
-    const metric1 = metrics[0];
-    const metric2 = metrics[1];
+  // Detect correlations between metrics
+  for (let i = 0; i < timeSeries.length; i++) {
+    for (let j = i + 1; j < timeSeries.length; j++) {
+      const seriesA = timeSeries[i];
+      const seriesB = timeSeries[j];
 
-    // Guard against undefined (shouldn't happen but satisfies TypeScript)
-    if (!metric1 || !metric2) return insights;
+      if (!seriesA || !seriesB) continue;
 
-    // Simulate detecting a correlation
-    insights.push({
-      headline: `${metric1.canonicalName} correlates with ${metric2.canonicalName}`,
-      explanation: `Historical analysis shows a strong correlation between ${metric1.canonicalName} and ${metric2.canonicalName}. When one increases, the other tends to follow within 2-3 days.`,
-      evidence: {
-        metric: metric1.slug,
-        currentValue: 0, // Placeholder
-        pattern: `correlated_with:${metric2.slug}`,
-      },
-      severity: "info",
-      category: "correlation",
-    });
+      const correlation = calculatePearsonCorrelation(seriesA.values, seriesB.values);
+
+      // Report strong correlations (|r| > 0.7)
+      if (Math.abs(correlation) > 0.7) {
+        insights.push({
+          headline: `${seriesA.metric.canonicalName} ${correlation > 0 ? "moves with" : "inversely tracks"} ${seriesB.metric.canonicalName}`,
+          explanation: `Analysis of the last 30 days shows a ${correlation > 0 ? "positive" : "negative"} correlation (r=${correlation.toFixed(2)}) between these metrics. Changes in one often ${correlation > 0 ? "accompany" : "oppose"} changes in the other.`,
+          evidence: {
+            metric: seriesA.metric.slug,
+            currentValue: correlation,
+            pattern: `correlated_with:${seriesB.metric.slug}`,
+            correlationStrength: Math.abs(correlation) > 0.9 ? "very_strong" : "strong",
+          },
+          severity: "info",
+          category: "correlation",
+        });
+
+        // Limit correlations to avoid flooding
+        if (insights.filter((i) => i.category === "correlation").length >= 2) break;
+      }
+    }
+  }
+
+  // Detect trends
+  for (const series of timeSeries) {
+    const trend = calculateLinearTrend(series.values);
+
+    // Report significant trends (>10% change over period)
+    if (Math.abs(trend.percentChange) > 10) {
+      const lastValue = series.values[series.values.length - 1] ?? 0;
+      const firstValue = series.values[0] ?? 0;
+
+      insights.push({
+        headline: `${series.metric.canonicalName} is ${trend.direction === "up" ? "trending upward" : "declining"}`,
+        explanation: `Over the last 30 days, ${series.metric.canonicalName} has ${trend.direction === "up" ? "increased" : "decreased"} by ${Math.abs(trend.percentChange).toFixed(1)}%. This represents a consistent ${trend.direction}ward trend.`,
+        evidence: {
+          metric: series.metric.slug,
+          currentValue: lastValue,
+          previousValue: firstValue,
+          changePercent: trend.percentChange,
+          pattern: `trend_${trend.direction}`,
+        },
+        severity: Math.abs(trend.percentChange) > 25 ? "warning" : "info",
+        category: "trend",
+      });
+
+      // Limit trends to avoid flooding
+      if (insights.filter((i) => i.category === "trend").length >= 2) break;
+    }
   }
 
   return insights;

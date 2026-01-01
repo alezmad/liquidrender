@@ -1,0 +1,52 @@
+id: WF-0033
+name: Knosia Canvas & Insights Implementation
+status: completed
+created_at: '2026-01-01T12:15:00Z'
+started_at: '2026-01-01T13:00:00Z'
+completed_at: '2026-01-01T14:00:00Z'
+
+git:
+  start_tag: WF-0033-start
+  start_commit: 1461e7c
+
+waves:
+  - id: 0
+    name: Bootstrap & verify structure
+    type: sequential
+    status: completed
+    tasks: [verify-types]
+  - id: 1
+    name: Core blocks
+    type: parallel
+    status: completed
+    tasks: [hero-metric, watch-list, comparison-card, insight-card]
+  - id: 2
+    name: Extended components
+    type: parallel
+    status: completed
+    tasks: [liquid-render-block, insight-helpers, canvas-alerts-panel, canvas-share-modal]
+  - id: 3
+    name: Integration
+    type: sequential
+    status: completed
+    tasks: [block-renderer-update, canvas-view-wiring, mutations-update, schema-fix]
+
+current_wave: 3
+total_tasks: 12
+completed_tasks: 12
+
+files_created:
+  - apps/web/src/modules/knosia/canvas/components/blocks/hero-metric.tsx
+  - apps/web/src/modules/knosia/canvas/components/blocks/watch-list.tsx
+  - apps/web/src/modules/knosia/canvas/components/blocks/comparison-card.tsx
+  - apps/web/src/modules/knosia/canvas/components/blocks/insight-card.tsx
+  - apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx
+  - apps/web/src/modules/knosia/canvas/components/canvas-alerts-panel.tsx
+  - apps/web/src/modules/knosia/canvas/components/canvas-share-modal.tsx
+  - packages/api/src/modules/knosia/insight/helpers.ts
+
+files_modified:
+  - apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx
+  - apps/web/src/modules/knosia/canvas/components/canvas-view.tsx
+  - packages/api/src/modules/knosia/insight/mutations.ts
+  - packages/api/src/modules/knosia/insight/schemas.ts

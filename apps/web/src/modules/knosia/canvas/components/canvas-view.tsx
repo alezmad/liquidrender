@@ -9,7 +9,9 @@ import { Icons } from "@turbostarter/ui-web/icons";
 import { useCanvas } from "../hooks/use-canvas";
 import { CanvasGrid } from "./canvas-grid";
 import { CanvasPromptBar } from "./canvas-prompt-bar";
-import type { CanvasViewProps } from "../types";
+import { CanvasAlertsPanel } from "./canvas-alerts-panel";
+import { CanvasShareModal } from "./canvas-share-modal";
+import type { CanvasViewProps, CanvasAlert } from "../types";
 
 export function CanvasView({
   canvasId,
@@ -18,6 +20,9 @@ export function CanvasView({
 }: CanvasViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [alerts, setAlerts] = useState<CanvasAlert[]>([]);
 
   const {
     canvas,
@@ -26,6 +31,27 @@ export function CanvasView({
     isError,
     updateCanvas,
   } = useCanvas({ canvasId });
+
+  // Alert handlers
+  const handleCreateAlert = () => {
+    // TODO: Open alert creation modal
+    console.log("Create alert for canvas:", canvasId);
+  };
+
+  const handleEditAlert = (alertId: string) => {
+    // TODO: Open alert edit modal
+    console.log("Edit alert:", alertId);
+  };
+
+  const handleDeleteAlert = (alertId: string) => {
+    setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+  };
+
+  const handleToggleAlert = (alertId: string, enabled: boolean) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === alertId ? { ...a, enabled } : a))
+    );
+  };
 
   const handlePromptSubmit = async (instruction: string) => {
     setIsProcessing(true);
@@ -77,23 +103,46 @@ export function CanvasView({
 
         <div className="flex items-center gap-2">
           {editable && (
-            <Button
-              variant={isEditing ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              {isEditing ? (
-                <>
-                  <Icons.Check className="mr-2 h-4 w-4" />
-                  Done
-                </>
-              ) : (
-                <>
-                  <Icons.SquarePen className="mr-2 h-4 w-4" />
-                  Edit
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAlerts(!showAlerts)}
+              >
+                <Icons.Bell className="mr-2 h-4 w-4" />
+                Alerts
+                {alerts.length > 0 && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    ({alerts.length})
+                  </span>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShareModal(true)}
+              >
+                <Icons.Share className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+              <Button
+                variant={isEditing ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                {isEditing ? (
+                  <>
+                    <Icons.Check className="mr-2 h-4 w-4" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <Icons.SquarePen className="mr-2 h-4 w-4" />
+                    Edit
+                  </>
+                )}
+              </Button>
+            </>
           )}
           <Button variant="ghost" size="icon">
             <Icons.EllipsisVertical className="h-4 w-4" />
@@ -110,6 +159,20 @@ export function CanvasView({
         />
       </div>
 
+      {/* Alerts Panel (collapsible) */}
+      {showAlerts && (
+        <div className="border-t">
+          <CanvasAlertsPanel
+            canvasId={canvasId}
+            alerts={alerts}
+            onCreateAlert={handleCreateAlert}
+            onEditAlert={handleEditAlert}
+            onDeleteAlert={handleDeleteAlert}
+            onToggleAlert={handleToggleAlert}
+          />
+        </div>
+      )}
+
       {/* Prompt Bar (for AI editing) */}
       {editable && (
         <div className="border-t p-4">
@@ -119,6 +182,15 @@ export function CanvasView({
             isProcessing={isProcessing}
           />
         </div>
+      )}
+
+      {/* Share Modal */}
+      {canvas && (
+        <CanvasShareModal
+          canvas={canvas}
+          open={showShareModal}
+          onOpenChange={setShowShareModal}
+        />
       )}
     </div>
   );

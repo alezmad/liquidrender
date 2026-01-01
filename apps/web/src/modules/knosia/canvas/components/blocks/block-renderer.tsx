@@ -4,6 +4,14 @@
 
 import { Icons } from "@turbostarter/ui-web/icons";
 import type { BlockRendererProps } from "../../types";
+import { LiquidRenderBlock, BLOCK_TYPE_TO_LIQUID_TYPE } from "./liquid-render-block";
+import { HeroMetric } from "./hero-metric";
+import { WatchList } from "./watch-list";
+import { ComparisonCard } from "./comparison-card";
+import { InsightCard } from "./insight-card";
+
+// Block types that should be delegated to LiquidRender
+const LIQUID_RENDER_BLOCK_TYPES = new Set(Object.keys(BLOCK_TYPE_TO_LIQUID_TYPE));
 
 export function BlockRenderer({
   block,
@@ -11,6 +19,24 @@ export function BlockRenderer({
   isLoading = false,
   error = null,
 }: BlockRendererProps) {
+  // Check if this block should delegate to LiquidRender
+  // Either by explicit config or by block type
+  const shouldUseLiquidRender =
+    block.config?.liquidRenderType ||
+    LIQUID_RENDER_BLOCK_TYPES.has(block.type);
+
+  if (shouldUseLiquidRender) {
+    return (
+      <LiquidRenderBlock
+        block={block}
+        data={data}
+        isLoading={isLoading}
+        error={error}
+      />
+    );
+  }
+
+  // Handle loading state for native blocks
   if (isLoading) {
     return (
       <div className="flex h-32 items-center justify-center">
@@ -19,6 +45,7 @@ export function BlockRenderer({
     );
   }
 
+  // Handle error state for native blocks
   if (error) {
     return (
       <div className="flex h-32 flex-col items-center justify-center gap-2 text-destructive">
@@ -28,51 +55,21 @@ export function BlockRenderer({
     );
   }
 
-  // Check if this block should delegate to LiquidRender
-  if (block.config?.liquidRenderType) {
-    return (
-      <LiquidRenderDelegate
-        type={block.config.liquidRenderType}
-        config={block.config.liquidRenderConfig}
-        data={data}
-      />
-    );
-  }
-
   // Native block rendering based on type
   switch (block.type) {
-    case "kpi":
-      return <KPIBlock data={data} />;
     case "hero_metric":
-      return <HeroMetricBlock data={data} />;
+      return <HeroMetric block={block} data={data} />;
+    case "watch_list":
+      return <WatchList block={block} data={data} />;
+    case "comparison":
+      return <ComparisonCard block={block} data={data} />;
+    case "insight":
+      return <InsightCard block={block} data={data} />;
     case "text":
       return <TextBlock data={data} />;
-    case "insight":
-      return <InsightBlock data={data} />;
     default:
       return <PlaceholderBlock type={block.type} data={data} />;
   }
-}
-
-// ============================================================================
-// LiquidRender Delegation
-// ============================================================================
-
-interface LiquidRenderDelegateProps {
-  type: string;
-  config?: unknown;
-  data?: unknown;
-}
-
-function LiquidRenderDelegate({ type, config, data }: LiquidRenderDelegateProps) {
-  // TODO: Import and use actual LiquidRender components
-  return (
-    <div className="flex h-32 items-center justify-center rounded bg-muted/50">
-      <p className="text-sm text-muted-foreground">
-        LiquidRender: {type}
-      </p>
-    </div>
-  );
 }
 
 // ============================================================================

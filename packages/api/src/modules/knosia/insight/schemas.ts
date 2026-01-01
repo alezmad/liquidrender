@@ -50,6 +50,10 @@ export const insightEvidenceSchema = z.object({
   previousValue: z.number().optional(),
   changePercent: z.number().optional(),
   pattern: z.string().optional(),
+  /** Z-score for anomaly detection (standard deviations from mean) */
+  zScore: z.number().optional(),
+  /** Correlation strength label (for correlation insights) */
+  correlationStrength: z.enum(["very_strong", "strong", "moderate"]).optional(),
 });
 
 /**

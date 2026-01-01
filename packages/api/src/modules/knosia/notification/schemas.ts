@@ -82,6 +82,10 @@ export const updateAiInsightStatusInputSchema = z.object({
   status: z.enum(["pending", "viewed", "engaged", "dismissed", "converted"]),
 });
 
+export const convertInsightToThreadInputSchema = z.object({
+  title: z.string().min(1).max(255).optional(), // Defaults to insight headline
+});
+
 // Query schemas for zValidator
 export const getAiInsightsQuerySchema = z.object({
   workspaceId: workspaceIdSchema,
@@ -108,3 +112,4 @@ export type AiInsight = z.infer<typeof aiInsightSchema>;
 export type InsertAiInsight = z.infer<typeof insertAiInsightSchema>;
 export type GetAiInsightsInput = z.infer<typeof getAiInsightsInputSchema>;
 export type UpdateAiInsightStatusInput = z.infer<typeof updateAiInsightStatusInputSchema>;
+export type ConvertInsightToThreadInput = z.infer<typeof convertInsightToThreadInputSchema>;

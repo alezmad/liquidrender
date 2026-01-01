@@ -22,6 +22,7 @@ import {
   updateDigest,
   deleteDigest,
   updateAiInsightStatus,
+  convertInsightToThread,
 } from "./mutations";
 import {
   getNotificationsInputSchema,
@@ -31,6 +32,7 @@ import {
   getAiInsightsInputSchema,
   updateAiInsightStatusInputSchema,
   getAiInsightsQuerySchema,
+  convertInsightToThreadInputSchema,
 } from "./schemas";
 
 import type { Session, User } from "@turbostarter/auth";
@@ -355,4 +357,31 @@ export const notificationRouter = new Hono<{ Variables: Variables }>()
     const insight = await updateAiInsightStatus(id, input, user.id);
 
     return c.json(insight);
+  })
+
+  /**
+   * POST /insights/:id/convert-to-thread - Convert insight to a Thread
+   * Creates a new Thread with the insight context and initial AI message.
+   */
+  .post("/insights/:id/convert-to-thread", zValidator("json", convertInsightToThreadInputSchema), async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+    const input = c.req.valid("json");
+
+    const result = await convertInsightToThread(id, input, user.id);
+
+    if ("error" in result) {
+      if (result.error === "Insight not found") {
+        return c.json({ error: result.error }, 404);
+      }
+      if (result.error === "Access denied") {
+        return c.json({ error: result.error }, 403);
+      }
+      if (result.error === "Insight already converted") {
+        return c.json({ error: result.error, threadId: result.threadId }, 409);
+      }
+      return c.json({ error: result.error }, 400);
+    }
+
+    return c.json(result.thread, 201);
   });

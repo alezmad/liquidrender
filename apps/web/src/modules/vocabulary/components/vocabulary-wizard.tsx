@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 import { cn } from "@turbostarter/ui";
 import {
@@ -9,6 +9,71 @@ import {
   CardHeader,
   CardTitle,
 } from "@turbostarter/ui-web/card";
+
+// Scroll container with top/bottom shadow indicators
+function ScrollContainer({
+  children,
+  className
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateScrollState = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      setScrollState({
+        top: scrollTop > 10,
+        bottom: scrollTop + clientHeight < scrollHeight - 10,
+      });
+    };
+
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState);
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(el);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="relative">
+      {/* Top shadow */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-card to-transparent transition-opacity duration-200",
+          scrollState.top ? "opacity-100" : "opacity-0"
+        )}
+      />
+
+      <div
+        ref={scrollRef}
+        className={cn(
+          "max-h-[60vh] overflow-y-auto scroll-smooth [scrollbar-gutter:stable]",
+          className
+        )}
+      >
+        {children}
+      </div>
+
+      {/* Bottom shadow */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-card to-transparent transition-opacity duration-200",
+          scrollState.bottom ? "opacity-100" : "opacity-0"
+        )}
+      />
+    </div>
+  );
+}
 
 import type {
   ExtractionResult,
@@ -213,45 +278,47 @@ export function VocabularyWizard({ onComplete }: VocabularyWizardProps) {
       )}
 
       {/* Step Content */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>{currentStep?.label}</CardTitle>
           <p className="text-muted-foreground text-sm">
             {currentStep?.description}
           </p>
         </CardHeader>
-        <CardContent>
-          {state.currentStep === "connect" && (
-            <ConnectStep onNext={handleConnect} isLoading={isLoading} />
-          )}
+        <CardContent className="p-0">
+          <ScrollContainer className="px-6 pb-6">
+            {state.currentStep === "connect" && (
+              <ConnectStep onNext={handleConnect} isLoading={isLoading} />
+            )}
 
-          {state.currentStep === "review" && state.extraction && (
-            <ReviewStep
-              detected={state.extraction.detected}
-              onNext={handleReview}
-              onBack={handleBack}
-              isLoading={isLoading}
-            />
-          )}
+            {state.currentStep === "review" && state.extraction && (
+              <ReviewStep
+                detected={state.extraction.detected}
+                onNext={handleReview}
+                onBack={handleBack}
+                isLoading={isLoading}
+              />
+            )}
 
-          {state.currentStep === "confirm" && state.extraction && (
-            <ConfirmStep
-              confirmations={state.extraction.confirmations}
-              onNext={handleConfirm}
-              onBack={handleBack}
-              isLoading={isLoading}
-            />
-          )}
+            {state.currentStep === "confirm" && state.extraction && (
+              <ConfirmStep
+                confirmations={state.extraction.confirmations}
+                onNext={handleConfirm}
+                onBack={handleBack}
+                isLoading={isLoading}
+              />
+            )}
 
-          {state.currentStep === "save" && state.extraction && (
-            <SaveStep
-              stats={state.extraction.stats}
-              onSave={handleSave}
-              onBack={handleBack}
-              isLoading={isLoading}
-              isSaving={isLoading}
-            />
-          )}
+            {state.currentStep === "save" && state.extraction && (
+              <SaveStep
+                stats={state.extraction.stats}
+                onSave={handleSave}
+                onBack={handleBack}
+                isLoading={isLoading}
+                isSaving={isLoading}
+              />
+            )}
+          </ScrollContainer>
         </CardContent>
       </Card>
     </div>

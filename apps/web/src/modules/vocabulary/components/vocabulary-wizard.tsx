@@ -278,7 +278,7 @@ export function VocabularyWizard({ onComplete }: VocabularyWizardProps) {
       )}
 
       {/* Step Content */}
-      <Card className="overflow-hidden">
+      <Card>
         <CardHeader>
           <CardTitle>{currentStep?.label}</CardTitle>
           <p className="text-muted-foreground text-sm">

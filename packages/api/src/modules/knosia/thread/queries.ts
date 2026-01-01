@@ -2,6 +2,7 @@ import { and, desc, eq, count } from "@turbostarter/db";
 import {
   knosiaThread,
   knosiaThreadMessage,
+  knosiaThreadSnapshot,
   knosiaWorkspace,
   knosiaUserPreference,
   knosiaConnection,
@@ -715,4 +716,29 @@ export const deleteThread = async (input: GetThreadInput) => {
     .returning();
 
   return result[0] ?? null;
+};
+
+/**
+ * Get snapshots for a thread.
+ * User must own the thread to view its snapshots.
+ */
+export const getThreadSnapshots = async (threadId: string, userId: string) => {
+  // Verify user owns the thread
+  const thread = await db
+    .select()
+    .from(knosiaThread)
+    .where(and(eq(knosiaThread.id, threadId), eq(knosiaThread.userId, userId)))
+    .limit(1);
+
+  if (!thread[0]) {
+    return null;
+  }
+
+  const snapshots = await db
+    .select()
+    .from(knosiaThreadSnapshot)
+    .where(eq(knosiaThreadSnapshot.threadId, threadId))
+    .orderBy(desc(knosiaThreadSnapshot.createdAt));
+
+  return snapshots;
 };

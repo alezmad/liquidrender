@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 
 import { enforceAuth } from "../../../middleware";
 
@@ -10,6 +10,10 @@ import {
   getDigest,
   getAiInsights,
   getAiInsight,
+  getCanvasesData,
+  getMetricsData,
+  getRecentAlerts,
+  getRecentInsights,
 } from "./queries";
 import {
   markNotificationsRead,
@@ -205,16 +209,96 @@ export const notificationRouter = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Digest not found" }, 404);
     }
 
-    // TODO: Generate actual preview content
+    // Generate actual preview content based on digest.include settings
+    const sections: Array<{
+      title: string;
+      type: string;
+      items: Array<{
+        label: string;
+        value: string;
+        change?: number | null;
+        severity?: string;
+      }>;
+    }> = [];
+
+    const include = digest.include as {
+      canvasIds?: string[];
+      metrics?: string[];
+      includeAlerts?: boolean;
+      includeAiInsights?: boolean;
+    } | null;
+
+    // 1. Canvas Highlights
+    if (include?.canvasIds?.length) {
+      const canvasData = await getCanvasesData(include.canvasIds);
+      if (canvasData.length) {
+        sections.push({
+          title: "Canvas Highlights",
+          type: "canvases",
+          items: canvasData.map((c) => ({
+            label: c.name,
+            value: c.summary,
+          })),
+        });
+      }
+    }
+
+    // 2. Key Metrics
+    if (include?.metrics?.length) {
+      const metricsData = await getMetricsData(
+        digest.workspaceId,
+        include.metrics,
+      );
+      if (metricsData.length) {
+        sections.push({
+          title: "Key Metrics",
+          type: "metrics",
+          items: metricsData.map((m) => ({
+            label: m.name,
+            value: m.formattedValue,
+            change: m.change,
+          })),
+        });
+      }
+    }
+
+    // 3. Alerts
+    if (include?.includeAlerts) {
+      const alerts = await getRecentAlerts(digest.workspaceId);
+      if (alerts.length) {
+        sections.push({
+          title: "Alerts",
+          type: "alerts",
+          items: alerts.map((a) => ({
+            label: a.name,
+            value: a.message,
+            severity: a.severity,
+          })),
+        });
+      }
+    }
+
+    // 4. AI Insights
+    if (include?.includeAiInsights) {
+      const insights = await getRecentInsights(digest.workspaceId);
+      if (insights.length) {
+        sections.push({
+          title: "AI Insights",
+          type: "insights",
+          items: insights.map((i) => ({
+            label: i.headline,
+            value: i.explanation,
+            severity: i.severity ?? undefined,
+          })),
+        });
+      }
+    }
+
     return c.json({
-      digest,
-      preview: {
-        generatedAt: new Date().toISOString(),
-        sections: [
-          { type: "alerts", count: 0, items: [] },
-          { type: "insights", count: 0, items: [] },
-        ],
-      },
+      digestId: digest.id,
+      name: digest.name,
+      generatedAt: new Date().toISOString(),
+      sections,
     });
   })
 

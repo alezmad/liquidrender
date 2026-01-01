@@ -142,6 +142,25 @@ export interface ThreadResponse {
 }
 
 // ============================================================================
+// FORK/SNAPSHOT/SHARE SCHEMAS
+// ============================================================================
+
+export const forkThreadInputSchema = z.object({
+  fromMessageId: z.string().min(1),
+  name: z.string().min(1).max(255),
+});
+
+export const createSnapshotInputSchema = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().max(1000).optional(),
+});
+
+export const shareThreadInputSchema = z.object({
+  userIds: z.array(z.string()).min(1),
+  mode: z.enum(["view", "collaborate"]),
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -152,3 +171,6 @@ export type ClarifyInput = z.infer<typeof clarifyInputSchema>;
 export type GetThreadInput = z.infer<typeof getThreadInputSchema>;
 export type GetThreadsInput = z.infer<typeof getThreadsInputSchema>;
 export type GetThreadMessagesInput = z.infer<typeof getThreadMessagesInputSchema>;
+export type ForkThreadInput = z.infer<typeof forkThreadInputSchema>;
+export type CreateSnapshotInput = z.infer<typeof createSnapshotInputSchema>;
+export type ShareThreadInput = z.infer<typeof shareThreadInputSchema>;

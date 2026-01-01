@@ -15,8 +15,10 @@ export const sttRouter = new Hono<{
 }>().post("/", enforceAuth, rateLimiter, async (c) => {
   console.log("[STT] Request received");
 
+  // Use Hono's typed FormData methods to work across different runtime environments
   const formData = await c.req.formData();
-  const audioFile = formData.get("audio") as File | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const audioFile = ((formData as any).get?.("audio") ?? (formData as any).getAll?.("audio")?.[0]) as File | null;
 
   console.log("[STT] Audio file:", audioFile ? `${audioFile.name} (${audioFile.size} bytes, ${audioFile.type})` : "null");
 
@@ -25,8 +27,10 @@ export const sttRouter = new Hono<{
   }
 
   // Parse optional parameters
-  const language = formData.get("language") as string | null;
-  const prompt = formData.get("prompt") as string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fd = formData as any;
+  const language = (fd.get?.("language") ?? fd.getAll?.("language")?.[0]) as string | null;
+  const prompt = (fd.get?.("prompt") ?? fd.getAll?.("prompt")?.[0]) as string | null;
 
   const options = transcriptionOptionsSchema.parse({
     language: language || undefined,

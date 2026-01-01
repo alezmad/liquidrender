@@ -91,15 +91,13 @@ export interface VisualizationRef {
 
 export interface ThreadViewProps {
   threadId: string;
-  workspaceId: string;
-  connectionId: string;
+  workspaceId?: string;
+  connectionId?: string;
 }
 
 export interface ThreadSidebarProps {
-  workspaceId: string;
-  activeThreadId?: string;
-  onSelectThread: (threadId: string) => void;
-  onNewThread: () => void;
+  workspaceId?: string;
+  selectedId?: string;
 }
 
 export interface ThreadMessageProps {

@@ -293,5 +293,7 @@
   "size": "Size",
   "type": "Type",
   "confirm": "Confirm",
-  "downloading": "Downloading..."
+  "downloading": "Downloading...",
+  "canvases": "Canvases",
+  "threads": "Threads"
 }

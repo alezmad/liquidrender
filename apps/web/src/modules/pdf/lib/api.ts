@@ -36,10 +36,12 @@ const queries = {
       }),
       getStatus: (documentId: string) => ({
         queryKey: [KEY, "documents", documentId, "status"],
-        queryFn: () =>
-          handle(api.ai.pdf.documents[":id"].status.$get)({
+        queryFn: async () => {
+          const response = await api.ai.pdf.documents[":id"].status.$get({
             param: { id: documentId },
-          }),
+          });
+          return response.json();
+        },
       }),
     },
   },

@@ -26,6 +26,16 @@ const menu = [
         href: pathsConfig.knosia.ask,
         icon: Icons.MessageCircle,
       },
+      {
+        title: "canvases",
+        href: pathsConfig.knosia.canvas.index,
+        icon: Icons.ChartNoAxesColumn,
+      },
+      {
+        title: "threads",
+        href: pathsConfig.knosia.threads.index,
+        icon: Icons.MessagesSquare,
+      },
     ],
   },
   {

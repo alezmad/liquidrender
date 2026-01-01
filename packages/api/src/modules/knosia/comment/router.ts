@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { enforceAuth } from "../../../middleware";
 
 import { getComments, getComment } from "./queries";
-import { createComment, updateComment, deleteComment } from "./mutations";
+import { createComment, updateComment, deleteComment, notifyMentions } from "./mutations";
 import {
   getCommentsInputSchema,
   createCommentInputSchema,
@@ -72,10 +72,14 @@ export const commentRouter = new Hono<{ Variables: Variables }>()
     const input = createCommentInputSchema.parse(body);
     const comment = await createComment({ ...input, userId: user.id });
 
-    // TODO: Notify mentioned users
-    // if (input.mentions?.length) {
-    //   await notifyMentions(input.mentions, comment);
-    // }
+    if (!comment) {
+      return c.json({ error: "Failed to create comment" }, 500);
+    }
+
+    // Notify mentioned users
+    if (input.mentions?.length) {
+      await notifyMentions(input.mentions, comment, user.id);
+    }
 
     return c.json(comment, 201);
   })

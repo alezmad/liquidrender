@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 
 import { enforceAuth } from "../../../middleware";
 
@@ -22,6 +22,10 @@ import {
   createAlert,
   updateAlert,
   deleteAlert,
+  generateCanvasFromAI,
+  interpretCanvasEdit,
+  createAIGeneratedCanvas,
+  createBlocksFromSpecs,
 } from "./mutations";
 import {
   createCanvasInputSchema,
@@ -150,16 +154,34 @@ export const canvasRouter = new Hono<{ Variables: Variables }>()
     const user = c.get("user");
     const input = c.req.valid("json");
 
-    // TODO: Implement AI canvas generation
-    // For now, create a blank canvas
-    const canvas = await createCanvas({
+    // Generate canvas layout from prompt using AI helper
+    const generated = await generateCanvasFromAI({
+      prompt: input.prompt,
       workspaceId: input.workspaceId,
-      name: `Generated: ${input.prompt.slice(0, 50)}`,
-      description: `AI-generated from prompt: ${input.prompt}`,
+      roleId: input.roleId,
       userId: user.id,
     });
 
-    return c.json(canvas, 201);
+    // Create canvas with AI generation flag
+    const canvas = await createAIGeneratedCanvas({
+      workspaceId: input.workspaceId,
+      name: generated.name,
+      description: generated.description,
+      userId: user.id,
+    });
+
+    // Create blocks from generated specs
+    const blocks = await createBlocksFromSpecs(canvas!.id, generated.blocks);
+
+    return c.json({
+      ...canvas,
+      blocks,
+      generatedFrom: {
+        prompt: input.prompt,
+        roleId: input.roleId,
+        blockCount: blocks.length,
+      },
+    }, 201);
   })
 
   /**
@@ -176,12 +198,89 @@ export const canvasRouter = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Canvas not found" }, 404);
     }
 
-    // TODO: Implement AI canvas editing
-    // For now, return the unchanged canvas
+    // Get existing blocks
+    const existingBlocks = await getCanvasBlocks(id);
+
+    // Interpret the edit instruction using AI helper
+    const changes = await interpretCanvasEdit({
+      canvasId: id,
+      existingBlocks,
+      instruction: input.instruction,
+      userId: user.id,
+    });
+
+    // Apply the changes
+    const appliedChanges: Array<{
+      type: "add" | "update" | "remove";
+      blockId?: string;
+      success: boolean;
+    }> = [];
+
+    for (const change of changes) {
+      try {
+        if (change.type === "add" && change.block) {
+          const [newBlock] = await createBlocksFromSpecs(id, [change.block]);
+          appliedChanges.push({
+            type: "add",
+            blockId: newBlock?.id,
+            success: true,
+          });
+        } else if (change.type === "remove" && change.blockId) {
+          await deleteBlock(change.blockId);
+          appliedChanges.push({
+            type: "remove",
+            blockId: change.blockId,
+            success: true,
+          });
+        } else if (change.type === "update" && change.blockId && change.updates) {
+          const updatePayload: Record<string, unknown> = {};
+          if (change.updates.title) {
+            updatePayload.title = change.updates.title;
+          }
+          if (change.updates.position) {
+            updatePayload.position = {
+              x: change.updates.position.x ?? 0,
+              y: change.updates.position.y ?? 0,
+              width: change.updates.position.w ?? 4,
+              height: change.updates.position.h ?? 2,
+            };
+          }
+          if (change.updates.config) {
+            updatePayload.config = change.updates.config;
+          }
+          if (change.updates.dataSource) {
+            updatePayload.dataSource = {
+              type: change.updates.dataSource.type ?? "vocabulary",
+              vocabularyId: change.updates.dataSource.vocabularyItemId,
+              sql: change.updates.dataSource.query,
+            };
+          }
+
+          await updateBlock(change.blockId, updatePayload);
+          appliedChanges.push({
+            type: "update",
+            blockId: change.blockId,
+            success: true,
+          });
+        }
+      } catch {
+        appliedChanges.push({
+          type: change.type,
+          blockId: change.blockId,
+          success: false,
+        });
+      }
+    }
+
+    // Get updated blocks
+    const updatedBlocks = await getCanvasBlocks(id);
+
     return c.json({
       canvas,
-      message: `Instruction received: ${input.instruction}`,
-      changes: [],
+      blocks: updatedBlocks,
+      instruction: input.instruction,
+      changes: appliedChanges,
+      changesApplied: appliedChanges.filter((c) => c.success).length,
     });
   })
 

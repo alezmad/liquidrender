@@ -135,8 +135,11 @@ const Documents = ({ id }: { id: string }) => {
     enabled: !!document?.id,
     refetchInterval: (query) => {
       const data = query.state.data;
-      // Stop polling once ready or failed
-      if (data?.processingStatus === "ready" || data?.processingStatus === "failed") {
+      // Stop polling once ready, failed, or error
+      if (!data || "error" in data) {
+        return false;
+      }
+      if (data.processingStatus === "ready" || data.processingStatus === "failed") {
         return false;
       }
       return 2000; // Poll every 2 seconds while processing
@@ -162,8 +165,10 @@ const Documents = ({ id }: { id: string }) => {
     );
   }
 
-  const isProcessing = status.data?.processingStatus !== "ready" &&
-                       status.data?.processingStatus !== "failed";
+  // Check if still processing (not ready, not failed, not error)
+  const statusData = status.data && !("error" in status.data) ? status.data : null;
+  const isProcessing = statusData?.processingStatus !== "ready" &&
+                       statusData?.processingStatus !== "failed";
 
   return (
     <div className="relative h-full w-full">

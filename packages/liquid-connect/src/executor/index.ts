@@ -233,4 +233,23 @@ export async function executeQuery(
 export { TimeoutError } from "./timeout";
 export type { QueryResult } from "../uvb/adapters/duckdb";
 
+// Provenance (Block Trust Metadata)
+export {
+  calculateConfidence,
+  generateProvenance,
+  formatFreshness,
+  truncateQuery,
+  extractTablesFromQuery,
+  detectAssumptions,
+  getConfidenceLevelDescription,
+  getConfidenceLevelColor,
+  formatConfidenceScore,
+} from "./provenance";
+export type {
+  Provenance,
+  ProvenanceSource,
+  ConfidenceLevel,
+  ConfidenceResult,
+} from "./provenance";
+
 export default QueryExecutor;

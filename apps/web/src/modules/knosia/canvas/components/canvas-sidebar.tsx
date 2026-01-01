@@ -1,6 +1,6 @@
 "use client";
 
-// Sidebar showing list of threads
+// Sidebar showing list of canvases
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,37 +10,43 @@ import { Icons } from "@turbostarter/ui-web/icons";
 import { cn } from "@turbostarter/ui";
 import { pathsConfig } from "~/config/paths";
 
-import { useThreadsList } from "../hooks/use-threads-list";
-import type { Thread } from "../types";
+import { useCanvasesList } from "../hooks/use-canvases-list";
+import type { Canvas, CanvasStatus } from "../types";
 
-interface ThreadSidebarProps {
+interface CanvasSidebarProps {
   workspaceId?: string;
   selectedId?: string;
 }
 
-export function ThreadSidebar({ workspaceId, selectedId }: ThreadSidebarProps) {
+export function CanvasSidebar({ workspaceId, selectedId }: CanvasSidebarProps) {
   const router = useRouter();
   const [showArchived, setShowArchived] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Use a default workspaceId for now - will be properly wired when workspace context is available
   const effectiveWorkspaceId = workspaceId ?? "default";
 
-  const { threads, isLoading, createThread, isCreating } = useThreadsList({
+  const { canvases, isLoading, createCanvas } = useCanvasesList({
     workspaceId: effectiveWorkspaceId,
     status: showArchived ? "archived" : "active",
   });
 
-  const handleNewThread = async () => {
+  const handleNewCanvas = async () => {
+    setIsCreating(true);
     try {
-      const thread = await createThread();
-      router.push(pathsConfig.knosia.threads.detail(thread.id));
+      const canvas = await createCanvas({
+        name: "Untitled Canvas",
+      });
+      router.push(pathsConfig.knosia.canvas.detail(canvas.id));
     } catch (error) {
-      console.error("Failed to create thread:", error);
+      console.error("Failed to create canvas:", error);
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleSelectThread = (threadId: string) => {
-    router.push(pathsConfig.knosia.threads.detail(threadId));
+  const handleSelectCanvas = (canvasId: string) => {
+    router.push(pathsConfig.knosia.canvas.detail(canvasId));
   };
 
   const formatDate = (dateStr: string) => {
@@ -60,11 +66,11 @@ export function ThreadSidebar({ workspaceId, selectedId }: ThreadSidebarProps) {
     <div className="flex h-full w-64 flex-col border-r bg-muted/30">
       {/* Header */}
       <div className="flex items-center justify-between border-b p-3">
-        <h3 className="font-semibold">Threads</h3>
+        <h3 className="font-semibold">Canvases</h3>
         <Button
           size="sm"
           variant="ghost"
-          onClick={handleNewThread}
+          onClick={handleNewCanvas}
           disabled={isCreating}
         >
           {isCreating ? (
@@ -75,25 +81,25 @@ export function ThreadSidebar({ workspaceId, selectedId }: ThreadSidebarProps) {
         </Button>
       </div>
 
-      {/* Thread List */}
+      {/* Canvas List */}
       <ScrollArea className="flex-1">
         <div className="p-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Icons.Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : threads.length === 0 ? (
+          ) : canvases.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              {showArchived ? "No archived threads" : "No threads yet"}
+              {showArchived ? "No archived canvases" : "No canvases yet"}
             </div>
           ) : (
             <div className="space-y-1">
-              {threads.map((thread) => (
-                <ThreadItem
-                  key={thread.id}
-                  thread={thread}
-                  isActive={thread.id === selectedId}
-                  onClick={() => handleSelectThread(thread.id)}
+              {canvases.map((canvas) => (
+                <CanvasItem
+                  key={canvas.id}
+                  canvas={canvas}
+                  isActive={canvas.id === selectedId}
+                  onClick={() => handleSelectCanvas(canvas.id)}
                   formatDate={formatDate}
                 />
               ))}
@@ -118,19 +124,19 @@ export function ThreadSidebar({ workspaceId, selectedId }: ThreadSidebarProps) {
   );
 }
 
-interface ThreadItemProps {
-  thread: Thread;
+interface CanvasItemProps {
+  canvas: Canvas;
   isActive: boolean;
   onClick: () => void;
   formatDate: (dateStr: string) => string;
 }
 
-function ThreadItem({
-  thread,
+function CanvasItem({
+  canvas,
   isActive,
   onClick,
   formatDate,
-}: ThreadItemProps) {
+}: CanvasItemProps) {
   return (
     <button
       onClick={onClick}
@@ -141,12 +147,20 @@ function ThreadItem({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
-            {thread.title || "New Thread"}
-          </p>
+          <div className="flex items-center gap-2">
+            {canvas.icon && <span className="text-sm">{canvas.icon}</span>}
+            <p className="truncate text-sm font-medium">
+              {canvas.name || "Untitled Canvas"}
+            </p>
+          </div>
+          {canvas.description && (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {canvas.description}
+            </p>
+          )}
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">
-          {formatDate(thread.updatedAt)}
+          {formatDate(canvas.updatedAt)}
         </span>
       </div>
     </button>

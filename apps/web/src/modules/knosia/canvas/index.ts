@@ -8,6 +8,7 @@ export { useCanvasBlocks } from "./hooks/use-canvas-blocks";
 
 // Components
 export { CanvasView } from "./components/canvas-view";
+export { CanvasSidebar } from "./components/canvas-sidebar";
 export { CanvasGrid } from "./components/canvas-grid";
 export { CanvasBlockComponent as CanvasBlock } from "./components/canvas-block";
 export { BlockRenderer } from "./components/blocks/block-renderer";

@@ -1,0 +1,135 @@
+# Workflow Status: WF-0031 - Knosia Vision Completion
+# Last Updated: 2025-12-31
+
+workflow:
+  id: WF-0031
+  name: Knosia Vision Completion
+  status: completed
+  created_at: 2025-12-31T18:00:00Z
+  completed_at: 2025-12-31T20:00:00Z
+
+git:
+  start_tag: WF-0031-start
+  start_commit: 2206395
+  current_branch: main
+
+waves:
+  - id: 0
+    name: "Sidebar + Page Structure"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0a
+        name: Sidebar Menu
+        gap: 8
+        status: completed
+        files:
+          - apps/web/src/app/[locale]/dashboard/(user)/layout.tsx
+          - packages/i18n/src/translations/en/common.json
+          - packages/i18n/src/translations/es/common.json
+      - id: T0b
+        name: Page Structure
+        gap: 7
+        status: completed
+        files:
+          - apps/web/src/app/[locale]/dashboard/(user)/canvas/page.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/canvas/[id]/page.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/threads/page.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/threads/[id]/page.tsx
+
+  - id: 1
+    name: "API Completions"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: Thread API Endpoints
+        gap: 1
+        status: completed
+        files:
+          - packages/api/src/modules/knosia/thread/router.ts
+          - packages/api/src/modules/knosia/thread/mutations.ts
+          - packages/api/src/modules/knosia/thread/queries.ts
+          - packages/api/src/modules/knosia/thread/schemas.ts
+      - id: T2
+        name: Comment Notifications
+        gap: 5
+        status: completed
+        files:
+          - packages/api/src/modules/knosia/comment/router.ts
+          - packages/api/src/modules/knosia/comment/mutations.ts
+      - id: T3
+        name: Digest Preview
+        gap: 6
+        status: completed
+        files:
+          - packages/api/src/modules/knosia/notification/router.ts
+          - packages/api/src/modules/knosia/notification/queries.ts
+
+  - id: 2
+    name: "Infrastructure"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T4
+        name: Block Trust Provenance
+        gap: 2
+        status: completed
+        files:
+          - packages/liquid-connect/src/executor/provenance.ts
+      - id: T5
+        name: AI Insight Generation
+        gap: 3
+        status: completed
+        files:
+          - packages/api/src/modules/knosia/insight/mutations.ts
+          - packages/api/src/modules/knosia/insight/router.ts
+          - packages/api/src/modules/knosia/insight/schemas.ts
+          - packages/api/src/modules/knosia/insight/index.ts
+
+  - id: 3
+    name: "AI Features + Page Wiring"
+    type: parallel
+    status: completed
+    tasks:
+      - id: T6
+        name: AI Canvas Generation
+        gap: 4
+        status: completed
+        files:
+          - packages/api/src/modules/knosia/canvas/router.ts
+          - packages/api/src/modules/knosia/canvas/mutations.ts
+          - packages/api/src/modules/knosia/canvas/schemas.ts
+      - id: T7
+        name: Dashboard Page Wiring
+        gap: 7
+        status: completed
+        files:
+          - apps/web/src/modules/knosia/canvas/components/canvas-sidebar.tsx
+          - apps/web/src/modules/knosia/canvas/index.ts
+          - apps/web/src/app/[locale]/dashboard/(user)/canvas/canvas-list-view.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/canvas/[id]/canvas-detail-view.tsx
+          - apps/web/src/modules/knosia/threads/components/thread-sidebar.tsx
+          - apps/web/src/modules/knosia/threads/types.ts
+          - apps/web/src/modules/knosia/threads/components/thread-view.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/threads/threads-list-view.tsx
+          - apps/web/src/app/[locale]/dashboard/(user)/layout.tsx
+
+  - id: 4
+    name: "Integration"
+    type: sequential
+    status: completed
+    tasks:
+      - id: T8
+        name: TypeCheck + Validation
+        status: completed
+        notes: |
+          Fixed type errors in pdf/layout.tsx (processingStatus union handling)
+          Fixed FormData compatibility in stt.ts for React Native
+          Fixed import ordering and unused imports in Knosia modules
+
+reference_doc: .artifacts/2025-12-31-knosia-implementation-gaps.md
+
+notes: |
+  MANDATORY: All agents must read the reference_doc before implementing.
+  This workflow completes what WF-0030 left unfinished.

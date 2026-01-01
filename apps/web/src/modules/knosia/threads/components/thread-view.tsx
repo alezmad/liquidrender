@@ -18,13 +18,17 @@ export function ThreadView({ threadId, workspaceId, connectionId }: ThreadViewPr
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Use defaults - will be properly wired when workspace context is available
+  const effectiveWorkspaceId = workspaceId ?? "default";
+  const effectiveConnectionId = connectionId ?? "default";
+
   const {
     thread,
     messages,
     isLoading,
     sendMessage,
     isSending,
-  } = useThread({ threadId, workspaceId, connectionId });
+  } = useThread({ threadId, workspaceId: effectiveWorkspaceId, connectionId: effectiveConnectionId });
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

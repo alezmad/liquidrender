@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 
 import { enforceAuth } from "../../../middleware";
 
@@ -11,7 +11,15 @@ import {
   getThreadMessages,
   archiveThread,
   deleteThread,
+  getThreadSnapshots,
 } from "./queries";
+import {
+  forkThread,
+  createThreadSnapshot,
+  starThread,
+  unstarThread,
+  shareThread,
+} from "./mutations";
 import {
   threadQueryInputSchema,
   clarifyInputSchema,
@@ -19,6 +27,9 @@ import {
   getThreadMessagesInputSchema,
   archiveThreadInputSchema,
   workspaceIdQuerySchema,
+  forkThreadInputSchema,
+  createSnapshotInputSchema,
+  shareThreadInputSchema,
 } from "./schemas";
 
 import type { Session, User } from "@turbostarter/auth";
@@ -221,4 +232,108 @@ export const threadRouter = new Hono<{ Variables: Variables }>()
     }
 
     return c.json({ success: true });
+  })
+
+  // ============================================================================
+  // FORK/SNAPSHOT/STAR/SHARE ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /:id/fork - Fork a thread from a specific message
+   * Creates a new thread with all messages up to and including the specified message.
+   */
+  .post("/:id/fork", zValidator("json", forkThreadInputSchema), async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+    const input = c.req.valid("json");
+
+    const forkedThread = await forkThread(id, input, user.id);
+
+    if (!forkedThread) {
+      return c.json({ error: "Thread or message not found" }, 404);
+    }
+
+    return c.json(forkedThread, 201);
+  })
+
+  /**
+   * POST /:id/snapshot - Create a snapshot (frozen state)
+   */
+  .post("/:id/snapshot", zValidator("json", createSnapshotInputSchema), async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+    const input = c.req.valid("json");
+
+    const snapshot = await createThreadSnapshot(id, input, user.id);
+
+    if (!snapshot) {
+      return c.json({ error: "Thread not found" }, 404);
+    }
+
+    return c.json(snapshot, 201);
+  })
+
+  /**
+   * GET /:id/snapshots - List snapshots for a thread
+   */
+  .get("/:id/snapshots", async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+
+    const snapshots = await getThreadSnapshots(id, user.id);
+
+    if (snapshots === null) {
+      return c.json({ error: "Thread not found" }, 404);
+    }
+
+    return c.json({ data: snapshots });
+  })
+
+  /**
+   * POST /:id/star - Star a thread
+   */
+  .post("/:id/star", async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+
+    const thread = await starThread(id, user.id);
+
+    if (!thread) {
+      return c.json({ error: "Thread not found" }, 404);
+    }
+
+    return c.json(thread);
+  })
+
+  /**
+   * DELETE /:id/star - Unstar a thread
+   */
+  .delete("/:id/star", async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+
+    const thread = await unstarThread(id, user.id);
+
+    if (!thread) {
+      return c.json({ error: "Thread not found" }, 404);
+    }
+
+    return c.json(thread);
+  })
+
+  /**
+   * POST /:id/share - Share with users
+   */
+  .post("/:id/share", zValidator("json", shareThreadInputSchema), async (c) => {
+    const user = c.get("user");
+    const id = c.req.param("id");
+    const input = c.req.valid("json");
+
+    const result = await shareThread(id, input, user.id);
+
+    if (!result) {
+      return c.json({ error: "Thread not found" }, 404);
+    }
+
+    return c.json(result);
   });

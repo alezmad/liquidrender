@@ -1,8 +1,9 @@
-import { z } from "zod";
 import {
   createInsertSchema,
   createSelectSchema,
 } from "drizzle-zod";
+import { z } from "zod";
+
 import {
   knosiaCanvas,
   knosiaCanvasBlock,
@@ -146,6 +147,57 @@ export const updateAlertInputSchema = z.object({
 });
 
 // ============================================================================
+// AI GENERATION SCHEMAS
+// ============================================================================
+
+/**
+ * Schema for AI-generated block specifications
+ */
+export const generatedBlockSpecSchema = z.object({
+  type: z.enum([
+    "kpi", "line_chart", "bar_chart", "area_chart", "pie_chart", "table",
+    "hero_metric", "watch_list", "comparison", "insight", "text",
+  ]),
+  title: z.string(),
+  position: z.object({
+    x: z.number().min(0),
+    y: z.number().min(0),
+    w: z.number().min(1), // width in columns
+    h: z.number().min(1), // height in rows
+  }),
+  config: z.record(z.string(), z.unknown()).optional(),
+  dataSource: z.object({
+    type: z.enum(["query", "vocabulary", "static"]),
+    vocabularyItemId: z.string().optional(),
+    query: z.string().optional(),
+  }).optional(),
+});
+
+/**
+ * Schema for AI edit change specification
+ */
+export const canvasEditChangeSchema = z.object({
+  type: z.enum(["add", "update", "remove"]),
+  block: generatedBlockSpecSchema.optional(), // For add
+  blockId: z.string().optional(), // For update/remove
+  updates: z.object({
+    title: z.string().optional(),
+    position: z.object({
+      x: z.number().min(0).optional(),
+      y: z.number().min(0).optional(),
+      w: z.number().min(1).optional(),
+      h: z.number().min(1).optional(),
+    }).optional(),
+    config: z.record(z.string(), z.unknown()).optional(),
+    dataSource: z.object({
+      type: z.enum(["query", "vocabulary", "static"]).optional(),
+      vocabularyItemId: z.string().optional(),
+      query: z.string().optional(),
+    }).optional(),
+  }).optional(), // For update
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -156,6 +208,9 @@ export type UpdateCanvasInput = z.infer<typeof updateCanvasInputSchema>;
 export type GetCanvasesInput = z.infer<typeof getCanvasesInputSchema>;
 export type GenerateCanvasInput = z.infer<typeof generateCanvasInputSchema>;
 export type EditCanvasInput = z.infer<typeof editCanvasInputSchema>;
+
+export type GeneratedBlockSpec = z.infer<typeof generatedBlockSpecSchema>;
+export type CanvasEditChange = z.infer<typeof canvasEditChangeSchema>;
 
 export type CanvasBlock = z.infer<typeof canvasBlockSchema>;
 export type InsertCanvasBlock = z.infer<typeof insertCanvasBlockSchema>;

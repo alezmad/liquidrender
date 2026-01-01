@@ -1,0 +1,37 @@
+# Context Library for WF-0031 - Knosia Vision Completion
+# Generated: 2025-12-31
+# Token Budget: 20,000
+
+mandatory:
+  - path: .artifacts/2025-12-31-knosia-implementation-gaps.md
+    purpose: Complete gap analysis with code samples
+    tokens: ~8000
+    priority: 1
+
+reference:
+  - path: .artifacts/2025-12-31-knosia-vision-implementation-spec.md
+    purpose: Original spec (for validation)
+    tokens: ~6000
+    priority: 2
+
+  - path: packages/api/src/modules/knosia/thread/router.ts
+    purpose: Current thread router (to extend)
+    tokens: ~800
+    priority: 3
+
+  - path: apps/web/src/modules/knosia/index.ts
+    purpose: Frontend module exports
+    tokens: ~100
+    priority: 4
+
+  - path: apps/web/src/app/[locale]/dashboard/(user)/layout.tsx
+    purpose: Sidebar menu location
+    tokens: ~300
+    priority: 5
+
+deferred:
+  - path: packages/db/src/schema/knosia.ts
+    purpose: Full schema (only if needed)
+    reason: Large file, consult on demand
+
+total_estimated_tokens: ~15200

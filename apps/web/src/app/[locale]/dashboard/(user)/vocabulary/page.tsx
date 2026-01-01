@@ -17,7 +17,7 @@ export default async function VocabularyPage() {
   const { t } = await getTranslation({ ns: "dashboard" });
 
   return (
-    <>
+    <div className="px-4 lg:px-6">
       <DashboardHeader>
         <div>
           {/* eslint-disable-next-line i18next/no-literal-string */}
@@ -29,9 +29,9 @@ export default async function VocabularyPage() {
         </div>
       </DashboardHeader>
 
-      <div className="px-4 py-6 lg:px-6">
+      <div className="py-6">
         <VocabularyWizard />
       </div>
-    </>
+    </div>
   );
 }

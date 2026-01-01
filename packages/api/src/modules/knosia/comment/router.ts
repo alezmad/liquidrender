@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 
 import { enforceAuth } from "../../../middleware";
 
@@ -87,10 +88,10 @@ export const commentRouter = new Hono<{ Variables: Variables }>()
   /**
    * PATCH /:id - Update comment
    */
-  .patch("/:id", async (c) => {
+  .patch("/:id", zValidator("json", updateCommentInputSchema), async (c) => {
     const user = c.get("user");
     const id = c.req.param("id");
-    const body = await c.req.json();
+    const input = c.req.valid("json");
 
     // Verify ownership
     const existing = await getComment(id);
@@ -101,7 +102,6 @@ export const commentRouter = new Hono<{ Variables: Variables }>()
       return c.json({ error: "Forbidden" }, 403);
     }
 
-    const input = updateCommentInputSchema.parse(body);
     const comment = await updateComment(id, input, user.id);
 
     return c.json(comment);

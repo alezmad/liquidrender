@@ -1,9 +1,21 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useDebouncedValue } from "@turbostarter/ui-web/hooks/use-debounced-value";
 
 import { api } from "~/lib/api/client";
+
+// Simple debounced value hook
+function useDebouncedValue<T>(value: T, delay: number): [T] {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return [debouncedValue];
+}
 
 export interface SearchResult {
   id: string;

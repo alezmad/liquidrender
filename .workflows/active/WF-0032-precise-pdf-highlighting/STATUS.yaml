@@ -1,0 +1,60 @@
+# Workflow Status: WF-0032 - Precise PDF Highlighting
+# Replace chunk-level citations with exact text highlighting via LLM tool calls
+
+metadata:
+  id: WF-0032
+  name: Precise PDF Highlighting
+  created: 2026-01-01
+  git_tag: WF-0032-start
+  git_commit: 1461e7c
+
+status: completed
+
+waves:
+  - id: 0
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: PreciseCitation type
+        file: packages/ai/src/modules/pdf/types.ts
+        status: completed
+
+  - id: 1
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: highlightText tool
+        file: packages/ai/src/modules/pdf/api.ts
+        status: completed
+      - id: T2
+        name: Update system prompt
+        file: packages/ai/src/modules/pdf/constants.ts
+        status: completed
+
+  - id: 2
+    type: parallel
+    status: completed
+    tasks:
+      - id: T3
+        name: Context text highlights
+        file: apps/web/src/modules/pdf/context/pdf-viewer-context.tsx
+        status: completed
+      - id: T4
+        name: Text highlight layer
+        file: apps/web/src/modules/pdf/layout/preview/text-highlight-layer.tsx
+        status: completed
+
+  - id: 3
+    type: sequential
+    status: completed
+    tasks:
+      - id: T5
+        name: Wire assistant + preview
+        files:
+          - apps/web/src/modules/pdf/thread/assistant.tsx
+          - apps/web/src/modules/pdf/layout/preview/index.tsx
+        status: completed
+
+current_wave: 3

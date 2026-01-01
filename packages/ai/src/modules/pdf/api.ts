@@ -8,13 +8,15 @@ import {
 } from "ai";
 import * as z from "zod";
 
-import { eq } from "@turbostarter/db";
+import { eq, sql } from "@turbostarter/db";
 import {
   pdfChat,
   pdfDocument,
+  pdfEmbedding,
   pdfMessage,
 } from "@turbostarter/db/schema/pdf";
 import { db } from "@turbostarter/db/server";
+import { generateId as generateCitationId } from "@turbostarter/shared/utils";
 import { getDeleteUrl } from "@turbostarter/storage/server";
 
 import { repairToolCall } from "../../utils/llm";
@@ -27,7 +29,7 @@ import { modelStrategies } from "./strategies";
 import { Role } from "./types";
 
 import type { PdfMessagePayload } from "./schema";
-import type { Citation, CitationResponse } from "./types";
+import type { Citation, CitationResponse, PreciseCitation } from "./types";
 import type { EmbeddingSearchResult } from "./embeddings";
 import type { SearchResult } from "./search";
 import type {
@@ -235,10 +237,35 @@ async function hybridSearch(
   }));
 }
 
+// Create highlight tool for precise text citations
+const createHighlightTool = () => ({
+  highlightText: tool({
+    description: `Highlight a specific phrase from the PDF document to support your answer.
+Use this tool for EACH fact you cite. The text must be an EXACT quote from the document.
+Keep highlights short (10-100 characters) - single sentences or key phrases only.`,
+    inputSchema: z.object({
+      text: z.string().min(10).max(200).describe("Exact phrase from the document to highlight"),
+      page: z.number().int().positive().describe("Page number where text appears (1-indexed)"),
+      relevance: z.string().optional().describe("Brief note on why this supports your answer"),
+    }),
+    execute: async ({ text, page, relevance }) => {
+      const citationId = generateCitationId();
+      const citation: PreciseCitation = {
+        citationId,
+        text,
+        page,
+        relevance: relevance ?? null,
+        timestamp: Date.now(),
+      };
+      return citation;
+    },
+  }),
+});
+
 // Create tools with optional document filtering
 const createTools = (documentIds?: string[]) => {
   console.log(`🛠️ createTools called with documentIds:`, documentIds);
-  return {
+  const searchTool = {
     findRelevantContent: tool({
       description: `Get information from the PDF document to answer questions. Returns sources with IDs and page numbers that you MUST cite using [[cite:ID:PAGE]] format.`,
       inputSchema: z.object({
@@ -277,6 +304,8 @@ const createTools = (documentIds?: string[]) => {
       },
     }),
   };
+  const highlightTool = createHighlightTool();
+  return { ...searchTool, ...highlightTool };
 };
 
 // Legacy export for backwards compatibility
@@ -433,7 +462,7 @@ export const streamChatWithDocuments = async ({
       },
     ]),
     system: PROMPTS.SYSTEM,
-    stopWhen: stepCountIs(3),
+    stopWhen: stepCountIs(6),
     abortSignal: signal,
     tools: createTools(documentIds),
     experimental_transform: smoothStream({
@@ -466,3 +495,6 @@ export const streamChatWithDocuments = async ({
     },
   });
 };
+
+// Re-export PreciseCitation type for consumers
+export type { PreciseCitation } from "./types";

@@ -46,7 +46,7 @@ export interface EmbeddingMetadata {
 }
 
 /**
- * Citation returned by AI with source reference
+ * Citation returned by AI with source reference (legacy [[cite:id:page]] format)
  */
 export interface Citation {
   /** Citation index displayed as [1], [2], etc. */
@@ -59,6 +59,54 @@ export interface Citation {
   pageNumber: number;
   /** Short preview of the cited content */
   excerpt: string;
+}
+
+// ============================================================================
+// Precise Citation Types (Tool-based highlighting - WF-0032)
+// ============================================================================
+
+/**
+ * Precise citation from highlightText tool.
+ * LLM calls this tool with exact phrases to highlight in the PDF.
+ */
+export interface PreciseCitation {
+  /** Unique ID for this citation */
+  citationId: string;
+  /** Exact text phrase to highlight (from document) */
+  text: string;
+  /** Page number where text appears (1-indexed) */
+  page: number;
+  /** Optional note on why this supports the answer */
+  relevance: string | null;
+  /** When the citation was created */
+  timestamp: number;
+}
+
+/**
+ * Bounding rectangle for text highlights (DOM-independent for SSR compatibility)
+ */
+export interface HighlightRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Text highlight pending resolution to screen coordinates.
+ * Created when LLM calls highlightText, resolved when page renders.
+ */
+export interface TextHighlight {
+  /** Citation ID for reference */
+  id: string;
+  /** Text to find and highlight */
+  text: string;
+  /** Page number (1-indexed) */
+  page: number;
+  /** Computed bounding rects (populated after text search) */
+  rects: HighlightRect[];
+  /** Whether text was found on the page */
+  found: boolean;
 }
 
 /**

@@ -64,3 +64,6 @@ dist/
 # Large voice model files
 .claude/piper-voices/*.onnx
 .mcp.json
+
+# Auto Claude data directory
+.auto-claude/

@@ -200,6 +200,27 @@ export interface EmbeddingSearchResult {
   pageNumber: number;
 }
 
+/**
+ * Extract significant keywords from query for keyword search fallback.
+ * Focuses on specific identifiers (numbers, codes) that embeddings handle poorly.
+ */
+function extractKeywords(query: string): string[] {
+  // Match patterns like "35/2024", "123/2023", alphanumeric codes
+  const patterns = [
+    /\d+\/\d{4}/g, // Legal references like 35/2024
+    /\b[A-Z]{2,}[-/]?\d+/g, // Codes like TDF/379
+    /\b\d{4,}/g, // Long numbers
+  ];
+
+  const keywords: string[] = [];
+  for (const pattern of patterns) {
+    const matches = query.match(pattern);
+    if (matches) keywords.push(...matches);
+  }
+
+  return [...new Set(keywords)];
+}
+
 export const findRelevantContent = async (
   query: string,
   documentId?: string,
@@ -273,7 +294,7 @@ export const findRelevantContent = async (
       : ((similarGuides as unknown as { rows: typeof similarGuides }).rows ??
         []);
 
-    const results: EmbeddingSearchResult[] = rows.map(
+    let results: EmbeddingSearchResult[] = rows.map(
       (
         row: {
           id: string;
@@ -292,7 +313,7 @@ export const findRelevantContent = async (
     );
 
     console.log(
-      `🔍 Found ${results.length} similar results:`,
+      `🔍 Found ${results.length} semantic results:`,
       results.map((g) => ({
         id: g.id,
         similarity: g.similarity,
@@ -300,6 +321,59 @@ export const findRelevantContent = async (
         preview: g.name?.substring(0, 50),
       })),
     );
+
+    // Keyword fallback: if semantic search found few results and query has specific identifiers
+    const keywords = extractKeywords(query);
+    if (keywords.length > 0 && results.length < 3) {
+      console.log(`🔍 Running keyword fallback for: ${keywords.join(", ")}`);
+
+      // Build ILIKE conditions for each keyword
+      const keywordPattern = keywords.map((k) => `%${k}%`).join("%");
+
+      const keywordResults = await db.execute<{
+        id: string;
+        content: string;
+        page_number: number | null;
+      }>(
+        documentId
+          ? sql`
+              SELECT id, content, page_number
+              FROM pdf.embedding
+              WHERE document_id = ${documentId}
+                AND content ILIKE ${keywordPattern}
+              LIMIT 4
+            `
+          : sql`
+              SELECT id, content, page_number
+              FROM pdf.embedding
+              WHERE content ILIKE ${keywordPattern}
+              LIMIT 4
+            `,
+      );
+
+      const keywordRows = Array.isArray(keywordResults)
+        ? keywordResults
+        : ((keywordResults as unknown as { rows: typeof keywordResults }).rows ?? []);
+
+      console.log(`🔍 Keyword search found ${keywordRows.length} matches`);
+
+      // Add keyword results with high similarity (they're exact matches)
+      const existingIds = new Set(results.map((r) => r.id));
+      for (const row of keywordRows) {
+        if (!existingIds.has(row.id)) {
+          results.push({
+            id: row.id,
+            name: row.content,
+            similarity: 0.95, // High score for exact keyword matches
+            pageNumber: row.page_number ?? 1,
+          });
+        }
+      }
+
+      // Re-sort by similarity
+      results.sort((a, b) => b.similarity - a.similarity);
+      results = results.slice(0, 6);
+    }
 
     return results;
   } catch (error) {

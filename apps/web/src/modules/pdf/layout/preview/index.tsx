@@ -19,6 +19,7 @@ import { usePdfViewer } from "../../context";
 import { DocumentMenu } from "./document-menu";
 import { HighlightLayer } from "./highlight-layer";
 import { PageNavigation } from "./page-navigation";
+import { TextHighlightLayer } from "./text-highlight-layer";
 import { ZoomMenu } from "./zoom-menu";
 
 // Import extracted PDF text layer styles (avoids problematic pdfjs-dist CSS with relative image imports)
@@ -77,6 +78,7 @@ export const PdfPreview = memo<PdfPreviewProps>(({ url }) => {
       </div>
       <div className="relative flex-1 overflow-hidden">
         <HighlightLayer />
+        <TextHighlightLayer />
         <Pages className="dark:brightness-80 dark:contrast-228 dark:hue-rotate-180 dark:invert-94">
           <Page>
             <CanvasLayer />

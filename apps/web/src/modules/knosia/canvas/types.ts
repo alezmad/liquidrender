@@ -80,6 +80,8 @@ export interface BlockDataSource {
 
 export type AlertOperator = "gt" | "lt" | "eq" | "gte" | "lte" | "change_gt" | "change_lt";
 export type AlertChannel = "in_app" | "email" | "slack";
+export type AlertSeverity = "info" | "warning" | "critical";
+export type AlertStatus = "active" | "triggered" | "paused";
 
 export interface CanvasAlert {
   id: string;
@@ -87,8 +89,8 @@ export interface CanvasAlert {
   blockId: string | null;
   name: string;
   condition: AlertCondition;
-  channels: AlertChannel[];
-  enabled: boolean;
+  channels: AlertChannel[] | null; // Matches DB schema which allows null
+  enabled: boolean | null; // Matches DB schema which has default true but allows null
   lastTriggeredAt: string | null;
   createdAt: string;
 }

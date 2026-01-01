@@ -1,0 +1,48 @@
+# Context Library for WF-0032 - Precise PDF Highlighting
+# Auto-generated context for parallel agents
+
+metadata:
+  workflow_id: WF-0032
+  created: 2026-01-01
+  total_tokens: ~8000
+
+# Files agents need to read
+context_files:
+  # Types reference
+  - path: packages/ai/src/modules/pdf/types.ts
+    purpose: Existing PDF types to extend
+    tokens: ~200
+
+  # Backend files to modify
+  - path: packages/ai/src/modules/pdf/api.ts
+    purpose: Add highlightText tool
+    tokens: ~2500
+
+  - path: packages/ai/src/modules/pdf/constants.ts
+    purpose: Update system prompt
+    tokens: ~300
+
+  # Frontend files to modify
+  - path: apps/web/src/modules/pdf/context/pdf-viewer-context.tsx
+    purpose: Add text highlight state
+    tokens: ~800
+
+  - path: apps/web/src/modules/pdf/layout/preview/highlight-layer.tsx
+    purpose: Reference for existing highlight patterns
+    tokens: ~2000
+
+  - path: apps/web/src/modules/pdf/thread/assistant.tsx
+    purpose: Wire citation parsing
+    tokens: ~200
+
+  # Spec file
+  - path: .artifacts/2026-01-01-precise-pdf-highlighting.md
+    purpose: Implementation specification
+    tokens: ~2000
+
+# Key decisions from approval
+decisions:
+  - Use page-level fallback if exact text not found (simplest approach)
+  - Keep existing [[cite:...]] system during transition
+  - Use numbered badges on citation chips for multiple highlights
+  - highlightText tool returns PreciseCitation for streaming

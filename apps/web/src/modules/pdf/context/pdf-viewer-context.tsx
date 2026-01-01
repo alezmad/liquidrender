@@ -12,6 +12,8 @@ import type {
   NavigationEntry,
   PdfViewerActions,
   PdfViewerState,
+  PreciseCitation,
+  TextHighlight,
 } from "@turbostarter/ai/pdf/types";
 import type { ReactNode } from "react";
 
@@ -31,6 +33,14 @@ interface PdfViewerContextValue extends PdfViewerState, PdfViewerActions {
   pendingNavigation: PendingNavigation | null;
   /** Clear the pending navigation after it's been processed */
   clearPendingNavigation: () => void;
+  /** Text highlights from highlightText tool calls */
+  textHighlights: TextHighlight[];
+  /** Add a citation from highlightText tool call */
+  addTextHighlight: (citation: PreciseCitation) => void;
+  /** Update highlight rects after text search resolves */
+  updateTextHighlightRects: (id: string, rects: DOMRect[], found: boolean) => void;
+  /** Clear all text highlights (e.g., on new message) */
+  clearTextHighlights: () => void;
 }
 
 // ============================================================================
@@ -62,6 +72,7 @@ export function PdfViewerProvider({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [pendingNavigation, setPendingNavigation] =
     useState<PendingNavigation | null>(null);
+  const [textHighlights, setTextHighlights] = useState<TextHighlight[]>([]);
 
   // Actions
   const navigateTo = useCallback(
@@ -125,6 +136,33 @@ export function PdfViewerProvider({
     setActiveHighlight(null);
   }, []);
 
+  // Text highlight actions (for highlightText tool)
+  const addTextHighlight = useCallback((citation: PreciseCitation) => {
+    setTextHighlights((prev) => [
+      ...prev,
+      {
+        id: citation.citationId,
+        text: citation.text,
+        page: citation.page,
+        rects: [], // Populated when page renders
+        found: false,
+      },
+    ]);
+  }, []);
+
+  const updateTextHighlightRects = useCallback(
+    (id: string, rects: DOMRect[], found: boolean) => {
+      setTextHighlights((prev) =>
+        prev.map((h) => (h.id === id ? { ...h, rects, found } : h)),
+      );
+    },
+    [],
+  );
+
+  const clearTextHighlights = useCallback(() => {
+    setTextHighlights([]);
+  }, []);
+
   // Memoized context value
   const value = useMemo<PdfViewerContextValue>(
     () => ({
@@ -136,6 +174,7 @@ export function PdfViewerProvider({
       history,
       historyIndex,
       pendingNavigation,
+      textHighlights,
       // Actions
       navigateTo,
       goBack,
@@ -143,6 +182,9 @@ export function PdfViewerProvider({
       clearHighlight,
       clearPendingNavigation,
       setCurrentPage,
+      addTextHighlight,
+      updateTextHighlightRects,
+      clearTextHighlights,
     }),
     [
       currentPage,
@@ -152,11 +194,15 @@ export function PdfViewerProvider({
       history,
       historyIndex,
       pendingNavigation,
+      textHighlights,
       navigateTo,
       goBack,
       goForward,
       clearHighlight,
       clearPendingNavigation,
+      addTextHighlight,
+      updateTextHighlightRects,
+      clearTextHighlights,
     ],
   );
 

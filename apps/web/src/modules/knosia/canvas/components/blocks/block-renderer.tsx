@@ -73,57 +73,12 @@ export function BlockRenderer({
 }
 
 // ============================================================================
-// Native Block Renderers
+// Fallback Block Renderers
 // ============================================================================
 
 interface BlockData {
-  value?: string | number;
-  label?: string;
-  change?: { value: number; direction: "up" | "down" | "stable" };
   content?: string;
-  summary?: string;
   [key: string]: unknown;
-}
-
-function KPIBlock({ data }: { data?: unknown }) {
-  const d = data as BlockData | undefined;
-
-  return (
-    <div className="space-y-1">
-      <div className="text-3xl font-bold">
-        {d?.value ?? "—"}
-      </div>
-      {d?.label && (
-        <div className="text-sm text-muted-foreground">{d.label}</div>
-      )}
-      {d?.change && (
-        <div className={
-          d.change.direction === "up" ? "text-green-600" :
-          d.change.direction === "down" ? "text-red-600" :
-          "text-muted-foreground"
-        }>
-          {d.change.direction === "up" && "↑"}
-          {d.change.direction === "down" && "↓"}
-          {d.change.value}%
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HeroMetricBlock({ data }: { data?: unknown }) {
-  const d = data as BlockData | undefined;
-
-  return (
-    <div className="flex flex-col items-center justify-center py-4 text-center">
-      <div className="text-5xl font-bold">
-        {d?.value ?? "—"}
-      </div>
-      {d?.label && (
-        <div className="mt-2 text-lg text-muted-foreground">{d.label}</div>
-      )}
-    </div>
-  );
 }
 
 function TextBlock({ data }: { data?: unknown }) {
@@ -132,19 +87,6 @@ function TextBlock({ data }: { data?: unknown }) {
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none">
       {d?.content || <span className="text-muted-foreground">No content</span>}
-    </div>
-  );
-}
-
-function InsightBlock({ data }: { data?: unknown }) {
-  const d = data as BlockData | undefined;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-start gap-2">
-        <Icons.Lightbulb className="mt-0.5 h-4 w-4 text-yellow-500" />
-        <p className="text-sm">{d?.summary || "No insight available"}</p>
-      </div>
     </div>
   );
 }

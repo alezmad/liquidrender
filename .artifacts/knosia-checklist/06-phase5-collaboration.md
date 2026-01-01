@@ -30,7 +30,8 @@
 - [x] Comment thread on Canvas blocks <!-- KNOSIA:DONE notes="CommentThread component works for any targetType including canvas_block" -->
 - [x] Activity feed page/panel <!-- KNOSIA:DONE notes="ActivityFeed component with filtering in apps/web/src/modules/knosia/activity/" -->
 - [ ] @mention autocomplete in comments <!-- KNOSIA:TODO priority=medium category=frontend -->
-- [~] Share dialogs for Threads and Canvases <!-- KNOSIA:PARTIAL notes="canvas-share-modal.tsx exists, thread share TBD" -->
+- [x] Share dialogs for Threads <!-- KNOSIA:DONE notes="ShareModal component in apps/web/src/modules/knosia/sharing/" -->
+- [x] Share dialogs for Canvases <!-- KNOSIA:DONE notes="ShareModal component updated to support canvas sharing via existing API" -->
 
 ## 5.4 Team Page
 

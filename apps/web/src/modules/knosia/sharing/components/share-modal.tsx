@@ -35,9 +35,10 @@ interface ShareModalProps {
   targetTitle: string;
 }
 
-// Type label for display (currently only threads supported)
+// Type label for display
 const typeLabels: Record<ShareTargetType, string> = {
   thread: "Thread",
+  canvas: "Canvas",
 };
 
 export function ShareModal({

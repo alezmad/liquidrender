@@ -8,6 +8,7 @@ import { commentRouter } from "./comment";
 import { connectionsRouter } from "./connections";
 import { insightRouter } from "./insight";
 import { notificationRouter } from "./notification";
+import { searchRouter } from "./search";
 import { threadRouter } from "./thread";
 import { knosiaOrganizationRouter } from "./organization";
 import { preferencesRouter } from "./preferences";
@@ -33,6 +34,7 @@ export const knosiaRouter = new Hono<{ Variables: Variables }>()
   .route("/connections", connectionsRouter)
   .route("/insight", insightRouter)
   .route("/notification", notificationRouter)
+  .route("/search", searchRouter)
   .route("/thread", threadRouter)
   .route("/organization", knosiaOrganizationRouter)
   .route("/preferences", preferencesRouter)

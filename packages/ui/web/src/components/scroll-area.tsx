@@ -2,6 +2,7 @@
 
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui";
 import * as React from "react";
+import { useRef, useState, useEffect } from "react";
 
 import { cn } from "@turbostarter/ui";
 
@@ -25,6 +26,79 @@ function ScrollArea({
       <ScrollBar />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
+  );
+}
+
+interface ScrollAreaWithShadowsProps {
+  children: React.ReactNode;
+  className?: string;
+  maxHeight?: string;
+}
+
+/**
+ * Scroll container with top/bottom shadow indicators.
+ * Shows gradient shadows when content is scrollable.
+ */
+function ScrollAreaWithShadows({
+  children,
+  className,
+  maxHeight = "60vh",
+}: ScrollAreaWithShadowsProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateScrollState = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      setScrollState({
+        top: scrollTop > 10,
+        bottom: scrollTop + clientHeight < scrollHeight - 10,
+      });
+    };
+
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState);
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(el);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="relative">
+      {/* Top shadow */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-background to-transparent transition-opacity duration-200",
+          scrollState.top ? "opacity-100" : "opacity-0"
+        )}
+      />
+
+      <div
+        ref={scrollRef}
+        className={cn(
+          "overflow-y-auto scroll-smooth [scrollbar-gutter:stable]",
+          className
+        )}
+        style={{ maxHeight }}
+      >
+        {children}
+      </div>
+
+      {/* Bottom shadow */}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-background to-transparent transition-opacity duration-200",
+          scrollState.bottom ? "opacity-100" : "opacity-0"
+        )}
+      />
+    </div>
   );
 }
 
@@ -55,4 +129,4 @@ function ScrollBar({
   );
 }
 
-export { ScrollArea, ScrollBar };
+export { ScrollArea, ScrollAreaWithShadows, ScrollBar };

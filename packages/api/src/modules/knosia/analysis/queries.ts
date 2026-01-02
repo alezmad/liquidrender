@@ -1,11 +1,17 @@
 import { eq } from "@turbostarter/db";
-import { knosiaAnalysis, knosiaConnection } from "@turbostarter/db/schema";
-import { db } from "@turbostarter/db/server";
 import {
-  PostgresAdapter,
-  extractSchema,
-  applyHardRules,
-} from "@repo/liquid-connect/uvb";
+  knosiaAnalysis,
+  knosiaConnection,
+  knosiaTableProfile,
+  knosiaColumnProfile,
+} from "@turbostarter/db/schema";
+import { db } from "@turbostarter/db/server";
+
+// Dynamic import to avoid Turbopack issues with native modules
+const getDuckDBAdapter = async () => {
+  const { DuckDBUniversalAdapter, applyHardRules, profileSchema } = await import("@repo/liquid-connect/uvb");
+  return { DuckDBUniversalAdapter, applyHardRules, profileSchema };
+};
 
 import type { GetAnalysisInput } from "./schemas";
 import type { StepEvent, CompleteEvent, ErrorEvent } from "./schemas";
@@ -20,6 +26,10 @@ const ANALYSIS_STEPS = [
   { step: 3, label: "Detecting business type", detail: "Analyzing naming patterns..." },
   { step: 4, label: "Classifying fields", detail: "Identifying metrics, dimensions, entities..." },
   { step: 5, label: "Generating vocabulary", detail: "Building semantic mappings..." },
+  // Profiling steps (optional - enabled via includeDataProfiling parameter)
+  { step: 6, label: "Profiling data quality", detail: "Analyzing data completeness and patterns..." },
+  { step: 7, label: "Assessing freshness", detail: "Checking recency and update patterns..." },
+  { step: 8, label: "Finalizing insights", detail: "Compiling data health summary..." },
 ] as const;
 
 // ============================================================================
@@ -61,12 +71,19 @@ export const getConnection = async (connectionId: string) => {
  *
  * Uses UVB (Universal Vocabulary Builder) for real schema extraction
  * and hard rules detection.
+ *
+ * @param connectionId - Database connection ID
+ * @param includeDataProfiling - Optional: Enable data profiling (steps 6-8)
  */
-export async function* runAnalysis(connectionId: string): AsyncGenerator<
+export async function* runAnalysis(
+  connectionId: string,
+  includeDataProfiling: boolean = false
+): AsyncGenerator<
   | { event: "step"; data: StepEvent }
   | { event: "complete"; data: CompleteEvent }
   | { event: "error"; data: ErrorEvent }
 > {
+  const totalSteps = includeDataProfiling ? 8 : 5;
   // Validate connection exists
   const connection = await getConnection(connectionId);
   if (!connection) {
@@ -81,19 +98,6 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
     return;
   }
 
-  // Only postgres supported currently
-  if (connection.type !== "postgres") {
-    yield {
-      event: "error",
-      data: {
-        code: "UNSUPPORTED_TYPE",
-        message: `Connection type '${connection.type}' not yet supported. Only 'postgres' is available.`,
-        recoverable: false,
-      },
-    };
-    return;
-  }
-
   // Create analysis record
   const analysisResult = await db
     .insert(knosiaAnalysis)
@@ -101,7 +105,7 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       connectionId,
       status: "running",
       currentStep: 0,
-      totalSteps: 5,
+      totalSteps,
       startedAt: new Date(),
     })
     .returning();
@@ -120,30 +124,66 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
   }
 
   // Parse credentials
-  let credentials: { username: string; password: string };
+  let credentials: { username?: string; password?: string };
   try {
-    credentials = JSON.parse(connection.credentials ?? "{}") as { username: string; password: string };
+    credentials = JSON.parse(connection.credentials ?? "{}") as { username?: string; password?: string };
   } catch {
+    credentials = {};
+  }
+
+  // Build connection string
+  let connectionString: string;
+  try {
+    switch (connection.type) {
+      case 'postgres': {
+        const port = connection.port ?? 5432;
+        const auth = credentials.username && credentials.password
+          ? `${credentials.username}:${credentials.password}@`
+          : '';
+        connectionString = `postgresql://${auth}${connection.host}:${port}/${connection.database}`;
+        break;
+      }
+
+      case 'mysql': {
+        const port = connection.port ?? 3306;
+        const auth = credentials.username && credentials.password
+          ? `${credentials.username}:${credentials.password}@`
+          : '';
+        connectionString = `mysql://${auth}${connection.host}:${port}/${connection.database}`;
+        break;
+      }
+
+      case 'duckdb': {
+        connectionString = connection.database; // database field contains the file path
+        break;
+      }
+
+      default:
+        yield {
+          event: "error",
+          data: {
+            code: "UNSUPPORTED_TYPE",
+            message: `Connection type '${connection.type}' is not supported`,
+            recoverable: false,
+          },
+        };
+        return;
+    }
+  } catch (error) {
     yield {
       event: "error",
       data: {
-        code: "INVALID_CREDENTIALS",
-        message: "Failed to parse connection credentials",
+        code: "CONNECTION_STRING_ERROR",
+        message: error instanceof Error ? error.message : "Failed to build connection string",
         recoverable: false,
       },
     };
     return;
   }
 
-  // Create PostgresAdapter
-  const adapter = new PostgresAdapter({
-    host: connection.host,
-    port: connection.port ?? 5432,
-    database: connection.database,
-    user: credentials.username,
-    password: credentials.password,
-    ssl: connection.sslEnabled ?? true,
-  });
+  // Create DuckDB Universal Adapter (using dynamic import)
+  const { DuckDBUniversalAdapter, applyHardRules, profileSchema } = await getDuckDBAdapter();
+  const adapter = new DuckDBUniversalAdapter();
 
   try {
     // Step 1: Connect to database
@@ -162,7 +202,7 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       .set({ currentStep: 1 })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
-    await adapter.connect();
+    await adapter.connect(connectionString);
 
     yield {
       event: "step",
@@ -189,9 +229,7 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       .set({ currentStep: 2 })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
-    const schema = await extractSchema(adapter, {
-      schema: connection.schema ?? "public",
-    });
+    const schema = await adapter.extractSchema(connection.schema ?? "public");
 
     yield {
       event: "step",
@@ -291,6 +329,95 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       },
     };
 
+    // Optional: Data Profiling (Steps 6-8)
+    let profilingResult;
+    if (includeDataProfiling) {
+      // Step 6: Profile data quality
+      yield {
+        event: "step",
+        data: {
+          step: 6,
+          status: "started",
+          label: ANALYSIS_STEPS[5].label,
+          detail: ANALYSIS_STEPS[5].detail,
+        },
+      };
+
+      await db
+        .update(knosiaAnalysis)
+        .set({ currentStep: 6 })
+        .where(eq(knosiaAnalysis.id, analysis.id));
+
+      profilingResult = await profileSchema(adapter, schema, {
+        enableTier1: true,
+        enableTier2: true,
+        enableTier3: false, // Tier 3 is expensive, skip for now
+        maxConcurrentTables: 5,
+      });
+
+      yield {
+        event: "step",
+        data: {
+          step: 6,
+          status: "completed",
+          label: ANALYSIS_STEPS[5].label,
+        },
+      };
+
+      // Step 7: Assess freshness
+      yield {
+        event: "step",
+        data: {
+          step: 7,
+          status: "started",
+          label: ANALYSIS_STEPS[6].label,
+          detail: ANALYSIS_STEPS[6].detail,
+        },
+      };
+
+      await db
+        .update(knosiaAnalysis)
+        .set({ currentStep: 7 })
+        .where(eq(knosiaAnalysis.id, analysis.id));
+
+      // Store profiling results in database
+      await storeProfilingResults(analysis.id, profilingResult);
+
+      yield {
+        event: "step",
+        data: {
+          step: 7,
+          status: "completed",
+          label: ANALYSIS_STEPS[6].label,
+        },
+      };
+
+      // Step 8: Finalize insights
+      yield {
+        event: "step",
+        data: {
+          step: 8,
+          status: "started",
+          label: ANALYSIS_STEPS[7].label,
+          detail: ANALYSIS_STEPS[7].detail,
+        },
+      };
+
+      await db
+        .update(knosiaAnalysis)
+        .set({ currentStep: 8 })
+        .where(eq(knosiaAnalysis.id, analysis.id));
+
+      yield {
+        event: "step",
+        data: {
+          step: 8,
+          status: "completed",
+          label: ANALYSIS_STEPS[7].label,
+        },
+      };
+    }
+
     // Disconnect from database
     await adapter.disconnect();
 
@@ -299,7 +426,7 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
       .update(knosiaAnalysis)
       .set({
         status: "completed",
-        currentStep: 5,
+        currentStep: totalSteps,
         summary,
         businessType,
         detectedVocab: detected,
@@ -315,6 +442,15 @@ export async function* runAnalysis(connectionId: string): AsyncGenerator<
         summary,
         businessType,
         confirmations,
+        profiling: profilingResult
+          ? {
+              tablesProfiled: profilingResult.stats.tablesProfiled,
+              tablesSkipped: profilingResult.stats.tablesSkipped,
+              duration: profilingResult.stats.totalDuration,
+              tier1Duration: profilingResult.stats.tier1Duration,
+              tier2Duration: profilingResult.stats.tier2Duration,
+            }
+          : undefined,
       },
     };
   } catch (error) {
@@ -408,5 +544,44 @@ function detectBusinessType(tableNames: string[]): {
     reasoning: `Detected ${Math.round(topScore * 6)} matching table patterns for ${topType}`,
     alternatives,
   };
+}
+
+/**
+ * Store profiling results in database
+ *
+ * Inserts table profiles and column profiles into respective tables
+ */
+async function storeProfilingResults(analysisId: string, profilingResult: any): Promise<void> {
+  const { schema } = profilingResult;
+
+  // Insert table profiles
+  const tableProfilePromises = Object.entries(schema.tableProfiles).map(
+    async ([tableName, tableProfile]) => {
+      const [inserted] = await db
+        .insert(knosiaTableProfile)
+        .values({
+          analysisId,
+          tableName,
+          profile: tableProfile as any,
+        })
+        .returning();
+
+      // Insert column profiles for this table
+      const columnProfiles = schema.columnProfiles[tableName];
+      if (columnProfiles && inserted) {
+        const columnInserts = Object.values(columnProfiles).map((columnProfile: any) =>
+          db.insert(knosiaColumnProfile).values({
+            tableProfileId: inserted.id,
+            columnName: columnProfile.columnName,
+            profile: columnProfile,
+          }),
+        );
+
+        await Promise.all(columnInserts);
+      }
+    },
+  );
+
+  await Promise.all(tableProfilePromises);
 }
 

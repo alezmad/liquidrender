@@ -19,7 +19,7 @@ export const getAnalysisSchema = z.object({
 // ============================================================================
 
 export interface StepEvent {
-  step: 1 | 2 | 3 | 4 | 5;
+  step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   status: "started" | "completed";
   label: string;
   detail?: string;
@@ -40,6 +40,13 @@ export interface CompleteEvent {
     alternatives: Array<{ type: string; confidence: number }>;
   };
   confirmations?: unknown[]; // UVB confirmation questions for user
+  profiling?: {
+    tablesProfiled: number;
+    tablesSkipped: number;
+    duration: number;
+    tier1Duration: number;
+    tier2Duration: number;
+  };
 }
 
 export interface ErrorEvent {

@@ -1,16 +1,28 @@
-import { eq } from "@turbostarter/db";
+import { and, eq } from "@turbostarter/db";
 import {
   knosiaAnalysis,
   knosiaVocabularyItem,
+  knosiaUserVocabularyPrefs,
+  knosiaWorkspace,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 
 import type {
   GetVocabularyInput,
+  ListVocabularyInput,
+  GetVocabularyBySlugInput,
+  GetUserVocabularyPrefsInput,
+  GetSuggestionsInput,
   VocabularyResponse,
   VocabularyItem,
   ConfirmationQuestion,
 } from "./schemas";
+import {
+  resolveVocabulary,
+  searchVocabulary,
+  getSuggestedVocabulary,
+  type ResolvedVocabularyItem,
+} from "./resolution";
 
 /**
  * Transforms raw database vocabulary item to API response format
@@ -283,4 +295,118 @@ export async function getVocabularyFromAnalysis(
     entities,
     questions,
   };
+}
+
+// ============================================================================
+// New Vocabulary Queries (resolution-based)
+// ============================================================================
+
+/**
+ * Get resolved vocabulary list for a workspace
+ * Merges org + workspace + private scopes with search/filter support
+ */
+export async function getVocabularyList(
+  userId: string,
+  input: ListVocabularyInput
+): Promise<{
+  items: ResolvedVocabularyItem[];
+  total: number;
+}> {
+  const resolved = await resolveVocabulary(userId, input.workspaceId);
+
+  let items = resolved.items;
+
+  // Apply search filter
+  if (input.search) {
+    const results = searchVocabulary(input.search, resolved, input.limit);
+    items = results.map((r) => r.item);
+  }
+
+  // Apply type filter
+  if (input.type) {
+    items = items.filter((item) => item.type === input.type);
+  }
+
+  // Apply scope filter
+  if (input.scope && input.scope !== "all") {
+    items = items.filter((item) => item.scope === input.scope);
+  }
+
+  // Apply limit
+  const total = items.length;
+  items = items.slice(0, input.limit);
+
+  return { items, total };
+}
+
+/**
+ * Get a single vocabulary item by slug
+ */
+export async function getVocabularyBySlug(
+  userId: string,
+  input: GetVocabularyBySlugInput
+): Promise<ResolvedVocabularyItem | null> {
+  const resolved = await resolveVocabulary(userId, input.workspaceId);
+  return resolved.bySlug.get(input.slug) ?? null;
+}
+
+/**
+ * Get user vocabulary preferences for a workspace
+ */
+export async function getUserVocabularyPrefs(
+  userId: string,
+  input: GetUserVocabularyPrefsInput
+): Promise<{
+  favorites: string[];
+  synonyms: Record<string, string>;
+  recentlyUsed: { slug: string; lastUsedAt: string; useCount: number }[];
+  dismissedSuggestions: string[];
+  privateVocabulary: {
+    id: string;
+    name: string;
+    slug: string;
+    type: "metric" | "dimension" | "filter";
+    formula: string;
+    description?: string;
+    createdAt: string;
+  }[];
+} | null> {
+  const prefs = await db.query.knosiaUserVocabularyPrefs.findFirst({
+    where: and(
+      eq(knosiaUserVocabularyPrefs.userId, userId),
+      eq(knosiaUserVocabularyPrefs.workspaceId, input.workspaceId)
+    ),
+  });
+
+  if (!prefs) {
+    return null;
+  }
+
+  return {
+    favorites: (prefs.favorites as string[]) ?? [],
+    synonyms: (prefs.synonyms as Record<string, string>) ?? {},
+    recentlyUsed:
+      (prefs.recentlyUsed as { slug: string; lastUsedAt: string; useCount: number }[]) ?? [],
+    dismissedSuggestions: (prefs.dismissedSuggestions as string[]) ?? [],
+    privateVocabulary:
+      (prefs.privateVocabulary as {
+        id: string;
+        name: string;
+        slug: string;
+        type: "metric" | "dimension" | "filter";
+        formula: string;
+        description?: string;
+        createdAt: string;
+      }[]) ?? [],
+  };
+}
+
+/**
+ * Get vocabulary suggestions for a user's role
+ */
+export async function getVocabularySuggestions(
+  userId: string,
+  input: GetSuggestionsInput
+): Promise<ResolvedVocabularyItem[]> {
+  return getSuggestedVocabulary(userId, input.workspaceId, input.roleArchetype);
 }

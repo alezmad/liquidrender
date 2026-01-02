@@ -8,6 +8,13 @@
       "when": 1767304924817,
       "tag": "0000_loose_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767326780175,
+      "tag": "0001_wise_starhawk",
+      "breakpoints": true
     }
   ]
 }

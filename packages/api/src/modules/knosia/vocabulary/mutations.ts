@@ -4,9 +4,11 @@ import {
   knosiaVocabularyItem,
   knosiaMismatchReport,
   knosiaWorkspace,
+  knosiaUserVocabularyPrefs,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 import { compileVocabulary } from "@repo/liquid-connect";
+import { generateId } from "@turbostarter/shared/utils";
 
 import { transformToDetectedVocabulary } from "../shared/transforms";
 
@@ -15,6 +17,13 @@ import type {
   ReportMismatchInput,
   ConfirmVocabularyResponse,
   ReportMismatchResponse,
+  CreateVocabularyItemInput,
+  UpdateVocabularyItemInput,
+  UpdateVocabularyPrefsInput,
+  CreatePrivateVocabInput,
+  UpdatePrivateVocabInput,
+  DeletePrivateVocabInput,
+  TrackVocabularyUsageInput,
 } from "./schemas";
 
 /**
@@ -303,4 +312,378 @@ export async function reportMismatch(
       message: "Couldn't send - try again",
     };
   }
+}
+
+// ============================================================================
+// New Vocabulary CRUD Mutations
+// ============================================================================
+
+/**
+ * Create a new vocabulary item
+ */
+export async function createVocabularyItem(
+  input: CreateVocabularyItemInput
+): Promise<typeof knosiaVocabularyItem.$inferSelect> {
+  const [item] = await db
+    .insert(knosiaVocabularyItem)
+    .values({
+      orgId: input.orgId,
+      workspaceId: input.workspaceId ?? null,
+      canonicalName: input.canonicalName,
+      slug: input.slug,
+      abbreviation: input.abbreviation ?? null,
+      type: input.type,
+      category: input.category ?? null,
+      status: "draft",
+      definition: input.definition ?? null,
+      suggestedForRoles: input.suggestedForRoles ?? null,
+    })
+    .returning();
+
+  return item!;
+}
+
+/**
+ * Update an existing vocabulary item
+ */
+export async function updateVocabularyItem(
+  itemId: string,
+  input: UpdateVocabularyItemInput
+): Promise<typeof knosiaVocabularyItem.$inferSelect | null> {
+  const [updated] = await db
+    .update(knosiaVocabularyItem)
+    .set({
+      canonicalName: input.canonicalName,
+      abbreviation: input.abbreviation,
+      category: input.category,
+      definition: input.definition,
+      suggestedForRoles: input.suggestedForRoles,
+      status: input.status,
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaVocabularyItem.id, itemId))
+    .returning();
+
+  return updated ?? null;
+}
+
+/**
+ * Mark a vocabulary item as deprecated
+ */
+export async function deprecateVocabularyItem(
+  itemId: string
+): Promise<typeof knosiaVocabularyItem.$inferSelect | null> {
+  const [updated] = await db
+    .update(knosiaVocabularyItem)
+    .set({
+      status: "deprecated",
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaVocabularyItem.id, itemId))
+    .returning();
+
+  return updated ?? null;
+}
+
+// ============================================================================
+// User Vocabulary Preferences Mutations
+// ============================================================================
+
+/**
+ * Ensure user vocabulary prefs exist (upsert)
+ */
+async function ensureUserVocabularyPrefs(
+  userId: string,
+  workspaceId: string
+): Promise<typeof knosiaUserVocabularyPrefs.$inferSelect> {
+  const existing = await db.query.knosiaUserVocabularyPrefs.findFirst({
+    where: and(
+      eq(knosiaUserVocabularyPrefs.userId, userId),
+      eq(knosiaUserVocabularyPrefs.workspaceId, workspaceId)
+    ),
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const [created] = await db
+    .insert(knosiaUserVocabularyPrefs)
+    .values({
+      userId,
+      workspaceId,
+      favorites: [],
+      synonyms: {},
+      recentlyUsed: [],
+      dismissedSuggestions: [],
+      privateVocabulary: [],
+    })
+    .returning();
+
+  return created!;
+}
+
+/**
+ * Update user vocabulary preferences
+ */
+export async function updateUserVocabularyPrefs(
+  userId: string,
+  input: UpdateVocabularyPrefsInput
+): Promise<{
+  favorites: string[];
+  synonyms: Record<string, string>;
+  dismissedSuggestions: string[];
+}> {
+  const prefs = await ensureUserVocabularyPrefs(userId, input.workspaceId);
+
+  const updateData: Record<string, unknown> = {
+    updatedAt: new Date(),
+  };
+
+  if (input.favorites !== undefined) {
+    updateData.favorites = input.favorites;
+  }
+  if (input.synonyms !== undefined) {
+    updateData.synonyms = input.synonyms;
+  }
+  if (input.dismissedSuggestions !== undefined) {
+    updateData.dismissedSuggestions = input.dismissedSuggestions;
+  }
+
+  const [updated] = await db
+    .update(knosiaUserVocabularyPrefs)
+    .set(updateData)
+    .where(eq(knosiaUserVocabularyPrefs.id, prefs.id))
+    .returning();
+
+  return {
+    favorites: (updated!.favorites as string[]) ?? [],
+    synonyms: (updated!.synonyms as Record<string, string>) ?? {},
+    dismissedSuggestions: (updated!.dismissedSuggestions as string[]) ?? [],
+  };
+}
+
+/**
+ * Create a private vocabulary item
+ */
+export async function createPrivateVocabulary(
+  userId: string,
+  input: CreatePrivateVocabInput
+): Promise<{
+  id: string;
+  name: string;
+  slug: string;
+  type: "metric" | "dimension" | "filter";
+  formula: string;
+  description?: string;
+  createdAt: string;
+}> {
+  const prefs = await ensureUserVocabularyPrefs(userId, input.workspaceId);
+
+  const newItem = {
+    id: generateId(),
+    name: input.name,
+    slug: input.slug,
+    type: input.type,
+    formula: input.formula,
+    description: input.description,
+    createdAt: new Date().toISOString(),
+  };
+
+  const currentPrivate =
+    (prefs.privateVocabulary as {
+      id: string;
+      name: string;
+      slug: string;
+      type: "metric" | "dimension" | "filter";
+      formula: string;
+      description?: string;
+      createdAt: string;
+    }[]) ?? [];
+
+  await db
+    .update(knosiaUserVocabularyPrefs)
+    .set({
+      privateVocabulary: [...currentPrivate, newItem],
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaUserVocabularyPrefs.id, prefs.id));
+
+  return newItem;
+}
+
+/**
+ * Update a private vocabulary item
+ */
+export async function updatePrivateVocabulary(
+  userId: string,
+  input: UpdatePrivateVocabInput
+): Promise<{
+  id: string;
+  name: string;
+  slug: string;
+  type: "metric" | "dimension" | "filter";
+  formula: string;
+  description?: string;
+  createdAt: string;
+} | null> {
+  const prefs = await db.query.knosiaUserVocabularyPrefs.findFirst({
+    where: and(
+      eq(knosiaUserVocabularyPrefs.userId, userId),
+      eq(knosiaUserVocabularyPrefs.workspaceId, input.workspaceId)
+    ),
+  });
+
+  if (!prefs) {
+    return null;
+  }
+
+  const currentPrivate =
+    (prefs.privateVocabulary as {
+      id: string;
+      name: string;
+      slug: string;
+      type: "metric" | "dimension" | "filter";
+      formula: string;
+      description?: string;
+      createdAt: string;
+    }[]) ?? [];
+
+  const itemIndex = currentPrivate.findIndex((item) => item.id === input.id);
+  if (itemIndex === -1) {
+    return null;
+  }
+
+  const existingItem = currentPrivate[itemIndex]!;
+  const updatedItem: {
+    id: string;
+    name: string;
+    slug: string;
+    type: "metric" | "dimension" | "filter";
+    formula: string;
+    description?: string;
+    createdAt: string;
+  } = {
+    id: existingItem.id,
+    name: input.name ?? existingItem.name,
+    slug: existingItem.slug,
+    type: existingItem.type,
+    formula: input.formula ?? existingItem.formula,
+    description: input.description ?? existingItem.description,
+    createdAt: existingItem.createdAt,
+  };
+
+  const updatedPrivate = [
+    ...currentPrivate.slice(0, itemIndex),
+    updatedItem,
+    ...currentPrivate.slice(itemIndex + 1),
+  ];
+
+  await db
+    .update(knosiaUserVocabularyPrefs)
+    .set({
+      privateVocabulary: updatedPrivate,
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaUserVocabularyPrefs.id, prefs.id));
+
+  return updatedItem;
+}
+
+/**
+ * Delete a private vocabulary item
+ */
+export async function deletePrivateVocabulary(
+  userId: string,
+  input: DeletePrivateVocabInput
+): Promise<boolean> {
+  const prefs = await db.query.knosiaUserVocabularyPrefs.findFirst({
+    where: and(
+      eq(knosiaUserVocabularyPrefs.userId, userId),
+      eq(knosiaUserVocabularyPrefs.workspaceId, input.workspaceId)
+    ),
+  });
+
+  if (!prefs) {
+    return false;
+  }
+
+  const currentPrivate =
+    (prefs.privateVocabulary as {
+      id: string;
+      name: string;
+      slug: string;
+      type: "metric" | "dimension" | "filter";
+      formula: string;
+      description?: string;
+      createdAt: string;
+    }[]) ?? [];
+
+  const filtered = currentPrivate.filter((item) => item.id !== input.id);
+
+  if (filtered.length === currentPrivate.length) {
+    return false; // Nothing was removed
+  }
+
+  await db
+    .update(knosiaUserVocabularyPrefs)
+    .set({
+      privateVocabulary: filtered,
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaUserVocabularyPrefs.id, prefs.id));
+
+  return true;
+}
+
+/**
+ * Track vocabulary usage (for recently used list)
+ */
+export async function trackVocabularyUsage(
+  userId: string,
+  input: TrackVocabularyUsageInput
+): Promise<void> {
+  const prefs = await ensureUserVocabularyPrefs(userId, input.workspaceId);
+
+  const recentlyUsed =
+    (prefs.recentlyUsed as { slug: string; lastUsedAt: string; useCount: number }[]) ?? [];
+
+  const now = new Date().toISOString();
+  const existingIndex = recentlyUsed.findIndex((r) => r.slug === input.slug);
+
+  let updated: { slug: string; lastUsedAt: string; useCount: number }[];
+
+  if (existingIndex >= 0) {
+    // Update existing entry
+    const existingEntry = recentlyUsed[existingIndex]!;
+    updated = [
+      ...recentlyUsed.slice(0, existingIndex),
+      {
+        slug: input.slug,
+        lastUsedAt: now,
+        useCount: existingEntry.useCount + 1,
+      },
+      ...recentlyUsed.slice(existingIndex + 1),
+    ];
+  } else {
+    // Add new entry
+    updated = [
+      { slug: input.slug, lastUsedAt: now, useCount: 1 },
+      ...recentlyUsed,
+    ];
+  }
+
+  // Keep only the most recent 50 entries
+  updated.sort(
+    (a, b) => new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime()
+  );
+  updated = updated.slice(0, 50);
+
+  await db
+    .update(knosiaUserVocabularyPrefs)
+    .set({
+      recentlyUsed: updated,
+      updatedAt: new Date(),
+    })
+    .where(eq(knosiaUserVocabularyPrefs.id, prefs.id));
 }

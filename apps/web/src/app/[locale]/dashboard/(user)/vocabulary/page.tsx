@@ -6,11 +6,11 @@ import {
   DashboardHeaderDescription,
   DashboardHeaderTitle,
 } from "~/modules/common/layout/dashboard/header";
-import { VocabularyWizard } from "~/modules/vocabulary";
+import { VocabularyBrowser } from "~/modules/knosia/vocabulary";
 
 export const generateMetadata = getMetadata({
   title: "Vocabulary",
-  description: "Create and manage your data vocabulary",
+  description: "Browse and manage your business vocabulary",
 });
 
 export default async function VocabularyPage() {
@@ -21,16 +21,16 @@ export default async function VocabularyPage() {
       <DashboardHeader>
         <div>
           {/* eslint-disable-next-line i18next/no-literal-string */}
-          <DashboardHeaderTitle>{t("vocabulary.title", "Vocabulary Builder")}</DashboardHeaderTitle>
+          <DashboardHeaderTitle>{t("vocabulary.title", "Vocabulary")}</DashboardHeaderTitle>
           <DashboardHeaderDescription>
             {/* eslint-disable-next-line i18next/no-literal-string */}
-            {t("vocabulary.description", "Connect your database and create a vocabulary for your data")}
+            {t("vocabulary.description", "Browse and manage your business vocabulary")}
           </DashboardHeaderDescription>
         </div>
       </DashboardHeader>
 
       <div className="py-6">
-        <VocabularyWizard />
+        <VocabularyBrowser workspaceId="default" />
       </div>
     </div>
   );

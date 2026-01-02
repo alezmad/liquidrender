@@ -234,6 +234,18 @@ workflows:
     current_wave: 0
     total_tasks: 14
     completed_tasks: 0
+  WF-0035:
+    name: Vocabulary Architecture
+    dirname: WF-0035-vocabulary-architecture
+    location: active
+    status: pending
+    created_at: '2026-01-02T03:48:20.781917'
+    updated_at: '2026-01-02T03:48:20.781917'
+    started_at: ''
+    completed_at: ''
+    current_wave: 0
+    total_tasks: 12
+    completed_tasks: 0
 WF-0018:
   name: Knosia LiquidConnect Integration
   dirname: WF-0018-knosia-liquidconnect
@@ -353,8 +365,8 @@ WF-0029:
   completed_tasks: 0
   git_tag: WF-0029-start
 stats:
-  total_workflows: 16
+  total_workflows: 19
   queued: 0
-  active: 8
-  completed: 8
+  active: 9
+  completed: 10
   failed: 0

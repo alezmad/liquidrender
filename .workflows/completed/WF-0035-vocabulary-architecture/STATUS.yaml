@@ -1,0 +1,115 @@
+# Workflow Status: WF-0035 - Vocabulary Architecture
+# Implement vocabulary scoping, preferences, and browser UI
+
+metadata:
+  id: WF-0035
+  name: Vocabulary Architecture
+  created: 2026-01-02
+  completed: 2026-01-02
+  git_tag: WF-0035-start
+  git_commit: 9c8c91f
+  source_doc: .artifacts/2026-01-01-vocabulary-implementation-plan.md
+
+status: completed
+
+waves:
+  - id: 0
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Schema updates
+        files:
+          - packages/db/src/schema/knosia.ts
+        status: completed
+        description: Add suggestedForRoles field, create knosiaUserVocabularyPrefs table, generate migration
+
+  - id: 1
+    type: sequential
+    status: completed
+    tasks:
+      - id: T1
+        name: Resolution algorithm
+        file: packages/api/src/modules/knosia/vocabulary/resolution.ts
+        status: completed
+        description: Create resolveVocabulary and searchVocabulary functions
+      - id: T2
+        name: API schemas
+        file: packages/api/src/modules/knosia/vocabulary/schemas.ts
+        status: completed
+        description: Add listVocabularySchema, createVocabularyItemSchema, updateVocabularyPrefsSchema
+      - id: T3
+        name: API queries
+        file: packages/api/src/modules/knosia/vocabulary/queries.ts
+        status: completed
+        description: Add getVocabularyList, getVocabularyBySlug, getUserVocabularyPrefs
+      - id: T4
+        name: API mutations
+        file: packages/api/src/modules/knosia/vocabulary/mutations.ts
+        status: completed
+        description: Add CRUD mutations for vocabulary and user preferences
+      - id: T5
+        name: API router
+        file: packages/api/src/modules/knosia/vocabulary/router.ts
+        status: completed
+        description: Add 10 new endpoints for vocabulary CRUD and preferences
+
+  - id: 2
+    type: parallel
+    status: completed
+    tasks:
+      - id: T6
+        name: Preferences API wiring
+        files:
+          - packages/api/src/modules/knosia/vocabulary/mutations.ts
+          - packages/api/src/modules/knosia/vocabulary/queries.ts
+        status: completed
+        description: Wire favorites, synonyms, recently used, dismissed suggestions
+      - id: T7
+        name: Role suggestions
+        files:
+          - packages/api/src/modules/knosia/vocabulary/mutations.ts
+          - packages/api/src/modules/knosia/vocabulary/queries.ts
+        status: completed
+        description: Implement getSuggestedVocabulary and dismiss endpoint
+
+  - id: 3
+    type: parallel
+    status: completed
+    tasks:
+      - id: T8
+        name: Vocabulary browser
+        files:
+          - apps/web/src/modules/knosia/vocabulary/components/vocabulary-browser.tsx
+          - apps/web/src/modules/knosia/vocabulary/components/vocabulary-list.tsx
+          - apps/web/src/modules/knosia/vocabulary/components/vocabulary-card.tsx
+          - apps/web/src/modules/knosia/vocabulary/types.ts
+        status: completed
+        description: Main vocabulary browser UI component
+      - id: T9
+        name: Vocabulary hooks
+        files:
+          - apps/web/src/modules/knosia/vocabulary/hooks/use-vocabulary.ts
+          - apps/web/src/modules/knosia/vocabulary/hooks/use-vocabulary-prefs.ts
+          - apps/web/src/modules/knosia/vocabulary/hooks/index.ts
+          - apps/web/src/modules/knosia/vocabulary/index.ts
+        status: completed
+        description: React Query hooks for vocabulary data
+      - id: T10
+        name: Page and routing
+        files:
+          - apps/web/src/app/[locale]/dashboard/knosia/vocabulary/page.tsx
+        status: completed
+        description: Create page and add sidebar link
+
+  - id: 4
+    type: sequential
+    status: completed
+    tasks:
+      - id: T11
+        name: TypeCheck validation
+        status: completed
+        description: Run pnpm typecheck and fix any errors
+        notes: Fixed share mode type mismatch (view|collaborate -> view|comment|edit)
+
+current_wave: 4

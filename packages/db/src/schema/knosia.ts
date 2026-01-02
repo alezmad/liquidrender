@@ -7,6 +7,7 @@ import {
   text,
   timestamp,
   real,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 import { generateId } from "@turbostarter/shared/utils";
@@ -422,6 +423,8 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     caveats?: string[];
     exampleValues?: { low?: string; typical?: string; high?: string };
   }>(),
+  // Role-based suggestions: which archetypes should see this item suggested
+  suggestedForRoles: jsonb().$type<string[]>(), // ["strategist", "operator", "analyst", "builder"]
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
@@ -557,6 +560,54 @@ export const knosiaUserPreference = pgTable("knosia_user_preference", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+/**
+ * User Vocabulary Preferences - Per-workspace vocabulary customizations
+ * Stores favorites, synonyms, recently used items, dismissed suggestions,
+ * and private vocabulary formulas
+ */
+export const knosiaUserVocabularyPrefs = pgTable(
+  "knosia_user_vocabulary_prefs",
+  {
+    id: text().primaryKey().$defaultFn(generateId),
+    userId: text()
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    workspaceId: text()
+      .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+      .notNull(),
+    // Favorited vocabulary item slugs
+    favorites: jsonb().$type<string[]>().default([]),
+    // Personal synonyms: { "my_term": "official_slug" }
+    synonyms: jsonb().$type<Record<string, string>>().default({}),
+    // Recently used vocabulary items with usage tracking
+    recentlyUsed: jsonb()
+      .$type<{ slug: string; lastUsedAt: string; useCount: number }[]>()
+      .default([]),
+    // Dismissed role-based suggestions
+    dismissedSuggestions: jsonb().$type<string[]>().default([]),
+    // Private vocabulary formulas (user-only, not shared)
+    privateVocabulary: jsonb()
+      .$type<
+        {
+          id: string;
+          name: string;
+          slug: string;
+          type: "metric" | "dimension" | "filter";
+          formula: string;
+          description?: string;
+          createdAt: string;
+          updatedAt?: string;
+        }[]
+      >()
+      .default([]),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("idx_user_vocab_prefs").on(table.userId, table.workspaceId),
+  ]
+);
 
 // ============================================================================
 // INTELLIGENCE TABLES

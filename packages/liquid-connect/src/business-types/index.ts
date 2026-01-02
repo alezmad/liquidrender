@@ -6,8 +6,8 @@
 
 export * from './types';
 
-// Wave 1 exports (not yet implemented)
-// export * from './detector';
-// export * from './signatures';
-// export * from './mapper';
-// export * from './templates';
+// Wave 1 exports (all groups complete)
+export * from './detector';
+export * from './signatures';
+export * from './mapper';
+export * from './templates';

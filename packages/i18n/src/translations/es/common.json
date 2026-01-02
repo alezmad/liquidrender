@@ -300,5 +300,7 @@
   "threads": "Hilos",
   "briefing": "Resumen",
   "connections": "Conexiones",
-  "vocabulary": "Vocabulario"
+  "vocabulary": "Vocabulario",
+  "demos": "Demos",
+  "dev": "Desarrollo"
 }

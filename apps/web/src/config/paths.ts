@@ -14,8 +14,15 @@ const APPS_TTS = "/tts";
 const APPS_PDF = "/pdf";
 const APPS_AGENT = "/agent";
 
+const DEMO_PREFIX = "/demo";
+
 const pathsConfig = {
   index: "/",
+  demo: {
+    index: DEMO_PREFIX,
+    liquidRender: `${DEMO_PREFIX}/liquid-render`,
+    scrollTest: `${DEMO_PREFIX}/scroll-test`,
+  },
   apps: {
     chat: {
       index: APPS_CHAT,

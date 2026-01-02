@@ -58,6 +58,16 @@ const menu = [
       },
     ],
   },
+  {
+    label: "dev",
+    items: [
+      {
+        title: "demos",
+        href: pathsConfig.demo.index,
+        icon: Icons.LayoutDashboard,
+      },
+    ],
+  },
 ];
 
 export default async function DashboardLayout({

@@ -157,7 +157,7 @@ export const createSnapshotInputSchema = z.object({
 
 export const shareThreadInputSchema = z.object({
   userIds: z.array(z.string()).min(1),
-  mode: z.enum(["view", "collaborate"]),
+  mode: z.enum(["view", "comment", "edit"]).default("view"),
 });
 
 // ============================================================================

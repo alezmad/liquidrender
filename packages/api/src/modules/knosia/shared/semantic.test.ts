@@ -68,6 +68,7 @@ const createVocabItem = (
   cardinality: null,
   isPrimaryTime: false,
   joinsTo: null,
+  suggestedForRoles: null,
   definition: {
     sourceTables: ["orders"],
     sourceColumn: "amount",

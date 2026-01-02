@@ -50,7 +50,7 @@ export function ShareModal({
 }: ShareModalProps) {
   const [email, setEmail] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [mode, setMode] = useState<"view" | "collaborate">("view");
+  const [mode, setMode] = useState<"view" | "comment" | "edit">("view");
 
   const shareMutation = useShare();
 
@@ -153,7 +153,7 @@ export function ShareModal({
           {/* Permission mode */}
           <div className="space-y-2">
             <Label htmlFor="mode">Permission</Label>
-            <Select value={mode} onValueChange={(v) => setMode(v as "view" | "collaborate")}>
+            <Select value={mode} onValueChange={(v) => setMode(v as "view" | "comment" | "edit")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -164,10 +164,16 @@ export function ShareModal({
                     <span>Can view</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="collaborate">
+                <SelectItem value="comment">
+                  <div className="flex items-center gap-2">
+                    <Icons.MessageSquare className="h-4 w-4" />
+                    <span>Can comment</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="edit">
                   <div className="flex items-center gap-2">
                     <Icons.Edit className="h-4 w-4" />
-                    <span>Can collaborate</span>
+                    <span>Can edit</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -175,7 +181,9 @@ export function ShareModal({
             <p className="text-xs text-muted-foreground">
               {mode === "view"
                 ? "Users can view but not make changes"
-                : "Users can view, comment, and make changes"}
+                : mode === "comment"
+                  ? "Users can view and add comments"
+                  : "Users can view, comment, and make changes"}
             </p>
           </div>
         </div>

@@ -79,9 +79,18 @@ const KNOSIA = [
   },
 ] as const;
 
+const DEV = [
+  {
+    title: "demos",
+    href: pathsConfig.demo.index,
+    icon: Icons.LayoutDashboard,
+  },
+] as const;
+
 const sections = [
   { label: "apps", items: APPS },
   { label: "platform", items: KNOSIA },
+  { label: "dev", items: DEV },
   { label: "freeTools", items: FREE_TOOLS },
   { label: "other", items: OTHER },
 ] as const;
@@ -105,7 +114,7 @@ export const Content = () => {
                   <SidebarMenuButton
                     asChild
                     isActive={
-                      (section.label === "apps" || section.label === "platform") &&
+                      (section.label === "apps" || section.label === "platform" || section.label === "dev") &&
                       pathname.startsWith(item.href)
                     }
                   >
@@ -119,7 +128,7 @@ export const Content = () => {
                       <item.icon className="size-4" />
                       {section.label === "apps"
                         ? t(`ai:${item.title}.title` as "ai:chat.title" | "ai:image.title" | "ai:tts.title" | "ai:pdf.title" | "ai:agent.title")
-                        : t(item.title as "home" | "documentation" | "affiliates" | "blog" | "envin" | "ideasGenerator" | "extro" | "emojai" | "syncreads" | "knosia")}
+                        : t(item.title as "home" | "documentation" | "affiliates" | "blog" | "envin" | "ideasGenerator" | "extro" | "emojai" | "syncreads" | "knosia" | "demos" | "dev")}
                     </TurboLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

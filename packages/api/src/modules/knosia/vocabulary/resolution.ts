@@ -67,6 +67,41 @@ export async function resolveVocabulary(
   userId: string,
   workspaceId: string
 ): Promise<ResolvedVocabulary> {
+  // Handle "default" workspace - return all org-level vocabulary
+  if (workspaceId === "default") {
+    // Fetch all org-level vocabulary items (no specific workspace)
+    const dbItems = await db
+      .select()
+      .from(knosiaVocabularyItem)
+      .where(isNull(knosiaVocabularyItem.workspaceId));
+
+    const bySlug = new Map<string, ResolvedVocabularyItem>();
+    for (const item of dbItems) {
+      bySlug.set(item.slug, {
+        id: item.id,
+        slug: item.slug,
+        canonicalName: item.canonicalName,
+        abbreviation: item.abbreviation,
+        type: item.type as "metric" | "dimension" | "entity" | "event",
+        category: item.category,
+        scope: "org",
+        definition: item.definition as ResolvedVocabularyItem["definition"],
+        suggestedForRoles: item.suggestedForRoles as string[] | null,
+        isFavorite: false,
+        recentlyUsedAt: null,
+        useCount: 0,
+      });
+    }
+
+    return {
+      items: Array.from(bySlug.values()),
+      bySlug,
+      favorites: [],
+      recentlyUsed: [],
+      synonyms: {},
+    };
+  }
+
   // Get workspace to find orgId
   const workspace = await db.query.knosiaWorkspace.findFirst({
     where: eq(knosiaWorkspace.id, workspaceId),
@@ -94,8 +129,7 @@ export async function resolveVocabulary(
         or(
           isNull(knosiaVocabularyItem.workspaceId),
           eq(knosiaVocabularyItem.workspaceId, workspaceId)
-        ),
-        eq(knosiaVocabularyItem.status, "approved")
+        )
       )
     );
 

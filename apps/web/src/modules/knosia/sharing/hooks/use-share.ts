@@ -10,7 +10,7 @@ interface ShareInput {
   targetType: ShareTargetType;
   targetId: string;
   userIds: string[];
-  mode: "view" | "collaborate";
+  mode: "view" | "comment" | "edit";
 }
 
 /**

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "motion/react";
 import { useState } from "react";
 
 import { useTranslation } from "@turbostarter/i18n";
@@ -9,6 +8,11 @@ import { useBreakpoint } from "@turbostarter/ui-web";
 import { Button } from "@turbostarter/ui-web/button";
 import { Drawer, DrawerContent } from "@turbostarter/ui-web/drawer";
 import { Icons } from "@turbostarter/ui-web/icons";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@turbostarter/ui-web/resizable";
 import { Skeleton } from "@turbostarter/ui-web/skeleton";
 import {
   Tooltip,
@@ -56,7 +60,7 @@ const Trigger = ({
   );
 };
 
-const DocumentPreview = ({
+const MobileDocumentPreview = ({
   id,
   open,
   onOpenChange,
@@ -65,37 +69,6 @@ const DocumentPreview = ({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) => {
-  const isDesktop = useBreakpoint("lg");
-
-  if (isDesktop) {
-    return (
-      <>
-        <motion.div
-          className="relative h-full w-1/2"
-          variants={{
-            open: { width: "50%" },
-            closed: { width: 0 },
-          }}
-          initial="closed"
-          animate={open ? "open" : "closed"}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-0 right-0 z-10 h-full w-1/2 p-3 pl-0"
-          variants={{
-            open: { x: 0 },
-            closed: { x: "100%" },
-          }}
-          initial="closed"
-          animate={open ? "open" : "closed"}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <Documents id={id} />
-        </motion.div>
-      </>
-    );
-  }
-
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="border-b-none fixed right-0 bottom-0 left-0 mx-[-1px] flex max-h-[97%] flex-col gap-3 rounded-t-[10px] border px-3 pb-3">
@@ -186,23 +159,50 @@ export const PdfLayout = ({
   id: string;
 }) => {
   const [open, setOpen] = useState(true);
+  const isDesktop = useBreakpoint("lg");
+
+  if (isDesktop) {
+    return (
+      <PdfViewerProvider>
+        <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="relative flex h-full flex-col">
+              <Header>
+                <div className="flex items-center gap-1">
+                  <ChatHistory />
+                  <ThemeSwitcher />
+                  <Trigger open={open} onOpenChange={setOpen} />
+                </div>
+              </Header>
+              {children}
+            </div>
+          </ResizablePanel>
+
+          {open && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50} minSize={25}>
+                <Documents id={id} />
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
+      </PdfViewerProvider>
+    );
+  }
 
   return (
     <PdfViewerProvider>
-      <div className="relative flex h-full w-full overflow-hidden">
-        <div className="relative flex h-full grow flex-col">
-          <Header>
-            <div className="flex items-center gap-1">
-              <ChatHistory />
-              <ThemeSwitcher />
-              <Trigger open={open} onOpenChange={setOpen} />
-            </div>
-          </Header>
-
-          {children}
-        </div>
-
-        <DocumentPreview open={open} onOpenChange={setOpen} id={id} />
+      <div className="relative flex h-full w-full flex-col overflow-hidden">
+        <Header>
+          <div className="flex items-center gap-1">
+            <ChatHistory />
+            <ThemeSwitcher />
+            <Trigger open={open} onOpenChange={setOpen} />
+          </div>
+        </Header>
+        {children}
+        <MobileDocumentPreview open={open} onOpenChange={setOpen} id={id} />
       </div>
     </PdfViewerProvider>
   );

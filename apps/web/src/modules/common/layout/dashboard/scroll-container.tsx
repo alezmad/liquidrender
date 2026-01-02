@@ -46,16 +46,7 @@ export function ScrollContainer({ children, className }: ScrollContainerProps) {
 
   return (
     <div className={cn("relative flex-1 overflow-hidden", className)}>
-      {/* Top shadow */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-black/10 to-transparent transition-opacity duration-150 dark:from-white/10",
-          canScrollUp ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden="true"
-      />
-
-      {/* Scroll content */}
+      {/* Scroll content - shadows removed, handled by individual components */}
       <div
         ref={scrollRef}
         onScroll={updateScrollState}
@@ -63,15 +54,6 @@ export function ScrollContainer({ children, className }: ScrollContainerProps) {
       >
         {children}
       </div>
-
-      {/* Bottom shadow */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-black/10 to-transparent transition-opacity duration-150 dark:from-white/10",
-          canScrollDown ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden="true"
-      />
     </div>
   );
 }

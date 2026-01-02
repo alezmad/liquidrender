@@ -6,7 +6,7 @@ import { api } from "~/lib/api/client";
 import type { Thread, ThreadStatus } from "../types";
 
 interface UseThreadsListOptions {
-  workspaceId: string;
+  workspaceId?: string;
   connectionId?: string;
   status?: ThreadStatus;
   page?: number;
@@ -30,12 +30,12 @@ interface UseThreadsListReturn {
 }
 
 export function useThreadsList({
-  workspaceId,
-  connectionId,
+  workspaceId = "default",
+  connectionId = "default",
   status,
   page = 1,
   perPage = 20,
-}: UseThreadsListOptions): UseThreadsListReturn {
+}: UseThreadsListOptions = {}): UseThreadsListReturn {
   const queryClient = useQueryClient();
 
   // Fetch threads list
@@ -63,12 +63,8 @@ export function useThreadsList({
   });
 
   // Create thread mutation - threads are created via POST /query
-  // Requires connectionId to be provided
   const createThreadMutation = useMutation({
     mutationFn: async (initialQuery?: string) => {
-      if (!connectionId) {
-        throw new Error("connectionId is required to create a thread");
-      }
       const res = await api.knosia.thread.query.$post({
         json: {
           workspaceId,

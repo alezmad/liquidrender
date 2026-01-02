@@ -44,6 +44,8 @@
   "goToDashboard": "Go to dashboard",
   "home": "Home",
   "ai": "AI",
+  "aiTools": "AI Tools",
+  "knosia": "Knosia",
   "settings": "Settings",
   "billing": "Billing",
   "blog": "Blog",
@@ -295,5 +297,8 @@
   "confirm": "Confirm",
   "downloading": "Downloading...",
   "canvases": "Canvases",
-  "threads": "Threads"
+  "threads": "Threads",
+  "briefing": "Briefing",
+  "connections": "Connections",
+  "vocabulary": "Vocabulary"
 }

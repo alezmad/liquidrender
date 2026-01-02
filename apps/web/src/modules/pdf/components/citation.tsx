@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@turbostarter/ui";
+import { Icons } from "@turbostarter/ui-web/icons";
 
 import { usePdfViewer } from "../context/pdf-viewer-context";
 
@@ -76,7 +77,8 @@ export function Citation({ citation, className }: CitationProps) {
       aria-label={`Citation ${citation.index}, page ${citation.pageNumber}${isActive ? " (active)" : ""}`}
       title={isActive ? "Click to deactivate" : `Go to page ${citation.pageNumber}`}
     >
-      {citation.index}
+      <Icons.FileText className="size-3 mr-0.5" aria-hidden />
+      <span>{citation.index}</span>
     </button>
   );
 }

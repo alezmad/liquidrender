@@ -198,6 +198,34 @@ export const canvasEditChangeSchema = z.object({
 });
 
 // ============================================================================
+// SHARING SCHEMAS
+// ============================================================================
+
+/**
+ * Schema for sharing a canvas with other users
+ */
+export const shareCanvasInputSchema = z.object({
+  userIds: z.array(z.string()).min(1),
+  mode: z.enum(["view", "comment", "edit"]).default("view"),
+});
+
+/**
+ * Schema for a collaborator on a canvas
+ */
+export const collaboratorSchema = z.object({
+  userId: z.string(),
+  permission: z.enum(["view", "comment", "edit"]),
+  addedAt: z.date().optional(),
+});
+
+/**
+ * Schema for removing a collaborator
+ */
+export const removeCollaboratorInputSchema = z.object({
+  userId: z.string(),
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -222,3 +250,7 @@ export type CanvasAlert = z.infer<typeof canvasAlertSchema>;
 export type InsertCanvasAlert = z.infer<typeof insertCanvasAlertSchema>;
 export type CreateAlertInput = z.infer<typeof createAlertInputSchema>;
 export type UpdateAlertInput = z.infer<typeof updateAlertInputSchema>;
+
+export type ShareCanvasInput = z.infer<typeof shareCanvasInputSchema>;
+export type Collaborator = z.infer<typeof collaboratorSchema>;
+export type RemoveCollaboratorInput = z.infer<typeof removeCollaboratorInputSchema>;

@@ -22,11 +22,8 @@ export function ThreadSidebar({ workspaceId, selectedId }: ThreadSidebarProps) {
   const router = useRouter();
   const [showArchived, setShowArchived] = useState(false);
 
-  // Use a default workspaceId for now - will be properly wired when workspace context is available
-  const effectiveWorkspaceId = workspaceId ?? "default";
-
   const { threads, isLoading, createThread, isCreating } = useThreadsList({
-    workspaceId: effectiveWorkspaceId,
+    workspaceId,
     status: showArchived ? "archived" : "active",
   });
 

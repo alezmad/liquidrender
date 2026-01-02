@@ -44,6 +44,8 @@
   "goToDashboard": "Ir al panel",
   "home": "Inicio",
   "ai": "IA",
+  "aiTools": "Herramientas IA",
+  "knosia": "Knosia",
   "settings": "Ajustes",
   "billing": "Facturación",
   "blog": "Blog",
@@ -295,5 +297,8 @@
   "confirm": "Confirmar",
   "downloading": "Descargando...",
   "canvases": "Lienzos",
-  "threads": "Hilos"
+  "threads": "Hilos",
+  "briefing": "Resumen",
+  "connections": "Conexiones",
+  "vocabulary": "Vocabulario"
 }

@@ -22,11 +22,6 @@ const menu = [
         icon: Icons.Home,
       },
       {
-        title: "ask",
-        href: pathsConfig.knosia.ask,
-        icon: Icons.MessageCircle,
-      },
-      {
         title: "canvases",
         href: pathsConfig.knosia.canvas.index,
         icon: Icons.ChartNoAxesColumn,
@@ -35,6 +30,11 @@ const menu = [
         title: "threads",
         href: pathsConfig.knosia.threads.index,
         icon: Icons.MessagesSquare,
+      },
+      {
+        title: "aiTools",
+        href: pathsConfig.apps.chat.index,
+        icon: Icons.Sparkles,
       },
     ],
   },

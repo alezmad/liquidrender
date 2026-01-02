@@ -24,6 +24,7 @@ interface ThreadProps<MESSAGE extends UIMessage> {
   readonly regenerate?: () => Promise<void>;
   readonly className?: string;
   readonly components: ThreadMessageComponents<MESSAGE>;
+  readonly footer?: React.ReactNode;
 }
 
 export const Thread = <MESSAGE extends UIMessage>({
@@ -34,6 +35,7 @@ export const Thread = <MESSAGE extends UIMessage>({
   regenerate,
   className,
   components,
+  footer,
 }: ThreadProps<MESSAGE>) => {
   const { t } = useTranslation("common");
   const isReloading = useRef(false);
@@ -106,6 +108,7 @@ export const Thread = <MESSAGE extends UIMessage>({
               )}
             </div>
           )}
+          {footer}
           {error && (
             <div className="relative pb-4 @lg/thread:px-2 @xl/thread:px-4">
               <div className="bg-destructive/10 dark:bg-destructive/40 flex w-fit flex-wrap items-center gap-3 rounded-xl p-5 py-3">

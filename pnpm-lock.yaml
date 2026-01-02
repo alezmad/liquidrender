@@ -999,7 +999,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
+        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
 
   packages/db:
     dependencies:
@@ -1156,7 +1156,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
+        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
 
   packages/liquid-connect:
     dependencies:
@@ -1181,7 +1181,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
+        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
 
   packages/liquid-render:
     dependencies:
@@ -1248,7 +1248,7 @@ importers:
         version: 7.3.0(@types/node@22.16.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.43.1)(tsx@4.19.2)(yaml@2.8.0)
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
+        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
 
   packages/liquid-survey:
     dependencies:
@@ -1267,7 +1267,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
+        version: 2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1)
 
   packages/monitoring/extension:
     dependencies:
@@ -1662,6 +1662,9 @@ importers:
       react-day-picker:
         specifier: 9.11.1
         version: 9.11.1(react@19.1.0)
+      react-resizable-panels:
+        specifier: 4.1.1
+        version: 4.1.1(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
       react-textarea-autosize:
         specifier: 8.5.9
         version: 8.5.9(@types/react@19.2.7)(react@19.1.0)
@@ -14169,6 +14172,12 @@ packages:
       '@types/react':
         optional: true
 
+  react-resizable-panels@4.1.1:
+    resolution: {integrity: sha512-+LO3RKIrSplxD5XFFD2ANsNXplAoihn1Gwmb+XwYS2RKSV17C7RqbYuYEUyqrD8uitGIdXK1vs2FamRLGLeGfQ==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+
   react-shiki@0.9.1:
     resolution: {integrity: sha512-Ln1PnISi7WaSlheSBRdxVruVbU1zMUkCmxe+vmbIvZSsHdfvOF5NBOgf1h4cCr6OjdR0dLAxmPKcx3tobdyxVA==}
     peerDependencies:
@@ -18914,7 +18923,6 @@ snapshots:
       - graphql
       - supports-color
       - utf-8-validate
-    optional: true
 
   '@expo/code-signing-certificates@0.0.5':
     dependencies:
@@ -18980,7 +18988,6 @@ snapshots:
     optionalDependencies:
       react: 19.2.3
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
-    optional: true
 
   '@expo/env@2.0.8':
     dependencies:
@@ -19055,7 +19062,7 @@ snapshots:
       postcss: 8.4.49
       resolve-from: 5.0.0
     optionalDependencies:
-      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0)
+      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -19140,7 +19147,7 @@ snapshots:
       '@expo/json-file': 10.0.8
       '@react-native/normalize-colors': 0.81.5
       debug: 4.4.1
-      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0)
+      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
       resolve-from: 5.0.0
       semver: 7.7.2
       xml2js: 0.6.0
@@ -19168,7 +19175,6 @@ snapshots:
       expo-font: 14.0.10(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
-    optional: true
 
   '@expo/ws-tunnel@1.0.6': {}
 
@@ -19907,7 +19913,7 @@ snapshots:
   '@openpanel/nextjs@1.0.9(next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@openpanel/web': 1.0.2
-      next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -23048,7 +23054,7 @@ snapshots:
       '@sentry/react': 10.30.0(react@19.2.3)
       '@sentry/vercel-edge': 10.30.0
       '@sentry/webpack-plugin': 4.6.1(encoding@0.1.13)(webpack@5.100.2)
-      next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       resolve: 1.22.8
       rollup: 4.44.2
       stacktrace-parser: 0.1.11
@@ -23171,7 +23177,7 @@ snapshots:
       '@sentry/bundler-plugin-core': 4.6.1(encoding@0.1.13)
       unplugin: 1.0.1
       uuid: 9.0.1
-      webpack: 5.100.2(esbuild@0.25.0)
+      webpack: 5.100.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -24403,7 +24409,7 @@ snapshots:
 
   '@vercel/analytics@1.5.0(next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
     optionalDependencies:
-      next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
 
   '@vercel/oidc@3.0.3': {}
@@ -25031,7 +25037,7 @@ snapshots:
       resolve-from: 5.0.0
     optionalDependencies:
       '@babel/runtime': 7.28.4
-      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0)
+      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
     transitivePeerDependencies:
       - '@babel/core'
       - supports-color
@@ -26694,7 +26700,7 @@ snapshots:
 
   expo-application@7.0.8(expo@54.0.27):
     dependencies:
-      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0)
+      expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
 
   expo-asset@12.0.11(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -26715,7 +26721,6 @@ snapshots:
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   expo-auth-session@7.0.10(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -26766,7 +26771,6 @@ snapshots:
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   expo-crypto@15.0.8(expo@54.0.27):
     dependencies:
@@ -26813,7 +26817,6 @@ snapshots:
     dependencies:
       expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
-    optional: true
 
   expo-font@14.0.10(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -26828,7 +26831,6 @@ snapshots:
       fontfaceobserver: 2.3.0
       react: 19.2.3
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
-    optional: true
 
   expo-glass-effect@0.1.8(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -26864,7 +26866,6 @@ snapshots:
     dependencies:
       expo: 54.0.27(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.17)(react-native-webview@13.16.0(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3))(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3))(react@19.2.3)
       react: 19.2.3
-    optional: true
 
   expo-linking@8.0.10(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -26927,7 +26928,6 @@ snapshots:
       invariant: 2.2.4
       react: 19.2.3
       react-native: 0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.2.3)
-    optional: true
 
   expo-navigation-bar@5.0.10(expo@54.0.27)(react-native@0.81.5(@babel/core@7.28.5)(@types/react@19.2.7)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -27188,7 +27188,6 @@ snapshots:
       - graphql
       - supports-color
       - utf-8-validate
-    optional: true
 
   exponential-backoff@3.1.2: {}
 
@@ -27955,7 +27954,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.13.2)
+      retry-axios: 2.6.0(axios@1.13.2(debug@4.4.1))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -29899,6 +29898,33 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+    optional: true
+
+  next@16.0.10(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      '@next/env': 16.0.10
+      '@swc/helpers': 0.5.15
+      caniuse-lite: 1.0.30001727
+      postcss: 8.4.31
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      styled-jsx: 5.1.6(@babel/core@7.28.5)(react@19.2.3)
+    optionalDependencies:
+      '@next/swc-darwin-arm64': 16.0.10
+      '@next/swc-darwin-x64': 16.0.10
+      '@next/swc-linux-arm64-gnu': 16.0.10
+      '@next/swc-linux-arm64-musl': 16.0.10
+      '@next/swc-linux-x64-gnu': 16.0.10
+      '@next/swc-linux-x64-musl': 16.0.10
+      '@next/swc-win32-arm64-msvc': 16.0.10
+      '@next/swc-win32-x64-msvc': 16.0.10
+      '@opentelemetry/api': 1.9.0
+      '@playwright/test': 1.57.0
+      babel-plugin-react-compiler: 1.0.0
+      sharp: 0.34.4
+    transitivePeerDependencies:
+      - '@babel/core'
+      - babel-plugin-macros
 
   no-case@2.3.2:
     dependencies:
@@ -31396,6 +31422,11 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
 
+  react-resizable-panels@4.1.1(react-dom@19.2.3(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.2.3(react@19.1.0)
+
   react-shiki@0.9.1(@types/react-dom@19.1.9(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       clsx: 2.1.1
@@ -31815,7 +31846,7 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
-  retry-axios@2.6.0(axios@1.13.2):
+  retry-axios@2.6.0(axios@1.13.2(debug@4.4.1)):
     dependencies:
       axios: 1.13.2(debug@4.4.1)
 
@@ -32649,6 +32680,15 @@ snapshots:
     optionalDependencies:
       esbuild: 0.25.0
 
+  terser-webpack-plugin@5.3.14(webpack@5.100.2):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.3.2
+      serialize-javascript: 6.0.2
+      terser: 5.43.1
+      webpack: 5.100.2
+
   terser@5.43.1:
     dependencies:
       '@jridgewell/source-map': 0.3.10
@@ -33320,7 +33360,7 @@ snapshots:
       tsx: 4.19.2
       yaml: 2.8.0
 
-  vitest@2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14)(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1):
+  vitest@2.1.9(@types/node@22.16.0)(@vitest/ui@4.0.14(vitest@4.0.14))(jsdom@26.0.0)(lightningcss@1.30.2)(terser@5.43.1):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.16.0)(lightningcss@1.30.2)(terser@5.43.1))
@@ -33454,6 +33494,38 @@ snapshots:
   webpack-sources@3.3.3: {}
 
   webpack-virtual-modules@0.5.0: {}
+
+  webpack@5.100.2:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.25.1
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.7.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.2
+      tapable: 2.2.2
+      terser-webpack-plugin: 5.3.14(webpack@5.100.2)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.100.2(esbuild@0.25.0):
     dependencies:

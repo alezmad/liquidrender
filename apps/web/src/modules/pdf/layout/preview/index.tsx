@@ -65,7 +65,7 @@ const PageSync = () => {
 export const PdfPreview = memo<PdfPreviewProps>(({ url }) => {
   return (
     <Root
-      className="flex h-full w-full flex-col overflow-hidden rounded-lg border"
+      className="flex h-full w-full flex-col overflow-hidden"
       source={url}
       isZoomFitWidth={true}
       loader={<Skeleton className="h-full w-full" />}

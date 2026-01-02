@@ -58,7 +58,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https: http:",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.stripe.com https://*.sentry.io wss:",
+      "connect-src 'self' https://api.stripe.com https://*.sentry.io wss: http://localhost:9000",
       "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",

@@ -1,4 +1,4 @@
-import { eq } from "@turbostarter/db";
+import { and, eq } from "@turbostarter/db";
 import {
   knosiaCanvas,
   knosiaCanvasBlock,
@@ -17,6 +17,8 @@ import type {
   UpdateAlertInput,
   GeneratedBlockSpec,
   CanvasEditChange,
+  ShareCanvasInput,
+  Collaborator,
 } from "./schemas";
 
 // Infer block type from Drizzle schema for DB compatibility
@@ -710,4 +712,156 @@ export async function createBlocksFromSpecs(
     .returning();
 
   return results;
+}
+
+// ============================================================================
+// SHARING MUTATIONS
+// ============================================================================
+
+/**
+ * Share a canvas with other users.
+ * The sharedWith column stores an array of user IDs.
+ * Permission mode is stored implicitly via visibility level.
+ */
+export async function shareCanvas(
+  canvasId: string,
+  input: ShareCanvasInput,
+  userId: string,
+) {
+  // 1. Verify user owns canvas
+  const canvas = await db
+    .select()
+    .from(knosiaCanvas)
+    .where(and(eq(knosiaCanvas.id, canvasId), eq(knosiaCanvas.createdBy, userId)))
+    .limit(1);
+
+  if (!canvas[0]) {
+    return null;
+  }
+
+  // 2. Get existing sharedWith user IDs
+  const existingUserIds = (canvas[0].sharedWith ?? []) as string[];
+
+  // 3. Merge with new user IDs (dedup)
+  const sharedWithSet = new Set([...existingUserIds, ...input.userIds]);
+  const updatedSharedWith = Array.from(sharedWithSet);
+
+  // 4. Update canvas
+  const [updated] = await db
+    .update(knosiaCanvas)
+    .set({
+      sharedWith: updatedSharedWith,
+      // Change visibility to team_only if it was private
+      visibility: canvas[0].visibility === "private" ? "team_only" : canvas[0].visibility,
+    })
+    .where(eq(knosiaCanvas.id, canvasId))
+    .returning();
+
+  // 5. Return collaborators with the specified permission mode
+  const collaborators: Collaborator[] = updatedSharedWith.map((uid) => ({
+    userId: uid,
+    permission: input.mode,
+    addedAt: undefined, // Not tracked in simple string[] schema
+  }));
+
+  return {
+    success: true,
+    sharedWith: collaborators,
+    mode: input.mode,
+    canvas: updated,
+  };
+}
+
+/**
+ * Get list of collaborators for a canvas.
+ * Returns the users the canvas is shared with.
+ * Note: Permission is inferred from visibility level since sharedWith is string[].
+ */
+export async function getCanvasCollaborators(
+  canvasId: string,
+  userId: string,
+): Promise<Collaborator[] | null> {
+  // 1. Verify user owns canvas or has access
+  const canvas = await db
+    .select()
+    .from(knosiaCanvas)
+    .where(eq(knosiaCanvas.id, canvasId))
+    .limit(1);
+
+  if (!canvas[0]) {
+    return null;
+  }
+
+  // Check if user is owner or collaborator
+  const isOwner = canvas[0].createdBy === userId;
+  const sharedWith = (canvas[0].sharedWith ?? []) as string[];
+  const isCollaborator = sharedWith.includes(userId);
+
+  if (!isOwner && !isCollaborator) {
+    return null;
+  }
+
+  // 2. Map visibility to default permission level
+  const defaultPermission: "view" | "comment" | "edit" =
+    canvas[0].visibility === "org_wide" ? "view" :
+    canvas[0].visibility === "team_only" ? "comment" : "view";
+
+  // 3. Return collaborators list
+  return sharedWith.map((uid) => ({
+    userId: uid,
+    permission: defaultPermission,
+    addedAt: undefined,
+  }));
+}
+
+/**
+ * Remove a collaborator from a canvas.
+ * Only the canvas owner can remove collaborators.
+ */
+export async function removeCanvasCollaborator(
+  canvasId: string,
+  collaboratorUserId: string,
+  userId: string,
+): Promise<{ success: boolean; sharedWith: Collaborator[] } | null> {
+  // 1. Verify user owns canvas
+  const canvas = await db
+    .select()
+    .from(knosiaCanvas)
+    .where(and(eq(knosiaCanvas.id, canvasId), eq(knosiaCanvas.createdBy, userId)))
+    .limit(1);
+
+  if (!canvas[0]) {
+    return null;
+  }
+
+  // 2. Remove the collaborator from the user ID list
+  const existingSharedWith = (canvas[0].sharedWith ?? []) as string[];
+  const updatedSharedWith = existingSharedWith.filter(
+    (uid) => uid !== collaboratorUserId,
+  );
+
+  // 3. Update canvas
+  await db
+    .update(knosiaCanvas)
+    .set({
+      sharedWith: updatedSharedWith,
+      // If no more collaborators, optionally set back to private
+      visibility: updatedSharedWith.length === 0 ? "private" : canvas[0].visibility,
+    })
+    .where(eq(knosiaCanvas.id, canvasId))
+    .returning();
+
+  // 4. Map visibility to default permission level
+  const defaultPermission: "view" | "comment" | "edit" =
+    canvas[0].visibility === "org_wide" ? "view" :
+    canvas[0].visibility === "team_only" ? "comment" : "view";
+
+  return {
+    success: true,
+    sharedWith: updatedSharedWith.map((uid) => ({
+      userId: uid,
+      permission: defaultPermission,
+      addedAt: undefined,
+    })),
+  };
 }

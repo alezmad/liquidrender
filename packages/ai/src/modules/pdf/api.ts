@@ -22,16 +22,13 @@ import { getDeleteUrl } from "@turbostarter/storage/server";
 import { repairToolCall } from "../../utils/llm";
 
 import { PROMPTS } from "./constants";
-import { processPdfWithDualResolution } from "./dual-embeddings";
-import { findRelevantContent } from "./embeddings";
-import { searchWithCitations } from "./search";
+import { findRelevantContent, generateDocumentEmbeddings } from "./embeddings";
 import { modelStrategies } from "./strategies";
 import { Role } from "./types";
 
 import type { PdfMessagePayload } from "./schema";
 import type { Citation, CitationResponse, PreciseCitation } from "./types";
 import type { EmbeddingSearchResult } from "./embeddings";
-import type { SearchResult } from "./search";
 import type {
   InsertPdfChat,
   InsertPdfDocument,
@@ -62,24 +59,38 @@ const createDocument = async (data: InsertPdfDocument) => {
     return null;
   }
 
-  // Process with dual-resolution chunking (citation units + retrieval chunks)
+  // Process with legacy embeddings (simple, reliable, production-ready)
   void (async () => {
     try {
       // Set status to processing
       await updateDocumentStatus(documentData.id, "processing");
 
-      const result = await processPdfWithDualResolution(
-        documentData.id,
-        documentData.path,
-      );
-      console.log(
-        `[api] Dual-resolution processing complete: ${result.storage.stats.totalCitationUnits} citation units, ${result.storage.stats.totalRetrievalChunks} retrieval chunks`,
-      );
+      // Generate embeddings for the document
+      console.log(`[api] Generating embeddings for document ${documentData.id}`);
+      const chunks = await generateDocumentEmbeddings(documentData.path);
+      console.log(`[api] Generated ${chunks.length} embedding chunks`);
+
+      // Insert embeddings into database
+      if (chunks.length > 0) {
+        await db.insert(pdfEmbedding).values(
+          chunks.map((chunk) => ({
+            content: chunk.content,
+            documentId: documentData.id,
+            embedding: chunk.embedding,
+            pageNumber: chunk.metadata.pageNumber,
+            charStart: chunk.metadata.charStart,
+            charEnd: chunk.metadata.charEnd,
+            sectionTitle: chunk.metadata.sectionTitle,
+          })),
+        );
+      }
+
+      console.log(`[api] Embedding processing complete: ${chunks.length} chunks stored`);
 
       // Set status to ready
       await updateDocumentStatus(documentData.id, "ready");
     } catch (error) {
-      console.error(`[api] Failed to process PDF with dual-resolution:`, error);
+      console.error(`[api] Failed to process PDF:`, error);
       // Set status to failed with error message
       await updateDocumentStatus(
         documentData.id,
@@ -178,7 +189,7 @@ export const getDocument = async (id: string) =>
   });
 
 // ============================================================================
-// Hybrid Search (new dual-resolution with legacy fallback)
+// Hybrid Search (legacy embeddings + keyword fallback)
 // ============================================================================
 
 /**
@@ -189,52 +200,106 @@ interface UnifiedSearchResult {
   content: string;
   pageNumber: number;
   similarity: number;
-  /** Citation unit ID for pixel-perfect highlighting (new system) */
-  citationUnitId?: string;
-  /** Source type: 'dual' for new system, 'legacy' for old embeddings */
-  source: "dual" | "legacy";
+  /** Source type: 'legacy' for embeddings, 'keyword' for text search */
+  source: "legacy" | "keyword";
 }
 
 /**
- * Hybrid search: tries new dual-resolution system first, falls back to legacy
+ * Extract specific identifiers from query for keyword fallback.
+ * Embeddings are weak for legal references, codes, and specific numbers.
+ */
+function extractSearchKeywords(query: string): string[] {
+  const patterns = [
+    /\d+\/\d{4}/g, // Legal references like 35/2024
+    /\b[A-Z]{2,}[-/]?\d+/g, // Codes like TDF/379
+  ];
+  const keywords: string[] = [];
+  for (const pattern of patterns) {
+    const matches = query.match(pattern);
+    if (matches) keywords.push(...matches);
+  }
+  return [...new Set(keywords)];
+}
+
+/**
+ * Keyword search fallback for specific identifiers that embeddings miss.
+ */
+async function keywordSearchFallback(
+  query: string,
+  documentId: string,
+  limit = 4,
+): Promise<UnifiedSearchResult[]> {
+  const keywords = extractSearchKeywords(query);
+  if (keywords.length === 0) return [];
+
+  console.log(`[hybridSearch] Running keyword fallback for: ${keywords.join(", ")}`);
+
+  // Search for any of the keywords
+  const keywordPattern = keywords.map((k) => `%${k}%`).join("%");
+
+  const results = await db.execute<{
+    id: string;
+    content: string;
+    page_number: number | null;
+  }>(sql`
+    SELECT id, content, page_number
+    FROM pdf.embedding
+    WHERE document_id = ${documentId}
+      AND content ILIKE ${keywordPattern}
+    LIMIT ${limit}
+  `);
+
+  const rows = Array.isArray(results) ? results : [];
+  console.log(`[hybridSearch] Keyword fallback found ${rows.length} matches`);
+
+  return rows.map((row) => ({
+    id: row.id,
+    content: row.content,
+    pageNumber: row.page_number ?? 1,
+    similarity: 0.95, // High score for exact keyword matches
+    source: "keyword" as const,
+  }));
+}
+
+/**
+ * Hybrid search: semantic embeddings + keyword fallback for specific identifiers
  */
 async function hybridSearch(
   query: string,
   documentId: string,
   limit = 6,
 ): Promise<UnifiedSearchResult[]> {
-  // Try new dual-resolution search first
-  try {
-    const newResults = await searchWithCitations(query, documentId, { limit });
-    if (newResults.length > 0) {
-      console.log(`[hybridSearch] Using dual-resolution: ${newResults.length} results`);
-      // Convert to unified format, using first citation unit for precise citing
-      return newResults.map((r) => {
-        const firstUnit = r.citationUnits[0];
-        return {
-          id: firstUnit?.id ?? r.retrievalChunkId,
-          content: r.content,
-          pageNumber: firstUnit?.pageNumber ?? r.pageStart,
-          similarity: r.similarity,
-          citationUnitId: firstUnit?.id,
-          source: "dual" as const,
-        };
-      });
-    }
-  } catch (error) {
-    console.warn(`[hybridSearch] Dual-resolution search failed, trying legacy:`, error);
-  }
+  console.log(`[hybridSearch] Searching for: "${query}" in document ${documentId}`);
 
-  // Fall back to legacy embeddings for old documents
-  console.log(`[hybridSearch] Falling back to legacy embeddings`);
+  // Semantic search using legacy embeddings
   const legacyResults = await findRelevantContent(query, documentId);
-  return legacyResults.slice(0, limit).map((r) => ({
+  let results: UnifiedSearchResult[] = legacyResults.slice(0, limit).map((r) => ({
     id: r.id,
     content: r.name,
     pageNumber: r.pageNumber,
     similarity: r.similarity,
     source: "legacy" as const,
   }));
+
+  console.log(`[hybridSearch] Semantic search found ${results.length} results`);
+
+  // Keyword fallback: ALWAYS run if query has specific identifiers (legal refs, codes)
+  // Embeddings are weak for these, so we need exact text matching
+  const keywords = extractSearchKeywords(query);
+  if (keywords.length > 0) {
+    const keywordResults = await keywordSearchFallback(query, documentId, 4);
+    if (keywordResults.length > 0) {
+      // Merge keyword results FIRST (they're more relevant for specific queries)
+      const existingIds = new Set(results.map((r) => r.id));
+      const newKeywordResults = keywordResults.filter((kr) => !existingIds.has(kr.id));
+
+      // Prepend keyword matches (higher priority) then add semantic results
+      results = [...newKeywordResults, ...results].slice(0, limit);
+      console.log(`[hybridSearch] Added ${newKeywordResults.length} keyword matches, total: ${results.length}`);
+    }
+  }
+
+  return results;
 }
 
 // Create highlight tool for precise text citations

@@ -26,6 +26,9 @@ import {
   interpretCanvasEdit,
   createAIGeneratedCanvas,
   createBlocksFromSpecs,
+  shareCanvas,
+  getCanvasCollaborators,
+  removeCanvasCollaborator,
 } from "./mutations";
 import {
   createCanvasInputSchema,
@@ -38,6 +41,7 @@ import {
   reorderBlocksInputSchema,
   createAlertInputSchema,
   updateAlertInputSchema,
+  shareCanvasInputSchema,
 } from "./schemas";
 
 import type { Session, User } from "@turbostarter/auth";
@@ -141,6 +145,57 @@ export const canvasRouter = new Hono<{ Variables: Variables }>()
 
     await deleteCanvas(id, user.id);
     return c.json({ success: true });
+  })
+
+  // ============================================================================
+  // SHARING ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /:canvasId/share - Share canvas with users
+   */
+  .post("/:canvasId/share", zValidator("json", shareCanvasInputSchema), async (c) => {
+    const user = c.get("user");
+    const canvasId = c.req.param("canvasId");
+    const input = c.req.valid("json");
+
+    const result = await shareCanvas(canvasId, input, user.id);
+    if (!result) {
+      return c.json({ error: "Canvas not found or you don't have permission to share" }, 404);
+    }
+
+    return c.json(result);
+  })
+
+  /**
+   * GET /:canvasId/collaborators - Get list of collaborators
+   */
+  .get("/:canvasId/collaborators", async (c) => {
+    const user = c.get("user");
+    const canvasId = c.req.param("canvasId");
+
+    const collaborators = await getCanvasCollaborators(canvasId, user.id);
+    if (collaborators === null) {
+      return c.json({ error: "Canvas not found or access denied" }, 404);
+    }
+
+    return c.json({ data: collaborators });
+  })
+
+  /**
+   * DELETE /:canvasId/collaborators/:userId - Remove a collaborator
+   */
+  .delete("/:canvasId/collaborators/:userId", async (c) => {
+    const user = c.get("user");
+    const canvasId = c.req.param("canvasId");
+    const collaboratorUserId = c.req.param("userId");
+
+    const result = await removeCanvasCollaborator(canvasId, collaboratorUserId, user.id);
+    if (!result) {
+      return c.json({ error: "Canvas not found or you don't have permission to manage collaborators" }, 404);
+    }
+
+    return c.json(result);
   })
 
   // ============================================================================

@@ -14,7 +14,15 @@ export const getFileName = (file: FileInput) => {
 
 export const readFile = async (file: FileInput) => {
   if ("url" in file) {
-    const response = await fetch(file.url);
+    // Use server proxy to fetch external URLs (avoids CORS issues)
+    const proxyUrl = `/api/storage/proxy?url=${encodeURIComponent(file.url)}`;
+    const response = await fetch(proxyUrl);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({})) as { error?: string };
+      throw new Error(error.error ?? "Failed to fetch PDF from URL");
+    }
+
     const blob = await response.blob();
     return blob;
   } else {

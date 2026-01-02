@@ -36,8 +36,9 @@ interface ScrollAreaWithShadowsProps {
 }
 
 /**
- * Scroll container with top/bottom shadow indicators.
- * Shows gradient shadows when content is scrollable.
+ * Scroll container with fade indicators.
+ * Uses CSS mask-image to fade content at edges when scrollable.
+ * No overlay elements = no overflow issues with rounded corners.
  */
 function ScrollAreaWithShadows({
   children,
@@ -70,34 +71,44 @@ function ScrollAreaWithShadows({
     };
   }, []);
 
+  // Build mask based on scroll state
+  const getMaskStyle = (): React.CSSProperties => {
+    const fadeSize = "24px";
+
+    if (scrollState.top && scrollState.bottom) {
+      // Fade both edges
+      return {
+        maskImage: `linear-gradient(to bottom, transparent, black ${fadeSize}, black calc(100% - ${fadeSize}), transparent)`,
+        WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${fadeSize}, black calc(100% - ${fadeSize}), transparent)`,
+      };
+    } else if (scrollState.top) {
+      // Fade top only
+      return {
+        maskImage: `linear-gradient(to bottom, transparent, black ${fadeSize})`,
+        WebkitMaskImage: `linear-gradient(to bottom, transparent, black ${fadeSize})`,
+      };
+    } else if (scrollState.bottom) {
+      // Fade bottom only
+      return {
+        maskImage: `linear-gradient(to bottom, black calc(100% - ${fadeSize}), transparent)`,
+        WebkitMaskImage: `linear-gradient(to bottom, black calc(100% - ${fadeSize}), transparent)`,
+      };
+    }
+
+    // No fade needed
+    return {};
+  };
+
   return (
-    <div className="relative">
-      {/* Top shadow */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-background to-transparent transition-opacity duration-200",
-          scrollState.top ? "opacity-100" : "opacity-0"
-        )}
-      />
-
-      <div
-        ref={scrollRef}
-        className={cn(
-          "overflow-y-auto scroll-smooth [scrollbar-gutter:stable]",
-          className
-        )}
-        style={{ maxHeight }}
-      >
-        {children}
-      </div>
-
-      {/* Bottom shadow */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-gradient-to-t from-background to-transparent transition-opacity duration-200",
-          scrollState.bottom ? "opacity-100" : "opacity-0"
-        )}
-      />
+    <div
+      ref={scrollRef}
+      className={cn(
+        "overflow-y-auto scroll-smooth [scrollbar-gutter:stable] transition-[mask-image] duration-200",
+        className
+      )}
+      style={{ maxHeight, ...getMaskStyle() }}
+    >
+      {children}
     </div>
   );
 }

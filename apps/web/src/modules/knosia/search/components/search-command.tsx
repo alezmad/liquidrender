@@ -23,7 +23,7 @@ interface SearchCommandProps {
 }
 
 const typeIcons: Record<SearchResult["type"], React.ComponentType<{ className?: string }>> = {
-  thread: Icons.MessageSquare,
+  thread: Icons.MessagesSquare,
   canvas: Icons.LayoutDashboard,
   vocabulary: Icons.BookOpen,
 };

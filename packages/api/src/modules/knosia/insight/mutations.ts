@@ -11,6 +11,11 @@ import {
 } from "./queries";
 
 import {
+  getWorkspaceConnections,
+  executeTimeSeriesQuery,
+} from "../connections/data-queries";
+
+import {
   calculateStats,
   calculatePearsonCorrelation,
   calculateLinearTrend,
@@ -142,12 +147,10 @@ export async function generateDailyInsights(
  * Detect anomalies in metric values
  *
  * Uses z-score analysis to identify values outside 2 standard deviations.
- * In production with real data sources, this would:
- * 1. Query actual metric data from connected data sources
- * 2. Calculate mean and standard deviation
- * 3. Identify values outside 2 std deviations
- *
- * Currently uses simulated historical data for demonstration.
+ * 1. Gets workspace connections for data source access
+ * 2. Queries time series data for each metric
+ * 3. Calculates mean and standard deviation
+ * 4. Identifies values outside 2 std deviations
  */
 async function detectAnomalies(
   workspaceId: string,
@@ -160,10 +163,28 @@ async function detectAnomalies(
 ): Promise<GeneratedInsight[]> {
   const insights: GeneratedInsight[] = [];
 
+  // Get workspace connections for data source access
+  const connections = await getWorkspaceConnections(workspaceId);
+  if (connections.length === 0) {
+    return insights; // No connections, no data to analyze
+  }
+
+  // Use first connection for V1 (multi-connection aggregation is V2+)
+  const connectionId = connections[0]!.id;
+
   for (const metric of metrics) {
-    // TODO: Replace with actual data source queries
-    // In production, fetch historical values from connected databases
-    const historicalValues = generateSimulatedHistoricalData();
+    // Get time series data from connected data source
+    const timeSeries = await executeTimeSeriesQuery({
+      connectionId,
+      metric: metric.slug,
+      period: 30,
+      granularity: "day",
+    });
+
+    // Extract values from data points
+    const historicalValues = timeSeries.dataPoints.map((dp) => dp.value);
+    if (historicalValues.length < 3) continue; // Need minimum data for stats
+
     const currentValue = historicalValues[historicalValues.length - 1] ?? 0;
     const previousValue = historicalValues[historicalValues.length - 2] ?? currentValue;
 
@@ -199,30 +220,6 @@ async function detectAnomalies(
   return insights;
 }
 
-/**
- * Generate simulated historical data for testing
- * In production, this would be replaced with actual data source queries
- */
-function generateSimulatedHistoricalData(): number[] {
-  const baseValue = 100 + Math.random() * 50;
-  const values: number[] = [];
-
-  // Generate 30 days of "normal" data
-  for (let i = 0; i < 30; i++) {
-    values.push(baseValue + (Math.random() - 0.5) * 20);
-  }
-
-  // 20% chance to inject an anomaly at the end
-  if (Math.random() < 0.2) {
-    const lastValue = values[values.length - 1] ?? baseValue;
-    values.push(lastValue * (1 + (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5)));
-  } else {
-    values.push(baseValue + (Math.random() - 0.5) * 20);
-  }
-
-  return values;
-}
-
 // ============================================================================
 // PATTERN DETECTION
 // ============================================================================
@@ -234,7 +231,7 @@ function generateSimulatedHistoricalData(): number[] {
  * 1. Correlations between metrics (|r| > 0.7)
  * 2. Significant trends (>10% change over 30 days)
  *
- * Currently uses simulated data for demonstration.
+ * Queries real time series data from connected data sources.
  */
 async function detectPatterns(
   workspaceId: string,
@@ -247,12 +244,36 @@ async function detectPatterns(
 ): Promise<GeneratedInsight[]> {
   const insights: GeneratedInsight[] = [];
 
-  // Generate time series data for each metric
-  // TODO: Replace with actual data source queries
-  const timeSeries = metrics.slice(0, 5).map((metric) => ({
-    metric,
-    values: generateSimulatedHistoricalData(),
-  }));
+  // Get workspace connections for data source access
+  const connections = await getWorkspaceConnections(workspaceId);
+  if (connections.length === 0) {
+    return insights; // No connections, no data to analyze
+  }
+
+  // Use first connection for V1 (multi-connection aggregation is V2+)
+  const connectionId = connections[0]!.id;
+
+  // Query time series data for each metric (limit to 5 for performance)
+  const timeSeries: Array<{
+    metric: (typeof metrics)[0];
+    values: number[];
+  }> = [];
+
+  for (const metric of metrics.slice(0, 5)) {
+    const result = await executeTimeSeriesQuery({
+      connectionId,
+      metric: metric.slug,
+      period: 30,
+      granularity: "day",
+    });
+
+    if (result.dataPoints.length >= 3) {
+      timeSeries.push({
+        metric,
+        values: result.dataPoints.map((dp) => dp.value),
+      });
+    }
+  }
 
   // Detect correlations between metrics
   for (let i = 0; i < timeSeries.length; i++) {

@@ -29,9 +29,27 @@ export const pdfUrlFormSchema = z.object({
 
 export type PdfUrlFormPayload = z.infer<typeof pdfUrlFormSchema>;
 
-export const validateRemotePdfUrl = async (url: string) => {
+interface ValidateOptions {
+  /** Use server proxy to avoid CSP/CORS issues on client-side */
+  useProxy?: boolean;
+}
+
+export const validateRemotePdfUrl = async (
+  url: string,
+  options: ValidateOptions = {},
+) => {
   try {
-    const response = await fetch(url, { method: "HEAD" });
+    const { useProxy = true } = options;
+
+    // Use proxy endpoint to avoid CSP/CORS blocking on client-side
+    // The proxy does HEAD internally and validates the PDF content-type
+    const fetchUrl = useProxy
+      ? `/api/storage/proxy?url=${encodeURIComponent(url)}&validate=true`
+      : url;
+
+    const response = await fetch(fetchUrl, {
+      method: useProxy ? "GET" : "HEAD",
+    });
 
     if (!response.ok) {
       return "ai:pdf.upload.error.notFound" as const;

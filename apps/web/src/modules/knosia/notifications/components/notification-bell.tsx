@@ -33,7 +33,7 @@ interface NotificationBellProps {
 const notificationIcons: Record<Notification["type"], React.ComponentType<{ className?: string }>> = {
   alert: Icons.AlertTriangle,
   mention: Icons.AtSign,
-  share: Icons.Share2,
+  share: Icons.Share,
   ai_insight: Icons.Sparkles,
   thread_activity: Icons.MessageSquare,
   digest: Icons.FileText,
@@ -62,9 +62,9 @@ function NotificationItem({
         <Icon className={cn("h-4 w-4", !notification.read ? "text-primary" : "text-muted-foreground")} />
       </div>
       <div className="flex-1 min-w-0">
-        {notification.link ? (
+        {notification.actions?.primary?.href ? (
           <TurboLink
-            href={notification.link}
+            href={notification.actions.primary.href}
             className="font-medium text-sm hover:underline block truncate"
             onClick={onRead}
           >

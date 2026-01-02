@@ -29,11 +29,11 @@ export default function KnosiaDashboardPage() {
   const { briefing, isLoading, isError } = useBriefing();
 
   const handleSubmit = (query: string) => {
-    router.push(`${pathsConfig.knosia.ask}?q=${encodeURIComponent(query)}`);
+    router.push(`${pathsConfig.knosia.threads.index}?q=${encodeURIComponent(query)}`);
   };
 
   const handleAlertAction = (query: string) => {
-    router.push(`${pathsConfig.knosia.ask}?q=${encodeURIComponent(query)}`);
+    router.push(`${pathsConfig.knosia.threads.index}?q=${encodeURIComponent(query)}`);
   };
 
   if (isLoading) {

@@ -16,7 +16,7 @@ import type { BoundingBox } from "../../hooks/use-citation-unit";
 const HIGHLIGHT_DURATION_MS = 5000;
 
 /** Minimum word match percentage to consider a span relevant (legacy fallback) */
-const MIN_MATCH_PERCENTAGE = 0.3;
+const MIN_MATCH_PERCENTAGE = 0.25;
 
 /** CSS class for primary highlight (exact citation - violet) */
 const HIGHLIGHT_PRIMARY_CLASS = "pdf-citation-primary";
@@ -340,10 +340,25 @@ export const HighlightLayer = memo(function HighlightLayer() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isApplyingHighlightsRef = useRef(false);
+  const lastHighlightIdRef = useRef<string | null>(null);
 
   // Determine which mode to use
   const hasBbox = citationUnit?.bbox != null;
   const fallbackContent = citationUnit?.content ?? embedding?.content;
+
+  // Debug logging for highlight mode selection
+  useEffect(() => {
+    if (activeHighlight) {
+      console.debug("[HighlightLayer] Active highlight:", activeHighlight, {
+        citationLoading,
+        hasCitationUnit: Boolean(citationUnit),
+        hasBbox,
+        hasEmbedding: Boolean(embedding),
+        fallbackContentPreview: fallbackContent?.slice(0, 50),
+      });
+    }
+  }, [activeHighlight, citationLoading, citationUnit, hasBbox, embedding, fallbackContent]);
 
   // Ensure styles are injected (used by both bbox and legacy modes)
   useEffect(() => {
@@ -352,15 +367,12 @@ export const HighlightLayer = memo(function HighlightLayer() {
 
   // Apply bbox-based highlights (CSS on text spans within bounding box)
   // Two-level highlighting: secondary (yellow, context) then primary (violet, exact citation)
+  // Note: Clearing is handled by the main effect, not here
   const applyBboxHighlights = useCallback(() => {
     const container = containerRef.current?.parentElement;
     if (!container || !citationUnit?.bbox) {
-      if (container) clearAllHighlights(container);
       return;
     }
-
-    // Clear existing highlights first
-    clearAllHighlights(container);
 
     // First: Apply secondary highlights (yellow) with wider margins for context
     const secondaryCount = applyBboxHighlightsToSpans(
@@ -385,24 +397,36 @@ export const HighlightLayer = memo(function HighlightLayer() {
   }, [citationUnit]);
 
   // Apply legacy highlights to matching text (word overlap)
+  // Note: Clearing is handled by the main effect, not here
   const applyLegacyHighlights = useCallback(() => {
     const container = containerRef.current?.parentElement;
     if (!container || !fallbackContent) {
-      if (container) clearAllHighlights(container);
+      console.debug("[HighlightLayer] Legacy mode: no container or content", {
+        hasContainer: Boolean(container),
+        contentPreview: fallbackContent?.slice(0, 100),
+      });
       return;
     }
 
-    // Clear existing highlights first
-    clearAllHighlights(container);
+    console.debug("[HighlightLayer] Applying legacy highlights with content:", fallbackContent.slice(0, 100) + "...");
 
     // Apply new highlights using word overlap matching
-    applyHighlightsToSpans(container, fallbackContent);
+    const count = applyHighlightsToSpans(container, fallbackContent);
+    if (count === 0) {
+      console.warn("[HighlightLayer] No spans matched for legacy highlight. TextLayers found:", container.querySelectorAll(".textLayer").length);
+    }
   }, [fallbackContent]);
 
   // Apply highlights when data changes (unified for both modes)
   useEffect(() => {
+    const container = containerRef.current?.parentElement;
+
     if (!activeHighlight) {
-      clearAllHighlights(containerRef.current?.parentElement ?? null);
+      // Only clear if we previously had a highlight
+      if (lastHighlightIdRef.current !== null) {
+        clearAllHighlights(container ?? null);
+        lastHighlightIdRef.current = null;
+      }
       return;
     }
 
@@ -413,15 +437,59 @@ export const HighlightLayer = memo(function HighlightLayer() {
     if (hasBbox && !citationUnit?.bbox) return;
     if (!hasBbox && !fallbackContent) return;
 
-    // Give the TextLayer time to render after page navigation
-    const initialTimeout = setTimeout(applyHighlights, 100);
-
-    const container = containerRef.current?.parentElement;
     if (!container) return;
 
-    // Observe DOM changes in case TextLayer loads later
-    const observer = new MutationObserver(() => {
-      applyHighlights();
+    // Check if this is a NEW highlight (different ID) - only then clear old highlights
+    const isNewHighlight = lastHighlightIdRef.current !== activeHighlight;
+    if (isNewHighlight) {
+      clearAllHighlights(container);
+      lastHighlightIdRef.current = activeHighlight;
+    }
+
+    // Use ref-based flag to prevent MutationObserver re-triggering across effect runs
+    const safeApplyHighlights = () => {
+      if (isApplyingHighlightsRef.current) return;
+      isApplyingHighlightsRef.current = true;
+      try {
+        // Don't clear again - just apply (clearing already done above for new highlights)
+        applyHighlights();
+      } finally {
+        // Reset flag after a brief delay to allow DOM to settle
+        setTimeout(() => {
+          isApplyingHighlightsRef.current = false;
+        }, 100);
+      }
+    };
+
+    // Give the TextLayer time to render after page navigation
+    const initialTimeout = setTimeout(safeApplyHighlights, 100);
+
+    // Observe DOM changes in case TextLayer loads later (e.g., lazy loading pages)
+    // Only re-apply when NEW TextLayer content is added, not when we modify highlight classes
+    let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const observer = new MutationObserver((mutations) => {
+      // Check if any mutation added new TextLayer spans (not just class changes)
+      const hasNewTextContent = mutations.some((mutation) => {
+        // Only care about added nodes
+        if (mutation.type !== "childList" || mutation.addedNodes.length === 0) {
+          return false;
+        }
+        // Check if added nodes contain TextLayer or span elements
+        return Array.from(mutation.addedNodes).some((node) => {
+          if (node.nodeType !== Node.ELEMENT_NODE) return false;
+          const el = node as Element;
+          return el.classList?.contains("textLayer") ||
+                 el.querySelector?.(".textLayer") ||
+                 (el.tagName === "SPAN" && el.closest(".textLayer"));
+        });
+      });
+
+      if (!hasNewTextContent) return;
+
+      // Debounce to handle multiple rapid mutations
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(safeApplyHighlights, 150);
     });
 
     observer.observe(container, {
@@ -431,6 +499,7 @@ export const HighlightLayer = memo(function HighlightLayer() {
 
     return () => {
       clearTimeout(initialTimeout);
+      if (debounceTimeout) clearTimeout(debounceTimeout);
       observer.disconnect();
     };
   }, [activeHighlight, hasBbox, citationUnit, fallbackContent, applyBboxHighlights, applyLegacyHighlights]);

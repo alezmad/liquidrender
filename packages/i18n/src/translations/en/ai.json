@@ -107,6 +107,7 @@
     "title": "Chat with PDF",
     "description": "Extract insights and answers by chatting directly with your PDF documents.",
     "new": "Upload new PDF document",
+    "recent": "Recent documents",
     "command": {
       "search": "Type a command or search for a document...",
       "empty": "No results found."
@@ -165,6 +166,21 @@
     "processing": {
       "indexing": "Indexing document...",
       "indexingDescription": "We're analyzing your document to enable intelligent search and Q&A. This usually takes a few seconds."
+    },
+    "suggestions": {
+      "title": "Try asking...",
+      "summarize": "Summarize this document",
+      "keyPoints": "What are the key points?",
+      "explain": "Explain the main concepts",
+      "find": "Find specific information"
+    },
+    "followUp": {
+      "moreDetail": "Tell me more about this",
+      "clarify": "Can you clarify that?",
+      "continue": "What else should I know?"
+    },
+    "selection": {
+      "askAbout": "Ask about this"
     }
   },
   "tts": {

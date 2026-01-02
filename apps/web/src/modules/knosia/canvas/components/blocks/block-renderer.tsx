@@ -5,10 +5,10 @@
 import { Icons } from "@turbostarter/ui-web/icons";
 import type { BlockRendererProps } from "../../types";
 import { LiquidRenderBlock, BLOCK_TYPE_TO_LIQUID_TYPE } from "./liquid-render-block";
-import { HeroMetricBlock } from "./hero-metric";
-import { WatchListBlock } from "./watch-list";
-import { ComparisonCardBlock } from "./comparison-card";
-import { InsightCardBlock } from "./insight-card";
+import { HeroMetricBlock, type HeroMetricData } from "./hero-metric";
+import { WatchListBlock, type WatchItem } from "./watch-list";
+import { ComparisonCardBlock, type ComparisonCardData } from "./comparison-card";
+import { InsightCardBlock, type InsightCardData } from "./insight-card";
 
 // Block types that should be delegated to LiquidRender
 const LIQUID_RENDER_BLOCK_TYPES = new Set(Object.keys(BLOCK_TYPE_TO_LIQUID_TYPE));
@@ -58,13 +58,13 @@ export function BlockRenderer({
   // Native block rendering based on type
   switch (block.type) {
     case "hero_metric":
-      return <HeroMetricBlock block={block} data={data} />;
+      return <HeroMetricBlock block={block} data={data as HeroMetricData | undefined} />;
     case "watch_list":
-      return <WatchListBlock block={block} data={data} />;
+      return <WatchListBlock block={block} data={data as WatchItem[] | undefined} />;
     case "comparison":
-      return <ComparisonCardBlock block={block} data={data} />;
+      return <ComparisonCardBlock block={block} data={data as ComparisonCardData} />;
     case "insight":
-      return <InsightCardBlock block={block} data={data} />;
+      return <InsightCardBlock block={block} data={data as InsightCardData} />;
     case "text":
       return <TextBlock data={data} />;
     default:

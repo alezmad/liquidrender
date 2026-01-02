@@ -1,0 +1,44 @@
+# Context Library: WF-0034 - Knosia API Completion
+# Files to load for agent context
+
+token_budget: 15000
+
+files:
+  # Existing patterns to follow
+  - path: packages/api/src/modules/knosia/thread/mutations.ts
+    reason: shareThread pattern to replicate for canvas
+    priority: high
+    tokens: ~2500
+
+  - path: packages/api/src/modules/knosia/canvas/router.ts
+    reason: Existing canvas API structure
+    priority: high
+    tokens: ~3000
+
+  - path: packages/api/src/modules/knosia/insight/mutations.ts
+    reason: Current insight implementation with TODOs
+    priority: high
+    tokens: ~3000
+
+  - path: packages/api/src/modules/knosia/insight/helpers.ts
+    reason: Statistical helper functions
+    priority: medium
+    tokens: ~1500
+
+  - path: packages/api/src/modules/knosia/connections/queries.ts
+    reason: Existing connection query patterns
+    priority: medium
+    tokens: ~1000
+
+  # UI files to wire
+  - path: apps/web/src/modules/knosia/canvas/components/canvas-share-modal.tsx
+    reason: Share modal with TODO placeholders
+    priority: high
+    tokens: ~2000
+
+  - path: apps/web/src/modules/knosia/canvas/components/canvas-view.tsx
+    reason: View with alert/AI handlers to wire
+    priority: medium
+    tokens: ~1500
+
+total_estimated_tokens: ~14500

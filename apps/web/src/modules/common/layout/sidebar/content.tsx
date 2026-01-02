@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from "@turbostarter/ui-web/sidebar";
 
+import { pathsConfig } from "~/config/paths";
 import { APPS } from "~/lib/constants";
 import { TurboLink } from "~/modules/common/turbo-link";
 
@@ -70,8 +71,17 @@ const OTHER = [
   },
 ] as const;
 
+const KNOSIA = [
+  {
+    title: "knosia",
+    href: pathsConfig.knosia.index,
+    icon: Icons.Brain,
+  },
+] as const;
+
 const sections = [
   { label: "apps", items: APPS },
+  { label: "platform", items: KNOSIA },
   { label: "freeTools", items: FREE_TOOLS },
   { label: "other", items: OTHER },
 ] as const;
@@ -95,7 +105,8 @@ export const Content = () => {
                   <SidebarMenuButton
                     asChild
                     isActive={
-                      section.label === "apps" && pathname.startsWith(item.href)
+                      (section.label === "apps" || section.label === "platform") &&
+                      pathname.startsWith(item.href)
                     }
                   >
                     <TurboLink
@@ -108,7 +119,7 @@ export const Content = () => {
                       <item.icon className="size-4" />
                       {section.label === "apps"
                         ? t(`ai:${item.title}.title` as "ai:chat.title" | "ai:image.title" | "ai:tts.title" | "ai:pdf.title" | "ai:agent.title")
-                        : t(item.title as "home" | "documentation" | "affiliates" | "blog" | "envin" | "ideasGenerator" | "extro" | "emojai" | "syncreads")}
+                        : t(item.title as "home" | "documentation" | "affiliates" | "blog" | "envin" | "ideasGenerator" | "extro" | "emojai" | "syncreads" | "knosia")}
                     </TurboLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

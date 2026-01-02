@@ -25,7 +25,7 @@ type WatchItemStatus = "normal" | "warning" | "critical";
 type SortField = "name" | "value" | "status";
 type SortDirection = "asc" | "desc";
 
-interface WatchItem {
+export interface WatchItem {
   id: string;
   name: string;
   value: number | string;

@@ -9,12 +9,18 @@ import { api } from "~/lib/api/client";
 export interface Notification {
   id: string;
   userId: string;
-  workspaceId: string;
+  workspaceId: string | null;
   type: "alert" | "mention" | "share" | "ai_insight" | "thread_activity" | "digest";
   title: string;
   body: string | null;
-  link: string | null;
-  read: boolean;
+  sourceType: string | null;
+  sourceId: string | null;
+  read: boolean | null;
+  dismissed: boolean | null;
+  actions: {
+    primary?: { label: string; href: string };
+    secondary?: { label: string; href: string };
+  } | null;
   createdAt: string;
 }
 

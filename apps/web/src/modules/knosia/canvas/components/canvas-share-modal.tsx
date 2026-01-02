@@ -3,6 +3,7 @@
 // Modal for sharing a canvas with collaborators
 
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ import { Icons } from "@turbostarter/ui-web/icons";
 import { ScrollArea } from "@turbostarter/ui-web/scroll-area";
 import { toast } from "sonner";
 
+import { api } from "~/lib/api/client";
 import type { Canvas } from "../types";
 
 // ============================================================================
@@ -133,13 +135,59 @@ export function CanvasShareModal({
 }: CanvasShareModalProps) {
   const [email, setEmail] = useState("");
   const [permission, setPermission] = useState<PermissionLevel>("view");
-  const [isInviting, setIsInviting] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // TODO: Replace with actual API call to fetch collaborators
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([
-    // Mock data - will be replaced with API integration
-  ]);
+  // Fetch collaborators from API
+  const {
+    data: collaboratorsData,
+    isLoading: isLoadingCollaborators,
+  } = useQuery({
+    queryKey: ["canvas", canvas.id, "collaborators"],
+    queryFn: async () => {
+      const res = await api.knosia.canvas[":canvasId"].collaborators.$get({
+        param: { canvasId: canvas.id },
+      });
+      if (!res.ok) throw new Error("Failed to fetch collaborators");
+      return res.json();
+    },
+    enabled: open, // Only fetch when modal is open
+  });
+
+  // Map API response to component's Collaborator type
+  const collaborators: Collaborator[] = (collaboratorsData?.data ?? []).map((c) => ({
+    id: c.userId,
+    email: c.userId, // Note: API returns userId, not email. For V1, we display userId.
+    permission: c.permission,
+  }));
+
+  // Share canvas mutation
+  const shareMutation = useMutation({
+    mutationFn: async ({ userIds, mode }: { userIds: string[]; mode: PermissionLevel }) => {
+      const res = await api.knosia.canvas[":canvasId"].share.$post({
+        param: { canvasId: canvas.id },
+        json: { userIds, mode },
+      });
+      if (!res.ok) throw new Error("Failed to share canvas");
+      return res.json();
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["canvas", canvas.id, "collaborators"] });
+    },
+  });
+
+  // Remove collaborator mutation
+  const removeMutation = useMutation({
+    mutationFn: async (collaboratorUserId: string) => {
+      const res = await api.knosia.canvas[":canvasId"].collaborators[":userId"].$delete({
+        param: { canvasId: canvas.id, userId: collaboratorUserId },
+      });
+      if (!res.ok) throw new Error("Failed to remove collaborator");
+      return res.json();
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["canvas", canvas.id, "collaborators"] });
+    },
+  });
 
   const shareableLink = typeof window !== "undefined"
     ? `${window.location.origin}/canvas/${canvas.id}`
@@ -157,46 +205,32 @@ export function CanvasShareModal({
   const handleInvite = async () => {
     if (!email.trim()) return;
 
-    setIsInviting(true);
     try {
-      // TODO: Implement API call to invite collaborator
-      console.log("Inviting:", { email, permission, canvasId: canvas.id });
-
-      // Mock adding collaborator for now
-      const newCollaborator: Collaborator = {
-        id: crypto.randomUUID(),
-        email: email.trim(),
-        permission,
-      };
-      setCollaborators((prev) => [...prev, newCollaborator]);
+      // For V1, we pass email as userId. Backend can handle user lookup later.
+      await shareMutation.mutateAsync({
+        userIds: [email.trim()],
+        mode: permission,
+      });
 
       toast.success(`Invitation sent to ${email}`);
       setEmail("");
       setPermission("view");
     } catch {
       toast.error("Failed to send invitation");
-    } finally {
-      setIsInviting(false);
     }
   };
 
   const handleRemove = async (collaboratorId: string) => {
-    setRemovingId(collaboratorId);
     try {
-      // TODO: Implement API call to remove collaborator
-      console.log("Removing collaborator:", collaboratorId);
-
-      setCollaborators((prev) => prev.filter((c) => c.id !== collaboratorId));
+      await removeMutation.mutateAsync(collaboratorId);
       toast.success("Collaborator removed");
     } catch {
       toast.error("Failed to remove collaborator");
-    } finally {
-      setRemovingId(null);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isInviting && email.trim()) {
+    if (e.key === "Enter" && !shareMutation.isPending && email.trim()) {
       e.preventDefault();
       void handleInvite();
     }
@@ -247,9 +281,9 @@ export function CanvasShareModal({
             <Button
               className="w-full"
               onClick={handleInvite}
-              disabled={!email.trim() || isInviting}
+              disabled={!email.trim() || shareMutation.isPending}
             >
-              {isInviting ? (
+              {shareMutation.isPending ? (
                 <>
                   <Icons.Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Sending...
@@ -285,8 +319,15 @@ export function CanvasShareModal({
             </p>
           </div>
 
+          {/* Loading State */}
+          {isLoadingCollaborators && (
+            <div className="flex items-center justify-center py-4">
+              <Icons.Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
           {/* Collaborators List */}
-          {collaborators.length > 0 && (
+          {!isLoadingCollaborators && collaborators.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">
                 Collaborators ({collaborators.length})
@@ -298,7 +339,7 @@ export function CanvasShareModal({
                       key={collaborator.id}
                       collaborator={collaborator}
                       onRemove={handleRemove}
-                      isRemoving={removingId === collaborator.id}
+                      isRemoving={removeMutation.isPending && removeMutation.variables === collaborator.id}
                     />
                   ))}
                 </div>
@@ -307,7 +348,7 @@ export function CanvasShareModal({
           )}
 
           {/* Empty State */}
-          {collaborators.length === 0 && (
+          {!isLoadingCollaborators && collaborators.length === 0 && (
             <div className="rounded-md border border-dashed p-4 text-center">
               <Icons.UsersRound className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-2 text-sm text-muted-foreground">

@@ -6,7 +6,7 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground overflow-hidden rounded-lg border shadow-xs",
+        "bg-card text-card-foreground isolate overflow-hidden rounded-lg border shadow-xs",
         className,
       )}
       {...props}
@@ -48,7 +48,7 @@ export function CardContent({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  return <div className={cn("p-6 pt-0", className)} {...props} />;
+  return <div className={cn("p-6 pt-0 overflow-hidden rounded-[inherit]", className)} {...props} />;
 }
 
 export function CardFooter({

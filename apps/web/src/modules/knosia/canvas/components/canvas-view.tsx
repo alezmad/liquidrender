@@ -3,15 +3,19 @@
 // Main canvas view with blocks and editing
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@turbostarter/ui-web/button";
 import { Icons } from "@turbostarter/ui-web/icons";
 
+import { api } from "~/lib/api/client";
 import { useCanvas } from "../hooks/use-canvas";
 import { CanvasGrid } from "./canvas-grid";
 import { CanvasPromptBar } from "./canvas-prompt-bar";
 import { CanvasAlertsPanel } from "./canvas-alerts-panel";
 import { CanvasShareModal } from "./canvas-share-modal";
-import type { CanvasViewProps, CanvasAlert } from "../types";
+import { CanvasAlertModal } from "./canvas-alert-modal";
+import type { CanvasViewProps, CanvasAlert, AlertOperator, AlertChannel } from "../types";
 
 export function CanvasView({
   canvasId,
@@ -19,49 +23,224 @@ export function CanvasView({
   editable = true,
 }: CanvasViewProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [alerts, setAlerts] = useState<CanvasAlert[]>([]);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<CanvasAlert | null>(null);
+
+  const queryClient = useQueryClient();
 
   const {
     canvas,
     blocks,
+    alerts,
     isLoading,
     isError,
     updateCanvas,
+    refetch,
   } = useCanvas({ canvasId });
+
+  // ============================================================================
+  // MUTATIONS
+  // ============================================================================
+
+  // AI Canvas Edit mutation
+  const editCanvasMutation = useMutation({
+    mutationFn: async (instruction: string) => {
+      const res = await api.knosia.canvas[":id"].edit.$post({
+        param: { id: canvasId },
+        json: { instruction },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to edit canvas");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate canvas query to refetch blocks
+      queryClient.invalidateQueries({
+        queryKey: ["knosia", "canvas", canvasId],
+      });
+      const changesApplied = (data as { changesApplied?: number }).changesApplied ?? 0;
+      toast.success(`Canvas updated: ${changesApplied} change(s) applied`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to edit canvas");
+    },
+  });
+
+  // Create Alert mutation
+  const createAlertMutation = useMutation({
+    mutationFn: async (alertData: {
+      name: string;
+      condition: {
+        metric: string;
+        operator: "gt" | "lt" | "eq" | "gte" | "lte" | "change_gt" | "change_lt";
+        threshold: number;
+        timeWindow?: string;
+      };
+      channels?: ("in_app" | "email" | "slack")[];
+      blockId?: string;
+    }) => {
+      const res = await api.knosia.canvas[":canvasId"].alerts.$post({
+        param: { canvasId },
+        json: alertData,
+      });
+      if (!res.ok) {
+        throw new Error("Failed to create alert");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      refetch();
+      toast.success("Alert created");
+    },
+    onError: () => {
+      toast.error("Failed to create alert");
+    },
+  });
+
+  // Update Alert mutation
+  const updateAlertMutation = useMutation({
+    mutationFn: async ({
+      alertId,
+      updates,
+    }: {
+      alertId: string;
+      updates: {
+        name?: string;
+        condition?: {
+          metric: string;
+          operator: "gt" | "lt" | "eq" | "gte" | "lte" | "change_gt" | "change_lt";
+          threshold: number;
+          timeWindow?: string;
+        };
+        channels?: ("in_app" | "email" | "slack")[];
+        enabled?: boolean;
+      };
+    }) => {
+      const res = await api.knosia.canvas[":canvasId"].alerts[":alertId"].$patch({
+        param: { canvasId, alertId },
+        json: updates,
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update alert");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      refetch();
+      toast.success("Alert updated");
+    },
+    onError: () => {
+      toast.error("Failed to update alert");
+    },
+  });
+
+  // Delete Alert mutation
+  const deleteAlertMutation = useMutation({
+    mutationFn: async (alertId: string) => {
+      const res = await api.knosia.canvas[":canvasId"].alerts[":alertId"].$delete({
+        param: { canvasId, alertId },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete alert");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      refetch();
+      toast.success("Alert deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete alert");
+    },
+  });
+
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
 
   // Alert handlers
   const handleCreateAlert = () => {
-    // TODO: Open alert creation modal
-    console.log("Create alert for canvas:", canvasId);
+    setEditingAlert(null);
+    setShowAlertModal(true);
   };
 
   const handleEditAlert = (alertId: string) => {
-    // TODO: Open alert edit modal
-    console.log("Edit alert:", alertId);
+    const alertToEdit = alerts.find((a) => a.id === alertId);
+    if (!alertToEdit) {
+      toast.error("Alert not found");
+      return;
+    }
+    setEditingAlert(alertToEdit);
+    setShowAlertModal(true);
+  };
+
+  const handleAlertModalSubmit = (data: {
+    name: string;
+    condition: {
+      metric: string;
+      operator: AlertOperator;
+      threshold: number;
+      timeWindow?: string;
+    };
+    channels: AlertChannel[];
+    blockId?: string;
+  }) => {
+    if (editingAlert) {
+      // Update existing alert
+      updateAlertMutation.mutate(
+        {
+          alertId: editingAlert.id,
+          updates: {
+            name: data.name,
+            condition: data.condition,
+            channels: data.channels,
+          },
+        },
+        {
+          onSuccess: () => {
+            setShowAlertModal(false);
+            setEditingAlert(null);
+          },
+        }
+      );
+    } else {
+      // Create new alert
+      createAlertMutation.mutate(
+        {
+          name: data.name,
+          condition: data.condition,
+          channels: data.channels,
+          blockId: data.blockId,
+        },
+        {
+          onSuccess: () => {
+            setShowAlertModal(false);
+          },
+        }
+      );
+    }
   };
 
   const handleDeleteAlert = (alertId: string) => {
-    setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    deleteAlertMutation.mutate(alertId);
   };
 
   const handleToggleAlert = (alertId: string, enabled: boolean) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === alertId ? { ...a, enabled } : a))
-    );
+    updateAlertMutation.mutate({
+      alertId,
+      updates: { enabled },
+    });
   };
 
   const handlePromptSubmit = async (instruction: string) => {
-    setIsProcessing(true);
-    try {
-      // TODO: Implement AI canvas editing via API
-      console.log("Canvas instruction:", instruction);
-    } finally {
-      setIsProcessing(false);
-    }
+    editCanvasMutation.mutate(instruction);
   };
+
+  // Computed state for processing indicator
+  const isProcessing = editCanvasMutation.isPending;
 
   if (isLoading) {
     return (
@@ -192,6 +371,19 @@ export function CanvasView({
           onOpenChange={setShowShareModal}
         />
       )}
+
+      {/* Alert Modal */}
+      <CanvasAlertModal
+        open={showAlertModal}
+        onOpenChange={(open) => {
+          setShowAlertModal(open);
+          if (!open) setEditingAlert(null);
+        }}
+        alert={editingAlert}
+        blocks={blocks}
+        onSubmit={handleAlertModalSubmit}
+        isSubmitting={createAlertMutation.isPending || updateAlertMutation.isPending}
+      />
     </div>
   );
 }

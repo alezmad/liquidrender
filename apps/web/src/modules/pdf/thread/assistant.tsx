@@ -1,12 +1,15 @@
 import { memo, useEffect, useRef } from "react";
 
+import { cn } from "@turbostarter/ui";
 import { getMessageTextContent } from "@turbostarter/ai";
 
 import { ThreadMessage } from "~/modules/common/ai/thread/message";
+import { ThreadMessageLikes } from "~/modules/common/ai/thread/controls/likes";
 import { Prose } from "~/modules/common/prose";
 import { usePdfViewer } from "../context";
 
 import { CitationMarkdown } from "./citation-markdown";
+import { CopyWithCitations } from "./copy-with-citations";
 
 import type { PdfMessage, PreciseCitation } from "@turbostarter/ai/pdf/types";
 import type { ThreadMessageProps } from "~/modules/common/ai/thread/message";
@@ -54,6 +57,10 @@ export const AssistantMessage = memo<ThreadMessageProps<PdfMessage>>(
       }
     }, [message.parts, addTextHighlight]);
 
+    const hasTextContent = message.parts.some(
+      (part) => part.type === "text" && part.text.length > 0
+    );
+
     return (
       <ThreadMessage.Layout className="items-start" ref={ref}>
         <Prose className="w-full max-w-none">
@@ -64,7 +71,15 @@ export const AssistantMessage = memo<ThreadMessageProps<PdfMessage>>(
         </Prose>
 
         {!["submitted", "streaming"].includes(status) && (
-          <ThreadMessage.Controls message={message} />
+          <div
+            className={cn(
+              "bg-background start-0 -ml-4 flex w-max items-center gap-px rounded-lg px-2 pb-2 text-xs",
+              "opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 md:start-3"
+            )}
+          >
+            {hasTextContent && <CopyWithCitations message={message} />}
+            <ThreadMessageLikes />
+          </div>
         )}
       </ThreadMessage.Layout>
     );

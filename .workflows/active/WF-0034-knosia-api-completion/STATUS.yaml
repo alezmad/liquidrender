@@ -1,0 +1,66 @@
+# Workflow Status: WF-0034 - Knosia API Completion
+# Complete insight real data queries and canvas collaboration wiring
+
+metadata:
+  id: WF-0034
+  name: Knosia API Completion
+  created: 2026-01-01
+  git_tag: WF-0034-start
+  git_commit: ac1afaf
+
+status: completed
+
+waves:
+  - id: 0
+    type: sequential
+    status: completed
+    tasks:
+      - id: T0
+        name: Connection data queries
+        file: packages/api/src/modules/knosia/connections/data-queries.ts
+        status: completed
+        description: Create getWorkspaceConnections, executeMetricQuery, executeTimeSeriesQuery
+
+  - id: 1
+    type: parallel
+    status: completed
+    tasks:
+      - id: T1
+        name: Canvas Share API
+        files:
+          - packages/api/src/modules/knosia/canvas/mutations.ts
+          - packages/api/src/modules/knosia/canvas/schemas.ts
+          - packages/api/src/modules/knosia/canvas/router.ts
+        status: completed
+        description: Add shareCanvas, getCollaborators, removeCollaborator
+      - id: T2
+        name: Insight real queries
+        file: packages/api/src/modules/knosia/insight/mutations.ts
+        status: completed
+        description: Replace simulated data with real DB queries using T0 functions
+
+  - id: 2
+    type: parallel
+    status: completed
+    tasks:
+      - id: T3
+        name: Share modal wiring
+        file: apps/web/src/modules/knosia/canvas/components/canvas-share-modal.tsx
+        status: completed
+        description: Wire TODO placeholders to Canvas Share API
+      - id: T4
+        name: Canvas view handlers
+        file: apps/web/src/modules/knosia/canvas/components/canvas-view.tsx
+        status: completed
+        description: Wire alert modal handlers and AI edit to existing APIs
+
+  - id: 3
+    type: sequential
+    status: completed
+    tasks:
+      - id: T5
+        name: TypeCheck validation
+        status: completed
+        description: Run pnpm typecheck and fix any errors
+
+current_wave: 3

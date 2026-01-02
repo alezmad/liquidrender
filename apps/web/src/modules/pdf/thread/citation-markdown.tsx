@@ -187,6 +187,12 @@ export const CitationMarkdown = memo<CitationMarkdownProps>(
     return blocks.map((block, blockIndex) => {
       // Check if this block contains citation placeholders
       if (!block.includes("[[CITE_PLACEHOLDER:")) {
+        // For tiny punctuation-only blocks, render as plain inline text
+        // to avoid orphan dots/punctuation wrapped in <p> tags
+        const trimmedBlock = block.trim();
+        if (trimmedBlock.length <= 3 && /^[.,;:!?)\]}>…]+$/.test(trimmedBlock)) {
+          return <span key={`${id}-block_${blockIndex}`}>{trimmedBlock}</span>;
+        }
         return (
           <MarkdownSegment content={block} key={`${id}-block_${blockIndex}`} />
         );
@@ -199,17 +205,20 @@ export const CitationMarkdown = memo<CitationMarkdownProps>(
         <span key={`${id}-block_${blockIndex}`} className="inline">
           {segments.map((segment, segIndex) => {
             if (segment.type === "text") {
-              const textContent = segment.value as string;
+              let textContent = segment.value as string;
 
-              // For tiny punctuation-only segments, render as plain span
-              // to avoid orphan dots/punctuation in separate paragraphs
+              // Strip leading dot if this segment follows a citation
+              // (dots after citations look bad visually)
+              const prevSegment = segments[segIndex - 1];
+              if (prevSegment?.type === "citation") {
+                textContent = textContent.replace(/^\./, "");
+              }
+
               const trimmed = textContent.trim();
-              if (trimmed.length <= 2 && /^[.,;:!?)\]}>]+$/.test(trimmed)) {
-                return (
-                  <span key={`${id}-seg_${blockIndex}_${segIndex}`}>
-                    {textContent}
-                  </span>
-                );
+
+              // Skip empty segments after stripping
+              if (!trimmed) {
+                return null;
               }
 
               // For text segments, render inline markdown

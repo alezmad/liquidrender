@@ -1,4 +1,4 @@
-import { eq } from "@turbostarter/db";
+import { eq, and } from "@turbostarter/db";
 import {
   knosiaAnalysis,
   knosiaConnection,
@@ -60,6 +60,85 @@ export const getConnection = async (connectionId: string) => {
     .limit(1);
 
   return result[0] ?? null;
+};
+
+/**
+ * Get table profile for a specific table in an analysis
+ */
+export const getTableProfile = async (analysisId: string, tableName: string) => {
+  const result = await db
+    .select()
+    .from(knosiaTableProfile)
+    .where(
+      and(
+        eq(knosiaTableProfile.analysisId, analysisId),
+        eq(knosiaTableProfile.tableName, tableName),
+      ),
+    )
+    .limit(1);
+
+  return result[0] ?? null;
+};
+
+/**
+ * Get all column profiles for a specific table profile
+ */
+export const getColumnProfiles = async (tableProfileId: string) => {
+  return db
+    .select()
+    .from(knosiaColumnProfile)
+    .where(eq(knosiaColumnProfile.tableProfileId, tableProfileId));
+};
+
+/**
+ * Get high-level profiling summary for an analysis
+ */
+export const getProfilingSummary = async (analysisId: string) => {
+  const tableProfiles = await db
+    .select()
+    .from(knosiaTableProfile)
+    .where(eq(knosiaTableProfile.analysisId, analysisId));
+
+  if (tableProfiles.length === 0) {
+    return null;
+  }
+
+  // Calculate aggregate statistics
+  let totalRows = 0;
+  let totalSize = 0;
+  let tablesWithFreshness = 0;
+  let staleTables = 0;
+  const updateFrequencies: Record<string, number> = {};
+
+  for (const tp of tableProfiles) {
+    const profile = tp.profile as any;
+    totalRows += profile.rowCountEstimate || 0;
+    totalSize += profile.tableSizeBytes || 0;
+
+    if (profile.latestDataAt) {
+      tablesWithFreshness++;
+      const daysSinceUpdate = profile.dataSpanDays || 0;
+      if (daysSinceUpdate > 30) {
+        staleTables++;
+      }
+    }
+
+    if (profile.updateFrequency?.pattern) {
+      const pattern = profile.updateFrequency.pattern;
+      updateFrequencies[pattern] = (updateFrequencies[pattern] || 0) + 1;
+    }
+  }
+
+  return {
+    analysisId,
+    tableCount: tableProfiles.length,
+    totalRows,
+    totalSizeBytes: totalSize,
+    averageRowsPerTable: Math.round(totalRows / tableProfiles.length),
+    tablesWithFreshness,
+    staleTables,
+    updateFrequencies,
+  };
 };
 
 // ============================================================================

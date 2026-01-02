@@ -5,6 +5,4 @@
  */
 
 export * from './types';
-
-// Wave 2 exports (not yet implemented)
-// export * from './generator';
+export * from './generator';

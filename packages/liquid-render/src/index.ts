@@ -55,6 +55,9 @@ export type { LiquidSchema, Block, Layer, Signal, Binding } from './compiler/ui-
 // Component Manifest (Intelligence Layer)
 export * from './manifest';
 
+// Dashboard Schema Generation
+export { dashboardSpecToLiquidSchema, type SchemaGeneratorOptions } from './dashboard';
+
 // Re-export compiler internals for advanced usage
 export { SurveyScanner, type Token, type TokenType } from './compiler/scanner';
 export { SurveyParser, type SurveyAST, type NodeAST } from './compiler/parser';

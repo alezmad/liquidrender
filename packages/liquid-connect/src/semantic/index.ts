@@ -32,3 +32,10 @@ export {
 } from './loader';
 
 export { SemanticRegistry, createRegistry } from './registry';
+
+export {
+  generateSemanticLayer,
+  type ResolvedVocabulary,
+  type ResolvedVocabularyItem,
+  type GenerateSemanticLayerOptions,
+} from './from-vocabulary';

@@ -98,6 +98,7 @@ export {
   loadFromObject,
   validateSemanticLayer,
   mergeLayers,
+  generateSemanticLayer,
   type SemanticLayer,
   type SourceDefinition,
   type EntityDefinition,
@@ -118,6 +119,9 @@ export {
   type ValidationResult,
   type ValidationError,
   type ValidationWarning,
+  type ResolvedVocabulary,
+  type ResolvedVocabularyItem,
+  type GenerateSemanticLayerOptions,
 } from './semantic';
 
 // =============================================================================
@@ -199,6 +203,26 @@ export {
 } from './executor';
 
 // =============================================================================
+// UNIVERSAL VOCABULARY BUILDER (UVB)
+// =============================================================================
+
+export type {
+  DetectedVocabulary,
+  ExtractedSchema,
+  DetectedEntity,
+  DetectedMetric,
+  DetectedDimension,
+  DetectedTimeField,
+  DetectedFilter,
+  DetectedRelationship,
+  Table,
+  Column,
+  DatabaseType,
+  AggregationType as UVBAggregationType,
+  RelationshipType,
+} from './uvb';
+
+// =============================================================================
 // VOCABULARY (Query Engine - Wave 1)
 // =============================================================================
 
@@ -257,6 +281,41 @@ export {
   createQueryEngine,
   QueryEngine,
 } from './query';
+
+// =============================================================================
+// BUSINESS TYPES (Wave 1)
+// =============================================================================
+
+export {
+  detectBusinessType,
+  getTemplate,
+  mapToTemplate,
+  CONFIDENCE_THRESHOLD,
+  AMBIGUITY_THRESHOLD,
+  type BusinessType,
+  type BusinessTypeSignal,
+  type BusinessTypeMatch,
+  type DetectionResult,
+  type SlotMapping,
+  type BusinessTypeTemplate,
+  type KPIDefinition,
+  type EntityExpectation,
+  type DashboardSection,
+  type MappingResult,
+  type MappedKPI,
+} from './business-types';
+
+// =============================================================================
+// DASHBOARD (Wave 2)
+// =============================================================================
+
+export {
+  generateDashboardSpec,
+  type DashboardSpec,
+  type DashboardKPI,
+  type DashboardChart,
+  type GenerateDashboardSpecOptions,
+} from './dashboard';
 
 // =============================================================================
 // CONVENIENCE FUNCTIONS

@@ -169,8 +169,44 @@ function generateEntities(
   schema: ExtractedSchema
 ): Record<string, EntityDefinition> {
   const entities: Record<string, EntityDefinition> = {};
-  const entityItems = items.filter((item: ResolvedVocabularyItem) => item.type === 'entity');
 
+  // Helper to generate entity from table
+  const generateEntityFromTable = (
+    table: typeof schema.tables[0],
+    label?: string,
+    description?: string
+  ): EntityDefinition => {
+    const timeColumn = table.columns.find(col =>
+      col.dataType.toLowerCase().includes('timestamp') ||
+      col.dataType.toLowerCase().includes('date')
+    );
+
+    const fields: Record<string, FieldDefinition> = {};
+    for (const column of table.columns) {
+      fields[column.name] = {
+        column: column.name,
+        type: mapDataTypeToFieldType(column.dataType),
+        description: column.isForeignKey
+          ? `Foreign key to ${column.references?.table}.${column.references?.column}`
+          : undefined,
+        hidden: column.isPrimaryKey,
+      };
+    }
+
+    const primaryKey = table.primaryKeyColumns[0] || table.columns[0]?.name || 'id';
+
+    return {
+      source: table.name,
+      description,
+      label: label || table.name,
+      primaryKey,
+      fields,
+      defaultTimeField: timeColumn?.name,
+    };
+  };
+
+  // 1. Generate entities from vocabulary items with type="entity"
+  const entityItems = items.filter((item: ResolvedVocabularyItem) => item.type === 'entity');
   for (const item of entityItems) {
     const sourceTables = item.definition?.sourceTables;
     if (!sourceTables || sourceTables.length === 0) {
@@ -183,35 +219,23 @@ function generateEntities(
       continue;
     }
 
-    // Find default time field
-    const timeColumn = table.columns.find(col =>
-      col.dataType.toLowerCase().includes('timestamp') ||
-      col.dataType.toLowerCase().includes('date')
+    entities[item.slug] = generateEntityFromTable(
+      table,
+      item.canonicalName,
+      item.definition?.descriptionHuman
     );
+  }
 
-    // Generate field definitions from table columns
-    const fields: Record<string, FieldDefinition> = {};
-    for (const column of table.columns) {
-      fields[column.name] = {
-        column: column.name,
-        type: mapDataTypeToFieldType(column.dataType),
-        description: column.isForeignKey
-          ? `Foreign key to ${column.references?.table}.${column.references?.column}`
-          : undefined,
-        hidden: column.isPrimaryKey, // Hide primary keys from listings by default
-      };
+  // 2. Generate entities for ALL schema tables (ensures table references resolve)
+  //    This is critical for reverse engineering - every table becomes an entity
+  for (const table of schema.tables) {
+    // Skip if already defined from vocabulary
+    if (Object.values(entities).some(e => e.source === table.name)) {
+      continue;
     }
 
-    const primaryKey = table.primaryKeyColumns[0] || table.columns[0]?.name || 'id';
-
-    entities[item.slug] = {
-      source: sourceTableName,
-      description: item.definition?.descriptionHuman,
-      label: item.canonicalName,
-      primaryKey,
-      fields,
-      defaultTimeField: timeColumn?.name,
-    };
+    // Use table name as entity key
+    entities[table.name] = generateEntityFromTable(table);
   }
 
   return entities;

@@ -19,9 +19,9 @@ export default async function BillingPage() {
   }
 
   return (
-    <>
+    <div className="mx-auto max-w-2xl space-y-6">
       <PlanSummary />
       <ManagePlan />
-    </>
+    </div>
   );
 }

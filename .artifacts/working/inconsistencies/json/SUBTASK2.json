@@ -1,0 +1,210 @@
+{
+  "subtask_id": "SUBTASK2",
+  "domain": "api-structure",
+  "source_doc": "2026-01-02-1330-SUBTASK2-api-structure-inconsistencies.md",
+  "issues": [
+    {
+      "id": "API-001",
+      "title": "Proposed semantic/ module not implemented",
+      "description": "Complete implementation blueprint exists in documentation but module is not created in codebase. Document specifies full file structure, function signatures, and integration points.",
+      "severity": "critical",
+      "affected_systems": ["api", "vocabulary", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "No semantic/ directory in packages/api/src/modules/knosia/. No router mounts or imports.",
+      "desired_state": "Decision needed: Either implement as API module in packages/api/src/modules/knosia/semantic/ OR move to liquid-connect package as data transformation layer",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/semantic/index.ts",
+        "packages/api/src/modules/knosia/semantic/router.ts",
+        "packages/api/src/modules/knosia/semantic/schemas.ts",
+        "packages/api/src/modules/knosia/semantic/queries.ts",
+        "packages/api/src/modules/knosia/semantic/mutations.ts",
+        "packages/api/src/modules/knosia/router.ts",
+        "packages/api/src/modules/knosia/index.ts"
+      ]
+    },
+    {
+      "id": "API-002",
+      "title": "Proposed dashboard/ module not implemented",
+      "description": "Complete implementation blueprint exists in documentation but module is not created in codebase. Document specifies full file structure, function signatures, and integration points.",
+      "severity": "critical",
+      "affected_systems": ["api", "ui", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2d",
+      "current_state": "No dashboard/ directory in packages/api/src/modules/knosia/. No router mounts or imports.",
+      "desired_state": "Decision needed: Either implement as API module in packages/api/src/modules/knosia/dashboard/ OR move to liquid-connect package as data transformation layer",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/dashboard/index.ts",
+        "packages/api/src/modules/knosia/dashboard/router.ts",
+        "packages/api/src/modules/knosia/dashboard/schemas.ts",
+        "packages/api/src/modules/knosia/dashboard/queries.ts",
+        "packages/api/src/modules/knosia/dashboard/mutations.ts",
+        "packages/api/src/modules/knosia/router.ts",
+        "packages/api/src/modules/knosia/index.ts"
+      ]
+    },
+    {
+      "id": "API-003",
+      "title": "activity/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/activity/ exists and is router-mounted at /activity, but not mentioned in any documentation",
+      "desired_state": "Add activity/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-004",
+      "title": "canvas/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/canvas/ exists and is router-mounted at /canvas, but not mentioned in any documentation",
+      "desired_state": "Add canvas/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-005",
+      "title": "comment/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/comment/ exists and is router-mounted at /comment, but not mentioned in any documentation",
+      "desired_state": "Add comment/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-006",
+      "title": "insight/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas, mutations, helpers) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/insight/ exists and is router-mounted at /insight, but not mentioned in any documentation",
+      "desired_state": "Add insight/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-007",
+      "title": "notification/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/notification/ exists and is router-mounted at /notification, but not mentioned in any documentation",
+      "desired_state": "Add notification/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-008",
+      "title": "search/ module completely undocumented",
+      "description": "Module is fully implemented with complete file structure (router, queries, schemas) but has no documentation. Purpose, endpoints, and integration points are unknown.",
+      "severity": "high",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "packages/api/src/modules/knosia/search/ exists and is router-mounted at /search, but not mentioned in any documentation",
+      "desired_state": "Add search/ module to project structure documentation with purpose, key endpoints, and integration examples",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-009",
+      "title": "Module naming mismatch: conversation vs thread",
+      "description": "Documentation refers to 'conversation' module but actual implementation uses 'thread'. API endpoint is /thread not /conversation. Database tables use 'conversation' naming. This creates confusion across the stack.",
+      "severity": "medium",
+      "affected_systems": ["api", "database", "docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "Implementation: packages/api/src/modules/knosia/thread/ with router mount at /thread. Documentation: references conversation/ module. Database: knosia_conversation table.",
+      "desired_state": "Update all documentation to use 'thread' consistently (renaming module would be breaking change)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-010",
+      "title": "Unclear shared/ module scope and purpose",
+      "description": "Documentation describes shared/ as 'shared utilities' but actual implementation contains semantic.ts and transforms.ts with substantial logic. Naming collision with proposed semantic/ module. Unclear what qualifies for shared/ vs dedicated module.",
+      "severity": "low",
+      "affected_systems": ["api", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "packages/api/src/modules/knosia/shared/ contains semantic.ts, transforms.ts with tests. Documentation vague about contents and relationship to proposed semantic/ module.",
+      "desired_state": "Document actual shared/ contents, clarify relationship to proposed semantic/ module, define guidelines for what belongs in shared/",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "API-011",
+      "title": "Wrong package location for semantic/dashboard modules",
+      "description": "Documentation places semantic/ and dashboard/ in API layer but these are data transformation logic that should belong in liquid-connect package.",
+      "severity": "medium",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "Documentation proposes packages/api/src/modules/knosia/semantic/ and dashboard/",
+      "desired_state": "If implementing as data transformation, move to packages/liquid-connect/src/ and update all documentation accordingly",
+      "fix_type": "refactor",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 11,
+    "critical": 2,
+    "high": 6,
+    "medium": 2,
+    "low": 1
+  }
+}

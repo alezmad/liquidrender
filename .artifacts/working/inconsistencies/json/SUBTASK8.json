@@ -1,0 +1,141 @@
+{
+  "subtask_id": "SUBTASK8",
+  "domain": "business-type-detection",
+  "source_doc": "2026-01-02-1330-SUBTASK8-business-type-detection-inconsistencies.md",
+  "issues": [
+    {
+      "id": "BIZ-001",
+      "title": "Business Type Enumeration Mismatch",
+      "description": "knosia-platform-architecture defines 5 business types while knosia-glue-implementation-blueprint defines 9 types (adds healthcare, edtech, media, logistics). Project structure only mentions 3 specific templates plus generic.",
+      "severity": "medium",
+      "affected_systems": ["database", "api", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Platform architecture: 5 types (saas|ecommerce|marketplace|fintech|custom), Glue blueprint: 9 types (adds healthcare|edtech|media|logistics), Project structure: 3 templates (saas, ecommerce, marketplace) + generic",
+      "desired_state": "Canonical list: 9 types total. V1 implementation: saas, ecommerce, marketplace, custom. V2 roadmap: fintech, healthcare, edtech, media, logistics",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        "packages/liquid-connect/src/business-types/types.ts"
+      ]
+    },
+    {
+      "id": "BIZ-002",
+      "title": "Template File Format Conflict (YAML vs TypeScript)",
+      "description": "Platform architecture and project structure specify .yaml templates, while glue blueprint specifies .ts templates with TypeScript interfaces. This is a critical blocker for implementation.",
+      "severity": "critical",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": ["SUBTASK5", "SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "Platform architecture line 508: saas.yaml, Project structure lines 425-427: .yaml files, Glue blueprint lines 483-542: saas.ts with BusinessTypeTemplate interface",
+      "desired_state": "TypeScript (.ts) format with Zod schemas for runtime validation. YAML can be added later as import format. File pattern: packages/liquid-connect/src/business-types/templates/{type}.ts",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        "packages/liquid-connect/src/business-types/templates/"
+      ]
+    },
+    {
+      "id": "BIZ-003",
+      "title": "Detection Algorithm Detail Variance",
+      "description": "Platform architecture provides pseudocode with basic pattern matching, while glue blueprint provides detailed requirements with specific patterns per business type, weights, and confidence scoring.",
+      "severity": "low",
+      "affected_systems": ["pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Platform architecture lines 625-650: pseudocode only. Glue blueprint lines 450-477: detailed requirements with table/column patterns, weighting (table: 30, column: 10), confidence threshold (>60), ambiguity detection (top 2 within 15 points)",
+      "desired_state": "Use glue blueprint detailed requirements as source of truth. Extract patterns into separate signatures.ts module",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        "packages/liquid-connect/src/business-types/detector.ts",
+        "packages/liquid-connect/src/business-types/signatures.ts"
+      ]
+    },
+    {
+      "id": "BIZ-004",
+      "title": "Template Structure Definition Gaps",
+      "description": "Platform architecture has no template structure definition. Glue blueprint defines complete BusinessTypeTemplate interface. Consolidated implementation defines DashboardSpec which is output not input.",
+      "severity": "medium",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Platform architecture: no template schema. Glue blueprint lines 486-530: BusinessTypeTemplate interface with kpis, entities, dashboard, questions. Consolidated implementation lines 579-612: DashboardSpec (output format)",
+      "desired_state": "Use glue blueprint BusinessTypeTemplate as canonical input structure. Ensure clear distinction: BusinessTypeTemplate (input/catalog) vs DashboardSpec (output/generated)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        "packages/liquid-connect/src/business-types/types.ts"
+      ]
+    },
+    {
+      "id": "BIZ-005",
+      "title": "Detection Signatures Module Organization",
+      "description": "Project structure mentions signatures.ts as separate module, but glue blueprint embeds patterns in requirements without separate file spec.",
+      "severity": "low",
+      "affected_systems": ["pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "Project structure lines 48-50: mentions detector.ts, signatures.ts, mapper.ts. Glue blueprint: patterns listed in requirements (lines 450-477) not as file specification",
+      "desired_state": "Create signatures.ts with structure: export const businessTypeSignatures: Record<BusinessType, { tablePatterns: RegExp[]; columnPatterns: RegExp[]; weights: { table: number; column: number } }> = { ... }",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/signatures.ts",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "BIZ-006",
+      "title": "KPIDefinition Formula Template Specification",
+      "description": "Glue blueprint defines formula templates with slot mappings (e.g., 'SUM({amount_column})'), but no examples exist showing how patterns match to actual schema columns.",
+      "severity": "medium",
+      "affected_systems": ["pipeline"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "Glue blueprint lines 363-383: KPIDefinition interface with formula.template and SlotMapping interface defined, but no concrete examples of pattern matching logic",
+      "desired_state": "Create reference saas.ts template with complete KPIDefinition examples showing: formula templates, slot mappings, pattern regexes, and mapping algorithm",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/templates/saas.ts",
+        "packages/liquid-connect/src/business-types/mapper.ts",
+        ".artifacts/working/examples/saas-template-example.ts"
+      ]
+    },
+    {
+      "id": "BIZ-007",
+      "title": "V1/V2 Implementation Scope Not Documented",
+      "description": "Documents define different business type sets but don't clearly split what's V1 vs V2 roadmap, causing scope ambiguity.",
+      "severity": "medium",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Platform architecture: 5 types. Glue blueprint: 9 types. No explicit V1/V2 split documented across all 5 architecture documents",
+      "desired_state": "All documents updated with explicit V1 scope (saas, ecommerce, marketplace, custom) and V2 roadmap (fintech, healthcare, edtech, media, logistics)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 7,
+    "critical": 1,
+    "high": 0,
+    "medium": 4,
+    "low": 2
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "subtask_id": "SUBTASK3",
+  "domain": "file-locations",
+  "source_doc": "2026-01-02-1330-SUBTASK3-file-locations-inconsistencies.md",
+  "issues": [
+    {
+      "id": "FILE-001",
+      "title": "GLUE 1 location conflict",
+      "description": "GLUE 1 (DetectedVocabulary → DB) has two different locations specified across documents",
+      "severity": "high",
+      "affected_systems": ["api", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Blueprint specifies packages/api/src/modules/knosia/vocabulary/from-detected.ts but consolidated doc implies integration into vocabulary mutations module without explicit file path",
+      "desired_state": "Use dedicated file packages/api/src/modules/knosia/vocabulary/from-detected.ts for better separation of concerns",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/from-detected.ts"
+      ]
+    },
+    {
+      "id": "FILE-002",
+      "title": "GLUE 2 module name inconsistency",
+      "description": "GLUE 2 (ResolvedVocabulary → SemanticLayer) has inconsistent module paths across documents",
+      "severity": "medium",
+      "affected_systems": ["vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Blueprint says from-vocabulary.ts, project structure says generator.ts, consolidated doc doesn't specify filename",
+      "desired_state": "Standardize on generator.ts (more descriptive, matches dashboard/generator.ts pattern, consistent with project structure)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/liquid-connect/src/semantic/generator.ts"
+      ]
+    },
+    {
+      "id": "FILE-003",
+      "title": "Business types catalog structure ambiguity",
+      "description": "Project structure shows catalog/ subdirectory with YAML files, but this isn't mentioned in blueprint or consolidated docs",
+      "severity": "low",
+      "affected_systems": ["vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Unclear if catalog/ subdirectory (packages/liquid-connect/src/business-types/catalog/saas.yaml) is V1 or future enhancement",
+      "desired_state": "Clarify whether V1 uses hardcoded patterns in detector.ts, loads from YAML catalog, or YAML catalog is V2+ enhancement",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/catalog/saas.yaml",
+        "packages/liquid-connect/src/business-types/detector.ts"
+      ]
+    },
+    {
+      "id": "FILE-004",
+      "title": "Dashboard module path documentation gap",
+      "description": "Dashboard generation split across liquid-connect and liquid-render is correct but could be clearer in documentation",
+      "severity": "medium",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Dashboard files split between packages without clear explanation of why (liquid-connect/dashboard/generator.ts and liquid-render/dashboard/schema-generator.ts)",
+      "desired_state": "Add clarification to consolidated doc explaining the split: GLUE 3C (liquid-connect) creates DashboardSpec, GLUE 4 (liquid-render) converts to LiquidSchema",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/generator.ts",
+        "packages/liquid-render/src/dashboard/schema-generator.ts"
+      ]
+    },
+    {
+      "id": "FILE-005",
+      "title": "Pipeline module missing from consolidated doc",
+      "description": "Pipeline orchestration mentioned in blueprint and project structure but completely missing from consolidated implementation doc",
+      "severity": "high",
+      "affected_systems": ["pipeline", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "Pipeline module (packages/api/src/modules/knosia/pipeline/index.ts) documented in blueprint but absent from consolidated implementation",
+      "desired_state": "Add pipeline section to consolidated doc covering orchestration, error handling, and transaction boundaries",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/api/src/modules/knosia/pipeline/index.ts"
+      ]
+    },
+    {
+      "id": "FILE-006",
+      "title": "Web routes ambiguity",
+      "description": "Web app routes for Knosia features have unclear structure - org-scoped vs global routes",
+      "severity": "medium",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Project structure shows /dashboard/[org]/home but UX journeys show /home, creating conflict between org-scoped and global routes",
+      "desired_state": "Use org-scoped routes (/dashboard/[org]/home, /dashboard/[org]/canvas, etc.) and update UX journeys to reflect actual routes",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx",
+        "apps/web/src/app/[locale]/dashboard/[org]/canvas/page.tsx",
+        "apps/web/src/app/[locale]/dashboard/[org]/threads/page.tsx",
+        "apps/web/src/app/[locale]/dashboard/[org]/vocabulary/page.tsx"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 6,
+    "critical": 0,
+    "high": 2,
+    "medium": 3,
+    "low": 1
+  }
+}

@@ -1,0 +1,259 @@
+{
+  "subtask_id": "SUBTASK5",
+  "domain": "glue-functions",
+  "source_doc": "2026-01-02-1330-SUBTASK5-glue-functions-inconsistencies.md",
+  "issues": [
+    {
+      "id": "GLUE-001",
+      "title": "Function count mismatch across documents",
+      "description": "Documents specify different numbers of glue functions: doc 1500 lists 4 functions, doc 1600 lists 5, and doc 1800 lists 7 (includes mapToTemplate and runKnosiaPipeline)",
+      "severity": "critical",
+      "affected_systems": ["api", "pipeline", "vocabulary"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "Conflicting function counts: 4 (1500) vs 5 (1600) vs 7 (1800)",
+      "desired_state": "Use 7 functions from doc 1800 with proper separation of concerns (mapToTemplate as distinct from generateDashboardSpec)",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/mapper.ts",
+        "packages/api/src/modules/knosia/pipeline/index.ts"
+      ]
+    },
+    {
+      "id": "GLUE-002",
+      "title": "LOC estimates wildly different (700 vs 1,250 vs 2,650)",
+      "description": "Total LOC estimates vary dramatically: doc 1500/1600 estimate ~700, doc 1700 estimates ~2,650 (incorrectly includes UI components), doc 1800 estimates ~1,250 (separates glue from UI)",
+      "severity": "high",
+      "affected_systems": ["pipeline", "api", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "unknown",
+      "current_state": "Estimates range from 700 to 2,650 LOC with unclear scope boundaries",
+      "desired_state": "Use 1,250 LOC estimate from doc 1800 (~950 glue + ~300 templates)",
+      "fix_type": "doc_update",
+      "files_affected": []
+    },
+    {
+      "id": "GLUE-003",
+      "title": "saveDetectedVocabulary signature mismatch",
+      "description": "Function signature differs between docs: 1500/1600 use options { promoteToOrg?: string[] } returning void, while 1800 uses options { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean } returning structured result",
+      "severity": "medium",
+      "affected_systems": ["api", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "saveDetectedVocabulary(detected, orgId, workspaceId, { promoteToOrg?: string[] }) → Promise<void>",
+      "desired_state": "saveDetectedVocabulary(detected, orgId, workspaceId, { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean }) → Promise<SaveDetectedVocabularyResult>",
+      "fix_type": "api_update",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/from-detected.ts"
+      ]
+    },
+    {
+      "id": "GLUE-004",
+      "title": "generateSemanticLayer function name and signature mismatch",
+      "description": "Function renamed from generateSemanticLayerForUser (1500/1600) to generateSemanticLayer (1800), with parameters changed from (userId, workspaceId, schema) to (resolved, schema, options?), and made synchronous instead of async",
+      "severity": "high",
+      "affected_systems": ["api", "vocabulary", "pipeline"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "async generateSemanticLayerForUser(userId, workspaceId, schema) fetches resolved internally",
+      "desired_state": "generateSemanticLayer(resolved, schema, options?) expects pre-resolved vocabulary (sync)",
+      "fix_type": "refactor",
+      "files_affected": [
+        "packages/liquid-connect/src/semantic/from-vocabulary.ts",
+        "packages/api/src/modules/knosia/pipeline/index.ts"
+      ]
+    },
+    {
+      "id": "GLUE-005",
+      "title": "GLUE 3 granularity mismatch (mapping concern)",
+      "description": "Docs 1500/1600 combine detection and mapping in 2 functions (detectBusinessType + generateDashboardSpec), while doc 1800 separates into 3 functions with explicit mapToTemplate step",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "api"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "detectBusinessType → generateDashboardSpec (mapping implicit)",
+      "desired_state": "detectBusinessType → mapToTemplate → generateDashboardSpec (3 separate functions)",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/mapper.ts",
+        "packages/liquid-connect/src/dashboard/generator.ts"
+      ]
+    },
+    {
+      "id": "GLUE-006",
+      "title": "Missing options parameter in dashboardSpecToLiquidSchema",
+      "description": "Docs 1500/1600 omit options parameter, while doc 1800 adds options for UI customization (maxKPIsPerRow, includeSectionHeaders, gap)",
+      "severity": "low",
+      "affected_systems": ["ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "dashboardSpecToLiquidSchema(spec)",
+      "desired_state": "dashboardSpecToLiquidSchema(spec, options?: { maxKPIsPerRow?, includeSectionHeaders?, gap? })",
+      "fix_type": "api_update",
+      "files_affected": [
+        "packages/liquid-render/src/dashboard/schema-generator.ts"
+      ]
+    },
+    {
+      "id": "GLUE-007",
+      "title": "File location inconsistencies for saveDetectedVocabulary",
+      "description": "Doc 1500/1600 modifies existing mutations.ts, while doc 1800 creates new from-detected.ts file",
+      "severity": "medium",
+      "affected_systems": ["api"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Modify packages/api/.../vocabulary/mutations.ts",
+      "desired_state": "Create packages/api/.../vocabulary/from-detected.ts",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/from-detected.ts"
+      ]
+    },
+    {
+      "id": "GLUE-008",
+      "title": "File location inconsistencies for generateSemanticLayer",
+      "description": "Doc 1500/1600 uses uvb/semantic-generator.ts, while doc 1800 uses semantic/from-vocabulary.ts",
+      "severity": "medium",
+      "affected_systems": ["vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "packages/liquid-connect/.../uvb/semantic-generator.ts",
+      "desired_state": "packages/liquid-connect/.../semantic/from-vocabulary.ts",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/semantic/from-vocabulary.ts"
+      ]
+    },
+    {
+      "id": "GLUE-009",
+      "title": "Missing MappingResult interface",
+      "description": "Docs 1500/1600 have no explicit MappingResult interface (mapping done inside generateDashboardSpec), while doc 1800 defines explicit interface returned by mapToTemplate",
+      "severity": "medium",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "No MappingResult interface defined",
+      "desired_state": "MappingResult interface with businessType, template, mappedKPIs, unmappedKPIs, coverage fields",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/types.ts"
+      ]
+    },
+    {
+      "id": "GLUE-010",
+      "title": "Return type inconsistencies across functions",
+      "description": "Multiple functions have different return types: saveDetectedVocabulary (void → structured result), generateSemanticLayer (async → sync), detectBusinessType (single match → array of matches)",
+      "severity": "medium",
+      "affected_systems": ["api", "vocabulary", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "Functions return void or minimal data",
+      "desired_state": "All functions return structured results with metadata for error handling and UI feedback",
+      "fix_type": "api_update",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/from-detected.ts",
+        "packages/liquid-connect/src/semantic/from-vocabulary.ts",
+        "packages/liquid-connect/src/business-types/detector.ts"
+      ]
+    },
+    {
+      "id": "GLUE-011",
+      "title": "Missing mapToTemplate function in early docs",
+      "description": "Docs 1500/1600 omit mapToTemplate function entirely, conflating mapping with dashboard generation",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "api"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "No mapToTemplate function exists",
+      "desired_state": "Create mapToTemplate(detected, template) → MappingResult (~150 LOC) in packages/liquid-connect/src/dashboard/mapper.ts",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/mapper.ts"
+      ]
+    },
+    {
+      "id": "GLUE-012",
+      "title": "Missing runKnosiaPipeline orchestration function",
+      "description": "Docs 1500/1600 omit runKnosiaPipeline orchestration function, providing no end-to-end pipeline entry point",
+      "severity": "critical",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "No pipeline orchestration function exists",
+      "desired_state": "Create runKnosiaPipeline(connectionId, userId, workspaceId, options?) → Promise<PipelineResult> (~150 LOC) in packages/api/src/modules/knosia/pipeline/index.ts",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/pipeline/index.ts"
+      ]
+    },
+    {
+      "id": "GLUE-013",
+      "title": "Missing options interfaces (SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions)",
+      "description": "Early docs lack formal option interfaces for configuration flexibility",
+      "severity": "medium",
+      "affected_systems": ["api", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "No formal options interfaces defined",
+      "desired_state": "Define SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions, PipelineOptions, and PipelineResult interfaces",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/types.ts",
+        "packages/liquid-connect/src/semantic/types.ts",
+        "packages/api/src/modules/knosia/pipeline/types.ts"
+      ]
+    },
+    {
+      "id": "GLUE-014",
+      "title": "Missing business type YAML templates",
+      "description": "Doc 1800 includes ~300 LOC of business type templates (YAML), which are missing from earlier LOC estimates",
+      "severity": "high",
+      "affected_systems": ["pipeline"],
+      "blocks": ["SUBTASK9"],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "No business type templates defined",
+      "desired_state": "Create business type YAML templates (~300 LOC) in packages/liquid-connect/src/business-types/templates/",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/templates/saas.ts"
+      ]
+    },
+    {
+      "id": "GLUE-015",
+      "title": "Doc 1700 conflates glue code with UI components in LOC estimate",
+      "description": "Doc 1700's 2,650 LOC estimate incorrectly includes web UI components (600 LOC home/conversation, 400 LOC onboarding, 200 LOC routes) that are not part of the glue layer",
+      "severity": "high",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Doc 1700 counts UI components as glue functions (total 2,650 LOC)",
+      "desired_state": "Clearly separate glue layer (~1,250 LOC) from UI layer in documentation",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 15,
+    "critical": 4,
+    "high": 3,
+    "medium": 7,
+    "low": 1
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Knosia Inconsistency Report Schema",
+  "type": "object",
+  "required": ["subtask_id", "domain", "source_doc", "issues", "summary"],
+  "properties": {
+    "subtask_id": {
+      "type": "string",
+      "pattern": "^SUBTASK\\d+$",
+      "description": "Unique identifier (e.g., SUBTASK1)"
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "database-schema",
+        "api-structure",
+        "file-locations",
+        "vocabulary-system",
+        "glue-functions",
+        "dashboard-architecture",
+        "onboarding-flow",
+        "business-type-detection",
+        "data-pipeline",
+        "implementation-phases"
+      ],
+      "description": "Domain category"
+    },
+    "source_doc": {
+      "type": "string",
+      "description": "Original markdown filename"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "severity", "affected_systems", "current_state", "desired_state"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,4}-\\d{3}$",
+            "description": "Issue ID (e.g., DB-001, API-042)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short issue description"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed explanation (optional)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Impact severity"
+          },
+          "affected_systems": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["database", "api", "ui", "auth", "billing", "vocabulary", "pipeline", "docs"]
+            },
+            "description": "Systems impacted by this issue"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^SUBTASK\\d+$"
+            },
+            "description": "Subtasks blocked by this issue"
+          },
+          "blocked_by": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^SUBTASK\\d+$"
+            },
+            "description": "Subtasks that block this issue"
+          },
+          "effort_estimate": {
+            "type": "string",
+            "enum": ["15min", "30min", "1h", "2h", "4h", "1d", "2d", "1w", "unknown"],
+            "description": "Estimated fix time"
+          },
+          "current_state": {
+            "type": "string",
+            "description": "What exists now (the problem)"
+          },
+          "desired_state": {
+            "type": "string",
+            "description": "What should exist (the solution)"
+          },
+          "fix_type": {
+            "type": "string",
+            "enum": ["schema_change", "api_update", "ui_update", "doc_update", "refactor", "removal", "addition"],
+            "description": "Type of fix required"
+          },
+          "files_affected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "File paths that need modification"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_issues"],
+      "properties": {
+        "total_issues": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "critical": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "high": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "medium": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "low": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

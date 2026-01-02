@@ -1,0 +1,242 @@
+{
+  "subtask_id": "SUBTASK9",
+  "domain": "data-pipeline",
+  "source_doc": "2026-01-02-1330-SUBTASK9-data-pipeline-inconsistencies.md",
+  "issues": [
+    {
+      "id": "PIPE-001",
+      "title": "Missing business-types detection module",
+      "description": "Pattern matching module to infer business model from vocabulary patterns does not exist. Required to auto-generate appropriate dashboard templates. Blueprint specifies ~200 LOC implementation.",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "vocabulary"],
+      "blocks": ["SUBTASK6"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "MODULE DOES NOT EXIST at packages/liquid-connect/src/business-types/",
+      "desired_state": "Implement business-types module with detectBusinessType(vocabulary: DetectedVocabulary): BusinessType, BUSINESS_TYPE_PATTERNS, and BusinessType enum (saas, ecommerce, marketplace, etc.)",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/detector.ts",
+        "packages/liquid-connect/src/business-types/index.ts",
+        "packages/liquid-connect/src/index.ts"
+      ]
+    },
+    {
+      "id": "PIPE-002",
+      "title": "Missing dashboard specification generator",
+      "description": "Template-driven dashboard specification generator does not exist. Combines business type, vocabulary, and user role to select template. Blueprint specifies ~300 LOC implementation.",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "ui"],
+      "blocks": ["SUBTASK6"],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "MODULE DOES NOT EXIST at packages/liquid-connect/src/dashboard/",
+      "desired_state": "Implement dashboard module with generateDashboardSpec(businessType, vocabulary, role): DashboardSpec, TEMPLATES record<BusinessType, DashboardTemplate>, and DashboardSpec type",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/generator.ts",
+        "packages/liquid-connect/src/dashboard/templates.ts",
+        "packages/liquid-connect/src/dashboard/index.ts",
+        "packages/liquid-connect/src/index.ts"
+      ]
+    },
+    {
+      "id": "PIPE-003",
+      "title": "Missing semantic layer generator",
+      "description": "Transforms UVB DetectedVocabulary → liquid-connect SemanticLayer format. Critical bridge between vocabulary detection and query compilation. Blueprint specifies ~200 LOC implementation.",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "FILE DOES NOT EXIST at packages/liquid-connect/src/semantic/generator.ts",
+      "desired_state": "Implement generator.ts with generateSemanticLayer(vocabulary: ResolvedVocabulary): SemanticLayer function",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/semantic/generator.ts",
+        "packages/liquid-connect/src/semantic/index.ts"
+      ]
+    },
+    {
+      "id": "PIPE-004",
+      "title": "Missing dashboard-to-UI schema transformer",
+      "description": "Transforms DashboardSpec → LiquidSchema for rendering. Maps dashboard panels to LiquidRender block components. Blueprint specifies ~220 LOC implementation.",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "ui"],
+      "blocks": ["SUBTASK6"],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "MODULE DOES NOT EXIST at packages/liquid-render/src/dashboard/",
+      "desired_state": "Implement dashboard module with dashboardSpecToLiquidSchema(spec: DashboardSpec): LiquidSchema and schemaGenerator.ts with generateChartSchema() helper",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-render/src/dashboard/index.ts",
+        "packages/liquid-render/src/dashboard/schema-generator.ts",
+        "packages/liquid-render/src/index.ts"
+      ]
+    },
+    {
+      "id": "PIPE-005",
+      "title": "UVB not exported from main package index",
+      "description": "UVB is fully implemented but treated as internal-only. Main index.ts doesn't expose UVB exports at package root, requiring subpath imports.",
+      "severity": "medium",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "UVB has its own index.ts with full exports BUT packages/liquid-connect/src/index.ts does NOT re-export UVB",
+      "desired_state": "Either document subpath import pattern (@repo/liquid-connect/uvb) in architecture docs OR add UVB to main index.ts exports",
+      "fix_type": "doc_update",
+      "files_affected": [
+        "packages/liquid-connect/src/index.ts",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "PIPE-006",
+      "title": "Missing semantic API module",
+      "description": "No API layer for semantic layer generation and CRUD. Should call PIPE-003 (generateSemanticLayer) to bridge UVB → SemanticLayer.",
+      "severity": "high",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "NOT VERIFIED - expected location packages/api/src/modules/knosia/semantic/ does not exist or not checked",
+      "desired_state": "API module with routes: POST /semantic/generate, GET /semantic/:workspaceId, PATCH /semantic/:workspaceId",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/semantic/router.ts",
+        "packages/api/src/modules/knosia/semantic/schemas.ts",
+        "packages/api/src/modules/knosia/semantic/queries.ts",
+        "packages/api/src/modules/knosia/semantic/mutations.ts",
+        "packages/api/src/modules/knosia/router.ts"
+      ]
+    },
+    {
+      "id": "PIPE-007",
+      "title": "Missing dashboard API module",
+      "description": "No API layer for dashboard spec generation and retrieval. Should call PIPE-001 + PIPE-002 (detectBusinessType + generateDashboardSpec).",
+      "severity": "high",
+      "affected_systems": ["api", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "NOT VERIFIED - expected location packages/api/src/modules/knosia/dashboard/ does not exist or not checked",
+      "desired_state": "API module with routes: POST /dashboard/generate, GET /dashboard/:workspaceId, GET /dashboard/templates",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/dashboard/router.ts",
+        "packages/api/src/modules/knosia/dashboard/schemas.ts",
+        "packages/api/src/modules/knosia/dashboard/queries.ts",
+        "packages/api/src/modules/knosia/dashboard/mutations.ts",
+        "packages/api/src/modules/knosia/router.ts"
+      ]
+    },
+    {
+      "id": "PIPE-008",
+      "title": "Pipeline step numbering inconsistency in docs",
+      "description": "Consolidated doc uses 7-step pipeline (STEP 1: NL Query Engine → STEP 7: Liquid UI). Blueprint doc merges steps into 4 glue functions. Different abstraction levels in different docs.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "7-step is user-facing flow (what happens end-to-end). 4-glue is implementation view (code to build). No cross-reference.",
+      "desired_state": "Add cross-reference noting: '7-step pipeline = end-to-end flow, 4 glue functions = implementation components'",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    },
+    {
+      "id": "PIPE-009",
+      "title": "Type mismatch between DetectedVocabulary and SemanticLayer",
+      "description": "Shape mismatch between UVB output (DetectedEntity with tableName, schema, primaryKey, columns[]) and SemanticLayer input (EntityDefinition with name, source, primaryKey, fields[], relationships[]). Requires mapping layer.",
+      "severity": "medium",
+      "affected_systems": ["pipeline", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "UVB produces DetectedVocabulary. SemanticRegistry expects SemanticLayer. Bridge function does NOT exist.",
+      "desired_state": "PIPE-003 (generateSemanticLayer) implements transformation mapping DetectedEntity → EntityDefinition and DetectedMetric → MetricDefinition",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/semantic/generator.ts"
+      ]
+    },
+    {
+      "id": "PIPE-010",
+      "title": "Missing UVB to compiler integration bridge",
+      "description": "No saveDetectedVocabulary() function to persist UVB extraction to knosia_vocabulary_item table. No generateSemanticLayer() to transform for compiler.",
+      "severity": "high",
+      "affected_systems": ["pipeline", "database", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "UVB extraction works. createRegistry(semanticLayer) works IF you have SemanticLayer. Manual transformation and database insertion required.",
+      "desired_state": "Implement saveDetectedVocabulary() and generateSemanticLayer() functions to automate UVB → DB → SemanticLayer → Compiler flow",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/vocabulary/mutations.ts",
+        "packages/liquid-connect/src/semantic/generator.ts"
+      ]
+    },
+    {
+      "id": "PIPE-011",
+      "title": "Missing query results to UI schema integration",
+      "description": "No generateChartSchema() helper to analyze QueryResult shape. No dashboardSpecToLiquidSchema() function to create full schema for rendering.",
+      "severity": "high",
+      "affected_systems": ["pipeline", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "Executor returns QueryResult. LiquidUI can render IF you have LiquidSchema. Manual LiquidSchema construction required.",
+      "desired_state": "Implement generateChartSchema() and dashboardSpecToLiquidSchema() to automate QueryResult → LiquidSchema flow",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-render/src/dashboard/schema-generator.ts"
+      ]
+    },
+    {
+      "id": "PIPE-012",
+      "title": "Unclear type ownership for glue interfaces",
+      "description": "Blueprint defines new types (ResolvedVocabulary, DashboardSpec, DashboardTemplate) but doesn't specify which package they belong to. Could lead to circular dependencies.",
+      "severity": "low",
+      "affected_systems": ["pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Type ownership not specified for glue interfaces. Unclear if they should live in @repo/liquid-connect/types, @repo/api/modules/knosia/shared-schemas, or new shared types package.",
+      "desired_state": "Define in @repo/liquid-connect/types since used by both liquid-connect and API, and semantic domain types belong with semantic layer",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/types/index.ts"
+      ]
+    },
+    {
+      "id": "PIPE-013",
+      "title": "Inconsistent BusinessType enum values across docs",
+      "description": "Blueprint lists BusinessType values: 'saas' | 'ecommerce' | 'marketplace' | 'financial' | 'healthcare' | 'education' | 'generic'. Some docs mention additional types: 'b2b_saas' | 'consumer_app' | 'analytics_platform'.",
+      "severity": "medium",
+      "affected_systems": ["pipeline", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Inconsistent business type taxonomy across documents. Need canonical list before implementation.",
+      "desired_state": "Establish canonical BusinessType enum and update all docs to use consistent values",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md",
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 13,
+    "critical": 4,
+    "high": 4,
+    "medium": 4,
+    "low": 1
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "subtask_id": "SUBTASK6",
+  "domain": "dashboard-architecture",
+  "source_doc": "2026-01-02-1330-SUBTASK6-dashboard-architecture-inconsistencies.md",
+  "issues": [
+    {
+      "id": "DASH-001",
+      "title": "DashboardSpec to LiquidSchema transformer not implemented",
+      "description": "Architecture docs specify a key transformation function dashboardSpecToLiquidSchema() that converts DashboardSpec (business-level KPIs) to LiquidSchema (UI rendering layer). This function is completely missing from implementation. Cannot generate dashboards from detected business types. Breaks the complete pipeline: Schema → Vocabulary → DashboardSpec → LiquidSchema → UI",
+      "severity": "critical",
+      "affected_systems": ["ui", "pipeline"],
+      "blocks": ["SUBTASK8"],
+      "blocked_by": [],
+      "effort_estimate": "2d",
+      "current_state": "dashboardSpecToLiquidSchema() function not found in packages/liquid-render/src/dashboard/",
+      "desired_state": "Implement in packages/liquid-render/src/dashboard/schema-generator.ts using the createMinimalSchema pattern from liquid-render-block.tsx",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-render/src/dashboard/schema-generator.ts"
+      ]
+    },
+    {
+      "id": "DASH-002",
+      "title": "BlockType enum doesn't match architecture spec",
+      "description": "Canvas types.ts defines BlockType with values like 'kpi', 'hero_metric', 'watch_list', 'comparison', 'insight' - but architecture docs reference different types and don't document the native block types. Documentation doesn't reflect the dual-track block system: Native blocks (hero_metric, watch_list, etc.) with custom renderers and LiquidRender blocks (charts, tables) delegated to LiquidRender. This is actually a GOOD architecture but undocumented.",
+      "severity": "critical",
+      "affected_systems": ["docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "BlockType includes hero_metric, watch_list, comparison, insight which are not mentioned in architecture docs. Docs only reference LiquidRender types.",
+      "desired_state": "Update architecture docs to document native block types and the delegation pattern to LiquidRender",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md"
+      ]
+    },
+    {
+      "id": "DASH-003",
+      "title": "DashboardSpec interface not defined in implementation",
+      "description": "Architecture defines DashboardSpec interface extensively (with businessType, title, sections, suggestedQuestions), but it doesn't exist anywhere in the codebase. Current implementation skips DashboardSpec entirely and goes directly from CanvasBlock to LiquidSchema via createMinimalSchema(). Can't generate dashboards from business type templates. No structured intermediate representation between business logic and UI rendering.",
+      "severity": "high",
+      "affected_systems": ["pipeline", "ui"],
+      "blocks": ["SUBTASK8"],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "DashboardSpec interface not found in packages/liquid-connect/src/dashboard/. Implementation uses direct CanvasBlock → LiquidSchema conversion.",
+      "desired_state": "Create packages/liquid-connect/src/dashboard/types.ts with DashboardSpec and related interfaces (DashboardSection, DashboardKPI, DashboardChart)",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/dashboard/types.ts"
+      ]
+    },
+    {
+      "id": "DASH-004",
+      "title": "Canvas implementation uses minimal schemas, not full pipeline",
+      "description": "Architecture docs describe a 7-step pipeline from Query to UI (NL Query Engine → Compiler → Resolver → SQL Emitter → Executor → Schema Generation → LiquidUI rendering), but actual implementation uses a simplified createMinimalSchema() approach that bypasses most steps. This bypasses semantic layer, query compilation, and vocabulary resolution, limiting to simple field bindings. This works for basic charts but limits advanced features.",
+      "severity": "high",
+      "affected_systems": ["pipeline", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1w",
+      "current_state": "Implementation uses createMinimalSchema() function that directly creates LiquidSchema with minimal fields, bypassing the documented 7-step pipeline",
+      "desired_state": "Document as 'Phase 1: Direct Binding' vs 'Phase 2: Full Pipeline' and keep both approaches. Full pipeline implementation for advanced features.",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        "apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx"
+      ]
+    },
+    {
+      "id": "DASH-005",
+      "title": "Home/Briefing page module not implemented",
+      "description": "Architecture extensively documents a Home/Briefing page with KPI cards and dashboard, but the module doesn't exist. No dashboard landing page after onboarding. Users can't see their personalized briefing.",
+      "severity": "high",
+      "affected_systems": ["ui"],
+      "blocks": [],
+      "blocked_by": ["SUBTASK8"],
+      "effort_estimate": "2d",
+      "current_state": "apps/web/src/modules/knosia/home/ directory does not exist. No home/briefing page route.",
+      "desired_state": "Create home module with KPI grid using existing canvas blocks (hero-metric, etc.) at apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx",
+      "fix_type": "addition",
+      "files_affected": [
+        "apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx",
+        "apps/web/src/modules/knosia/home/components/kpi-grid.tsx",
+        "apps/web/src/modules/knosia/home/components/insights-panel.tsx"
+      ]
+    },
+    {
+      "id": "DASH-006",
+      "title": "BlockRenderer location doesn't match project structure doc",
+      "description": "Project structure doc references block-renderer.tsx in the blocks/ subdirectory, but implementation has it in components/blocks/. Minor path inconsistency. Actual implementation is sound with proper delegation to LiquidRender vs native blocks.",
+      "severity": "high",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Project structure doc expects canvas/blocks/block-renderer.tsx but actual file is at canvas/components/blocks/block-renderer.tsx",
+      "desired_state": "Update project structure doc to reflect actual path: apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "DASH-007",
+      "title": "AI Canvas Edit (prompt bar) has no instruction interpretation",
+      "description": "Canvas has a prompt bar UI but no backend interpretation of natural language instructions to modify blocks. Prompt bar submits to API but unclear if backend actually parses natural language instructions, determines block changes (add/remove/modify), and applies changes to canvas.",
+      "severity": "high",
+      "affected_systems": ["api", "ui", "pipeline"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "canvas-prompt-bar.tsx submits to api.knosia.canvas[':id'].edit.$post but backend logic for NL instruction parsing is unknown/missing",
+      "desired_state": "Implement NL instruction parser in packages/api/src/modules/knosia/canvas/mutations.ts that interprets user instructions and modifies canvas blocks",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/api/src/modules/knosia/canvas/mutations.ts"
+      ]
+    },
+    {
+      "id": "DASH-008",
+      "title": "Only field bindings supported, not computed/indexed/iterator",
+      "description": "LiquidRender supports 5 binding kinds (indexed, field, computed, literal, iterator, indexRef), but canvas implementation only uses field bindings. This limits data transformations - can't compute derived metrics in UI layer, can't handle nested data structures, can't implement master-detail patterns.",
+      "severity": "medium",
+      "affected_systems": ["ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1d",
+      "current_state": "liquid-render-block.tsx line 180 only uses field bindings: { kind: 'field', value: 'rows' }",
+      "desired_state": "Support computed, indexed, and iterator bindings for advanced dashboard features with transformations and nested data",
+      "fix_type": "addition",
+      "files_affected": [
+        "apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx"
+      ]
+    },
+    {
+      "id": "DASH-009",
+      "title": "BlockDataSource uses string literals instead of enum",
+      "description": "BlockDataSource.type is typed as string literal union ('vocabulary' | 'query' | 'static') but not extracted to a reusable enum. This makes it harder to reference data source types programmatically without importing the interface.",
+      "severity": "low",
+      "affected_systems": ["ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "BlockDataSource interface has inline type union for type property",
+      "desired_state": "Extract to BlockDataSourceType type alias: export type BlockDataSourceType = 'vocabulary' | 'query' | 'static'",
+      "fix_type": "refactor",
+      "files_affected": [
+        "apps/web/src/modules/knosia/canvas/types.ts"
+      ]
+    },
+    {
+      "id": "DASH-010",
+      "title": "BLOCK_TYPE_TO_LIQUID_TYPE mapping undocumented",
+      "description": "Implementation has a comprehensive 120-line mapping from block types to LiquidRender component types (77 mappings), but this isn't documented in architecture. Developers won't know when to add native blocks vs use LiquidRender, or how to add new chart types.",
+      "severity": "medium",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "BLOCK_TYPE_TO_LIQUID_TYPE mapping exists in liquid-render-block.tsx:26-120 with 77 mappings but no documentation explaining delegation pattern",
+      "desired_state": "Add section to project structure doc explaining delegation pattern and how to extend block type mappings",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "DASH-011",
+      "title": "Business type detection and templates not implemented",
+      "description": "Architecture extensively documents business type detection system with templates (saas, ecommerce, marketplace, fintech, healthcare, custom), but none of it exists in codebase. The business-types/ directory does not exist. Cannot auto-detect business type from schema. Cannot auto-generate role-specific dashboards. Breaks the '60-second onboarding' value proposition.",
+      "severity": "critical",
+      "affected_systems": ["pipeline", "vocabulary"],
+      "blocks": ["SUBTASK7"],
+      "blocked_by": [],
+      "effort_estimate": "1w",
+      "current_state": "packages/liquid-connect/src/business-types/ directory and all documented components (detector.ts, signatures.ts, catalog/*.yaml, mapper.ts) do not exist",
+      "desired_state": "Implement business-types module as documented in glue implementation blueprint with detector, signatures, catalog loader, and mapper",
+      "fix_type": "addition",
+      "files_affected": [
+        "packages/liquid-connect/src/business-types/detector.ts",
+        "packages/liquid-connect/src/business-types/signatures.ts",
+        "packages/liquid-connect/src/business-types/catalog/saas.yaml",
+        "packages/liquid-connect/src/business-types/catalog/ecommerce.yaml",
+        "packages/liquid-connect/src/business-types/catalog/loader.ts",
+        "packages/liquid-connect/src/business-types/mapper.ts"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 11,
+    "critical": 3,
+    "high": 5,
+    "medium": 2,
+    "low": 1
+  }
+}

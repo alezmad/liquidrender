@@ -1,0 +1,219 @@
+{
+  "subtask_id": "SUBTASK7",
+  "domain": "onboarding-flow",
+  "source_doc": "2026-01-02-1330-SUBTASK7-onboarding-flow-inconsistencies.md",
+  "issues": [
+    {
+      "id": "OB-001",
+      "title": "Analysis step missing in implementation",
+      "description": "All documentation files show a 6-step onboarding flow including an 'Analyze' step, but the actual implementation only has 5 steps with no 'Analyze' step. Documentation shows: connect → analyze → review → role → confirm → ready. Implementation shows: connect → review → role → confirm → ready.",
+      "severity": "critical",
+      "affected_systems": ["ui", "docs"],
+      "blocks": ["SUBTASK6"],
+      "blocked_by": [],
+      "effort_estimate": "4h",
+      "current_state": "Documentation shows 6-step flow with 'analyze' step, but stepMap only contains: connect, review, role, confirm, ready",
+      "desired_state": "Either add /onboarding/analysis route and implement the step, OR update all documentation to remove 'analyze' step, OR merge 'analyze' functionality into 'review' step",
+      "fix_type": "ui_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        "apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts"
+      ]
+    },
+    {
+      "id": "OB-002",
+      "title": "Progress indicator shows 6 steps, implementation has 5",
+      "description": "UX Journeys document shows a progress indicator with 6 steps including 'Analyze', but implementation only supports 5 steps.",
+      "severity": "high",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": ["SUBTASK7"],
+      "effort_estimate": "30min",
+      "current_state": "Documentation shows: Connect ──── Analyze ──── Review ──── Role ──── Ready. Implementation only has 5 steps.",
+      "desired_state": "Update progress indicator documentation to show 5 steps matching implementation",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md"
+      ]
+    },
+    {
+      "id": "OB-003",
+      "title": "Consolidated implementation shows different flow than project structure",
+      "description": "Consolidated implementation doc shows: connect → analysis → review → dashboard. Project structure doc shows: connect → analysis → review → summary → ready.",
+      "severity": "medium",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Multiple flow variations across documentation files",
+      "desired_state": "Clarify whether 'summary' step exists and standardize documentation to single canonical flow",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "OB-004",
+      "title": "Analyze vs Analysis naming inconsistency",
+      "description": "Documentation uses both 'analyze' and 'analysis' for the same step, but implementation doesn't have either. UX Journeys shows 'ANALYZING', Consolidated Implementation shows 'analysis', Project Structure shows 'analysis/'.",
+      "severity": "critical",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Route naming confusion - /onboarding/analyze vs /onboarding/analysis",
+      "desired_state": "If step is added, standardize on one name (suggest: 'analysis')",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "OB-005",
+      "title": "Confirm vs Confirmation inconsistency",
+      "description": "Documentation shows 'confirm' step but some text refers to 'confirmation questions'",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Mixed usage of 'confirm' and 'confirmation' in documentation",
+      "desired_state": "Use 'confirm' consistently (already correct in implementation)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md"
+      ]
+    },
+    {
+      "id": "OB-006",
+      "title": "Analysis route documented but doesn't exist",
+      "description": "Multiple documentation files reference /onboarding/analysis or /onboarding/analyze but implementation has no such route in the stepMap. Attempting to navigate to these routes would result in 404 errors.",
+      "severity": "critical",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "Documentation references /onboarding/analyze and /onboarding/analysis routes. Implemented routes: /onboarding/connect, /onboarding/review, /onboarding/role, /onboarding/confirm, /onboarding/ready",
+      "desired_state": "Either implement the route or remove from documentation",
+      "fix_type": "ui_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        "apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts"
+      ]
+    },
+    {
+      "id": "OB-007",
+      "title": "Summary route mentioned but not in implementation",
+      "description": "Project structure doc mentions a 'summary' component as a NEW STEP, but it's not in the step map or any other documentation.",
+      "severity": "medium",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "Project structure shows 'summary/' as NEW STEP but no 'summary' step in stepMap",
+      "desired_state": "Clarify if summary step should be implemented or documentation should be updated",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        "apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts"
+      ]
+    },
+    {
+      "id": "OB-008",
+      "title": "Implementation has full multi-connection support, docs inconsistent",
+      "description": "Implementation has connectionIds array and multi-connection management functions (addConnection, removeConnection, setPrimaryConnection, primaryConnectionId tracking), but documentation doesn't consistently mention this capability.",
+      "severity": "medium",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "2h",
+      "current_state": "Implementation has full multi-connection support with connectionIds[], addConnection(), removeConnection(), setPrimaryConnection(). Documentation only shows single connection flow.",
+      "desired_state": "Update UX journeys to include: 'Add Another Connection' flow after first connection, Connection summary screen showing all connections, Primary connection selection UI",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "OB-009",
+      "title": "Legacy connectionId field still exists alongside connectionIds array",
+      "description": "Implementation maintains both connectionId (single) and connectionIds (array) for backwards compatibility, but documentation doesn't explain this dual-field pattern or migration strategy.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Both connectionId: string | null and connectionIds: string[] exist. When adding first connection, sets both primaryConnectionId and connectionId for legacy support.",
+      "desired_state": "Document the migration strategy and deprecation timeline for connectionId field",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "OB-010",
+      "title": "Analysis component directory mentioned but may not exist",
+      "description": "Project structure doc shows analysis/ component directory, but implementation doesn't route to it. This could be dead code or documentation debt.",
+      "severity": "medium",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Documentation shows: web/src/modules/onboarding/components/analysis/ directory. Glob results showed: connect, review, role, confirm, ready components.",
+      "desired_state": "Verify component directory existence and remove from docs if not used",
+      "fix_type": "removal",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        "apps/web/src/modules/onboarding/components/"
+      ]
+    },
+    {
+      "id": "OB-011",
+      "title": "Summary and ready components marked as NEW but not in all docs",
+      "description": "Project structure shows summary/ and ready/ as NEW STEPS, but other docs don't mention summary at all. Ready exists in implementation, but summary status is unclear.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Project structure shows 'summary/' and 'ready/' marked as NEW STEP. Ready exists in stepMap, summary does not.",
+      "desired_state": "Remove 'NEW STEP' markers or add summary to implementation",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "OB-012",
+      "title": "Business type detection mentioned but location unclear",
+      "description": "Multiple docs mention business type detection (SaaS, e-commerce, etc.) happening during ANALYZING step, but unclear which step performs this detection since no analysis step exists in implementation.",
+      "severity": "medium",
+      "affected_systems": ["ui", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "1h",
+      "current_state": "Documentation shows business type detection ('Looks like a SaaS business!', 'Detected: subscriptions, customers, invoices') during ANALYZING step which doesn't exist. Unclear if review step performs this or if it's backend only.",
+      "desired_state": "Clarify which step displays business type detection results",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 12,
+    "critical": 3,
+    "high": 1,
+    "medium": 5,
+    "low": 3
+  }
+}

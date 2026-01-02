@@ -1,0 +1,2332 @@
+issue_id,subtask,domain,title,severity,effort_estimate,effort_hours,status,assignee,blocks,blocked_by,affected_systems,fix_type,current_state,desired_state,files_affected,context,prompt,date_started,date_completed,notes
+OB-004,SUBTASK7,onboarding-flow,Analyze vs Analysis naming inconsistency,critical,15min,0.25,completed,,,,docs,doc_update,Route naming confusion - /onboarding/analyze vs /onboarding/analysis,"If step is added, standardize on one name (suggest: 'analysis')",.artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: onboarding-flow
+Issue: Analyze vs Analysis naming inconsistency
+Current: Route naming confusion - /onboarding/analyze vs /onboarding/analysis
+Desired: If step is added, standardize on one name (suggest: 'analysis')
+Details: Documentation uses both 'analyze' and 'analysis' for the same step, but implementation doesn't have either. UX Journeys shows 'ANALYZING', Consolidated Implementation shows 'analysis', Project Structure shows 'analysis/'.
+Affected Systems: docs
+","Fix OB-004: Analyze vs Analysis naming inconsistency
+
+**Current State**: Route naming confusion - /onboarding/analyze vs /onboarding/analysis
+
+**Desired State**: If step is added, standardize on one name (suggest: 'analysis')
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+BIZ-002,SUBTASK8,business-type-detection,Template File Format Conflict (YAML vs TypeScript),critical,1h,1,completed,,"SUBTASK5, SUBTASK9",,"api, pipeline",doc_update,"Platform architecture line 508: saas.yaml, Project structure lines 425-427: .yaml files, Glue blueprint lines 483-542: saas.ts with BusinessTypeTemplate interface",TypeScript (.ts) format with Zod schemas for runtime validation. YAML can be added later as import format. File pattern: packages/liquid-connect/src/business-types/templates/{type}.ts,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; packages/liquid-connect/src/business-types/templates/,"Domain: business-type-detection
+Issue: Template File Format Conflict (YAML vs TypeScript)
+Current: Platform architecture line 508: saas.yaml, Project structure lines 425-427: .yaml files, Glue blueprint lines 483-542: saas.ts with BusinessTypeTemplate interface
+Desired: TypeScript (.ts) format with Zod schemas for runtime validation. YAML can be added later as import format. File pattern: packages/liquid-connect/src/business-types/templates/{type}.ts
+Details: Platform architecture and project structure specify .yaml templates, while glue blueprint specifies .ts templates with TypeScript interfaces. This is a critical blocker for implementation.
+Affected Systems: api, pipeline
+Blocks: SUBTASK5, SUBTASK9
+","Fix BIZ-002: Template File Format Conflict (YAML vs TypeScript)
+
+**Current State**: Platform architecture line 508: saas.yaml, Project structure lines 425-427: .yaml files, Glue blueprint lines 483-542: saas.ts with BusinessTypeTemplate interface
+
+**Desired State**: TypeScript (.ts) format with Zod schemas for runtime validation. YAML can be added later as import format. File pattern: packages/liquid-connect/src/business-types/templates/{type}.ts
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- packages/liquid-connect/src/business-types/templates/
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-001,SUBTASK5,glue-functions,Function count mismatch across documents,critical,2h,2,not_started,,SUBTASK9,,"api, pipeline, vocabulary",addition,Conflicting function counts: 4 (1500) vs 5 (1600) vs 7 (1800),Use 7 functions from doc 1800 with proper separation of concerns (mapToTemplate as distinct from generateDashboardSpec),packages/liquid-connect/src/dashboard/mapper.ts; packages/api/src/modules/knosia/pipeline/index.ts,"Domain: glue-functions
+Issue: Function count mismatch across documents
+Current: Conflicting function counts: 4 (1500) vs 5 (1600) vs 7 (1800)
+Desired: Use 7 functions from doc 1800 with proper separation of concerns (mapToTemplate as distinct from generateDashboardSpec)
+Details: Documents specify different numbers of glue functions: doc 1500 lists 4 functions, doc 1600 lists 5, and doc 1800 lists 7 (includes mapToTemplate and runKnosiaPipeline)
+Affected Systems: api, pipeline, vocabulary
+Blocks: SUBTASK9
+","Fix GLUE-001: Function count mismatch across documents
+
+**Current State**: Conflicting function counts: 4 (1500) vs 5 (1600) vs 7 (1800)
+
+**Desired State**: Use 7 functions from doc 1800 with proper separation of concerns (mapToTemplate as distinct from generateDashboardSpec)
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/mapper.ts
+- packages/api/src/modules/knosia/pipeline/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-002,SUBTASK6,dashboard-architecture,BlockType enum doesn't match architecture spec,critical,2h,2,completed,,,,"docs, ui",doc_update,"BlockType includes hero_metric, watch_list, comparison, insight which are not mentioned in architecture docs. Docs only reference LiquidRender types.",Update architecture docs to document native block types and the delegation pattern to LiquidRender,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1500-knosia-platform-architecture.md,"Domain: dashboard-architecture
+Issue: BlockType enum doesn't match architecture spec
+Current: BlockType includes hero_metric, watch_list, comparison, insight which are not mentioned in architecture docs. Docs only reference LiquidRender types.
+Desired: Update architecture docs to document native block types and the delegation pattern to LiquidRender
+Details: Canvas types.ts defines BlockType with values like 'kpi', 'hero_metric', 'watch_list', 'comparison', 'insight' - but architecture docs reference different types and don't document the native block types. Documentation doesn't reflect the dual-track block system: Native blocks (hero_metric, watch_list, etc.) with custom renderers and LiquidRender blocks (charts, tables) delegated to LiquidRender. This is actually a GOOD architecture but undocumented.
+Affected Systems: docs, ui
+","Fix DASH-002: BlockType enum doesn't match architecture spec
+
+**Current State**: BlockType includes hero_metric, watch_list, comparison, insight which are not mentioned in architecture docs. Docs only reference LiquidRender types.
+
+**Desired State**: Update architecture docs to document native block types and the delegation pattern to LiquidRender
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+OB-006,SUBTASK7,onboarding-flow,Analysis route documented but doesn't exist,critical,2h,2,not_started,,,,"ui, docs",ui_update,"Documentation references /onboarding/analyze and /onboarding/analysis routes. Implemented routes: /onboarding/connect, /onboarding/review, /onboarding/role, /onboarding/confirm, /onboarding/ready",Either implement the route or remove from documentation,.artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts,"Domain: onboarding-flow
+Issue: Analysis route documented but doesn't exist
+Current: Documentation references /onboarding/analyze and /onboarding/analysis routes. Implemented routes: /onboarding/connect, /onboarding/review, /onboarding/role, /onboarding/confirm, /onboarding/ready
+Desired: Either implement the route or remove from documentation
+Details: Multiple documentation files reference /onboarding/analysis or /onboarding/analyze but implementation has no such route in the stepMap. Attempting to navigate to these routes would result in 404 errors.
+Affected Systems: ui, docs
+","Fix OB-006: Analysis route documented but doesn't exist
+
+**Current State**: Documentation references /onboarding/analyze and /onboarding/analysis routes. Implemented routes: /onboarding/connect, /onboarding/review, /onboarding/role, /onboarding/confirm, /onboarding/ready
+
+**Desired State**: Either implement the route or remove from documentation
+
+**Fix Type**: ui_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts
+
+**Steps**:
+1. Read existing components
+2. Implement UI changes
+3. Update routes/layouts if needed
+4. Test in browser
+",,,
+GLUE-005,SUBTASK5,glue-functions,GLUE 3 granularity mismatch (mapping concern),critical,4h,4,not_started,,SUBTASK9,,"pipeline, api",addition,detectBusinessType → generateDashboardSpec (mapping implicit),detectBusinessType → mapToTemplate → generateDashboardSpec (3 separate functions),packages/liquid-connect/src/dashboard/mapper.ts; packages/liquid-connect/src/dashboard/generator.ts,"Domain: glue-functions
+Issue: GLUE 3 granularity mismatch (mapping concern)
+Current: detectBusinessType → generateDashboardSpec (mapping implicit)
+Desired: detectBusinessType → mapToTemplate → generateDashboardSpec (3 separate functions)
+Details: Docs 1500/1600 combine detection and mapping in 2 functions (detectBusinessType + generateDashboardSpec), while doc 1800 separates into 3 functions with explicit mapToTemplate step
+Affected Systems: pipeline, api
+Blocks: SUBTASK9
+","Fix GLUE-005: GLUE 3 granularity mismatch (mapping concern)
+
+**Current State**: detectBusinessType → generateDashboardSpec (mapping implicit)
+
+**Desired State**: detectBusinessType → mapToTemplate → generateDashboardSpec (3 separate functions)
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/mapper.ts
+- packages/liquid-connect/src/dashboard/generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+GLUE-011,SUBTASK5,glue-functions,Missing mapToTemplate function in early docs,critical,4h,4,not_started,,SUBTASK9,,"pipeline, api",addition,No mapToTemplate function exists,"Create mapToTemplate(detected, template) → MappingResult (~150 LOC) in packages/liquid-connect/src/dashboard/mapper.ts",packages/liquid-connect/src/dashboard/mapper.ts,"Domain: glue-functions
+Issue: Missing mapToTemplate function in early docs
+Current: No mapToTemplate function exists
+Desired: Create mapToTemplate(detected, template) → MappingResult (~150 LOC) in packages/liquid-connect/src/dashboard/mapper.ts
+Details: Docs 1500/1600 omit mapToTemplate function entirely, conflating mapping with dashboard generation
+Affected Systems: pipeline, api
+Blocks: SUBTASK9
+","Fix GLUE-011: Missing mapToTemplate function in early docs
+
+**Current State**: No mapToTemplate function exists
+
+**Desired State**: Create mapToTemplate(detected, template) → MappingResult (~150 LOC) in packages/liquid-connect/src/dashboard/mapper.ts
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/mapper.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+GLUE-012,SUBTASK5,glue-functions,Missing runKnosiaPipeline orchestration function,critical,4h,4,not_started,,SUBTASK9,,"api, pipeline",addition,No pipeline orchestration function exists,"Create runKnosiaPipeline(connectionId, userId, workspaceId, options?) → Promise<PipelineResult> (~150 LOC) in packages/api/src/modules/knosia/pipeline/index.ts",packages/api/src/modules/knosia/pipeline/index.ts,"Domain: glue-functions
+Issue: Missing runKnosiaPipeline orchestration function
+Current: No pipeline orchestration function exists
+Desired: Create runKnosiaPipeline(connectionId, userId, workspaceId, options?) → Promise<PipelineResult> (~150 LOC) in packages/api/src/modules/knosia/pipeline/index.ts
+Details: Docs 1500/1600 omit runKnosiaPipeline orchestration function, providing no end-to-end pipeline entry point
+Affected Systems: api, pipeline
+Blocks: SUBTASK9
+","Fix GLUE-012: Missing runKnosiaPipeline orchestration function
+
+**Current State**: No pipeline orchestration function exists
+
+**Desired State**: Create runKnosiaPipeline(connectionId, userId, workspaceId, options?) → Promise<PipelineResult> (~150 LOC) in packages/api/src/modules/knosia/pipeline/index.ts
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/pipeline/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+OB-001,SUBTASK7,onboarding-flow,Analysis step missing in implementation,critical,4h,4,not_started,,SUBTASK6,,"ui, docs",ui_update,"Documentation shows 6-step flow with 'analyze' step, but stepMap only contains: connect, review, role, confirm, ready","Either add /onboarding/analysis route and implement the step, OR update all documentation to remove 'analyze' step, OR merge 'analyze' functionality into 'review' step",.artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts,"Domain: onboarding-flow
+Issue: Analysis step missing in implementation
+Current: Documentation shows 6-step flow with 'analyze' step, but stepMap only contains: connect, review, role, confirm, ready
+Desired: Either add /onboarding/analysis route and implement the step, OR update all documentation to remove 'analyze' step, OR merge 'analyze' functionality into 'review' step
+Details: All documentation files show a 6-step onboarding flow including an 'Analyze' step, but the actual implementation only has 5 steps with no 'Analyze' step. Documentation shows: connect → analyze → review → role → confirm → ready. Implementation shows: connect → review → role → confirm → ready.
+Affected Systems: ui, docs
+Blocks: SUBTASK6
+","Fix OB-001: Analysis step missing in implementation
+
+**Current State**: Documentation shows 6-step flow with 'analyze' step, but stepMap only contains: connect, review, role, confirm, ready
+
+**Desired State**: Either add /onboarding/analysis route and implement the step, OR update all documentation to remove 'analyze' step, OR merge 'analyze' functionality into 'review' step
+
+**Fix Type**: ui_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts
+
+**Steps**:
+1. Read existing components
+2. Implement UI changes
+3. Update routes/layouts if needed
+4. Test in browser
+",,,
+PIPE-001,SUBTASK9,data-pipeline,Missing business-types detection module,critical,4h,4,not_started,,SUBTASK6,,"pipeline, vocabulary",addition,MODULE DOES NOT EXIST at packages/liquid-connect/src/business-types/,"Implement business-types module with detectBusinessType(vocabulary: DetectedVocabulary): BusinessType, BUSINESS_TYPE_PATTERNS, and BusinessType enum (saas, ecommerce, marketplace, etc.)",packages/liquid-connect/src/business-types/detector.ts; packages/liquid-connect/src/business-types/index.ts; packages/liquid-connect/src/index.ts,"Domain: data-pipeline
+Issue: Missing business-types detection module
+Current: MODULE DOES NOT EXIST at packages/liquid-connect/src/business-types/
+Desired: Implement business-types module with detectBusinessType(vocabulary: DetectedVocabulary): BusinessType, BUSINESS_TYPE_PATTERNS, and BusinessType enum (saas, ecommerce, marketplace, etc.)
+Details: Pattern matching module to infer business model from vocabulary patterns does not exist. Required to auto-generate appropriate dashboard templates. Blueprint specifies ~200 LOC implementation.
+Affected Systems: pipeline, vocabulary
+Blocks: SUBTASK6
+","Fix PIPE-001: Missing business-types detection module
+
+**Current State**: MODULE DOES NOT EXIST at packages/liquid-connect/src/business-types/
+
+**Desired State**: Implement business-types module with detectBusinessType(vocabulary: DetectedVocabulary): BusinessType, BUSINESS_TYPE_PATTERNS, and BusinessType enum (saas, ecommerce, marketplace, etc.)
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/detector.ts
+- packages/liquid-connect/src/business-types/index.ts
+- packages/liquid-connect/src/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-003,SUBTASK9,data-pipeline,Missing semantic layer generator,critical,4h,4,not_started,,,,"pipeline, vocabulary",addition,FILE DOES NOT EXIST at packages/liquid-connect/src/semantic/generator.ts,Implement generator.ts with generateSemanticLayer(vocabulary: ResolvedVocabulary): SemanticLayer function,packages/liquid-connect/src/semantic/generator.ts; packages/liquid-connect/src/semantic/index.ts,"Domain: data-pipeline
+Issue: Missing semantic layer generator
+Current: FILE DOES NOT EXIST at packages/liquid-connect/src/semantic/generator.ts
+Desired: Implement generator.ts with generateSemanticLayer(vocabulary: ResolvedVocabulary): SemanticLayer function
+Details: Transforms UVB DetectedVocabulary → liquid-connect SemanticLayer format. Critical bridge between vocabulary detection and query compilation. Blueprint specifies ~200 LOC implementation.
+Affected Systems: pipeline, vocabulary
+","Fix PIPE-003: Missing semantic layer generator
+
+**Current State**: FILE DOES NOT EXIST at packages/liquid-connect/src/semantic/generator.ts
+
+**Desired State**: Implement generator.ts with generateSemanticLayer(vocabulary: ResolvedVocabulary): SemanticLayer function
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/semantic/generator.ts
+- packages/liquid-connect/src/semantic/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+API-001,SUBTASK2,api-structure,Proposed semantic/ module not implemented,critical,1d,8,not_started,,,,"api, vocabulary, pipeline",addition,No semantic/ directory in packages/api/src/modules/knosia/. No router mounts or imports.,Decision needed: Either implement as API module in packages/api/src/modules/knosia/semantic/ OR move to liquid-connect package as data transformation layer,packages/api/src/modules/knosia/semantic/index.ts; packages/api/src/modules/knosia/semantic/router.ts; packages/api/src/modules/knosia/semantic/schemas.ts; packages/api/src/modules/knosia/semantic/queries.ts; packages/api/src/modules/knosia/semantic/mutations.ts; packages/api/src/modules/knosia/router.ts; packages/api/src/modules/knosia/index.ts,"Domain: api-structure
+Issue: Proposed semantic/ module not implemented
+Current: No semantic/ directory in packages/api/src/modules/knosia/. No router mounts or imports.
+Desired: Decision needed: Either implement as API module in packages/api/src/modules/knosia/semantic/ OR move to liquid-connect package as data transformation layer
+Details: Complete implementation blueprint exists in documentation but module is not created in codebase. Document specifies full file structure, function signatures, and integration points.
+Affected Systems: api, vocabulary, pipeline
+","Fix API-001: Proposed semantic/ module not implemented
+
+**Current State**: No semantic/ directory in packages/api/src/modules/knosia/. No router mounts or imports.
+
+**Desired State**: Decision needed: Either implement as API module in packages/api/src/modules/knosia/semantic/ OR move to liquid-connect package as data transformation layer
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/semantic/index.ts
+- packages/api/src/modules/knosia/semantic/router.ts
+- packages/api/src/modules/knosia/semantic/schemas.ts
+- packages/api/src/modules/knosia/semantic/queries.ts
+- packages/api/src/modules/knosia/semantic/mutations.ts
+- packages/api/src/modules/knosia/router.ts
+- packages/api/src/modules/knosia/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-002,SUBTASK9,data-pipeline,Missing dashboard specification generator,critical,1d,8,not_started,,SUBTASK6,,"pipeline, ui",addition,MODULE DOES NOT EXIST at packages/liquid-connect/src/dashboard/,"Implement dashboard module with generateDashboardSpec(businessType, vocabulary, role): DashboardSpec, TEMPLATES record<BusinessType, DashboardTemplate>, and DashboardSpec type",packages/liquid-connect/src/dashboard/generator.ts; packages/liquid-connect/src/dashboard/templates.ts; packages/liquid-connect/src/dashboard/index.ts; packages/liquid-connect/src/index.ts,"Domain: data-pipeline
+Issue: Missing dashboard specification generator
+Current: MODULE DOES NOT EXIST at packages/liquid-connect/src/dashboard/
+Desired: Implement dashboard module with generateDashboardSpec(businessType, vocabulary, role): DashboardSpec, TEMPLATES record<BusinessType, DashboardTemplate>, and DashboardSpec type
+Details: Template-driven dashboard specification generator does not exist. Combines business type, vocabulary, and user role to select template. Blueprint specifies ~300 LOC implementation.
+Affected Systems: pipeline, ui
+Blocks: SUBTASK6
+","Fix PIPE-002: Missing dashboard specification generator
+
+**Current State**: MODULE DOES NOT EXIST at packages/liquid-connect/src/dashboard/
+
+**Desired State**: Implement dashboard module with generateDashboardSpec(businessType, vocabulary, role): DashboardSpec, TEMPLATES record<BusinessType, DashboardTemplate>, and DashboardSpec type
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/generator.ts
+- packages/liquid-connect/src/dashboard/templates.ts
+- packages/liquid-connect/src/dashboard/index.ts
+- packages/liquid-connect/src/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-004,SUBTASK9,data-pipeline,Missing dashboard-to-UI schema transformer,critical,1d,8,not_started,,SUBTASK6,,"pipeline, ui",addition,MODULE DOES NOT EXIST at packages/liquid-render/src/dashboard/,Implement dashboard module with dashboardSpecToLiquidSchema(spec: DashboardSpec): LiquidSchema and schemaGenerator.ts with generateChartSchema() helper,packages/liquid-render/src/dashboard/index.ts; packages/liquid-render/src/dashboard/schema-generator.ts; packages/liquid-render/src/index.ts,"Domain: data-pipeline
+Issue: Missing dashboard-to-UI schema transformer
+Current: MODULE DOES NOT EXIST at packages/liquid-render/src/dashboard/
+Desired: Implement dashboard module with dashboardSpecToLiquidSchema(spec: DashboardSpec): LiquidSchema and schemaGenerator.ts with generateChartSchema() helper
+Details: Transforms DashboardSpec → LiquidSchema for rendering. Maps dashboard panels to LiquidRender block components. Blueprint specifies ~220 LOC implementation.
+Affected Systems: pipeline, ui
+Blocks: SUBTASK6
+","Fix PIPE-004: Missing dashboard-to-UI schema transformer
+
+**Current State**: MODULE DOES NOT EXIST at packages/liquid-render/src/dashboard/
+
+**Desired State**: Implement dashboard module with dashboardSpecToLiquidSchema(spec: DashboardSpec): LiquidSchema and schemaGenerator.ts with generateChartSchema() helper
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-render/src/dashboard/index.ts
+- packages/liquid-render/src/dashboard/schema-generator.ts
+- packages/liquid-render/src/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+API-002,SUBTASK2,api-structure,Proposed dashboard/ module not implemented,critical,2d,16,not_started,,,,"api, ui, vocabulary",addition,No dashboard/ directory in packages/api/src/modules/knosia/. No router mounts or imports.,Decision needed: Either implement as API module in packages/api/src/modules/knosia/dashboard/ OR move to liquid-connect package as data transformation layer,packages/api/src/modules/knosia/dashboard/index.ts; packages/api/src/modules/knosia/dashboard/router.ts; packages/api/src/modules/knosia/dashboard/schemas.ts; packages/api/src/modules/knosia/dashboard/queries.ts; packages/api/src/modules/knosia/dashboard/mutations.ts; packages/api/src/modules/knosia/router.ts; packages/api/src/modules/knosia/index.ts,"Domain: api-structure
+Issue: Proposed dashboard/ module not implemented
+Current: No dashboard/ directory in packages/api/src/modules/knosia/. No router mounts or imports.
+Desired: Decision needed: Either implement as API module in packages/api/src/modules/knosia/dashboard/ OR move to liquid-connect package as data transformation layer
+Details: Complete implementation blueprint exists in documentation but module is not created in codebase. Document specifies full file structure, function signatures, and integration points.
+Affected Systems: api, ui, vocabulary
+","Fix API-002: Proposed dashboard/ module not implemented
+
+**Current State**: No dashboard/ directory in packages/api/src/modules/knosia/. No router mounts or imports.
+
+**Desired State**: Decision needed: Either implement as API module in packages/api/src/modules/knosia/dashboard/ OR move to liquid-connect package as data transformation layer
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/dashboard/index.ts
+- packages/api/src/modules/knosia/dashboard/router.ts
+- packages/api/src/modules/knosia/dashboard/schemas.ts
+- packages/api/src/modules/knosia/dashboard/queries.ts
+- packages/api/src/modules/knosia/dashboard/mutations.ts
+- packages/api/src/modules/knosia/router.ts
+- packages/api/src/modules/knosia/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-001,SUBTASK6,dashboard-architecture,DashboardSpec to LiquidSchema transformer not implemented,critical,2d,16,not_started,,SUBTASK8,,"ui, pipeline",addition,dashboardSpecToLiquidSchema() function not found in packages/liquid-render/src/dashboard/,Implement in packages/liquid-render/src/dashboard/schema-generator.ts using the createMinimalSchema pattern from liquid-render-block.tsx,packages/liquid-render/src/dashboard/schema-generator.ts,"Domain: dashboard-architecture
+Issue: DashboardSpec to LiquidSchema transformer not implemented
+Current: dashboardSpecToLiquidSchema() function not found in packages/liquid-render/src/dashboard/
+Desired: Implement in packages/liquid-render/src/dashboard/schema-generator.ts using the createMinimalSchema pattern from liquid-render-block.tsx
+Details: Architecture docs specify a key transformation function dashboardSpecToLiquidSchema() that converts DashboardSpec (business-level KPIs) to LiquidSchema (UI rendering layer). This function is completely missing from implementation. Cannot generate dashboards from detected business types. Breaks the complete pipeline: Schema → Vocabulary → DashboardSpec → LiquidSchema → UI
+Affected Systems: ui, pipeline
+Blocks: SUBTASK8
+","Fix DASH-001: DashboardSpec to LiquidSchema transformer not implemented
+
+**Current State**: dashboardSpecToLiquidSchema() function not found in packages/liquid-render/src/dashboard/
+
+**Desired State**: Implement in packages/liquid-render/src/dashboard/schema-generator.ts using the createMinimalSchema pattern from liquid-render-block.tsx
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-render/src/dashboard/schema-generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-011,SUBTASK6,dashboard-architecture,Business type detection and templates not implemented,critical,1w,40,not_started,,SUBTASK7,,"pipeline, vocabulary",addition,"packages/liquid-connect/src/business-types/ directory and all documented components (detector.ts, signatures.ts, catalog/*.yaml, mapper.ts) do not exist","Implement business-types module as documented in glue implementation blueprint with detector, signatures, catalog loader, and mapper",packages/liquid-connect/src/business-types/detector.ts; packages/liquid-connect/src/business-types/signatures.ts; packages/liquid-connect/src/business-types/catalog/saas.yaml; packages/liquid-connect/src/business-types/catalog/ecommerce.yaml; packages/liquid-connect/src/business-types/catalog/loader.ts; packages/liquid-connect/src/business-types/mapper.ts,"Domain: dashboard-architecture
+Issue: Business type detection and templates not implemented
+Current: packages/liquid-connect/src/business-types/ directory and all documented components (detector.ts, signatures.ts, catalog/*.yaml, mapper.ts) do not exist
+Desired: Implement business-types module as documented in glue implementation blueprint with detector, signatures, catalog loader, and mapper
+Details: Architecture extensively documents business type detection system with templates (saas, ecommerce, marketplace, fintech, healthcare, custom), but none of it exists in codebase. The business-types/ directory does not exist. Cannot auto-detect business type from schema. Cannot auto-generate role-specific dashboards. Breaks the '60-second onboarding' value proposition.
+Affected Systems: pipeline, vocabulary
+Blocks: SUBTASK7
+","Fix DASH-011: Business type detection and templates not implemented
+
+**Current State**: packages/liquid-connect/src/business-types/ directory and all documented components (detector.ts, signatures.ts, catalog/*.yaml, mapper.ts) do not exist
+
+**Desired State**: Implement business-types module as documented in glue implementation blueprint with detector, signatures, catalog loader, and mapper
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/detector.ts
+- packages/liquid-connect/src/business-types/signatures.ts
+- packages/liquid-connect/src/business-types/catalog/saas.yaml
+- packages/liquid-connect/src/business-types/catalog/ecommerce.yaml
+- packages/liquid-connect/src/business-types/catalog/loader.ts
+- packages/liquid-connect/src/business-types/mapper.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+FILE-001,SUBTASK3,file-locations,GLUE 1 location conflict,high,15min,0.25,completed,,,,"api, vocabulary",doc_update,Blueprint specifies packages/api/src/modules/knosia/vocabulary/from-detected.ts but consolidated doc implies integration into vocabulary mutations module without explicit file path,Use dedicated file packages/api/src/modules/knosia/vocabulary/from-detected.ts for better separation of concerns,packages/api/src/modules/knosia/vocabulary/from-detected.ts,"Domain: file-locations
+Issue: GLUE 1 location conflict
+Current: Blueprint specifies packages/api/src/modules/knosia/vocabulary/from-detected.ts but consolidated doc implies integration into vocabulary mutations module without explicit file path
+Desired: Use dedicated file packages/api/src/modules/knosia/vocabulary/from-detected.ts for better separation of concerns
+Details: GLUE 1 (DetectedVocabulary → DB) has two different locations specified across documents
+Affected Systems: api, vocabulary
+","Fix FILE-001: GLUE 1 location conflict
+
+**Current State**: Blueprint specifies packages/api/src/modules/knosia/vocabulary/from-detected.ts but consolidated doc implies integration into vocabulary mutations module without explicit file path
+
+**Desired State**: Use dedicated file packages/api/src/modules/knosia/vocabulary/from-detected.ts for better separation of concerns
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/from-detected.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-015,SUBTASK5,glue-functions,Doc 1700 conflates glue code with UI components in LOC estimate,high,15min,0.25,completed,,,,docs,doc_update,"Doc 1700 counts UI components as glue functions (total 2,650 LOC)","Clearly separate glue layer (~1,250 LOC) from UI layer in documentation",.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: glue-functions
+Issue: Doc 1700 conflates glue code with UI components in LOC estimate
+Current: Doc 1700 counts UI components as glue functions (total 2,650 LOC)
+Desired: Clearly separate glue layer (~1,250 LOC) from UI layer in documentation
+Details: Doc 1700's 2,650 LOC estimate incorrectly includes web UI components (600 LOC home/conversation, 400 LOC onboarding, 200 LOC routes) that are not part of the glue layer
+Affected Systems: docs
+","Fix GLUE-015: Doc 1700 conflates glue code with UI components in LOC estimate
+
+**Current State**: Doc 1700 counts UI components as glue functions (total 2,650 LOC)
+
+**Desired State**: Clearly separate glue layer (~1,250 LOC) from UI layer in documentation
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DASH-006,SUBTASK6,dashboard-architecture,BlockRenderer location doesn't match project structure doc,high,15min,0.25,completed,,,,docs,doc_update,Project structure doc expects canvas/blocks/block-renderer.tsx but actual file is at canvas/components/blocks/block-renderer.tsx,Update project structure doc to reflect actual path: apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx,.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: dashboard-architecture
+Issue: BlockRenderer location doesn't match project structure doc
+Current: Project structure doc expects canvas/blocks/block-renderer.tsx but actual file is at canvas/components/blocks/block-renderer.tsx
+Desired: Update project structure doc to reflect actual path: apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx
+Details: Project structure doc references block-renderer.tsx in the blocks/ subdirectory, but implementation has it in components/blocks/. Minor path inconsistency. Actual implementation is sound with proper delegation to LiquidRender vs native blocks.
+Affected Systems: docs
+","Fix DASH-006: BlockRenderer location doesn't match project structure doc
+
+**Current State**: Project structure doc expects canvas/blocks/block-renderer.tsx but actual file is at canvas/components/blocks/block-renderer.tsx
+
+**Desired State**: Update project structure doc to reflect actual path: apps/web/src/modules/knosia/canvas/components/blocks/block-renderer.tsx
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-001,SUBTASK10,implementation-phases,"LOC estimate mismatch across documents (700 vs 2,650)",high,15min,0.25,completed,,,,docs,doc_update,"1500 says '~700 LOC total glue code', 1600/1700 say '~2,650 LOC new code', 1800 says '~1,250 LOC glue + templates'","1500 clarified to show: Core glue ~700 LOC (5 functions), Full glue layer ~1,250 LOC (glue + templates + pipeline), Complete implementation ~2,650 LOC (includes UI/routes)",.artifacts/2026-01-02-1500-knosia-platform-architecture.md,"Domain: implementation-phases
+Issue: LOC estimate mismatch across documents (700 vs 2,650)
+Current: 1500 says '~700 LOC total glue code', 1600/1700 say '~2,650 LOC new code', 1800 says '~1,250 LOC glue + templates'
+Desired: 1500 clarified to show: Core glue ~700 LOC (5 functions), Full glue layer ~1,250 LOC (glue + templates + pipeline), Complete implementation ~2,650 LOC (includes UI/routes)
+Details: Document 1500 estimates ~700 LOC for glue code only, while 1600/1700 estimate ~2,650 LOC for full implementation. This creates confusion about total scope: 700 = core glue only (5 functions), 1,250 = glue+templates (7 functions), 2,650 = complete implementation including UI/routes.
+Affected Systems: docs
+","Fix IMPL-001: LOC estimate mismatch across documents (700 vs 2,650)
+
+**Current State**: 1500 says '~700 LOC total glue code', 1600/1700 say '~2,650 LOC new code', 1800 says '~1,250 LOC glue + templates'
+
+**Desired State**: 1500 clarified to show: Core glue ~700 LOC (5 functions), Full glue layer ~1,250 LOC (glue + templates + pipeline), Complete implementation ~2,650 LOC (includes UI/routes)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-001,SUBTASK1,database-schema,"Table count mismatch: docs claim 15 tables, schema has 26",high,30min,0.5,completed,,,,"database, docs",doc_update,"Architecture docs say '15 tables in knosia.ts' but actual schema has 26 tables including Canvas, Collaboration, and Notification systems",All documents updated to reflect '26 tables (V1 complete)' with accurate table listings in architecture diagrams,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: database-schema
+Issue: Table count mismatch: docs claim 15 tables, schema has 26
+Current: Architecture docs say '15 tables in knosia.ts' but actual schema has 26 tables including Canvas, Collaboration, and Notification systems
+Desired: All documents updated to reflect '26 tables (V1 complete)' with accurate table listings in architecture diagrams
+Details: Architecture documents claim '15 tables (V1 foundation)' but packages/db/src/schema/knosia.ts contains 26 tables. This causes confusion about implementation completeness.
+Affected Systems: database, docs
+","Fix DB-001: Table count mismatch: docs claim 15 tables, schema has 26
+
+**Current State**: Architecture docs say '15 tables in knosia.ts' but actual schema has 26 tables including Canvas, Collaboration, and Notification systems
+
+**Desired State**: All documents updated to reflect '26 tables (V1 complete)' with accurate table listings in architecture diagrams
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-003,SUBTASK1,database-schema,knosiaUserVocabularyPrefs table missing from documentation,high,30min,0.5,completed,,,,"database, docs, vocabulary",doc_update,"knosiaUserVocabularyPrefs exists in schema (lines 569-610) with favorites, synonyms, recentlyUsed, dismissedSuggestions, privateVocabulary fields, but architecture docs don't list it","Add knosiaUserVocabularyPrefs to all table listings and architecture diagrams, document as USER-level preference source in vocabulary hierarchy",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: database-schema
+Issue: knosiaUserVocabularyPrefs table missing from documentation
+Current: knosiaUserVocabularyPrefs exists in schema (lines 569-610) with favorites, synonyms, recentlyUsed, dismissedSuggestions, privateVocabulary fields, but architecture docs don't list it
+Desired: Add knosiaUserVocabularyPrefs to all table listings and architecture diagrams, document as USER-level preference source in vocabulary hierarchy
+Details: Critical table for 3-level vocabulary hierarchy (Org > Workspace > User) exists in schema but is not mentioned in architecture docs
+Affected Systems: database, docs, vocabulary
+","Fix DB-003: knosiaUserVocabularyPrefs table missing from documentation
+
+**Current State**: knosiaUserVocabularyPrefs exists in schema (lines 569-610) with favorites, synonyms, recentlyUsed, dismissedSuggestions, privateVocabulary fields, but architecture docs don't list it
+
+**Desired State**: Add knosiaUserVocabularyPrefs to all table listings and architecture diagrams, document as USER-level preference source in vocabulary hierarchy
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-006,SUBTASK1,database-schema,Canvas tables missing from architecture docs,high,30min,0.5,completed,,,,"database, docs, dashboard",doc_update,"Canvas tables exist in schema (lines 794-903) for dashboard functionality, but architecture docs don't list them in table inventories",Add Canvas tables to all architecture diagrams and table listings under 'V1 Complete' or 'Dashboard Layer' section,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: database-schema
+Issue: Canvas tables missing from architecture docs
+Current: Canvas tables exist in schema (lines 794-903) for dashboard functionality, but architecture docs don't list them in table inventories
+Desired: Add Canvas tables to all architecture diagrams and table listings under 'V1 Complete' or 'Dashboard Layer' section
+Details: Canvas system tables (knosiaCanvas, knosiaCanvasBlock, knosiaCanvasAlert) are implemented in schema but not listed in architecture inventories
+Affected Systems: database, docs, dashboard
+","Fix DB-006: Canvas tables missing from architecture docs
+
+**Current State**: Canvas tables exist in schema (lines 794-903) for dashboard functionality, but architecture docs don't list them in table inventories
+
+**Desired State**: Add Canvas tables to all architecture diagrams and table listings under 'V1 Complete' or 'Dashboard Layer' section
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+OB-002,SUBTASK7,onboarding-flow,"Progress indicator shows 6 steps, implementation has 5",high,30min,0.5,completed,,,SUBTASK7,"ui, docs",doc_update,Documentation shows: Connect ──── Analyze ──── Review ──── Role ──── Ready. Implementation only has 5 steps.,Update progress indicator documentation to show 5 steps matching implementation,.artifacts/2026-01-02-1535-knosia-ux-journeys.md,"Domain: onboarding-flow
+Issue: Progress indicator shows 6 steps, implementation has 5
+Current: Documentation shows: Connect ──── Analyze ──── Review ──── Role ──── Ready. Implementation only has 5 steps.
+Desired: Update progress indicator documentation to show 5 steps matching implementation
+Details: UX Journeys document shows a progress indicator with 6 steps including 'Analyze', but implementation only supports 5 steps.
+Affected Systems: ui, docs
+Blocked By: SUBTASK7
+","Fix OB-002: Progress indicator shows 6 steps, implementation has 5
+
+**Current State**: Documentation shows: Connect ──── Analyze ──── Review ──── Role ──── Ready. Implementation only has 5 steps.
+
+**Desired State**: Update progress indicator documentation to show 5 steps matching implementation
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+FILE-005,SUBTASK3,file-locations,Pipeline module missing from consolidated doc,high,1h,1,completed,,,,"pipeline, docs",doc_update,Pipeline module (packages/api/src/modules/knosia/pipeline/index.ts) documented in blueprint but absent from consolidated implementation,"Add pipeline section to consolidated doc covering orchestration, error handling, and transaction boundaries",packages/api/src/modules/knosia/pipeline/index.ts,"Domain: file-locations
+Issue: Pipeline module missing from consolidated doc
+Current: Pipeline module (packages/api/src/modules/knosia/pipeline/index.ts) documented in blueprint but absent from consolidated implementation
+Desired: Add pipeline section to consolidated doc covering orchestration, error handling, and transaction boundaries
+Details: Pipeline orchestration mentioned in blueprint and project structure but completely missing from consolidated implementation doc
+Affected Systems: pipeline, docs
+","Fix FILE-005: Pipeline module missing from consolidated doc
+
+**Current State**: Pipeline module (packages/api/src/modules/knosia/pipeline/index.ts) documented in blueprint but absent from consolidated implementation
+
+**Desired State**: Add pipeline section to consolidated doc covering orchestration, error handling, and transaction boundaries
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/pipeline/index.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-003,SUBTASK2,api-structure,activity/ module completely undocumented,high,2h,2,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/activity/ exists and is router-mounted at /activity, but not mentioned in any documentation","Add activity/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: activity/ module completely undocumented
+Current: packages/api/src/modules/knosia/activity/ exists and is router-mounted at /activity, but not mentioned in any documentation
+Desired: Add activity/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs
+","Fix API-003: activity/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/activity/ exists and is router-mounted at /activity, but not mentioned in any documentation
+
+**Desired State**: Add activity/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-004,SUBTASK2,api-structure,canvas/ module completely undocumented,high,2h,2,completed,,,,"api, docs, ui",doc_update,"packages/api/src/modules/knosia/canvas/ exists and is router-mounted at /canvas, but not mentioned in any documentation","Add canvas/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: canvas/ module completely undocumented
+Current: packages/api/src/modules/knosia/canvas/ exists and is router-mounted at /canvas, but not mentioned in any documentation
+Desired: Add canvas/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs, ui
+","Fix API-004: canvas/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/canvas/ exists and is router-mounted at /canvas, but not mentioned in any documentation
+
+**Desired State**: Add canvas/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-005,SUBTASK2,api-structure,comment/ module completely undocumented,high,2h,2,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/comment/ exists and is router-mounted at /comment, but not mentioned in any documentation","Add comment/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: comment/ module completely undocumented
+Current: packages/api/src/modules/knosia/comment/ exists and is router-mounted at /comment, but not mentioned in any documentation
+Desired: Add comment/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs
+","Fix API-005: comment/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/comment/ exists and is router-mounted at /comment, but not mentioned in any documentation
+
+**Desired State**: Add comment/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-006,SUBTASK2,api-structure,insight/ module completely undocumented,high,2h,2,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/insight/ exists and is router-mounted at /insight, but not mentioned in any documentation","Add insight/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: insight/ module completely undocumented
+Current: packages/api/src/modules/knosia/insight/ exists and is router-mounted at /insight, but not mentioned in any documentation
+Desired: Add insight/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas, mutations, helpers) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs
+","Fix API-006: insight/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/insight/ exists and is router-mounted at /insight, but not mentioned in any documentation
+
+**Desired State**: Add insight/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-007,SUBTASK2,api-structure,notification/ module completely undocumented,high,2h,2,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/notification/ exists and is router-mounted at /notification, but not mentioned in any documentation","Add notification/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: notification/ module completely undocumented
+Current: packages/api/src/modules/knosia/notification/ exists and is router-mounted at /notification, but not mentioned in any documentation
+Desired: Add notification/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas, mutations) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs
+","Fix API-007: notification/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/notification/ exists and is router-mounted at /notification, but not mentioned in any documentation
+
+**Desired State**: Add notification/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-008,SUBTASK2,api-structure,search/ module completely undocumented,high,2h,2,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/search/ exists and is router-mounted at /search, but not mentioned in any documentation","Add search/ module to project structure documentation with purpose, key endpoints, and integration examples",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: search/ module completely undocumented
+Current: packages/api/src/modules/knosia/search/ exists and is router-mounted at /search, but not mentioned in any documentation
+Desired: Add search/ module to project structure documentation with purpose, key endpoints, and integration examples
+Details: Module is fully implemented with complete file structure (router, queries, schemas) but has no documentation. Purpose, endpoints, and integration points are unknown.
+Affected Systems: api, docs
+","Fix API-008: search/ module completely undocumented
+
+**Current State**: packages/api/src/modules/knosia/search/ exists and is router-mounted at /search, but not mentioned in any documentation
+
+**Desired State**: Add search/ module to project structure documentation with purpose, key endpoints, and integration examples
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-004,SUBTASK5,glue-functions,generateSemanticLayer function name and signature mismatch,high,2h,2,not_started,,SUBTASK9,,"api, vocabulary, pipeline",refactor,"async generateSemanticLayerForUser(userId, workspaceId, schema) fetches resolved internally","generateSemanticLayer(resolved, schema, options?) expects pre-resolved vocabulary (sync)",packages/liquid-connect/src/semantic/from-vocabulary.ts; packages/api/src/modules/knosia/pipeline/index.ts,"Domain: glue-functions
+Issue: generateSemanticLayer function name and signature mismatch
+Current: async generateSemanticLayerForUser(userId, workspaceId, schema) fetches resolved internally
+Desired: generateSemanticLayer(resolved, schema, options?) expects pre-resolved vocabulary (sync)
+Details: Function renamed from generateSemanticLayerForUser (1500/1600) to generateSemanticLayer (1800), with parameters changed from (userId, workspaceId, schema) to (resolved, schema, options?), and made synchronous instead of async
+Affected Systems: api, vocabulary, pipeline
+Blocks: SUBTASK9
+","Fix GLUE-004: generateSemanticLayer function name and signature mismatch
+
+**Current State**: async generateSemanticLayerForUser(userId, workspaceId, schema) fetches resolved internally
+
+**Desired State**: generateSemanticLayer(resolved, schema, options?) expects pre-resolved vocabulary (sync)
+
+**Fix Type**: refactor
+
+**Files to Modify**:
+- packages/liquid-connect/src/semantic/from-vocabulary.ts
+- packages/api/src/modules/knosia/pipeline/index.ts
+
+**Steps**:
+1. Analyze current implementation
+2. Make required changes
+3. Verify against desired state
+",,,
+GLUE-014,SUBTASK5,glue-functions,Missing business type YAML templates,high,2h,2,not_started,,SUBTASK9,,pipeline,addition,No business type templates defined,Create business type YAML templates (~300 LOC) in packages/liquid-connect/src/business-types/templates/,packages/liquid-connect/src/business-types/templates/saas.ts,"Domain: glue-functions
+Issue: Missing business type YAML templates
+Current: No business type templates defined
+Desired: Create business type YAML templates (~300 LOC) in packages/liquid-connect/src/business-types/templates/
+Details: Doc 1800 includes ~300 LOC of business type templates (YAML), which are missing from earlier LOC estimates
+Affected Systems: pipeline
+Blocks: SUBTASK9
+","Fix GLUE-014: Missing business type YAML templates
+
+**Current State**: No business type templates defined
+
+**Desired State**: Create business type YAML templates (~300 LOC) in packages/liquid-connect/src/business-types/templates/
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/templates/saas.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-006,SUBTASK9,data-pipeline,Missing semantic API module,high,2h,2,not_started,,,,"api, pipeline",addition,NOT VERIFIED - expected location packages/api/src/modules/knosia/semantic/ does not exist or not checked,"API module with routes: POST /semantic/generate, GET /semantic/:workspaceId, PATCH /semantic/:workspaceId",packages/api/src/modules/knosia/semantic/router.ts; packages/api/src/modules/knosia/semantic/schemas.ts; packages/api/src/modules/knosia/semantic/queries.ts; packages/api/src/modules/knosia/semantic/mutations.ts; packages/api/src/modules/knosia/router.ts,"Domain: data-pipeline
+Issue: Missing semantic API module
+Current: NOT VERIFIED - expected location packages/api/src/modules/knosia/semantic/ does not exist or not checked
+Desired: API module with routes: POST /semantic/generate, GET /semantic/:workspaceId, PATCH /semantic/:workspaceId
+Details: No API layer for semantic layer generation and CRUD. Should call PIPE-003 (generateSemanticLayer) to bridge UVB → SemanticLayer.
+Affected Systems: api, pipeline
+","Fix PIPE-006: Missing semantic API module
+
+**Current State**: NOT VERIFIED - expected location packages/api/src/modules/knosia/semantic/ does not exist or not checked
+
+**Desired State**: API module with routes: POST /semantic/generate, GET /semantic/:workspaceId, PATCH /semantic/:workspaceId
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/semantic/router.ts
+- packages/api/src/modules/knosia/semantic/schemas.ts
+- packages/api/src/modules/knosia/semantic/queries.ts
+- packages/api/src/modules/knosia/semantic/mutations.ts
+- packages/api/src/modules/knosia/router.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-007,SUBTASK9,data-pipeline,Missing dashboard API module,high,2h,2,not_started,,,,"api, pipeline",addition,NOT VERIFIED - expected location packages/api/src/modules/knosia/dashboard/ does not exist or not checked,"API module with routes: POST /dashboard/generate, GET /dashboard/:workspaceId, GET /dashboard/templates",packages/api/src/modules/knosia/dashboard/router.ts; packages/api/src/modules/knosia/dashboard/schemas.ts; packages/api/src/modules/knosia/dashboard/queries.ts; packages/api/src/modules/knosia/dashboard/mutations.ts; packages/api/src/modules/knosia/router.ts,"Domain: data-pipeline
+Issue: Missing dashboard API module
+Current: NOT VERIFIED - expected location packages/api/src/modules/knosia/dashboard/ does not exist or not checked
+Desired: API module with routes: POST /dashboard/generate, GET /dashboard/:workspaceId, GET /dashboard/templates
+Details: No API layer for dashboard spec generation and retrieval. Should call PIPE-001 + PIPE-002 (detectBusinessType + generateDashboardSpec).
+Affected Systems: api, pipeline
+","Fix PIPE-007: Missing dashboard API module
+
+**Current State**: NOT VERIFIED - expected location packages/api/src/modules/knosia/dashboard/ does not exist or not checked
+
+**Desired State**: API module with routes: POST /dashboard/generate, GET /dashboard/:workspaceId, GET /dashboard/templates
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/dashboard/router.ts
+- packages/api/src/modules/knosia/dashboard/schemas.ts
+- packages/api/src/modules/knosia/dashboard/queries.ts
+- packages/api/src/modules/knosia/dashboard/mutations.ts
+- packages/api/src/modules/knosia/router.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+GLUE-002,SUBTASK5,glue-functions,"LOC estimates wildly different (700 vs 1,250 vs 2,650)",high,unknown,4,completed,,,,"pipeline, api, vocabulary",doc_update,"Estimates range from 700 to 2,650 LOC with unclear scope boundaries","Use 1,250 LOC estimate from doc 1800 (~950 glue + ~300 templates)",,"Domain: glue-functions
+Issue: LOC estimates wildly different (700 vs 1,250 vs 2,650)
+Current: Estimates range from 700 to 2,650 LOC with unclear scope boundaries
+Desired: Use 1,250 LOC estimate from doc 1800 (~950 glue + ~300 templates)
+Details: Total LOC estimates vary dramatically: doc 1500/1600 estimate ~700, doc 1700 estimates ~2,650 (incorrectly includes UI components), doc 1800 estimates ~1,250 (separates glue from UI)
+Affected Systems: pipeline, api, vocabulary
+","Fix GLUE-002: LOC estimates wildly different (700 vs 1,250 vs 2,650)
+
+**Current State**: Estimates range from 700 to 2,650 LOC with unclear scope boundaries
+
+**Desired State**: Use 1,250 LOC estimate from doc 1800 (~950 glue + ~300 templates)
+
+**Fix Type**: doc_update
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DASH-007,SUBTASK6,dashboard-architecture,AI Canvas Edit (prompt bar) has no instruction interpretation,high,4h,4,not_started,,,,"api, ui, pipeline",addition,canvas-prompt-bar.tsx submits to api.knosia.canvas[':id'].edit.$post but backend logic for NL instruction parsing is unknown/missing,Implement NL instruction parser in packages/api/src/modules/knosia/canvas/mutations.ts that interprets user instructions and modifies canvas blocks,packages/api/src/modules/knosia/canvas/mutations.ts,"Domain: dashboard-architecture
+Issue: AI Canvas Edit (prompt bar) has no instruction interpretation
+Current: canvas-prompt-bar.tsx submits to api.knosia.canvas[':id'].edit.$post but backend logic for NL instruction parsing is unknown/missing
+Desired: Implement NL instruction parser in packages/api/src/modules/knosia/canvas/mutations.ts that interprets user instructions and modifies canvas blocks
+Details: Canvas has a prompt bar UI but no backend interpretation of natural language instructions to modify blocks. Prompt bar submits to API but unclear if backend actually parses natural language instructions, determines block changes (add/remove/modify), and applies changes to canvas.
+Affected Systems: api, ui, pipeline
+","Fix DASH-007: AI Canvas Edit (prompt bar) has no instruction interpretation
+
+**Current State**: canvas-prompt-bar.tsx submits to api.knosia.canvas[':id'].edit.$post but backend logic for NL instruction parsing is unknown/missing
+
+**Desired State**: Implement NL instruction parser in packages/api/src/modules/knosia/canvas/mutations.ts that interprets user instructions and modifies canvas blocks
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/canvas/mutations.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-010,SUBTASK9,data-pipeline,Missing UVB to compiler integration bridge,high,4h,4,not_started,,,,"pipeline, database, vocabulary",addition,UVB extraction works. createRegistry(semanticLayer) works IF you have SemanticLayer. Manual transformation and database insertion required.,Implement saveDetectedVocabulary() and generateSemanticLayer() functions to automate UVB → DB → SemanticLayer → Compiler flow,packages/api/src/modules/knosia/vocabulary/mutations.ts; packages/liquid-connect/src/semantic/generator.ts,"Domain: data-pipeline
+Issue: Missing UVB to compiler integration bridge
+Current: UVB extraction works. createRegistry(semanticLayer) works IF you have SemanticLayer. Manual transformation and database insertion required.
+Desired: Implement saveDetectedVocabulary() and generateSemanticLayer() functions to automate UVB → DB → SemanticLayer → Compiler flow
+Details: No saveDetectedVocabulary() function to persist UVB extraction to knosia_vocabulary_item table. No generateSemanticLayer() to transform for compiler.
+Affected Systems: pipeline, database, vocabulary
+","Fix PIPE-010: Missing UVB to compiler integration bridge
+
+**Current State**: UVB extraction works. createRegistry(semanticLayer) works IF you have SemanticLayer. Manual transformation and database insertion required.
+
+**Desired State**: Implement saveDetectedVocabulary() and generateSemanticLayer() functions to automate UVB → DB → SemanticLayer → Compiler flow
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/mutations.ts
+- packages/liquid-connect/src/semantic/generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-003,SUBTASK6,dashboard-architecture,DashboardSpec interface not defined in implementation,high,1d,8,not_started,,SUBTASK8,,"pipeline, ui",addition,DashboardSpec interface not found in packages/liquid-connect/src/dashboard/. Implementation uses direct CanvasBlock → LiquidSchema conversion.,"Create packages/liquid-connect/src/dashboard/types.ts with DashboardSpec and related interfaces (DashboardSection, DashboardKPI, DashboardChart)",packages/liquid-connect/src/dashboard/types.ts,"Domain: dashboard-architecture
+Issue: DashboardSpec interface not defined in implementation
+Current: DashboardSpec interface not found in packages/liquid-connect/src/dashboard/. Implementation uses direct CanvasBlock → LiquidSchema conversion.
+Desired: Create packages/liquid-connect/src/dashboard/types.ts with DashboardSpec and related interfaces (DashboardSection, DashboardKPI, DashboardChart)
+Details: Architecture defines DashboardSpec interface extensively (with businessType, title, sections, suggestedQuestions), but it doesn't exist anywhere in the codebase. Current implementation skips DashboardSpec entirely and goes directly from CanvasBlock to LiquidSchema via createMinimalSchema(). Can't generate dashboards from business type templates. No structured intermediate representation between business logic and UI rendering.
+Affected Systems: pipeline, ui
+Blocks: SUBTASK8
+","Fix DASH-003: DashboardSpec interface not defined in implementation
+
+**Current State**: DashboardSpec interface not found in packages/liquid-connect/src/dashboard/. Implementation uses direct CanvasBlock → LiquidSchema conversion.
+
+**Desired State**: Create packages/liquid-connect/src/dashboard/types.ts with DashboardSpec and related interfaces (DashboardSection, DashboardKPI, DashboardChart)
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/types.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+PIPE-011,SUBTASK9,data-pipeline,Missing query results to UI schema integration,high,1d,8,not_started,,,,"pipeline, ui",addition,Executor returns QueryResult. LiquidUI can render IF you have LiquidSchema. Manual LiquidSchema construction required.,Implement generateChartSchema() and dashboardSpecToLiquidSchema() to automate QueryResult → LiquidSchema flow,packages/liquid-render/src/dashboard/schema-generator.ts,"Domain: data-pipeline
+Issue: Missing query results to UI schema integration
+Current: Executor returns QueryResult. LiquidUI can render IF you have LiquidSchema. Manual LiquidSchema construction required.
+Desired: Implement generateChartSchema() and dashboardSpecToLiquidSchema() to automate QueryResult → LiquidSchema flow
+Details: No generateChartSchema() helper to analyze QueryResult shape. No dashboardSpecToLiquidSchema() function to create full schema for rendering.
+Affected Systems: pipeline, ui
+","Fix PIPE-011: Missing query results to UI schema integration
+
+**Current State**: Executor returns QueryResult. LiquidUI can render IF you have LiquidSchema. Manual LiquidSchema construction required.
+
+**Desired State**: Implement generateChartSchema() and dashboardSpecToLiquidSchema() to automate QueryResult → LiquidSchema flow
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-render/src/dashboard/schema-generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-005,SUBTASK6,dashboard-architecture,Home/Briefing page module not implemented,high,2d,16,not_started,,,SUBTASK8,ui,addition,apps/web/src/modules/knosia/home/ directory does not exist. No home/briefing page route.,"Create home module with KPI grid using existing canvas blocks (hero-metric, etc.) at apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx",apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx; apps/web/src/modules/knosia/home/components/kpi-grid.tsx; apps/web/src/modules/knosia/home/components/insights-panel.tsx,"Domain: dashboard-architecture
+Issue: Home/Briefing page module not implemented
+Current: apps/web/src/modules/knosia/home/ directory does not exist. No home/briefing page route.
+Desired: Create home module with KPI grid using existing canvas blocks (hero-metric, etc.) at apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx
+Details: Architecture extensively documents a Home/Briefing page with KPI cards and dashboard, but the module doesn't exist. No dashboard landing page after onboarding. Users can't see their personalized briefing.
+Affected Systems: ui
+Blocked By: SUBTASK8
+","Fix DASH-005: Home/Briefing page module not implemented
+
+**Current State**: apps/web/src/modules/knosia/home/ directory does not exist. No home/briefing page route.
+
+**Desired State**: Create home module with KPI grid using existing canvas blocks (hero-metric, etc.) at apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx
+- apps/web/src/modules/knosia/home/components/kpi-grid.tsx
+- apps/web/src/modules/knosia/home/components/insights-panel.tsx
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-004,SUBTASK6,dashboard-architecture,"Canvas implementation uses minimal schemas, not full pipeline",high,1w,40,completed,,,,"pipeline, vocabulary",doc_update,"Implementation uses createMinimalSchema() function that directly creates LiquidSchema with minimal fields, bypassing the documented 7-step pipeline",Document as 'Phase 1: Direct Binding' vs 'Phase 2: Full Pipeline' and keep both approaches. Full pipeline implementation for advanced features.,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx,"Domain: dashboard-architecture
+Issue: Canvas implementation uses minimal schemas, not full pipeline
+Current: Implementation uses createMinimalSchema() function that directly creates LiquidSchema with minimal fields, bypassing the documented 7-step pipeline
+Desired: Document as 'Phase 1: Direct Binding' vs 'Phase 2: Full Pipeline' and keep both approaches. Full pipeline implementation for advanced features.
+Details: Architecture docs describe a 7-step pipeline from Query to UI (NL Query Engine → Compiler → Resolver → SQL Emitter → Executor → Schema Generation → LiquidUI rendering), but actual implementation uses a simplified createMinimalSchema() approach that bypasses most steps. This bypasses semantic layer, query compilation, and vocabulary resolution, limiting to simple field bindings. This works for basic charts but limits advanced features.
+Affected Systems: pipeline, vocabulary
+","Fix DASH-004: Canvas implementation uses minimal schemas, not full pipeline
+
+**Current State**: Implementation uses createMinimalSchema() function that directly creates LiquidSchema with minimal fields, bypassing the documented 7-step pipeline
+
+**Desired State**: Document as 'Phase 1: Direct Binding' vs 'Phase 2: Full Pipeline' and keep both approaches. Full pipeline implementation for advanced features.
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-002,SUBTASK1,database-schema,Proposed tables that don't exist and aren't needed,medium,15min,0.25,completed,,,,"database, docs",doc_update,"Document proposes knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer as new tables, but Canvas system (knosiaCanvas + knosiaCanvasBlock) and Workspace.compiledVocabulary JSONB already handle these use cases",Remove these 3 tables from 'new tables' section and document existing Canvas + compiledVocabulary solutions instead,.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: database-schema
+Issue: Proposed tables that don't exist and aren't needed
+Current: Document proposes knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer as new tables, but Canvas system (knosiaCanvas + knosiaCanvasBlock) and Workspace.compiledVocabulary JSONB already handle these use cases
+Desired: Remove these 3 tables from 'new tables' section and document existing Canvas + compiledVocabulary solutions instead
+Details: Project structure doc proposes 3 new tables (knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer) that don't exist in schema and are superseded by existing solutions
+Affected Systems: database, docs
+","Fix DB-002: Proposed tables that don't exist and aren't needed
+
+**Current State**: Document proposes knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer as new tables, but Canvas system (knosiaCanvas + knosiaCanvasBlock) and Workspace.compiledVocabulary JSONB already handle these use cases
+
+**Desired State**: Remove these 3 tables from 'new tables' section and document existing Canvas + compiledVocabulary solutions instead
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+FILE-002,SUBTASK3,file-locations,GLUE 2 module name inconsistency,medium,15min,0.25,completed,,,,vocabulary,doc_update,"Blueprint says from-vocabulary.ts, project structure says generator.ts, consolidated doc doesn't specify filename","Standardize on generator.ts (more descriptive, matches dashboard/generator.ts pattern, consistent with project structure)",packages/liquid-connect/src/semantic/generator.ts,"Domain: file-locations
+Issue: GLUE 2 module name inconsistency
+Current: Blueprint says from-vocabulary.ts, project structure says generator.ts, consolidated doc doesn't specify filename
+Desired: Standardize on generator.ts (more descriptive, matches dashboard/generator.ts pattern, consistent with project structure)
+Details: GLUE 2 (ResolvedVocabulary → SemanticLayer) has inconsistent module paths across documents
+Affected Systems: vocabulary
+","Fix FILE-002: GLUE 2 module name inconsistency
+
+**Current State**: Blueprint says from-vocabulary.ts, project structure says generator.ts, consolidated doc doesn't specify filename
+
+**Desired State**: Standardize on generator.ts (more descriptive, matches dashboard/generator.ts pattern, consistent with project structure)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/liquid-connect/src/semantic/generator.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+FILE-004,SUBTASK3,file-locations,Dashboard module path documentation gap,medium,15min,0.25,completed,,,,"ui, docs",doc_update,Dashboard files split between packages without clear explanation of why (liquid-connect/dashboard/generator.ts and liquid-render/dashboard/schema-generator.ts),"Add clarification to consolidated doc explaining the split: GLUE 3C (liquid-connect) creates DashboardSpec, GLUE 4 (liquid-render) converts to LiquidSchema",packages/liquid-connect/src/dashboard/generator.ts; packages/liquid-render/src/dashboard/schema-generator.ts,"Domain: file-locations
+Issue: Dashboard module path documentation gap
+Current: Dashboard files split between packages without clear explanation of why (liquid-connect/dashboard/generator.ts and liquid-render/dashboard/schema-generator.ts)
+Desired: Add clarification to consolidated doc explaining the split: GLUE 3C (liquid-connect) creates DashboardSpec, GLUE 4 (liquid-render) converts to LiquidSchema
+Details: Dashboard generation split across liquid-connect and liquid-render is correct but could be clearer in documentation
+Affected Systems: ui, docs
+","Fix FILE-004: Dashboard module path documentation gap
+
+**Current State**: Dashboard files split between packages without clear explanation of why (liquid-connect/dashboard/generator.ts and liquid-render/dashboard/schema-generator.ts)
+
+**Desired State**: Add clarification to consolidated doc explaining the split: GLUE 3C (liquid-connect) creates DashboardSpec, GLUE 4 (liquid-render) converts to LiquidSchema
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/generator.ts
+- packages/liquid-render/src/dashboard/schema-generator.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-007,SUBTASK5,glue-functions,File location inconsistencies for saveDetectedVocabulary,medium,15min,0.25,not_started,,,,api,addition,Modify packages/api/.../vocabulary/mutations.ts,Create packages/api/.../vocabulary/from-detected.ts,packages/api/src/modules/knosia/vocabulary/from-detected.ts,"Domain: glue-functions
+Issue: File location inconsistencies for saveDetectedVocabulary
+Current: Modify packages/api/.../vocabulary/mutations.ts
+Desired: Create packages/api/.../vocabulary/from-detected.ts
+Details: Doc 1500/1600 modifies existing mutations.ts, while doc 1800 creates new from-detected.ts file
+Affected Systems: api
+","Fix GLUE-007: File location inconsistencies for saveDetectedVocabulary
+
+**Current State**: Modify packages/api/.../vocabulary/mutations.ts
+
+**Desired State**: Create packages/api/.../vocabulary/from-detected.ts
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/from-detected.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+GLUE-008,SUBTASK5,glue-functions,File location inconsistencies for generateSemanticLayer,medium,15min,0.25,not_started,,,,vocabulary,addition,packages/liquid-connect/.../uvb/semantic-generator.ts,packages/liquid-connect/.../semantic/from-vocabulary.ts,packages/liquid-connect/src/semantic/from-vocabulary.ts,"Domain: glue-functions
+Issue: File location inconsistencies for generateSemanticLayer
+Current: packages/liquid-connect/.../uvb/semantic-generator.ts
+Desired: packages/liquid-connect/.../semantic/from-vocabulary.ts
+Details: Doc 1500/1600 uses uvb/semantic-generator.ts, while doc 1800 uses semantic/from-vocabulary.ts
+Affected Systems: vocabulary
+","Fix GLUE-008: File location inconsistencies for generateSemanticLayer
+
+**Current State**: packages/liquid-connect/.../uvb/semantic-generator.ts
+
+**Desired State**: packages/liquid-connect/.../semantic/from-vocabulary.ts
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/semantic/from-vocabulary.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+OB-003,SUBTASK7,onboarding-flow,Consolidated implementation shows different flow than project structure,medium,15min,0.25,completed,,,,docs,doc_update,Multiple flow variations across documentation files,Clarify whether 'summary' step exists and standardize documentation to single canonical flow,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: onboarding-flow
+Issue: Consolidated implementation shows different flow than project structure
+Current: Multiple flow variations across documentation files
+Desired: Clarify whether 'summary' step exists and standardize documentation to single canonical flow
+Details: Consolidated implementation doc shows: connect → analysis → review → dashboard. Project structure doc shows: connect → analysis → review → summary → ready.
+Affected Systems: docs
+","Fix OB-003: Consolidated implementation shows different flow than project structure
+
+**Current State**: Multiple flow variations across documentation files
+
+**Desired State**: Clarify whether 'summary' step exists and standardize documentation to single canonical flow
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+BIZ-007,SUBTASK8,business-type-detection,V1/V2 Implementation Scope Not Documented,medium,15min,0.25,completed,,,,docs,doc_update,Platform architecture: 5 types. Glue blueprint: 9 types. No explicit V1/V2 split documented across all 5 architecture documents,"All documents updated with explicit V1 scope (saas, ecommerce, marketplace, custom) and V2 roadmap (fintech, healthcare, edtech, media, logistics)",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: business-type-detection
+Issue: V1/V2 Implementation Scope Not Documented
+Current: Platform architecture: 5 types. Glue blueprint: 9 types. No explicit V1/V2 split documented across all 5 architecture documents
+Desired: All documents updated with explicit V1 scope (saas, ecommerce, marketplace, custom) and V2 roadmap (fintech, healthcare, edtech, media, logistics)
+Details: Documents define different business type sets but don't clearly split what's V1 vs V2 roadmap, causing scope ambiguity.
+Affected Systems: docs
+","Fix BIZ-007: V1/V2 Implementation Scope Not Documented
+
+**Current State**: Platform architecture: 5 types. Glue blueprint: 9 types. No explicit V1/V2 split documented across all 5 architecture documents
+
+**Desired State**: All documents updated with explicit V1 scope (saas, ecommerce, marketplace, custom) and V2 roadmap (fintech, healthcare, edtech, media, logistics)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+PIPE-005,SUBTASK9,data-pipeline,UVB not exported from main package index,medium,15min,0.25,completed,,,,"api, pipeline",doc_update,UVB has its own index.ts with full exports BUT packages/liquid-connect/src/index.ts does NOT re-export UVB,Either document subpath import pattern (@repo/liquid-connect/uvb) in architecture docs OR add UVB to main index.ts exports,packages/liquid-connect/src/index.ts; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: data-pipeline
+Issue: UVB not exported from main package index
+Current: UVB has its own index.ts with full exports BUT packages/liquid-connect/src/index.ts does NOT re-export UVB
+Desired: Either document subpath import pattern (@repo/liquid-connect/uvb) in architecture docs OR add UVB to main index.ts exports
+Details: UVB is fully implemented but treated as internal-only. Main index.ts doesn't expose UVB exports at package root, requiring subpath imports.
+Affected Systems: api, pipeline
+","Fix PIPE-005: UVB not exported from main package index
+
+**Current State**: UVB has its own index.ts with full exports BUT packages/liquid-connect/src/index.ts does NOT re-export UVB
+
+**Desired State**: Either document subpath import pattern (@repo/liquid-connect/uvb) in architecture docs OR add UVB to main index.ts exports
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/liquid-connect/src/index.ts
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-003,SUBTASK10,implementation-phases,No explicit P0/P1/P2 priority labels,medium,15min,0.25,completed,,,,docs,doc_update,"No explicit P0/P1/P2 labels in any document, only sequential phase numbering (0-4)","Add explicit priority labels to phases: Phase 0-1 (P0), Phase 2-3 (P1), Phase 4 (P2)",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: No explicit P0/P1/P2 priority labels
+Current: No explicit P0/P1/P2 labels in any document, only sequential phase numbering (0-4)
+Desired: Add explicit priority labels to phases: Phase 0-1 (P0), Phase 2-3 (P1), Phase 4 (P2)
+Details: Analysis prompt expects P0/P1/P2 priority assignments, but no document uses this system. Phase order in 1600 implies priority (Phase 0-1 = P0, Phase 2-3 = P1, Phase 4 = P2) but not explicitly labeled.
+Affected Systems: docs
+","Fix IMPL-003: No explicit P0/P1/P2 priority labels
+
+**Current State**: No explicit P0/P1/P2 labels in any document, only sequential phase numbering (0-4)
+
+**Desired State**: Add explicit priority labels to phases: Phase 0-1 (P0), Phase 2-3 (P1), Phase 4 (P2)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-005,SUBTASK1,database-schema,Table rename not reflected: Conversation → Thread,medium,30min,0.5,completed,,,,"database, docs, ui",doc_update,"Schema uses knosiaThread and knosiaThreadMessage (lines 664-733) with comment 'renamed from Conversations', but UX docs still say 'Conversation'","Global find/replace: 'Conversation' → 'Thread', 'knosiaConversation' → 'knosiaThread', 'knosiaConversationMessage' → 'knosiaThreadMessage' across all .artifacts/",.artifacts/2026-01-02-1535-knosia-ux-journeys.md,"Domain: database-schema
+Issue: Table rename not reflected: Conversation → Thread
+Current: Schema uses knosiaThread and knosiaThreadMessage (lines 664-733) with comment 'renamed from Conversations', but UX docs still say 'Conversation'
+Desired: Global find/replace: 'Conversation' → 'Thread', 'knosiaConversation' → 'knosiaThread', 'knosiaConversationMessage' → 'knosiaThreadMessage' across all .artifacts/
+Details: Schema renamed knosiaConversation to knosiaThread but UX documents still use old 'Conversation' terminology
+Affected Systems: database, docs, ui
+","Fix DB-005: Table rename not reflected: Conversation → Thread
+
+**Current State**: Schema uses knosiaThread and knosiaThreadMessage (lines 664-733) with comment 'renamed from Conversations', but UX docs still say 'Conversation'
+
+**Desired State**: Global find/replace: 'Conversation' → 'Thread', 'knosiaConversation' → 'knosiaThread', 'knosiaConversationMessage' → 'knosiaThreadMessage' across all .artifacts/
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-007,SUBTASK1,database-schema,Collaboration tables missing from documentation,medium,30min,0.5,completed,,,,"database, docs",doc_update,"knosiaComment and knosiaActivity tables exist (lines 912-950) supporting multi-user workflows, but docs don't mention them","Add Collaboration section to architecture docs listing these tables, include in 'What's Already Built' sections as part of V1 foundation",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: database-schema
+Issue: Collaboration tables missing from documentation
+Current: knosiaComment and knosiaActivity tables exist (lines 912-950) supporting multi-user workflows, but docs don't mention them
+Desired: Add Collaboration section to architecture docs listing these tables, include in 'What's Already Built' sections as part of V1 foundation
+Details: Collaboration system tables (knosiaComment, knosiaActivity) exist in schema but are not mentioned in architecture docs
+Affected Systems: database, docs
+","Fix DB-007: Collaboration tables missing from documentation
+
+**Current State**: knosiaComment and knosiaActivity tables exist (lines 912-950) supporting multi-user workflows, but docs don't mention them
+
+**Desired State**: Add Collaboration section to architecture docs listing these tables, include in 'What's Already Built' sections as part of V1 foundation
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DB-008,SUBTASK1,database-schema,Notification system tables missing from documentation,medium,30min,0.5,completed,,,,"database, docs",doc_update,"knosiaNotification, knosiaDigest, knosiaAiInsight tables exist (lines 959-1039) supporting features described in UX Journeys, but missing from implementation status tables","Add Notification System section to architecture docs, list these tables as supporting alerts, briefings, and AI insights features",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: database-schema
+Issue: Notification system tables missing from documentation
+Current: knosiaNotification, knosiaDigest, knosiaAiInsight tables exist (lines 959-1039) supporting features described in UX Journeys, but missing from implementation status tables
+Desired: Add Notification System section to architecture docs, list these tables as supporting alerts, briefings, and AI insights features
+Details: Notification system tables (knosiaNotification, knosiaDigest, knosiaAiInsight) are implemented but not documented in architecture
+Affected Systems: database, docs
+","Fix DB-008: Notification system tables missing from documentation
+
+**Current State**: knosiaNotification, knosiaDigest, knosiaAiInsight tables exist (lines 959-1039) supporting features described in UX Journeys, but missing from implementation status tables
+
+**Desired State**: Add Notification System section to architecture docs, list these tables as supporting alerts, briefings, and AI insights features
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+FILE-006,SUBTASK3,file-locations,Web routes ambiguity,medium,30min,0.5,completed,,,,"ui, docs",doc_update,"Project structure shows /dashboard/[org]/home but UX journeys show /home, creating conflict between org-scoped and global routes","Use org-scoped routes (/dashboard/[org]/home, /dashboard/[org]/canvas, etc.) and update UX journeys to reflect actual routes",apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx; apps/web/src/app/[locale]/dashboard/[org]/canvas/page.tsx; apps/web/src/app/[locale]/dashboard/[org]/threads/page.tsx; apps/web/src/app/[locale]/dashboard/[org]/vocabulary/page.tsx,"Domain: file-locations
+Issue: Web routes ambiguity
+Current: Project structure shows /dashboard/[org]/home but UX journeys show /home, creating conflict between org-scoped and global routes
+Desired: Use org-scoped routes (/dashboard/[org]/home, /dashboard/[org]/canvas, etc.) and update UX journeys to reflect actual routes
+Details: Web app routes for Knosia features have unclear structure - org-scoped vs global routes
+Affected Systems: ui, docs
+","Fix FILE-006: Web routes ambiguity
+
+**Current State**: Project structure shows /dashboard/[org]/home but UX journeys show /home, creating conflict between org-scoped and global routes
+
+**Desired State**: Use org-scoped routes (/dashboard/[org]/home, /dashboard/[org]/canvas, etc.) and update UX journeys to reflect actual routes
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- apps/web/src/app/[locale]/dashboard/[org]/home/page.tsx
+- apps/web/src/app/[locale]/dashboard/[org]/canvas/page.tsx
+- apps/web/src/app/[locale]/dashboard/[org]/threads/page.tsx
+- apps/web/src/app/[locale]/dashboard/[org]/vocabulary/page.tsx
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-009,SUBTASK5,glue-functions,Missing MappingResult interface,medium,30min,0.5,not_started,,,,"api, pipeline",addition,No MappingResult interface defined,"MappingResult interface with businessType, template, mappedKPIs, unmappedKPIs, coverage fields",packages/liquid-connect/src/dashboard/types.ts,"Domain: glue-functions
+Issue: Missing MappingResult interface
+Current: No MappingResult interface defined
+Desired: MappingResult interface with businessType, template, mappedKPIs, unmappedKPIs, coverage fields
+Details: Docs 1500/1600 have no explicit MappingResult interface (mapping done inside generateDashboardSpec), while doc 1800 defines explicit interface returned by mapToTemplate
+Affected Systems: api, pipeline
+","Fix GLUE-009: Missing MappingResult interface
+
+**Current State**: No MappingResult interface defined
+
+**Desired State**: MappingResult interface with businessType, template, mappedKPIs, unmappedKPIs, coverage fields
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/dashboard/types.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+OB-010,SUBTASK7,onboarding-flow,Analysis component directory mentioned but may not exist,medium,30min,0.5,not_started,,,,"ui, docs",removal,"Documentation shows: web/src/modules/onboarding/components/analysis/ directory. Glob results showed: connect, review, role, confirm, ready components.",Verify component directory existence and remove from docs if not used,.artifacts/2026-01-02-1700-knosia-project-structure.md; apps/web/src/modules/onboarding/components/,"Domain: onboarding-flow
+Issue: Analysis component directory mentioned but may not exist
+Current: Documentation shows: web/src/modules/onboarding/components/analysis/ directory. Glob results showed: connect, review, role, confirm, ready components.
+Desired: Verify component directory existence and remove from docs if not used
+Details: Project structure doc shows analysis/ component directory, but implementation doesn't route to it. This could be dead code or documentation debt.
+Affected Systems: ui, docs
+","Fix OB-010: Analysis component directory mentioned but may not exist
+
+**Current State**: Documentation shows: web/src/modules/onboarding/components/analysis/ directory. Glob results showed: connect, review, role, confirm, ready components.
+
+**Desired State**: Verify component directory existence and remove from docs if not used
+
+**Fix Type**: removal
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- apps/web/src/modules/onboarding/components/
+
+**Steps**:
+1. Analyze current implementation
+2. Make required changes
+3. Verify against desired state
+",,,
+BIZ-001,SUBTASK8,business-type-detection,Business Type Enumeration Mismatch,medium,30min,0.5,completed,,,,"database, api, ui",doc_update,"Platform architecture: 5 types (saas|ecommerce|marketplace|fintech|custom), Glue blueprint: 9 types (adds healthcare|edtech|media|logistics), Project structure: 3 templates (saas, ecommerce, marketplace) + generic","Canonical list: 9 types total. V1 implementation: saas, ecommerce, marketplace, custom. V2 roadmap: fintech, healthcare, edtech, media, logistics",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; packages/liquid-connect/src/business-types/types.ts,"Domain: business-type-detection
+Issue: Business Type Enumeration Mismatch
+Current: Platform architecture: 5 types (saas|ecommerce|marketplace|fintech|custom), Glue blueprint: 9 types (adds healthcare|edtech|media|logistics), Project structure: 3 templates (saas, ecommerce, marketplace) + generic
+Desired: Canonical list: 9 types total. V1 implementation: saas, ecommerce, marketplace, custom. V2 roadmap: fintech, healthcare, edtech, media, logistics
+Details: knosia-platform-architecture defines 5 business types while knosia-glue-implementation-blueprint defines 9 types (adds healthcare, edtech, media, logistics). Project structure only mentions 3 specific templates plus generic.
+Affected Systems: database, api, ui
+","Fix BIZ-001: Business Type Enumeration Mismatch
+
+**Current State**: Platform architecture: 5 types (saas|ecommerce|marketplace|fintech|custom), Glue blueprint: 9 types (adds healthcare|edtech|media|logistics), Project structure: 3 templates (saas, ecommerce, marketplace) + generic
+
+**Desired State**: Canonical list: 9 types total. V1 implementation: saas, ecommerce, marketplace, custom. V2 roadmap: fintech, healthcare, edtech, media, logistics
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- packages/liquid-connect/src/business-types/types.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+BIZ-004,SUBTASK8,business-type-detection,Template Structure Definition Gaps,medium,30min,0.5,completed,,,,"api, pipeline",doc_update,"Platform architecture: no template schema. Glue blueprint lines 486-530: BusinessTypeTemplate interface with kpis, entities, dashboard, questions. Consolidated implementation lines 579-612: DashboardSpec (output format)",Use glue blueprint BusinessTypeTemplate as canonical input structure. Ensure clear distinction: BusinessTypeTemplate (input/catalog) vs DashboardSpec (output/generated),.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; packages/liquid-connect/src/business-types/types.ts,"Domain: business-type-detection
+Issue: Template Structure Definition Gaps
+Current: Platform architecture: no template schema. Glue blueprint lines 486-530: BusinessTypeTemplate interface with kpis, entities, dashboard, questions. Consolidated implementation lines 579-612: DashboardSpec (output format)
+Desired: Use glue blueprint BusinessTypeTemplate as canonical input structure. Ensure clear distinction: BusinessTypeTemplate (input/catalog) vs DashboardSpec (output/generated)
+Details: Platform architecture has no template structure definition. Glue blueprint defines complete BusinessTypeTemplate interface. Consolidated implementation defines DashboardSpec which is output not input.
+Affected Systems: api, pipeline
+","Fix BIZ-004: Template Structure Definition Gaps
+
+**Current State**: Platform architecture: no template schema. Glue blueprint lines 486-530: BusinessTypeTemplate interface with kpis, entities, dashboard, questions. Consolidated implementation lines 579-612: DashboardSpec (output format)
+
+**Desired State**: Use glue blueprint BusinessTypeTemplate as canonical input structure. Ensure clear distinction: BusinessTypeTemplate (input/catalog) vs DashboardSpec (output/generated)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- packages/liquid-connect/src/business-types/types.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+PIPE-013,SUBTASK9,data-pipeline,Inconsistent BusinessType enum values across docs,medium,30min,0.5,completed,,,,"pipeline, docs",doc_update,Inconsistent business type taxonomy across documents. Need canonical list before implementation.,Establish canonical BusinessType enum and update all docs to use consistent values,.artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md; .artifacts/2026-01-02-1500-knosia-platform-architecture.md,"Domain: data-pipeline
+Issue: Inconsistent BusinessType enum values across docs
+Current: Inconsistent business type taxonomy across documents. Need canonical list before implementation.
+Desired: Establish canonical BusinessType enum and update all docs to use consistent values
+Details: Blueprint lists BusinessType values: 'saas' | 'ecommerce' | 'marketplace' | 'financial' | 'healthcare' | 'education' | 'generic'. Some docs mention additional types: 'b2b_saas' | 'consumer_app' | 'analytics_platform'.
+Affected Systems: pipeline, docs
+","Fix PIPE-013: Inconsistent BusinessType enum values across docs
+
+**Current State**: Inconsistent business type taxonomy across documents. Need canonical list before implementation.
+
+**Desired State**: Establish canonical BusinessType enum and update all docs to use consistent values
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-002,SUBTASK10,implementation-phases,Conversation module scope unclear,medium,30min,0.5,completed,,,,"docs, ui",doc_update,"UX spec exists for Conversation UI, implementation plan (1600) excludes it from Phase 0-4, file structure (1700) lists it as NEW (~10 files)","Clear decision: Either add Conversation UI to Phase 4, move to Phase 5 (post-MVP), or remove from 1700 new file list",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: implementation-phases
+Issue: Conversation module scope unclear
+Current: UX spec exists for Conversation UI, implementation plan (1600) excludes it from Phase 0-4, file structure (1700) lists it as NEW (~10 files)
+Desired: Clear decision: Either add Conversation UI to Phase 4, move to Phase 5 (post-MVP), or remove from 1700 new file list
+Details: UX spec (1535) includes full conversation UX, implementation plan (1600) excludes it from phases, but file structure (1700) includes it as NEW module. Conflicting signals on whether Conversation UI is in scope for MVP or future work.
+Affected Systems: docs, ui
+","Fix IMPL-002: Conversation module scope unclear
+
+**Current State**: UX spec exists for Conversation UI, implementation plan (1600) excludes it from Phase 0-4, file structure (1700) lists it as NEW (~10 files)
+
+**Desired State**: Clear decision: Either add Conversation UI to Phase 4, move to Phase 5 (post-MVP), or remove from 1700 new file list
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+API-009,SUBTASK2,api-structure,Module naming mismatch: conversation vs thread,medium,1h,1,completed,,,,"api, database, docs, ui",doc_update,Implementation: packages/api/src/modules/knosia/thread/ with router mount at /thread. Documentation: references conversation/ module. Database: knosia_conversation table.,Update all documentation to use 'thread' consistently (renaming module would be breaking change),.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: Module naming mismatch: conversation vs thread
+Current: Implementation: packages/api/src/modules/knosia/thread/ with router mount at /thread. Documentation: references conversation/ module. Database: knosia_conversation table.
+Desired: Update all documentation to use 'thread' consistently (renaming module would be breaking change)
+Details: Documentation refers to 'conversation' module but actual implementation uses 'thread'. API endpoint is /thread not /conversation. Database tables use 'conversation' naming. This creates confusion across the stack.
+Affected Systems: api, database, docs, ui
+","Fix API-009: Module naming mismatch: conversation vs thread
+
+**Current State**: Implementation: packages/api/src/modules/knosia/thread/ with router mount at /thread. Documentation: references conversation/ module. Database: knosia_conversation table.
+
+**Desired State**: Update all documentation to use 'thread' consistently (renaming module would be breaking change)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-003,SUBTASK5,glue-functions,saveDetectedVocabulary signature mismatch,medium,1h,1,not_started,,,,"api, vocabulary",api_update,"saveDetectedVocabulary(detected, orgId, workspaceId, { promoteToOrg?: string[] }) → Promise<void>","saveDetectedVocabulary(detected, orgId, workspaceId, { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean }) → Promise<SaveDetectedVocabularyResult>",packages/api/src/modules/knosia/vocabulary/from-detected.ts,"Domain: glue-functions
+Issue: saveDetectedVocabulary signature mismatch
+Current: saveDetectedVocabulary(detected, orgId, workspaceId, { promoteToOrg?: string[] }) → Promise<void>
+Desired: saveDetectedVocabulary(detected, orgId, workspaceId, { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean }) → Promise<SaveDetectedVocabularyResult>
+Details: Function signature differs between docs: 1500/1600 use options { promoteToOrg?: string[] } returning void, while 1800 uses options { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean } returning structured result
+Affected Systems: api, vocabulary
+","Fix GLUE-003: saveDetectedVocabulary signature mismatch
+
+**Current State**: saveDetectedVocabulary(detected, orgId, workspaceId, { promoteToOrg?: string[] }) → Promise<void>
+
+**Desired State**: saveDetectedVocabulary(detected, orgId, workspaceId, { promoteHighCertaintyToOrg?: boolean, certaintyThreshold?: number, skipExisting?: boolean }) → Promise<SaveDetectedVocabularyResult>
+
+**Fix Type**: api_update
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/from-detected.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+GLUE-013,SUBTASK5,glue-functions,"Missing options interfaces (SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions)",medium,1h,1,not_started,,,,"api, vocabulary",addition,No formal options interfaces defined,"Define SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions, PipelineOptions, and PipelineResult interfaces",packages/api/src/modules/knosia/vocabulary/types.ts; packages/liquid-connect/src/semantic/types.ts; packages/api/src/modules/knosia/pipeline/types.ts,"Domain: glue-functions
+Issue: Missing options interfaces (SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions)
+Current: No formal options interfaces defined
+Desired: Define SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions, PipelineOptions, and PipelineResult interfaces
+Details: Early docs lack formal option interfaces for configuration flexibility
+Affected Systems: api, vocabulary
+","Fix GLUE-013: Missing options interfaces (SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions)
+
+**Current State**: No formal options interfaces defined
+
+**Desired State**: Define SaveDetectedVocabularyOptions, GenerateSemanticLayerOptions, PipelineOptions, and PipelineResult interfaces
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/types.ts
+- packages/liquid-connect/src/semantic/types.ts
+- packages/api/src/modules/knosia/pipeline/types.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-010,SUBTASK6,dashboard-architecture,BLOCK_TYPE_TO_LIQUID_TYPE mapping undocumented,medium,1h,1,completed,,,,docs,doc_update,BLOCK_TYPE_TO_LIQUID_TYPE mapping exists in liquid-render-block.tsx:26-120 with 77 mappings but no documentation explaining delegation pattern,Add section to project structure doc explaining delegation pattern and how to extend block type mappings,.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: dashboard-architecture
+Issue: BLOCK_TYPE_TO_LIQUID_TYPE mapping undocumented
+Current: BLOCK_TYPE_TO_LIQUID_TYPE mapping exists in liquid-render-block.tsx:26-120 with 77 mappings but no documentation explaining delegation pattern
+Desired: Add section to project structure doc explaining delegation pattern and how to extend block type mappings
+Details: Implementation has a comprehensive 120-line mapping from block types to LiquidRender component types (77 mappings), but this isn't documented in architecture. Developers won't know when to add native blocks vs use LiquidRender, or how to add new chart types.
+Affected Systems: docs
+","Fix DASH-010: BLOCK_TYPE_TO_LIQUID_TYPE mapping undocumented
+
+**Current State**: BLOCK_TYPE_TO_LIQUID_TYPE mapping exists in liquid-render-block.tsx:26-120 with 77 mappings but no documentation explaining delegation pattern
+
+**Desired State**: Add section to project structure doc explaining delegation pattern and how to extend block type mappings
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+OB-007,SUBTASK7,onboarding-flow,Summary route mentioned but not in implementation,medium,1h,1,completed,,,,"ui, docs",doc_update,Project structure shows 'summary/' as NEW STEP but no 'summary' step in stepMap,Clarify if summary step should be implemented or documentation should be updated,.artifacts/2026-01-02-1700-knosia-project-structure.md; apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts,"Domain: onboarding-flow
+Issue: Summary route mentioned but not in implementation
+Current: Project structure shows 'summary/' as NEW STEP but no 'summary' step in stepMap
+Desired: Clarify if summary step should be implemented or documentation should be updated
+Details: Project structure doc mentions a 'summary' component as a NEW STEP, but it's not in the step map or any other documentation.
+Affected Systems: ui, docs
+","Fix OB-007: Summary route mentioned but not in implementation
+
+**Current State**: Project structure shows 'summary/' as NEW STEP but no 'summary' step in stepMap
+
+**Desired State**: Clarify if summary step should be implemented or documentation should be updated
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- apps/web/src/modules/onboarding/hooks/use-onboarding-state.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+OB-012,SUBTASK7,onboarding-flow,Business type detection mentioned but location unclear,medium,1h,1,completed,,,,"ui, docs",doc_update,"Documentation shows business type detection ('Looks like a SaaS business!', 'Detected: subscriptions, customers, invoices') during ANALYZING step which doesn't exist. Unclear if review step performs this or if it's backend only.",Clarify which step displays business type detection results,.artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: onboarding-flow
+Issue: Business type detection mentioned but location unclear
+Current: Documentation shows business type detection ('Looks like a SaaS business!', 'Detected: subscriptions, customers, invoices') during ANALYZING step which doesn't exist. Unclear if review step performs this or if it's backend only.
+Desired: Clarify which step displays business type detection results
+Details: Multiple docs mention business type detection (SaaS, e-commerce, etc.) happening during ANALYZING step, but unclear which step performs this detection since no analysis step exists in implementation.
+Affected Systems: ui, docs
+","Fix OB-012: Business type detection mentioned but location unclear
+
+**Current State**: Documentation shows business type detection ('Looks like a SaaS business!', 'Detected: subscriptions, customers, invoices') during ANALYZING step which doesn't exist. Unclear if review step performs this or if it's backend only.
+
+**Desired State**: Clarify which step displays business type detection results
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-010,SUBTASK5,glue-functions,Return type inconsistencies across functions,medium,2h,2,not_started,,,,"api, vocabulary, pipeline",api_update,Functions return void or minimal data,All functions return structured results with metadata for error handling and UI feedback,packages/api/src/modules/knosia/vocabulary/from-detected.ts; packages/liquid-connect/src/semantic/from-vocabulary.ts; packages/liquid-connect/src/business-types/detector.ts,"Domain: glue-functions
+Issue: Return type inconsistencies across functions
+Current: Functions return void or minimal data
+Desired: All functions return structured results with metadata for error handling and UI feedback
+Details: Multiple functions have different return types: saveDetectedVocabulary (void → structured result), generateSemanticLayer (async → sync), detectBusinessType (single match → array of matches)
+Affected Systems: api, vocabulary, pipeline
+","Fix GLUE-010: Return type inconsistencies across functions
+
+**Current State**: Functions return void or minimal data
+
+**Desired State**: All functions return structured results with metadata for error handling and UI feedback
+
+**Fix Type**: api_update
+
+**Files to Modify**:
+- packages/api/src/modules/knosia/vocabulary/from-detected.ts
+- packages/liquid-connect/src/semantic/from-vocabulary.ts
+- packages/liquid-connect/src/business-types/detector.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+OB-008,SUBTASK7,onboarding-flow,"Implementation has full multi-connection support, docs inconsistent",medium,2h,2,completed,,,,docs,doc_update,"Implementation has full multi-connection support with connectionIds[], addConnection(), removeConnection(), setPrimaryConnection(). Documentation only shows single connection flow.","Update UX journeys to include: 'Add Another Connection' flow after first connection, Connection summary screen showing all connections, Primary connection selection UI",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1535-knosia-ux-journeys.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: onboarding-flow
+Issue: Implementation has full multi-connection support, docs inconsistent
+Current: Implementation has full multi-connection support with connectionIds[], addConnection(), removeConnection(), setPrimaryConnection(). Documentation only shows single connection flow.
+Desired: Update UX journeys to include: 'Add Another Connection' flow after first connection, Connection summary screen showing all connections, Primary connection selection UI
+Details: Implementation has connectionIds array and multi-connection management functions (addConnection, removeConnection, setPrimaryConnection, primaryConnectionId tracking), but documentation doesn't consistently mention this capability.
+Affected Systems: docs
+","Fix OB-008: Implementation has full multi-connection support, docs inconsistent
+
+**Current State**: Implementation has full multi-connection support with connectionIds[], addConnection(), removeConnection(), setPrimaryConnection(). Documentation only shows single connection flow.
+
+**Desired State**: Update UX journeys to include: 'Add Another Connection' flow after first connection, Connection summary screen showing all connections, Primary connection selection UI
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+PIPE-009,SUBTASK9,data-pipeline,Type mismatch between DetectedVocabulary and SemanticLayer,medium,2h,2,not_started,,,,"pipeline, vocabulary",addition,UVB produces DetectedVocabulary. SemanticRegistry expects SemanticLayer. Bridge function does NOT exist.,PIPE-003 (generateSemanticLayer) implements transformation mapping DetectedEntity → EntityDefinition and DetectedMetric → MetricDefinition,packages/liquid-connect/src/semantic/generator.ts,"Domain: data-pipeline
+Issue: Type mismatch between DetectedVocabulary and SemanticLayer
+Current: UVB produces DetectedVocabulary. SemanticRegistry expects SemanticLayer. Bridge function does NOT exist.
+Desired: PIPE-003 (generateSemanticLayer) implements transformation mapping DetectedEntity → EntityDefinition and DetectedMetric → MetricDefinition
+Details: Shape mismatch between UVB output (DetectedEntity with tableName, schema, primaryKey, columns[]) and SemanticLayer input (EntityDefinition with name, source, primaryKey, fields[], relationships[]). Requires mapping layer.
+Affected Systems: pipeline, vocabulary
+","Fix PIPE-009: Type mismatch between DetectedVocabulary and SemanticLayer
+
+**Current State**: UVB produces DetectedVocabulary. SemanticRegistry expects SemanticLayer. Bridge function does NOT exist.
+
+**Desired State**: PIPE-003 (generateSemanticLayer) implements transformation mapping DetectedEntity → EntityDefinition and DetectedMetric → MetricDefinition
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/semantic/generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+API-011,SUBTASK2,api-structure,Wrong package location for semantic/dashboard modules,medium,4h,4,not_started,,,,"api, pipeline",refactor,Documentation proposes packages/api/src/modules/knosia/semantic/ and dashboard/,"If implementing as data transformation, move to packages/liquid-connect/src/ and update all documentation accordingly",.artifacts/2026-01-02-1700-knosia-project-structure.md; .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: api-structure
+Issue: Wrong package location for semantic/dashboard modules
+Current: Documentation proposes packages/api/src/modules/knosia/semantic/ and dashboard/
+Desired: If implementing as data transformation, move to packages/liquid-connect/src/ and update all documentation accordingly
+Details: Documentation places semantic/ and dashboard/ in API layer but these are data transformation logic that should belong in liquid-connect package.
+Affected Systems: api, pipeline
+","Fix API-011: Wrong package location for semantic/dashboard modules
+
+**Current State**: Documentation proposes packages/api/src/modules/knosia/semantic/ and dashboard/
+
+**Desired State**: If implementing as data transformation, move to packages/liquid-connect/src/ and update all documentation accordingly
+
+**Fix Type**: refactor
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Analyze current implementation
+2. Make required changes
+3. Verify against desired state
+",,,
+BIZ-006,SUBTASK8,business-type-detection,KPIDefinition Formula Template Specification,medium,4h,4,not_started,,SUBTASK9,,pipeline,addition,"Glue blueprint lines 363-383: KPIDefinition interface with formula.template and SlotMapping interface defined, but no concrete examples of pattern matching logic","Create reference saas.ts template with complete KPIDefinition examples showing: formula templates, slot mappings, pattern regexes, and mapping algorithm",packages/liquid-connect/src/business-types/templates/saas.ts; packages/liquid-connect/src/business-types/mapper.ts; .artifacts/working/examples/saas-template-example.ts,"Domain: business-type-detection
+Issue: KPIDefinition Formula Template Specification
+Current: Glue blueprint lines 363-383: KPIDefinition interface with formula.template and SlotMapping interface defined, but no concrete examples of pattern matching logic
+Desired: Create reference saas.ts template with complete KPIDefinition examples showing: formula templates, slot mappings, pattern regexes, and mapping algorithm
+Details: Glue blueprint defines formula templates with slot mappings (e.g., 'SUM({amount_column})'), but no examples exist showing how patterns match to actual schema columns.
+Affected Systems: pipeline
+Blocks: SUBTASK9
+","Fix BIZ-006: KPIDefinition Formula Template Specification
+
+**Current State**: Glue blueprint lines 363-383: KPIDefinition interface with formula.template and SlotMapping interface defined, but no concrete examples of pattern matching logic
+
+**Desired State**: Create reference saas.ts template with complete KPIDefinition examples showing: formula templates, slot mappings, pattern regexes, and mapping algorithm
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/templates/saas.ts
+- packages/liquid-connect/src/business-types/mapper.ts
+- .artifacts/working/examples/saas-template-example.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DASH-008,SUBTASK6,dashboard-architecture,"Only field bindings supported, not computed/indexed/iterator",medium,1d,8,not_started,,,,ui,addition,"liquid-render-block.tsx line 180 only uses field bindings: { kind: 'field', value: 'rows' }","Support computed, indexed, and iterator bindings for advanced dashboard features with transformations and nested data",apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx,"Domain: dashboard-architecture
+Issue: Only field bindings supported, not computed/indexed/iterator
+Current: liquid-render-block.tsx line 180 only uses field bindings: { kind: 'field', value: 'rows' }
+Desired: Support computed, indexed, and iterator bindings for advanced dashboard features with transformations and nested data
+Details: LiquidRender supports 5 binding kinds (indexed, field, computed, literal, iterator, indexRef), but canvas implementation only uses field bindings. This limits data transformations - can't compute derived metrics in UI layer, can't handle nested data structures, can't implement master-detail patterns.
+Affected Systems: ui
+","Fix DASH-008: Only field bindings supported, not computed/indexed/iterator
+
+**Current State**: liquid-render-block.tsx line 180 only uses field bindings: { kind: 'field', value: 'rows' }
+
+**Desired State**: Support computed, indexed, and iterator bindings for advanced dashboard features with transformations and nested data
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- apps/web/src/modules/knosia/canvas/components/blocks/liquid-render-block.tsx
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+DB-004,SUBTASK1,database-schema,Field name inconsistency: business_type vs businessType,low,15min,0.25,completed,,,,"database, docs",doc_update,"knosiaAnalysis.businessType exists as JSONB<{detected, confidence, reasoning, alternatives}> (lines 619-658), doc proposes adding 'business_type' field","Remove business_type addition proposal, clarify if mapping_coverage is needed and if so, define its structure and purpose",.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: database-schema
+Issue: Field name inconsistency: business_type vs businessType
+Current: knosiaAnalysis.businessType exists as JSONB<{detected, confidence, reasoning, alternatives}> (lines 619-658), doc proposes adding 'business_type' field
+Desired: Remove business_type addition proposal, clarify if mapping_coverage is needed and if so, define its structure and purpose
+Details: Project structure doc suggests adding 'business_type' and 'mapping_coverage' fields to knosiaAnalysis, but businessType already exists as JSONB with different structure
+Affected Systems: database, docs
+","Fix DB-004: Field name inconsistency: business_type vs businessType
+
+**Current State**: knosiaAnalysis.businessType exists as JSONB<{detected, confidence, reasoning, alternatives}> (lines 619-658), doc proposes adding 'business_type' field
+
+**Desired State**: Remove business_type addition proposal, clarify if mapping_coverage is needed and if so, define its structure and purpose
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+VOC-001,SUBTASK4,vocabulary-system,Inconsistent terminology for user-level vocabulary,low,15min,0.25,completed,,,,docs,doc_update,"Mixed usage of 'private vocabulary', 'user private vocabulary', and 'personal vocabulary' across documentation",Consistent use of 'private vocabulary' across all documentation,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1535-knosia-ux-journeys.md,"Domain: vocabulary-system
+Issue: Inconsistent terminology for user-level vocabulary
+Current: Mixed usage of 'private vocabulary', 'user private vocabulary', and 'personal vocabulary' across documentation
+Desired: Consistent use of 'private vocabulary' across all documentation
+Details: Different documents use slightly different terms for user-level vocabulary: 'Private vocabulary' (most common), 'User private vocabulary', and 'Personal vocabulary' (UX journeys). All refer to the same concept.
+Affected Systems: docs
+","Fix VOC-001: Inconsistent terminology for user-level vocabulary
+
+**Current State**: Mixed usage of 'private vocabulary', 'user private vocabulary', and 'personal vocabulary' across documentation
+
+**Desired State**: Consistent use of 'private vocabulary' across all documentation
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+VOC-002,SUBTASK4,vocabulary-system,Schema field 'aggregationConfidence' not documented in architecture,low,15min,0.25,completed,,,,docs,doc_update,aggregationConfidence field exists in schema but is not mentioned in architecture documentation,aggregationConfidence field documented in platform architecture and consolidated implementation docs,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: vocabulary-system
+Issue: Schema field 'aggregationConfidence' not documented in architecture
+Current: aggregationConfidence field exists in schema but is not mentioned in architecture documentation
+Desired: aggregationConfidence field documented in platform architecture and consolidated implementation docs
+Details: The database schema includes knosia_vocabulary_item.aggregationConfidence field, but architecture documents don't mention this field in their examples.
+Affected Systems: docs
+","Fix VOC-002: Schema field 'aggregationConfidence' not documented in architecture
+
+**Current State**: aggregationConfidence field exists in schema but is not mentioned in architecture documentation
+
+**Desired State**: aggregationConfidence field documented in platform architecture and consolidated implementation docs
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+VOC-003,SUBTASK4,vocabulary-system,Glue code example shows incorrect default storage level,low,15min,0.25,completed,,,,docs,doc_update,"Glue blueprint example shows 'workspaceId, // WORKSPACE level by default' (misleading)",Glue blueprint updated to show that DetectedVocabulary items default to org-level (workspaceId = NULL) unless explicitly workspace-specific,.artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: vocabulary-system
+Issue: Glue code example shows incorrect default storage level
+Current: Glue blueprint example shows 'workspaceId, // WORKSPACE level by default' (misleading)
+Desired: Glue blueprint updated to show that DetectedVocabulary items default to org-level (workspaceId = NULL) unless explicitly workspace-specific
+Details: The glue implementation blueprint shows saving all DetectedVocabulary items to workspace level by default, but the actual implementation correctly handles both org-level (workspaceId = NULL) and workspace-level vocabulary items. Implementation is correct, documentation needs update.
+Affected Systems: docs
+","Fix VOC-003: Glue code example shows incorrect default storage level
+
+**Current State**: Glue blueprint example shows 'workspaceId, // WORKSPACE level by default' (misleading)
+
+**Desired State**: Glue blueprint updated to show that DetectedVocabulary items default to org-level (workspaceId = NULL) unless explicitly workspace-specific
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+VOC-004,SUBTASK4,vocabulary-system,Scope badge descriptions vary between UX and architecture docs,low,15min,0.25,completed,,,,docs,doc_update,"UX docs use emoji badges, architecture docs use plain text, code uses lowercase strings",Accept as intentional - document this as a deliberate design choice in architecture docs,.artifacts/2026-01-02-1500-knosia-platform-architecture.md,"Domain: vocabulary-system
+Issue: Scope badge descriptions vary between UX and architecture docs
+Current: UX docs use emoji badges, architecture docs use plain text, code uses lowercase strings
+Desired: Accept as intentional - document this as a deliberate design choice in architecture docs
+Details: UX journey document uses emoji badges (🏢 Organization, 📁 Workspace, 👤 Private) while architecture documents use plain text ('org', 'workspace', 'private'). This is intentional separation of concerns - UX uses visual badges, code uses enum strings.
+Affected Systems: docs
+","Fix VOC-004: Scope badge descriptions vary between UX and architecture docs
+
+**Current State**: UX docs use emoji badges, architecture docs use plain text, code uses lowercase strings
+
+**Desired State**: Accept as intentional - document this as a deliberate design choice in architecture docs
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+DASH-009,SUBTASK6,dashboard-architecture,BlockDataSource uses string literals instead of enum,low,15min,0.25,not_started,,,,ui,refactor,BlockDataSource interface has inline type union for type property,Extract to BlockDataSourceType type alias: export type BlockDataSourceType = 'vocabulary' | 'query' | 'static',apps/web/src/modules/knosia/canvas/types.ts,"Domain: dashboard-architecture
+Issue: BlockDataSource uses string literals instead of enum
+Current: BlockDataSource interface has inline type union for type property
+Desired: Extract to BlockDataSourceType type alias: export type BlockDataSourceType = 'vocabulary' | 'query' | 'static'
+Details: BlockDataSource.type is typed as string literal union ('vocabulary' | 'query' | 'static') but not extracted to a reusable enum. This makes it harder to reference data source types programmatically without importing the interface.
+Affected Systems: ui
+","Fix DASH-009: BlockDataSource uses string literals instead of enum
+
+**Current State**: BlockDataSource interface has inline type union for type property
+
+**Desired State**: Extract to BlockDataSourceType type alias: export type BlockDataSourceType = 'vocabulary' | 'query' | 'static'
+
+**Fix Type**: refactor
+
+**Files to Modify**:
+- apps/web/src/modules/knosia/canvas/types.ts
+
+**Steps**:
+1. Analyze current implementation
+2. Make required changes
+3. Verify against desired state
+",,,
+OB-005,SUBTASK7,onboarding-flow,Confirm vs Confirmation inconsistency,low,15min,0.25,completed,,,,docs,doc_update,Mixed usage of 'confirm' and 'confirmation' in documentation,Use 'confirm' consistently (already correct in implementation),.artifacts/2026-01-02-1535-knosia-ux-journeys.md,"Domain: onboarding-flow
+Issue: Confirm vs Confirmation inconsistency
+Current: Mixed usage of 'confirm' and 'confirmation' in documentation
+Desired: Use 'confirm' consistently (already correct in implementation)
+Details: Documentation shows 'confirm' step but some text refers to 'confirmation questions'
+Affected Systems: docs
+","Fix OB-005: Confirm vs Confirmation inconsistency
+
+**Current State**: Mixed usage of 'confirm' and 'confirmation' in documentation
+
+**Desired State**: Use 'confirm' consistently (already correct in implementation)
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1535-knosia-ux-journeys.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+OB-011,SUBTASK7,onboarding-flow,Summary and ready components marked as NEW but not in all docs,low,15min,0.25,completed,,,,docs,doc_update,"Project structure shows 'summary/' and 'ready/' marked as NEW STEP. Ready exists in stepMap, summary does not.",Remove 'NEW STEP' markers or add summary to implementation,.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: onboarding-flow
+Issue: Summary and ready components marked as NEW but not in all docs
+Current: Project structure shows 'summary/' and 'ready/' marked as NEW STEP. Ready exists in stepMap, summary does not.
+Desired: Remove 'NEW STEP' markers or add summary to implementation
+Details: Project structure shows summary/ and ready/ as NEW STEPS, but other docs don't mention summary at all. Ready exists in implementation, but summary status is unclear.
+Affected Systems: docs
+","Fix OB-011: Summary and ready components marked as NEW but not in all docs
+
+**Current State**: Project structure shows 'summary/' and 'ready/' marked as NEW STEP. Ready exists in stepMap, summary does not.
+
+**Desired State**: Remove 'NEW STEP' markers or add summary to implementation
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+BIZ-003,SUBTASK8,business-type-detection,Detection Algorithm Detail Variance,low,15min,0.25,completed,,,,pipeline,doc_update,"Platform architecture lines 625-650: pseudocode only. Glue blueprint lines 450-477: detailed requirements with table/column patterns, weighting (table: 30, column: 10), confidence threshold (>60), ambiguity detection (top 2 within 15 points)",Use glue blueprint detailed requirements as source of truth. Extract patterns into separate signatures.ts module,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; packages/liquid-connect/src/business-types/detector.ts; packages/liquid-connect/src/business-types/signatures.ts,"Domain: business-type-detection
+Issue: Detection Algorithm Detail Variance
+Current: Platform architecture lines 625-650: pseudocode only. Glue blueprint lines 450-477: detailed requirements with table/column patterns, weighting (table: 30, column: 10), confidence threshold (>60), ambiguity detection (top 2 within 15 points)
+Desired: Use glue blueprint detailed requirements as source of truth. Extract patterns into separate signatures.ts module
+Details: Platform architecture provides pseudocode with basic pattern matching, while glue blueprint provides detailed requirements with specific patterns per business type, weights, and confidence scoring.
+Affected Systems: pipeline
+","Fix BIZ-003: Detection Algorithm Detail Variance
+
+**Current State**: Platform architecture lines 625-650: pseudocode only. Glue blueprint lines 450-477: detailed requirements with table/column patterns, weighting (table: 30, column: 10), confidence threshold (>60), ambiguity detection (top 2 within 15 points)
+
+**Desired State**: Use glue blueprint detailed requirements as source of truth. Extract patterns into separate signatures.ts module
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- packages/liquid-connect/src/business-types/detector.ts
+- packages/liquid-connect/src/business-types/signatures.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+PIPE-008,SUBTASK9,data-pipeline,Pipeline step numbering inconsistency in docs,low,15min,0.25,completed,,,,docs,doc_update,7-step is user-facing flow (what happens end-to-end). 4-glue is implementation view (code to build). No cross-reference.,"Add cross-reference noting: '7-step pipeline = end-to-end flow, 4 glue functions = implementation components'",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: data-pipeline
+Issue: Pipeline step numbering inconsistency in docs
+Current: 7-step is user-facing flow (what happens end-to-end). 4-glue is implementation view (code to build). No cross-reference.
+Desired: Add cross-reference noting: '7-step pipeline = end-to-end flow, 4 glue functions = implementation components'
+Details: Consolidated doc uses 7-step pipeline (STEP 1: NL Query Engine → STEP 7: Liquid UI). Blueprint doc merges steps into 4 glue functions. Different abstraction levels in different docs.
+Affected Systems: docs
+","Fix PIPE-008: Pipeline step numbering inconsistency in docs
+
+**Current State**: 7-step is user-facing flow (what happens end-to-end). 4-glue is implementation view (code to build). No cross-reference.
+
+**Desired State**: Add cross-reference noting: '7-step pipeline = end-to-end flow, 4 glue functions = implementation components'
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-004,SUBTASK10,implementation-phases,Business Type Detection LOC varies,low,15min,0.25,completed,,,,docs,doc_update,Different LOC estimates: 200 LOC (function only) vs 400 LOC (full module),Specify 'detector.ts' (200 LOC) vs 'business-types module' (400 LOC) clearly in all documents,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: Business Type Detection LOC varies
+Current: Different LOC estimates: 200 LOC (function only) vs 400 LOC (full module)
+Desired: Specify 'detector.ts' (200 LOC) vs 'business-types module' (400 LOC) clearly in all documents
+Details: 1500 estimates 200 LOC for detectBusinessType function only, 1600/1700 estimate 400 LOC for business-types/ module, 1800 estimates 200 LOC detector.ts + templates. Confusion between function vs module scope.
+Affected Systems: docs
+","Fix IMPL-004: Business Type Detection LOC varies
+
+**Current State**: Different LOC estimates: 200 LOC (function only) vs 400 LOC (full module)
+
+**Desired State**: Specify 'detector.ts' (200 LOC) vs 'business-types module' (400 LOC) clearly in all documents
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-005,SUBTASK10,implementation-phases,Phase structure inconsistency,low,15min,0.25,completed,,,,docs,doc_update,"Only 1600 has phases (Phase 0-4), other docs lack phase structure","Use Phase 0-4 from 1600 as canonical timeline, reference in other docs",.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: implementation-phases
+Issue: Phase structure inconsistency
+Current: Only 1600 has phases (Phase 0-4), other docs lack phase structure
+Desired: Use Phase 0-4 from 1600 as canonical timeline, reference in other docs
+Details: 1500 and 1800 have no explicit phases, 1600 defines Phase 0-4, 1700 has no phases. Only 1600 provides implementation timeline structure.
+Affected Systems: docs
+","Fix IMPL-005: Phase structure inconsistency
+
+**Current State**: Only 1600 has phases (Phase 0-4), other docs lack phase structure
+
+**Desired State**: Use Phase 0-4 from 1600 as canonical timeline, reference in other docs
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-006,SUBTASK10,implementation-phases,Timeline only in 1600,low,15min,0.25,completed,,,,docs,doc_update,Timeline specified only in 1600 (14 days),Add timeline reference to other implementation docs pointing to 1600,.artifacts/2026-01-02-1500-knosia-platform-architecture.md; .artifacts/2026-01-02-1700-knosia-project-structure.md; .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md,"Domain: implementation-phases
+Issue: Timeline only in 1600
+Current: Timeline specified only in 1600 (14 days)
+Desired: Add timeline reference to other implementation docs pointing to 1600
+Details: Only 1600 provides 14-day timeline (Days 1-14 across Phase 0-4). Other documents lack timeline information requiring cross-referencing.
+Affected Systems: docs
+","Fix IMPL-006: Timeline only in 1600
+
+**Current State**: Timeline specified only in 1600 (14 days)
+
+**Desired State**: Add timeline reference to other implementation docs pointing to 1600
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1500-knosia-platform-architecture.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+- .artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-007,SUBTASK10,implementation-phases,File counts only in 1700,low,15min,0.25,completed,,,,docs,doc_update,"File counts only in 1700 (59 new, 13 modified)",Reference 1700 as source of truth for file counts in implementation plan,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: File counts only in 1700
+Current: File counts only in 1700 (59 new, 13 modified)
+Desired: Reference 1700 as source of truth for file counts in implementation plan
+Details: Only 1700 provides explicit file counts (59 new, 13 modified). Other documents lack this metric requiring cross-referencing.
+Affected Systems: docs
+","Fix IMPL-007: File counts only in 1700
+
+**Current State**: File counts only in 1700 (59 new, 13 modified)
+
+**Desired State**: Reference 1700 as source of truth for file counts in implementation plan
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-009,SUBTASK10,implementation-phases,Phase duration rationale missing,low,15min,0.25,completed,,,,docs,doc_update,"Phase durations vary without explanation (Phase 1: 2 days for ~950 LOC, Phase 3: 4 days for ~800 LOC)","Add rationale notes to phase durations explaining factors like design iteration, integration complexity, testing requirements",.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: Phase duration rationale missing
+Current: Phase durations vary without explanation (Phase 1: 2 days for ~950 LOC, Phase 3: 4 days for ~800 LOC)
+Desired: Add rationale notes to phase durations explaining factors like design iteration, integration complexity, testing requirements
+Details: Phase 3 (Home & Canvas) is 4 days while Phase 1 (Glue) is 2 days, but no explanation why UI work takes longer despite similar LOC counts. Missing rationale for time estimates.
+Affected Systems: docs
+","Fix IMPL-009: Phase duration rationale missing
+
+**Current State**: Phase durations vary without explanation (Phase 1: 2 days for ~950 LOC, Phase 3: 4 days for ~800 LOC)
+
+**Desired State**: Add rationale notes to phase durations explaining factors like design iteration, integration complexity, testing requirements
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-010,SUBTASK10,implementation-phases,Canvas marked as both existing and new,low,15min,0.25,completed,,,,docs,doc_update,"Canvas module exists (canvas-view.tsx, liquid-render-block.tsx), but HOME page integration needs building",Clarify that Canvas components exist but need HOME page integration in Phase 3,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: implementation-phases
+Issue: Canvas marked as both existing and new
+Current: Canvas module exists (canvas-view.tsx, liquid-render-block.tsx), but HOME page integration needs building
+Desired: Clarify that Canvas components exist but need HOME page integration in Phase 3
+Details: 1700 marks Canvas components as ✅ (existing) but 1600 marks Canvas as P1 work to build. Confusion between Canvas module (exists) vs HOME page integration (needs building).
+Affected Systems: docs
+","Fix IMPL-010: Canvas marked as both existing and new
+
+**Current State**: Canvas module exists (canvas-view.tsx, liquid-render-block.tsx), but HOME page integration needs building
+
+**Desired State**: Clarify that Canvas components exist but need HOME page integration in Phase 3
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+FILE-003,SUBTASK3,file-locations,Business types catalog structure ambiguity,low,30min,0.5,completed,,,,vocabulary,doc_update,Unclear if catalog/ subdirectory (packages/liquid-connect/src/business-types/catalog/saas.yaml) is V1 or future enhancement,"Clarify whether V1 uses hardcoded patterns in detector.ts, loads from YAML catalog, or YAML catalog is V2+ enhancement",packages/liquid-connect/src/business-types/catalog/saas.yaml; packages/liquid-connect/src/business-types/detector.ts,"Domain: file-locations
+Issue: Business types catalog structure ambiguity
+Current: Unclear if catalog/ subdirectory (packages/liquid-connect/src/business-types/catalog/saas.yaml) is V1 or future enhancement
+Desired: Clarify whether V1 uses hardcoded patterns in detector.ts, loads from YAML catalog, or YAML catalog is V2+ enhancement
+Details: Project structure shows catalog/ subdirectory with YAML files, but this isn't mentioned in blueprint or consolidated docs
+Affected Systems: vocabulary
+","Fix FILE-003: Business types catalog structure ambiguity
+
+**Current State**: Unclear if catalog/ subdirectory (packages/liquid-connect/src/business-types/catalog/saas.yaml) is V1 or future enhancement
+
+**Desired State**: Clarify whether V1 uses hardcoded patterns in detector.ts, loads from YAML catalog, or YAML catalog is V2+ enhancement
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/catalog/saas.yaml
+- packages/liquid-connect/src/business-types/detector.ts
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+GLUE-006,SUBTASK5,glue-functions,Missing options parameter in dashboardSpecToLiquidSchema,low,30min,0.5,not_started,,,,ui,api_update,dashboardSpecToLiquidSchema(spec),"dashboardSpecToLiquidSchema(spec, options?: { maxKPIsPerRow?, includeSectionHeaders?, gap? })",packages/liquid-render/src/dashboard/schema-generator.ts,"Domain: glue-functions
+Issue: Missing options parameter in dashboardSpecToLiquidSchema
+Current: dashboardSpecToLiquidSchema(spec)
+Desired: dashboardSpecToLiquidSchema(spec, options?: { maxKPIsPerRow?, includeSectionHeaders?, gap? })
+Details: Docs 1500/1600 omit options parameter, while doc 1800 adds options for UI customization (maxKPIsPerRow, includeSectionHeaders, gap)
+Affected Systems: ui
+","Fix GLUE-006: Missing options parameter in dashboardSpecToLiquidSchema
+
+**Current State**: dashboardSpecToLiquidSchema(spec)
+
+**Desired State**: dashboardSpecToLiquidSchema(spec, options?: { maxKPIsPerRow?, includeSectionHeaders?, gap? })
+
+**Fix Type**: api_update
+
+**Files to Modify**:
+- packages/liquid-render/src/dashboard/schema-generator.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+OB-009,SUBTASK7,onboarding-flow,Legacy connectionId field still exists alongside connectionIds array,low,30min,0.5,completed,,,,docs,doc_update,"Both connectionId: string | null and connectionIds: string[] exist. When adding first connection, sets both primaryConnectionId and connectionId for legacy support.",Document the migration strategy and deprecation timeline for connectionId field,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: onboarding-flow
+Issue: Legacy connectionId field still exists alongside connectionIds array
+Current: Both connectionId: string | null and connectionIds: string[] exist. When adding first connection, sets both primaryConnectionId and connectionId for legacy support.
+Desired: Document the migration strategy and deprecation timeline for connectionId field
+Details: Implementation maintains both connectionId (single) and connectionIds (array) for backwards compatibility, but documentation doesn't explain this dual-field pattern or migration strategy.
+Affected Systems: docs
+","Fix OB-009: Legacy connectionId field still exists alongside connectionIds array
+
+**Current State**: Both connectionId: string | null and connectionIds: string[] exist. When adding first connection, sets both primaryConnectionId and connectionId for legacy support.
+
+**Desired State**: Document the migration strategy and deprecation timeline for connectionId field
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+PIPE-012,SUBTASK9,data-pipeline,Unclear type ownership for glue interfaces,low,30min,0.5,not_started,,,,pipeline,addition,"Type ownership not specified for glue interfaces. Unclear if they should live in @repo/liquid-connect/types, @repo/api/modules/knosia/shared-schemas, or new shared types package.","Define in @repo/liquid-connect/types since used by both liquid-connect and API, and semantic domain types belong with semantic layer",packages/liquid-connect/src/types/index.ts,"Domain: data-pipeline
+Issue: Unclear type ownership for glue interfaces
+Current: Type ownership not specified for glue interfaces. Unclear if they should live in @repo/liquid-connect/types, @repo/api/modules/knosia/shared-schemas, or new shared types package.
+Desired: Define in @repo/liquid-connect/types since used by both liquid-connect and API, and semantic domain types belong with semantic layer
+Details: Blueprint defines new types (ResolvedVocabulary, DashboardSpec, DashboardTemplate) but doesn't specify which package they belong to. Could lead to circular dependencies.
+Affected Systems: pipeline
+","Fix PIPE-012: Unclear type ownership for glue interfaces
+
+**Current State**: Type ownership not specified for glue interfaces. Unclear if they should live in @repo/liquid-connect/types, @repo/api/modules/knosia/shared-schemas, or new shared types package.
+
+**Desired State**: Define in @repo/liquid-connect/types since used by both liquid-connect and API, and semantic domain types belong with semantic layer
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/types/index.ts
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+IMPL-008,SUBTASK10,implementation-phases,Modified file list incomplete,low,30min,0.5,completed,,,,docs,doc_update,13 modified files claimed but only ~10 listed by name,All 13 modified files explicitly documented with reasons for modification,.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: implementation-phases
+Issue: Modified file list incomplete
+Current: 13 modified files claimed but only ~10 listed by name
+Desired: All 13 modified files explicitly documented with reasons for modification
+Details: 1700 states 13 modified files but only explicitly names ~10. Three files unspecified creating documentation gap.
+Affected Systems: docs
+","Fix IMPL-008: Modified file list incomplete
+
+**Current State**: 13 modified files claimed but only ~10 listed by name
+
+**Desired State**: All 13 modified files explicitly documented with reasons for modification
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-011,SUBTASK10,implementation-phases,Mobile experience scope unclear,low,30min,0.5,completed,,,,"docs, ui",doc_update,"Full mobile UX spec exists in 1535, but implementation plan only mentions responsive CSS in Phase 4",Clarify if mobile = responsive CSS only or includes separate mobile app development,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: Mobile experience scope unclear
+Current: Full mobile UX spec exists in 1535, but implementation plan only mentions responsive CSS in Phase 4
+Desired: Clarify if mobile = responsive CSS only or includes separate mobile app development
+Details: 1535 includes full mobile UX spec (Section 10), but 1600 only mentions 'mobile responsiveness' without detail. Gap between detailed spec and vague implementation plan.
+Affected Systems: docs, ui
+","Fix IMPL-011: Mobile experience scope unclear
+
+**Current State**: Full mobile UX spec exists in 1535, but implementation plan only mentions responsive CSS in Phase 4
+
+**Desired State**: Clarify if mobile = responsive CSS only or includes separate mobile app development
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+IMPL-012,SUBTASK10,implementation-phases,Missing cross-reference metrics table,low,30min,0.5,not_started,,,,docs,addition,"Metrics scattered across multiple documents (1500, 1600, 1700, 1800)",Add unified metrics table to 1600 showing: Phase | Days | LOC | Files (New/Mod) | Depends On,.artifacts/2026-01-02-1600-knosia-consolidated-implementation.md,"Domain: implementation-phases
+Issue: Missing cross-reference metrics table
+Current: Metrics scattered across multiple documents (1500, 1600, 1700, 1800)
+Desired: Add unified metrics table to 1600 showing: Phase | Days | LOC | Files (New/Mod) | Depends On
+Details: No unified table showing Phase | Days | LOC | Files (New/Mod) | Dependencies across documents. Metrics scattered requiring manual cross-referencing.
+Affected Systems: docs
+","Fix IMPL-012: Missing cross-reference metrics table
+
+**Current State**: Metrics scattered across multiple documents (1500, 1600, 1700, 1800)
+
+**Desired State**: Add unified metrics table to 1600 showing: Phase | Days | LOC | Files (New/Mod) | Depends On
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1600-knosia-consolidated-implementation.md
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,
+API-010,SUBTASK2,api-structure,Unclear shared/ module scope and purpose,low,1h,1,completed,,,,"api, docs",doc_update,"packages/api/src/modules/knosia/shared/ contains semantic.ts, transforms.ts with tests. Documentation vague about contents and relationship to proposed semantic/ module.","Document actual shared/ contents, clarify relationship to proposed semantic/ module, define guidelines for what belongs in shared/",.artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: api-structure
+Issue: Unclear shared/ module scope and purpose
+Current: packages/api/src/modules/knosia/shared/ contains semantic.ts, transforms.ts with tests. Documentation vague about contents and relationship to proposed semantic/ module.
+Desired: Document actual shared/ contents, clarify relationship to proposed semantic/ module, define guidelines for what belongs in shared/
+Details: Documentation describes shared/ as 'shared utilities' but actual implementation contains semantic.ts and transforms.ts with substantial logic. Naming collision with proposed semantic/ module. Unclear what qualifies for shared/ vs dedicated module.
+Affected Systems: api, docs
+","Fix API-010: Unclear shared/ module scope and purpose
+
+**Current State**: packages/api/src/modules/knosia/shared/ contains semantic.ts, transforms.ts with tests. Documentation vague about contents and relationship to proposed semantic/ module.
+
+**Desired State**: Document actual shared/ contents, clarify relationship to proposed semantic/ module, define guidelines for what belongs in shared/
+
+**Fix Type**: doc_update
+
+**Files to Modify**:
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read the file(s)
+2. Update documentation to reflect desired state
+3. Verify consistency across related docs
+",2026-01-02,2026-01-02,Fixed by parallel documentation agents
+BIZ-005,SUBTASK8,business-type-detection,Detection Signatures Module Organization,low,2h,2,not_started,,,,pipeline,addition,"Project structure lines 48-50: mentions detector.ts, signatures.ts, mapper.ts. Glue blueprint: patterns listed in requirements (lines 450-477) not as file specification","Create signatures.ts with structure: export const businessTypeSignatures: Record<BusinessType, { tablePatterns: RegExp[]; columnPatterns: RegExp[]; weights: { table: number; column: number } }> = { ... }",packages/liquid-connect/src/business-types/signatures.ts; .artifacts/2026-01-02-1700-knosia-project-structure.md,"Domain: business-type-detection
+Issue: Detection Signatures Module Organization
+Current: Project structure lines 48-50: mentions detector.ts, signatures.ts, mapper.ts. Glue blueprint: patterns listed in requirements (lines 450-477) not as file specification
+Desired: Create signatures.ts with structure: export const businessTypeSignatures: Record<BusinessType, { tablePatterns: RegExp[]; columnPatterns: RegExp[]; weights: { table: number; column: number } }> = { ... }
+Details: Project structure mentions signatures.ts as separate module, but glue blueprint embeds patterns in requirements without separate file spec.
+Affected Systems: pipeline
+","Fix BIZ-005: Detection Signatures Module Organization
+
+**Current State**: Project structure lines 48-50: mentions detector.ts, signatures.ts, mapper.ts. Glue blueprint: patterns listed in requirements (lines 450-477) not as file specification
+
+**Desired State**: Create signatures.ts with structure: export const businessTypeSignatures: Record<BusinessType, { tablePatterns: RegExp[]; columnPatterns: RegExp[]; weights: { table: number; column: number } }> = { ... }
+
+**Fix Type**: addition
+
+**Files to Modify**:
+- packages/liquid-connect/src/business-types/signatures.ts
+- .artifacts/2026-01-02-1700-knosia-project-structure.md
+
+**Steps**:
+1. Read existing code
+2. Implement required changes
+3. Update related files (schemas, queries, mutations)
+4. Test API endpoint manually
+",,,

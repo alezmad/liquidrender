@@ -1,0 +1,80 @@
+{
+  "subtask_id": "SUBTASK4",
+  "domain": "vocabulary-system",
+  "source_doc": "2026-01-02-1330-SUBTASK4-vocabulary-system-inconsistencies.md",
+  "issues": [
+    {
+      "id": "VOC-001",
+      "title": "Inconsistent terminology for user-level vocabulary",
+      "description": "Different documents use slightly different terms for user-level vocabulary: 'Private vocabulary' (most common), 'User private vocabulary', and 'Personal vocabulary' (UX journeys). All refer to the same concept.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Mixed usage of 'private vocabulary', 'user private vocabulary', and 'personal vocabulary' across documentation",
+      "desired_state": "Consistent use of 'private vocabulary' across all documentation",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md"
+      ]
+    },
+    {
+      "id": "VOC-002",
+      "title": "Schema field 'aggregationConfidence' not documented in architecture",
+      "description": "The database schema includes knosia_vocabulary_item.aggregationConfidence field, but architecture documents don't mention this field in their examples.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "aggregationConfidence field exists in schema but is not mentioned in architecture documentation",
+      "desired_state": "aggregationConfidence field documented in platform architecture and consolidated implementation docs",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "VOC-003",
+      "title": "Glue code example shows incorrect default storage level",
+      "description": "The glue implementation blueprint shows saving all DetectedVocabulary items to workspace level by default, but the actual implementation correctly handles both org-level (workspaceId = NULL) and workspace-level vocabulary items. Implementation is correct, documentation needs update.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Glue blueprint example shows 'workspaceId, // WORKSPACE level by default' (misleading)",
+      "desired_state": "Glue blueprint updated to show that DetectedVocabulary items default to org-level (workspaceId = NULL) unless explicitly workspace-specific",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    },
+    {
+      "id": "VOC-004",
+      "title": "Scope badge descriptions vary between UX and architecture docs",
+      "description": "UX journey document uses emoji badges (🏢 Organization, 📁 Workspace, 👤 Private) while architecture documents use plain text ('org', 'workspace', 'private'). This is intentional separation of concerns - UX uses visual badges, code uses enum strings.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "UX docs use emoji badges, architecture docs use plain text, code uses lowercase strings",
+      "desired_state": "Accept as intentional - document this as a deliberate design choice in architecture docs",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 4,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 4
+  }
+}

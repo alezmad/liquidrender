@@ -1,0 +1,148 @@
+{
+  "subtask_id": "SUBTASK1",
+  "domain": "database-schema",
+  "source_doc": "2026-01-02-1330-SUBTASK1-database-schema-inconsistencies.md",
+  "issues": [
+    {
+      "id": "DB-001",
+      "title": "Table count mismatch: docs claim 15 tables, schema has 26",
+      "description": "Architecture documents claim '15 tables (V1 foundation)' but packages/db/src/schema/knosia.ts contains 26 tables. This causes confusion about implementation completeness.",
+      "severity": "high",
+      "affected_systems": ["database", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Architecture docs say '15 tables in knosia.ts' but actual schema has 26 tables including Canvas, Collaboration, and Notification systems",
+      "desired_state": "All documents updated to reflect '26 tables (V1 complete)' with accurate table listings in architecture diagrams",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "DB-002",
+      "title": "Proposed tables that don't exist and aren't needed",
+      "description": "Project structure doc proposes 3 new tables (knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer) that don't exist in schema and are superseded by existing solutions",
+      "severity": "medium",
+      "affected_systems": ["database", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Document proposes knosia_dashboard, knosia_dashboard_kpi, knosia_semantic_layer as new tables, but Canvas system (knosiaCanvas + knosiaCanvasBlock) and Workspace.compiledVocabulary JSONB already handle these use cases",
+      "desired_state": "Remove these 3 tables from 'new tables' section and document existing Canvas + compiledVocabulary solutions instead",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "DB-003",
+      "title": "knosiaUserVocabularyPrefs table missing from documentation",
+      "description": "Critical table for 3-level vocabulary hierarchy (Org > Workspace > User) exists in schema but is not mentioned in architecture docs",
+      "severity": "high",
+      "affected_systems": ["database", "docs", "vocabulary"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "knosiaUserVocabularyPrefs exists in schema (lines 569-610) with favorites, synonyms, recentlyUsed, dismissedSuggestions, privateVocabulary fields, but architecture docs don't list it",
+      "desired_state": "Add knosiaUserVocabularyPrefs to all table listings and architecture diagrams, document as USER-level preference source in vocabulary hierarchy",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "DB-004",
+      "title": "Field name inconsistency: business_type vs businessType",
+      "description": "Project structure doc suggests adding 'business_type' and 'mapping_coverage' fields to knosiaAnalysis, but businessType already exists as JSONB with different structure",
+      "severity": "low",
+      "affected_systems": ["database", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "knosiaAnalysis.businessType exists as JSONB<{detected, confidence, reasoning, alternatives}> (lines 619-658), doc proposes adding 'business_type' field",
+      "desired_state": "Remove business_type addition proposal, clarify if mapping_coverage is needed and if so, define its structure and purpose",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "DB-005",
+      "title": "Table rename not reflected: Conversation → Thread",
+      "description": "Schema renamed knosiaConversation to knosiaThread but UX documents still use old 'Conversation' terminology",
+      "severity": "medium",
+      "affected_systems": ["database", "docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Schema uses knosiaThread and knosiaThreadMessage (lines 664-733) with comment 'renamed from Conversations', but UX docs still say 'Conversation'",
+      "desired_state": "Global find/replace: 'Conversation' → 'Thread', 'knosiaConversation' → 'knosiaThread', 'knosiaConversationMessage' → 'knosiaThreadMessage' across all .artifacts/",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1535-knosia-ux-journeys.md"
+      ]
+    },
+    {
+      "id": "DB-006",
+      "title": "Canvas tables missing from architecture docs",
+      "description": "Canvas system tables (knosiaCanvas, knosiaCanvasBlock, knosiaCanvasAlert) are implemented in schema but not listed in architecture inventories",
+      "severity": "high",
+      "affected_systems": ["database", "docs", "dashboard"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Canvas tables exist in schema (lines 794-903) for dashboard functionality, but architecture docs don't list them in table inventories",
+      "desired_state": "Add Canvas tables to all architecture diagrams and table listings under 'V1 Complete' or 'Dashboard Layer' section",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "DB-007",
+      "title": "Collaboration tables missing from documentation",
+      "description": "Collaboration system tables (knosiaComment, knosiaActivity) exist in schema but are not mentioned in architecture docs",
+      "severity": "medium",
+      "affected_systems": ["database", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "knosiaComment and knosiaActivity tables exist (lines 912-950) supporting multi-user workflows, but docs don't mention them",
+      "desired_state": "Add Collaboration section to architecture docs listing these tables, include in 'What's Already Built' sections as part of V1 foundation",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "DB-008",
+      "title": "Notification system tables missing from documentation",
+      "description": "Notification system tables (knosiaNotification, knosiaDigest, knosiaAiInsight) are implemented but not documented in architecture",
+      "severity": "medium",
+      "affected_systems": ["database", "docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "knosiaNotification, knosiaDigest, knosiaAiInsight tables exist (lines 959-1039) supporting features described in UX Journeys, but missing from implementation status tables",
+      "desired_state": "Add Notification System section to architecture docs, list these tables as supporting alerts, briefings, and AI insights features",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 8,
+    "critical": 0,
+    "high": 3,
+    "medium": 4,
+    "low": 1
+  }
+}

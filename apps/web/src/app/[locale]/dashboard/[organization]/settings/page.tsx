@@ -26,11 +26,11 @@ export default async function SettingsPage({
   }
 
   return (
-    <>
+    <div className="mx-auto max-w-2xl space-y-6">
       <EditLogo organizationId={activeOrganization.id} />
       <EditName organizationId={activeOrganization.id} />
       <LeaveOrganization organizationId={activeOrganization.id} />
       <DeleteOrganization organizationId={activeOrganization.id} />
-    </>
+    </div>
   );
 }

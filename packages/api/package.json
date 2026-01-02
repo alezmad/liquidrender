@@ -22,6 +22,7 @@
     "@ai-sdk/openai": "2.0.68",
     "@hono/zod-validator": "0.7.4",
     "@repo/liquid-connect": "workspace:*",
+    "@repo/liquid-render": "workspace:*",
     "@turbostarter/ai": "workspace:*",
     "@turbostarter/auth": "workspace:*",
     "@turbostarter/billing": "workspace:*",

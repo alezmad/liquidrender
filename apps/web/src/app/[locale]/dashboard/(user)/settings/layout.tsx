@@ -31,7 +31,7 @@ export default async function SettingsLayout({
   const { t } = await getTranslation({ ns: ["common", "auth"] });
 
   return (
-    <>
+    <div className="@container h-full overflow-auto p-6">
       <DashboardHeader>
         <div>
           <DashboardHeaderTitle>
@@ -64,6 +64,6 @@ export default async function SettingsLayout({
         </div>
         <div className="flex w-full flex-col gap-6">{children}</div>
       </div>
-    </>
+    </div>
   );
 }

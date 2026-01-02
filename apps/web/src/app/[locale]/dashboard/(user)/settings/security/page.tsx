@@ -13,12 +13,12 @@ export const generateMetadata = getMetadata({
 
 export default function SettingsPage() {
   return (
-    <>
+    <div className="mx-auto max-w-2xl space-y-6">
       <EditPassword />
       <Accounts />
       {authConfig.providers.passkey && <Passkeys />}
       <TwoFactorAuthentication />
       <Sessions />
-    </>
+    </div>
   );
 }

@@ -22,12 +22,12 @@ export default async function SettingsPage() {
   }
 
   return (
-    <>
+    <div className="mx-auto max-w-2xl space-y-6">
       <EditAvatar user={user} />
       <LanguageSwitcher />
       <EditName user={user} />
       <EditEmail user={user} />
       <DeleteAccount />
-    </>
+    </div>
   );
 }

@@ -1,0 +1,213 @@
+{
+  "subtask_id": "SUBTASK10",
+  "domain": "implementation-phases",
+  "source_doc": "2026-01-02-1330-SUBTASK10-implementation-phases-inconsistencies.md",
+  "issues": [
+    {
+      "id": "IMPL-001",
+      "title": "LOC estimate mismatch across documents (700 vs 2,650)",
+      "description": "Document 1500 estimates ~700 LOC for glue code only, while 1600/1700 estimate ~2,650 LOC for full implementation. This creates confusion about total scope: 700 = core glue only (5 functions), 1,250 = glue+templates (7 functions), 2,650 = complete implementation including UI/routes.",
+      "severity": "high",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "1500 says '~700 LOC total glue code', 1600/1700 say '~2,650 LOC new code', 1800 says '~1,250 LOC glue + templates'",
+      "desired_state": "1500 clarified to show: Core glue ~700 LOC (5 functions), Full glue layer ~1,250 LOC (glue + templates + pipeline), Complete implementation ~2,650 LOC (includes UI/routes)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md"
+      ]
+    },
+    {
+      "id": "IMPL-002",
+      "title": "Conversation module scope unclear",
+      "description": "UX spec (1535) includes full conversation UX, implementation plan (1600) excludes it from phases, but file structure (1700) includes it as NEW module. Conflicting signals on whether Conversation UI is in scope for MVP or future work.",
+      "severity": "medium",
+      "affected_systems": ["docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "UX spec exists for Conversation UI, implementation plan (1600) excludes it from Phase 0-4, file structure (1700) lists it as NEW (~10 files)",
+      "desired_state": "Clear decision: Either add Conversation UI to Phase 4, move to Phase 5 (post-MVP), or remove from 1700 new file list",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "IMPL-003",
+      "title": "No explicit P0/P1/P2 priority labels",
+      "description": "Analysis prompt expects P0/P1/P2 priority assignments, but no document uses this system. Phase order in 1600 implies priority (Phase 0-1 = P0, Phase 2-3 = P1, Phase 4 = P2) but not explicitly labeled.",
+      "severity": "medium",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "No explicit P0/P1/P2 labels in any document, only sequential phase numbering (0-4)",
+      "desired_state": "Add explicit priority labels to phases: Phase 0-1 (P0), Phase 2-3 (P1), Phase 4 (P2)",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "IMPL-004",
+      "title": "Business Type Detection LOC varies",
+      "description": "1500 estimates 200 LOC for detectBusinessType function only, 1600/1700 estimate 400 LOC for business-types/ module, 1800 estimates 200 LOC detector.ts + templates. Confusion between function vs module scope.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Different LOC estimates: 200 LOC (function only) vs 400 LOC (full module)",
+      "desired_state": "Specify 'detector.ts' (200 LOC) vs 'business-types module' (400 LOC) clearly in all documents",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "IMPL-005",
+      "title": "Phase structure inconsistency",
+      "description": "1500 and 1800 have no explicit phases, 1600 defines Phase 0-4, 1700 has no phases. Only 1600 provides implementation timeline structure.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Only 1600 has phases (Phase 0-4), other docs lack phase structure",
+      "desired_state": "Use Phase 0-4 from 1600 as canonical timeline, reference in other docs",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    },
+    {
+      "id": "IMPL-006",
+      "title": "Timeline only in 1600",
+      "description": "Only 1600 provides 14-day timeline (Days 1-14 across Phase 0-4). Other documents lack timeline information requiring cross-referencing.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Timeline specified only in 1600 (14 days)",
+      "desired_state": "Add timeline reference to other implementation docs pointing to 1600",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1500-knosia-platform-architecture.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md",
+        ".artifacts/2026-01-02-1800-knosia-glue-implementation-blueprint.md"
+      ]
+    },
+    {
+      "id": "IMPL-007",
+      "title": "File counts only in 1700",
+      "description": "Only 1700 provides explicit file counts (59 new, 13 modified). Other documents lack this metric requiring cross-referencing.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "File counts only in 1700 (59 new, 13 modified)",
+      "desired_state": "Reference 1700 as source of truth for file counts in implementation plan",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "IMPL-008",
+      "title": "Modified file list incomplete",
+      "description": "1700 states 13 modified files but only explicitly names ~10. Three files unspecified creating documentation gap.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "13 modified files claimed but only ~10 listed by name",
+      "desired_state": "All 13 modified files explicitly documented with reasons for modification",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "IMPL-009",
+      "title": "Phase duration rationale missing",
+      "description": "Phase 3 (Home & Canvas) is 4 days while Phase 1 (Glue) is 2 days, but no explanation why UI work takes longer despite similar LOC counts. Missing rationale for time estimates.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Phase durations vary without explanation (Phase 1: 2 days for ~950 LOC, Phase 3: 4 days for ~800 LOC)",
+      "desired_state": "Add rationale notes to phase durations explaining factors like design iteration, integration complexity, testing requirements",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "IMPL-010",
+      "title": "Canvas marked as both existing and new",
+      "description": "1700 marks Canvas components as ✅ (existing) but 1600 marks Canvas as P1 work to build. Confusion between Canvas module (exists) vs HOME page integration (needs building).",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "15min",
+      "current_state": "Canvas module exists (canvas-view.tsx, liquid-render-block.tsx), but HOME page integration needs building",
+      "desired_state": "Clarify that Canvas components exist but need HOME page integration in Phase 3",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md",
+        ".artifacts/2026-01-02-1700-knosia-project-structure.md"
+      ]
+    },
+    {
+      "id": "IMPL-011",
+      "title": "Mobile experience scope unclear",
+      "description": "1535 includes full mobile UX spec (Section 10), but 1600 only mentions 'mobile responsiveness' without detail. Gap between detailed spec and vague implementation plan.",
+      "severity": "low",
+      "affected_systems": ["docs", "ui"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Full mobile UX spec exists in 1535, but implementation plan only mentions responsive CSS in Phase 4",
+      "desired_state": "Clarify if mobile = responsive CSS only or includes separate mobile app development",
+      "fix_type": "doc_update",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    },
+    {
+      "id": "IMPL-012",
+      "title": "Missing cross-reference metrics table",
+      "description": "No unified table showing Phase | Days | LOC | Files (New/Mod) | Dependencies across documents. Metrics scattered requiring manual cross-referencing.",
+      "severity": "low",
+      "affected_systems": ["docs"],
+      "blocks": [],
+      "blocked_by": [],
+      "effort_estimate": "30min",
+      "current_state": "Metrics scattered across multiple documents (1500, 1600, 1700, 1800)",
+      "desired_state": "Add unified metrics table to 1600 showing: Phase | Days | LOC | Files (New/Mod) | Depends On",
+      "fix_type": "addition",
+      "files_affected": [
+        ".artifacts/2026-01-02-1600-knosia-consolidated-implementation.md"
+      ]
+    }
+  ],
+  "summary": {
+    "total_issues": 12,
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 9
+  }
+}

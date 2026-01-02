@@ -47,6 +47,16 @@ export type {
   HardRulesConfig,
   AggregationType,
   RelationshipType,
+  // Data profiling types
+  ProfiledSchema,
+  ProfileOptions,
+  ProfileResult,
+  TableProfile,
+  ColumnProfile,
+  NumericProfile,
+  TemporalProfile,
+  CategoricalProfile,
+  TextProfile,
 } from "./models";
 
 export { DEFAULT_HARD_RULES_CONFIG } from "./models";
@@ -74,10 +84,37 @@ export {
   PostgresAdapter,
   createPostgresAdapter,
   type PostgresConfig,
-  // DuckDB Universal Adapter
-  DuckDBAdapter,
+  // DuckDB Legacy adapter (deprecated - use DuckDBUniversalAdapter instead)
   createDuckDBAdapter,
   createAdapter,
   type DuckDBConnectionConfig,
   type QueryResult,
 } from "./adapters";
+
+// DuckDB Universal Adapter (new - connection string based)
+export {
+  DuckDBUniversalAdapter,
+  createDuckDBUniversalAdapter,
+  type DuckDBAdapterOptions,
+} from "./duckdb-adapter";
+
+// Data Profiling Engine
+export {
+  profileSchema,
+  calculateSampleRate,
+  selectColumnsToProfile,
+} from "./profiler";
+
+// Profiling Query Builders
+export {
+  // Tier 1: Database statistics
+  buildTableStatisticsQuery,
+  buildColumnStatisticsQuery,
+  buildCombinedStatisticsQuery,
+  buildSchemaStatisticsQuery,
+  // Tier 2: Adaptive sampling
+  buildSampleProfilingQuery,
+  buildFreshnessQuery,
+  buildCardinalityQuery,
+  determineAdaptiveSampleRate,
+} from "./profiler-queries";

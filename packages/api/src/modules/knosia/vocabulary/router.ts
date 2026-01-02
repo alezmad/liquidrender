@@ -49,12 +49,12 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
   .use(enforceAuth)
 
   /**
-   * GET /:analysisId - Get vocabulary from a completed analysis
+   * GET /analysis/:analysisId - Get vocabulary from a completed analysis
    *
    * Returns vocabulary items (metrics, dimensions, entities) detected
    * from schema analysis, along with confirmation questions.
    */
-  .get("/:analysisId", async (c) => {
+  .get("/analysis/:analysisId", async (c) => {
     const analysisId = c.req.param("analysisId");
 
     // Validate input
@@ -79,12 +79,12 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
   })
 
   /**
-   * POST /:analysisId/confirm - Confirm vocabulary selections
+   * POST /analysis/:analysisId/confirm - Confirm vocabulary selections
    *
    * Saves user's vocabulary confirmations and creates vocabulary items
    * in the database. Supports "skipped" mode to use defaults.
    */
-  .post("/:analysisId/confirm", async (c) => {
+  .post("/analysis/:analysisId/confirm", async (c) => {
     const user = c.get("user");
     const analysisId = c.req.param("analysisId");
     const body = await c.req.json();
@@ -115,12 +115,12 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
   })
 
   /**
-   * POST /:vocabularyId/report-mismatch - Report a vocabulary issue
+   * POST /items/:vocabularyId/report-mismatch - Report a vocabulary issue
    *
    * Allows users to report when vocabulary items are incorrect,
    * have wrong mappings, or are missing expected terms.
    */
-  .post("/:vocabularyId/report-mismatch", async (c) => {
+  .post("/items/:vocabularyId/report-mismatch", async (c) => {
     const user = c.get("user");
     const vocabularyId = c.req.param("vocabularyId");
     const body = await c.req.json();

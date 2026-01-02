@@ -1,5 +1,5 @@
 Wave,Task,Status,Agent,StartTime,EndTime,LOC,Files,Issues
-0,types,completed,master-orchestrator,2026-01-02T19:15,2026-01-02T19:20,150,4,TYPE-001|BIZ-001|DASH-001|TYPE-002
+0,types,completed,master-orchestrator,2026-01-02T19:15,2026-01-02T20:15,196,6,TYPE-001|BIZ-001|DASH-001|TYPE-002|DB-001
 1-A,detector,pending,,,0,0,BIZ-002|BIZ-003|GLUE-001
 1-A,signatures,pending,,,0,0,BIZ-002
 1-B,saas-template,pending,,,0,0,BIZ-004|TEMPLATE-001

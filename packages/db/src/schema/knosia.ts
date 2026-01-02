@@ -123,26 +123,10 @@ export const knosiaMismatchStatusEnum = pgEnum("knosia_mismatch_status", [
 // CANVAS ENUMS
 // ============================================================================
 
-export const knosiaCanvasStatusEnum = pgEnum("knosia_canvas_status", [
-  "draft",
-  "active",
-  "archived",
-]);
-
-export const knosiaCanvasBlockTypeEnum = pgEnum("knosia_canvas_block_type", [
-  // Data visualization (delegated to LiquidRender)
-  "kpi",
-  "line_chart",
-  "bar_chart",
-  "area_chart",
-  "pie_chart",
-  "table",
-  // Canvas-native blocks
-  "hero_metric",
-  "watch_list",
-  "comparison",
-  "insight",
-  "text",
+export const knosiaCanvasSourceTypeEnum = pgEnum("knosia_canvas_source_type", [
+  "template", // Generated from business type template
+  "custom", // User created from scratch
+  "hybrid", // Template that was customized
 ]);
 
 // ============================================================================
@@ -789,117 +773,30 @@ export const knosiaThreadSnapshot = pgTable("knosia_thread_snapshot", {
 // ============================================================================
 
 /**
- * Canvases - Living business views
+ * Workspace Canvas - Stores LiquidSchema-based canvas
+ *
+ * Canvas is the HOME page for a workspace. It stores a LiquidSchema
+ * that defines the entire layout. LiquidRender handles all visualization.
+ *
+ * One canvas per workspace (for V1). Future: multiple named canvases.
  */
-export const knosiaCanvas = pgTable("knosia_canvas", {
+export const knosiaWorkspaceCanvas = pgTable("knosia_workspace_canvas", {
   id: text().primaryKey().$defaultFn(generateId),
   workspaceId: text()
     .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
-    .notNull(),
-  createdBy: text()
-    .references(() => user.id, { onDelete: "cascade" })
-    .notNull(),
-  name: text().notNull(),
-  description: text(),
-  icon: text(),
-  status: knosiaCanvasStatusEnum().notNull().default("active"),
-  isAiGenerated: boolean().default(false),
-  // Layout configuration
-  layout: jsonb()
-    .$type<{
-      type: "grid" | "freeform";
-      columns?: number;
-      rows?: number;
-    }>()
-    .default({ type: "grid", columns: 12 }),
-  // Sharing
-  visibility: knosiaWorkspaceVisibilityEnum().notNull().default("private"),
-  sharedWith: jsonb().$type<string[]>().default([]),
+    .notNull()
+    .unique(), // One canvas per workspace in V1
+  // LiquidSchema JSON (complete layout definition)
+  schema: jsonb().notNull(), // LiquidSchema from @repo/liquid-render
+  // Source tracking
+  sourceType: knosiaCanvasSourceTypeEnum().notNull().default("template"),
+  templateId: text(), // Business type if sourced from template (e.g., "saas")
   // Metadata
-  lastViewedAt: timestamp(),
-  viewCount: integer().default(0),
+  lastEditedBy: text().references(() => user.id),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
     .$onUpdate(() => new Date()),
-});
-
-/**
- * Canvas Blocks - Individual blocks within a Canvas
- */
-export const knosiaCanvasBlock = pgTable("knosia_canvas_block", {
-  id: text().primaryKey().$defaultFn(generateId),
-  canvasId: text()
-    .references(() => knosiaCanvas.id, { onDelete: "cascade" })
-    .notNull(),
-  type: knosiaCanvasBlockTypeEnum().notNull(),
-  title: text(),
-  // Position (grid-based)
-  position: jsonb()
-    .$type<{
-      x: number; // Column start (0-based)
-      y: number; // Row start (0-based)
-      width: number; // Columns span
-      height: number; // Rows span
-    }>()
-    .notNull(),
-  // Block configuration
-  config: jsonb().$type<{
-    // For data blocks
-    metric?: string; // Vocabulary item slug
-    dimensions?: string[]; // Group by
-    timeRange?: string; // Last 7 days, MTD, etc.
-    comparison?: string; // WoW, MoM, etc.
-    // For hero_metric
-    target?: number;
-    targetLabel?: string;
-    // For watch_list
-    maxItems?: number;
-    severityFilter?: string[];
-    // For LiquidRender delegation
-    liquidRenderType?: string;
-    liquidRenderConfig?: unknown;
-  }>(),
-  // Data binding
-  dataSource: jsonb().$type<{
-    type: "vocabulary" | "query" | "static";
-    vocabularyId?: string;
-    sql?: string;
-    staticData?: unknown;
-  }>(),
-  // Cache
-  cachedData: jsonb(),
-  cachedAt: timestamp(),
-  // Metadata
-  sortOrder: integer().default(0),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp()
-    .notNull()
-    .$onUpdate(() => new Date()),
-});
-
-/**
- * Canvas Alerts - Threshold-based notifications for Canvas blocks
- */
-export const knosiaCanvasAlert = pgTable("knosia_canvas_alert", {
-  id: text().primaryKey().$defaultFn(generateId),
-  canvasId: text()
-    .references(() => knosiaCanvas.id, { onDelete: "cascade" })
-    .notNull(),
-  blockId: text().references(() => knosiaCanvasBlock.id, { onDelete: "cascade" }),
-  name: text().notNull(),
-  condition: jsonb()
-    .$type<{
-      metric: string;
-      operator: "gt" | "lt" | "eq" | "gte" | "lte" | "change_gt" | "change_lt";
-      threshold: number;
-      timeWindow?: string;
-    }>()
-    .notNull(),
-  channels: jsonb().$type<("in_app" | "email" | "slack")[]>().default(["in_app"]),
-  enabled: boolean().default(true),
-  lastTriggeredAt: timestamp(),
-  createdAt: timestamp().notNull().defaultNow(),
 });
 
 // ============================================================================
@@ -1244,39 +1141,18 @@ export type SelectKnosiaThreadSnapshot = z.infer<
   typeof selectKnosiaThreadSnapshotSchema
 >;
 
-// Canvases
-export const insertKnosiaCanvasSchema = createInsertSchema(knosiaCanvas);
-export const selectKnosiaCanvasSchema = createSelectSchema(knosiaCanvas);
-export const updateKnosiaCanvasSchema = createUpdateSchema(knosiaCanvas);
-export type InsertKnosiaCanvas = z.infer<typeof insertKnosiaCanvasSchema>;
-export type SelectKnosiaCanvas = z.infer<typeof selectKnosiaCanvasSchema>;
-
-// Canvas Blocks
-export const insertKnosiaCanvasBlockSchema =
-  createInsertSchema(knosiaCanvasBlock);
-export const selectKnosiaCanvasBlockSchema =
-  createSelectSchema(knosiaCanvasBlock);
-export const updateKnosiaCanvasBlockSchema =
-  createUpdateSchema(knosiaCanvasBlock);
-export type InsertKnosiaCanvasBlock = z.infer<
-  typeof insertKnosiaCanvasBlockSchema
+// Workspace Canvas
+export const insertKnosiaWorkspaceCanvasSchema =
+  createInsertSchema(knosiaWorkspaceCanvas);
+export const selectKnosiaWorkspaceCanvasSchema =
+  createSelectSchema(knosiaWorkspaceCanvas);
+export const updateKnosiaWorkspaceCanvasSchema =
+  createUpdateSchema(knosiaWorkspaceCanvas);
+export type InsertKnosiaWorkspaceCanvas = z.infer<
+  typeof insertKnosiaWorkspaceCanvasSchema
 >;
-export type SelectKnosiaCanvasBlock = z.infer<
-  typeof selectKnosiaCanvasBlockSchema
->;
-
-// Canvas Alerts
-export const insertKnosiaCanvasAlertSchema =
-  createInsertSchema(knosiaCanvasAlert);
-export const selectKnosiaCanvasAlertSchema =
-  createSelectSchema(knosiaCanvasAlert);
-export const updateKnosiaCanvasAlertSchema =
-  createUpdateSchema(knosiaCanvasAlert);
-export type InsertKnosiaCanvasAlert = z.infer<
-  typeof insertKnosiaCanvasAlertSchema
->;
-export type SelectKnosiaCanvasAlert = z.infer<
-  typeof selectKnosiaCanvasAlertSchema
+export type SelectKnosiaWorkspaceCanvas = z.infer<
+  typeof selectKnosiaWorkspaceCanvasSchema
 >;
 
 // Comments

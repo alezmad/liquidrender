@@ -304,6 +304,9 @@ export const knosiaConnection = pgTable("knosia_connection", {
   schema: text().default("public"),
   credentials: text(), // encrypted in production
   sslEnabled: boolean().default(true),
+  // DuckDB Universal Adapter fields
+  duckdbAttachedName: text(), // Name used in DuckDB ATTACH statement
+  scannerType: text(), // postgres_scanner, mysql_scanner, sqlite_scanner
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
@@ -640,6 +643,137 @@ export const knosiaAnalysis = pgTable("knosia_analysis", {
   completedAt: timestamp(),
   createdAt: timestamp().notNull().defaultNow(),
 });
+
+/**
+ * Table Profiles - Data profiling results per table
+ *
+ * Stores TableProfile data (row counts, size, freshness, quality metrics)
+ * One row per table per analysis run
+ */
+export const knosiaTableProfile = pgTable(
+  "knosia_table_profile",
+  {
+    id: text().primaryKey().$defaultFn(generateId),
+    analysisId: text()
+      .notNull()
+      .references(() => knosiaAnalysis.id, { onDelete: "cascade" }),
+    tableName: text().notNull(),
+
+    // Profiling data from TableProfile type
+    profile: jsonb()
+      .$type<{
+        tableName: string;
+        rowCountEstimate: number;
+        tableSizeBytes: number;
+        lastVacuum?: string;
+        lastAnalyze?: string;
+        rowCountExact?: number;
+        samplingRate: number;
+        latestDataAt?: string;
+        earliestDataAt?: string;
+        dataSpanDays?: number;
+        emptyColumnCount: number;
+        sparseColumnCount: number;
+        updateFrequency?: {
+          pattern: "realtime" | "hourly" | "daily" | "batch" | "stale";
+          confidence: number;
+        };
+      }>()
+      .notNull(),
+
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => [
+    {
+      // Index for looking up profiles by analysis
+      analysisTableIdx: uniqueIndex("knosia_table_profile_analysis_table_idx").on(
+        table.analysisId,
+        table.tableName,
+      ),
+    },
+  ],
+);
+
+/**
+ * Column Profiles - Data profiling results per column
+ *
+ * Stores ColumnProfile data (null counts, cardinality, type-specific stats)
+ * One row per column per table per analysis run
+ */
+export const knosiaColumnProfile = pgTable(
+  "knosia_column_profile",
+  {
+    id: text().primaryKey().$defaultFn(generateId),
+    tableProfileId: text()
+      .notNull()
+      .references(() => knosiaTableProfile.id, { onDelete: "cascade" }),
+    columnName: text().notNull(),
+
+    // Profiling data from ColumnProfile type
+    profile: jsonb()
+      .$type<{
+        columnName: string;
+        dataType: string;
+        nullCount: number;
+        nullPercentage: number;
+        // Numeric profile
+        numeric?: {
+          min: number;
+          max: number;
+          mean: number;
+          stdDev: number;
+          p25?: number;
+          p50?: number;
+          p75?: number;
+          p90?: number;
+          p95?: number;
+          p99?: number;
+        };
+        // Temporal profile
+        temporal?: {
+          min: Date;
+          max: Date;
+          spanDays: number;
+          hasTime: boolean;
+          uniqueDates: number;
+          gaps?: { start: Date; end: Date; days: number }[];
+        };
+        // Categorical profile
+        categorical?: {
+          cardinality: number;
+          topValues: { value: string; frequency: number; percentage: number }[];
+          isHighCardinality: boolean;
+          isLowCardinality: boolean;
+          possiblyUnique: boolean;
+        };
+        // Text profile
+        text?: {
+          minLength: number;
+          maxLength: number;
+          avgLength: number;
+          patterns?: {
+            email?: number;
+            url?: number;
+            phone?: number;
+            uuid?: number;
+            json?: number;
+          };
+        };
+      }>()
+      .notNull(),
+
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => [
+    {
+      // Index for looking up profiles by table
+      tableColumnIdx: uniqueIndex("knosia_column_profile_table_column_idx").on(
+        table.tableProfileId,
+        table.columnName,
+      ),
+    },
+  ],
+);
 
 /**
  * Threads - Chat sessions (renamed from Conversations)
@@ -1195,3 +1329,27 @@ export const selectKnosiaAiInsightSchema = createSelectSchema(knosiaAiInsight);
 export const updateKnosiaAiInsightSchema = createUpdateSchema(knosiaAiInsight);
 export type InsertKnosiaAiInsight = z.infer<typeof insertKnosiaAiInsightSchema>;
 export type SelectKnosiaAiInsight = z.infer<typeof selectKnosiaAiInsightSchema>;
+
+// Table Profiles
+export const insertKnosiaTableProfileSchema =
+  createInsertSchema(knosiaTableProfile);
+export const selectKnosiaTableProfileSchema =
+  createSelectSchema(knosiaTableProfile);
+export type InsertKnosiaTableProfile = z.infer<
+  typeof insertKnosiaTableProfileSchema
+>;
+export type SelectKnosiaTableProfile = z.infer<
+  typeof selectKnosiaTableProfileSchema
+>;
+
+// Column Profiles
+export const insertKnosiaColumnProfileSchema =
+  createInsertSchema(knosiaColumnProfile);
+export const selectKnosiaColumnProfileSchema =
+  createSelectSchema(knosiaColumnProfile);
+export type InsertKnosiaColumnProfile = z.infer<
+  typeof insertKnosiaColumnProfileSchema
+>;
+export type SelectKnosiaColumnProfile = z.infer<
+  typeof selectKnosiaColumnProfileSchema
+>;

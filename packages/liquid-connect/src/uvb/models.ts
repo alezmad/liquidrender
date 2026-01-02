@@ -50,6 +50,211 @@ export interface ExtractedSchema {
 export type DatabaseType = "postgres" | "mysql" | "sqlite" | "duckdb";
 
 // =============================================================================
+// Data Profiling Types (actual data analysis)
+// =============================================================================
+
+/**
+ * ProfiledSchema extends ExtractedSchema with actual data profiling
+ * Goes beyond structure to understand data quality, freshness, and business context
+ */
+export interface ProfiledSchema extends ExtractedSchema {
+  // Profiling data
+  tableProfiles: Record<string, TableProfile>;
+  columnProfiles: Record<string, Record<string, ColumnProfile>>;
+
+  // Profiling metadata
+  profiledAt: string;
+  profilingDuration: number;
+  samplingStrategy: "full" | "adaptive" | "statistics-only";
+}
+
+/**
+ * TableProfile - comprehensive profiling data for a table
+ * Three-tier approach: statistics (instant), sampling (fast), detailed (selective)
+ */
+export interface TableProfile {
+  tableName: string;
+
+  // Tier 1: Database Statistics (always available)
+  rowCountEstimate: number; // From pg_class.reltuples
+  tableSizeBytes: number; // From pg_class.relpages
+  lastVacuum?: Date; // From pg_stat_user_tables
+  lastAnalyze?: Date;
+
+  // Tier 2: Sample-based (computed if >0 rows)
+  rowCountExact?: number; // Exact count (if sampled or small)
+  samplingRate: number; // 1.0 = full scan, 0.01 = 1% sample
+
+  // Data freshness
+  latestDataAt?: Date; // MAX of all timestamp columns
+  earliestDataAt?: Date; // MIN of all timestamp columns
+  dataSpanDays?: number; // Range in days
+
+  // Data quality
+  emptyColumnCount: number; // Columns with 100% NULL
+  sparseColumnCount: number; // Columns with >50% NULL
+
+  // Tier 3: Detailed (selective)
+  updateFrequency?: {
+    // Detected from timestamp patterns
+    pattern: "realtime" | "hourly" | "daily" | "batch" | "stale";
+    confidence: number;
+  };
+}
+
+/**
+ * ColumnProfile - profiling data for a single column
+ */
+export interface ColumnProfile {
+  columnName: string;
+  dataType: string;
+
+  // Tier 1: From pg_stats (if available)
+  distinctCountEstimate?: number; // n_distinct from pg_stats
+  nullFraction?: number; // null_frac from pg_stats
+  avgWidth?: number; // avg_width from pg_stats
+
+  // Tier 2: Sample-based
+  nullCount: number;
+  nullPercentage: number;
+
+  // Type-specific profiling
+  numeric?: NumericProfile;
+  temporal?: TemporalProfile;
+  categorical?: CategoricalProfile;
+  text?: TextProfile;
+}
+
+/**
+ * NumericProfile - statistical profiling for numeric columns
+ */
+export interface NumericProfile {
+  min: number;
+  max: number;
+  mean?: number;
+  median?: number;
+  stdDev?: number;
+  percentiles?: {
+    p25: number;
+    p50: number;
+    p75: number;
+    p90: number;
+    p95: number;
+    p99: number;
+  };
+  zeroCount?: number;
+  negativeCount?: number;
+}
+
+/**
+ * TemporalProfile - profiling for date/timestamp columns
+ */
+export interface TemporalProfile {
+  min: Date;
+  max: Date;
+  spanDays: number;
+
+  // Granularity detection
+  hasTime: boolean; // vs date-only
+  uniqueDates: number; // Cardinality at date level
+
+  // Patterns
+  gaps?: Array<{
+    // Detected missing date ranges
+    start: Date;
+    end: Date;
+    days: number;
+  }>;
+}
+
+/**
+ * CategoricalProfile - profiling for low-cardinality columns
+ */
+export interface CategoricalProfile {
+  cardinality: number; // Unique values
+
+  topValues: Array<{
+    // Most common values
+    value: unknown;
+    count: number;
+    percentage: number;
+  }>;
+
+  // Flags
+  isHighCardinality: boolean; // >1000 unique values
+  isLowCardinality: boolean; // <20 unique values
+  possiblyUnique: boolean; // cardinality ~= row count
+}
+
+/**
+ * TextProfile - profiling for text/varchar columns
+ */
+export interface TextProfile {
+  minLength: number;
+  maxLength: number;
+  avgLength: number;
+
+  patterns?: {
+    // Pattern detection
+    email: number; // Count of email-like values
+    url: number;
+    phone: number;
+    uuid: number;
+    json: number;
+  };
+
+  topValues?: Array<{
+    // Sample values
+    value: string;
+    count: number;
+  }>;
+}
+
+/**
+ * ProfileOptions - configuration for profiling operations
+ */
+export interface ProfileOptions {
+  // Sampling
+  maxSampleRows?: number; // Default: 100,000
+  minSampleRate?: number; // Default: 0.01 (1%)
+
+  // Tiers
+  enableTier1?: boolean; // Default: true (statistics)
+  enableTier2?: boolean; // Default: true (sampling)
+  enableTier3?: boolean; // Default: false (detailed)
+
+  // Concurrency
+  maxConcurrentTables?: number; // Default: 5
+
+  // Selective profiling
+  includePatterns?: string[]; // Only profile tables matching regex
+  excludePatterns?: string[]; // Skip tables matching regex
+
+  // Performance limits
+  timeoutPerTable?: number; // Default: 30000ms
+  totalTimeout?: number; // Default: 300000ms (5 min)
+}
+
+/**
+ * ProfileResult - result of profiling operation
+ */
+export interface ProfileResult {
+  schema: ProfiledSchema;
+  stats: {
+    tablesProfiled: number;
+    tablesSkipped: number;
+    totalDuration: number;
+    tier1Duration: number;
+    tier2Duration: number;
+    tier3Duration: number;
+  };
+  warnings: Array<{
+    table: string;
+    message: string;
+  }>;
+}
+
+// =============================================================================
 // Detection Types (output of hard rules)
 // =============================================================================
 

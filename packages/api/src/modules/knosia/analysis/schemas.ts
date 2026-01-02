@@ -8,9 +8,19 @@ import { connectionIdSchema } from "../shared-schemas";
 
 export const runAnalysisSchema = z.object({
   connectionId: connectionIdSchema,
+  includeDataProfiling: z.boolean().optional().default(false),
 });
 
 export const getAnalysisSchema = z.object({
+  id: z.string(),
+});
+
+export const getTableProfileSchema = z.object({
+  analysisId: z.string(),
+  tableName: z.string(),
+});
+
+export const getProfilingSummarySchema = z.object({
   id: z.string(),
 });
 
@@ -67,3 +77,5 @@ export type AnalysisSSEEvent =
 
 export type RunAnalysisInput = z.infer<typeof runAnalysisSchema>;
 export type GetAnalysisInput = z.infer<typeof getAnalysisSchema>;
+export type GetTableProfileInput = z.infer<typeof getTableProfileSchema>;
+export type GetProfilingSummaryInput = z.infer<typeof getProfilingSummarySchema>;

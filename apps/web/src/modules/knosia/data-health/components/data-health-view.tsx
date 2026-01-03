@@ -10,7 +10,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@turbostarter/ui-web/c
 import { Skeleton } from "@turbostarter/ui-web/skeleton";
 
 import { api } from "~/lib/api/client";
-import { handle } from "@turbostarter/api/utils";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ProfilingSummary {
+  analysisId: string;
+  tableCount: number;
+  totalRows: number;
+  totalSizeBytes: number;
+  averageRowsPerTable: number;
+  tablesWithFreshness: number;
+  staleTables: number;
+  updateFrequencies: Record<string, number>;
+}
+
+interface Analysis {
+  id: string;
+  status: string;
+  completedAt?: string;
+  businessType?: {
+    detected: string;
+    confidence: number;
+  };
+}
 
 /**
  * Data Health Dashboard
@@ -26,29 +50,41 @@ export function DataHealthView() {
   // Get latest analysis ID from onboarding state (localStorage)
   // In production, this should come from user's workspace context
   const analysisId = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("knosia_onboarding_progress") ?? "{}")?.analysisId
+    ? (JSON.parse(localStorage.getItem("knosia_onboarding_progress") ?? "{}") as { analysisId?: string }).analysisId ?? null
     : null;
 
-  const { data: summary, isLoading, error } = useQuery({
+  const { data: summary, isLoading, error } = useQuery<ProfilingSummary>({
     queryKey: ["profiling-summary", analysisId],
-    queryFn: async () => {
-      if (!analysisId) return null;
-      const response = await handle(api.knosia.analysis[":id"].profiling.$get)({
+    queryFn: async (): Promise<ProfilingSummary> => {
+      if (!analysisId) throw new Error("Analysis ID required");
+
+      const res = await api.knosia.analysis[":id"].profiling.$get({
         param: { id: analysisId },
       });
-      return response;
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch profiling summary");
+      }
+
+      return res.json() as Promise<ProfilingSummary>;
     },
     enabled: !!analysisId,
   });
 
-  const { data: analysis } = useQuery({
+  const { data: analysis } = useQuery<Analysis>({
     queryKey: ["analysis", analysisId],
-    queryFn: async () => {
-      if (!analysisId) return null;
-      const response = await handle(api.knosia.analysis[":id"].$get)({
+    queryFn: async (): Promise<Analysis> => {
+      if (!analysisId) throw new Error("Analysis ID required");
+
+      const res = await api.knosia.analysis[":id"].$get({
         param: { id: analysisId },
       });
-      return response;
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch analysis");
+      }
+
+      return res.json() as Promise<Analysis>;
     },
     enabled: !!analysisId,
   });

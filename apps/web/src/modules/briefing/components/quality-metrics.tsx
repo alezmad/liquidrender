@@ -10,7 +10,6 @@ import { Icons } from "@turbostarter/ui-web/icons";
 import { Skeleton } from "@turbostarter/ui-web/skeleton";
 
 import { api } from "~/lib/api/client";
-import { handle } from "@turbostarter/api/utils";
 
 import type { QualityMetricsProps } from "../types";
 
@@ -40,11 +39,15 @@ export function QualityMetrics({
   const { data, isLoading, error } = useQuery({
     queryKey: ["tableProfile", analysisId, tableName],
     queryFn: async () => {
-      return handle(
-        api.knosia.analysis[":id"].tables[":tableName"].profile.$get,
-      )({
+      const res = await api.knosia.analysis[":id"].tables[":tableName"].profile.$get({
         param: { id: analysisId, tableName },
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch table profile");
+      }
+
+      return res.json();
     },
   });
 
@@ -73,8 +76,7 @@ export function QualityMetrics({
     );
   }
 
-  const { columns } = data as { columns: ColumnProfile[] };
-  const columnProfiles = columns;
+  const columnProfiles = (data as any).columns as ColumnProfile[];
 
   // Calculate quality flags
   const emptyColumns = columnProfiles.filter(

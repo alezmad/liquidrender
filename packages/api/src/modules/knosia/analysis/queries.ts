@@ -724,16 +724,17 @@ export async function* runAnalysis(
         const mappingResult = mapToTemplate(quickEnrichedVocab, template);
         console.log("[Canvas] Mapping result:", { coverage: mappingResult.coverage, matched: mappingResult.matched?.length || 0 });
 
-        // For generic/custom templates (Media, etc.), bypass mapping if we have vocabulary
+        // Bypass template mapping if we have vocabulary detected
+        // Rationale: Template matching may fail even for correct business type if column naming differs
+        // If we have metrics/dimensions, we can build a useful canvas regardless of template coverage
         const hasVocabulary = (quickEnrichedVocab.metrics?.length || 0) > 0 ||
                              (quickEnrichedVocab.dimensions?.length || 0) > 0;
-        const isGenericTemplate = template.id === 'custom';
-        const shouldCreateCanvas = mappingResult.coverage >= 10 || (isGenericTemplate && hasVocabulary);
+        const shouldCreateCanvas = mappingResult.coverage >= 10 || hasVocabulary;
 
         console.log("[Canvas] Creation decision:", {
           coverage: mappingResult.coverage,
           hasVocabulary,
-          isGenericTemplate,
+          templateId: template.id,
           shouldCreateCanvas
         });
 

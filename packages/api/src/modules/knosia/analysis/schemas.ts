@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { connectionIdSchema } from "../shared-schemas";
+import { connectionIdSchema, workspaceIdSchema } from "../shared-schemas";
 
 // ============================================================================
 // INPUT SCHEMAS
@@ -9,6 +9,11 @@ import { connectionIdSchema } from "../shared-schemas";
 export const runAnalysisSchema = z.object({
   connectionId: connectionIdSchema,
   includeDataProfiling: z.boolean().optional().default(false),
+});
+
+export const triggerAnalysisInputSchema = z.object({
+  connectionId: connectionIdSchema,
+  workspaceId: workspaceIdSchema,
 });
 
 export const getAnalysisSchema = z.object({
@@ -79,3 +84,4 @@ export type RunAnalysisInput = z.infer<typeof runAnalysisSchema>;
 export type GetAnalysisInput = z.infer<typeof getAnalysisSchema>;
 export type GetTableProfileInput = z.infer<typeof getTableProfileSchema>;
 export type GetProfilingSummaryInput = z.infer<typeof getProfilingSummarySchema>;
+export type TriggerAnalysisInput = z.infer<typeof triggerAnalysisInputSchema>;

@@ -43,6 +43,14 @@
     "./uvb": {
       "types": "./dist/uvb/index.d.ts",
       "import": "./dist/uvb/index.js"
+    },
+    "./business-types": {
+      "types": "./dist/business-types/index.d.ts",
+      "import": "./dist/business-types/index.js"
+    },
+    "./dashboard": {
+      "types": "./dist/dashboard/index.d.ts",
+      "import": "./dist/dashboard/index.js"
     }
   },
   "scripts": {
@@ -60,7 +68,7 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "duckdb": "1.4.3",
+    "@duckdb/node-api": "1.4.3-r.2",
     "pg": "8.16.3",
     "yaml": "^2.3.4"
   }

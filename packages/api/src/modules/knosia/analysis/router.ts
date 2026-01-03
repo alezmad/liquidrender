@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 
-import { enforceAuth } from "../../../middleware";
+import { enforceAuth, validate } from "../../../middleware";
 import {
   runAnalysis,
   getAnalysis,
@@ -9,11 +9,13 @@ import {
   getColumnProfiles,
   getProfilingSummary,
 } from "./queries";
+import { triggerAnalysis } from "./mutations";
 import {
   runAnalysisSchema,
   getAnalysisSchema,
   getTableProfileSchema,
   getProfilingSummarySchema,
+  triggerAnalysisInputSchema,
 } from "./schemas";
 
 import type { Session, User } from "@turbostarter/auth";
@@ -25,6 +27,17 @@ type Variables = {
 
 export const analysisRouter = new Hono<{ Variables: Variables }>()
   .use(enforceAuth)
+
+  // ============================================================================
+  // POST /trigger - Trigger analysis pipeline
+  // ============================================================================
+  .post("/trigger", validate("json", triggerAnalysisInputSchema), async (c) => {
+    const user = c.get("user");
+    const { connectionId, workspaceId } = c.req.valid("json");
+
+    const result = await triggerAnalysis(connectionId, user.id, workspaceId);
+    return c.json(result);
+  })
 
   // ============================================================================
   // GET /run - Run analysis with SSE streaming

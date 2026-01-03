@@ -1,7 +1,7 @@
 # NEXT-STEPS.md
 
 > **Purpose:** Living document tracking immediate implementation priorities.
-> **Updated:** 2025-12-30
+> **Updated:** 2026-01-03
 > **Rule:** Complete items in order. Check off when done. Add new items at bottom.
 
 ---
@@ -17,7 +17,7 @@
 ## Queue
 
 ### 1. Conversation UI
-**Priority:** High | **Estimate:** ~6h | **Status:** ⏳ Ready
+**Priority:** High | **Estimate:** ~6h | **Status:** ⏳ Queued
 
 Chat interface for natural language queries.
 
@@ -205,6 +205,9 @@ The compiled vocabulary (for NL queries) doesn't auto-sync with:
 | **Dashboard Module (WF-0021)** | 2025-12-30 | Briefing page, KPI grid, alerts, ask input |
 | **Guest Cron Cleanup (WF-0021)** | 2025-12-30 | `/api/cron/cleanup-expired-orgs` endpoint |
 | **DuckDB Universal Adapter (WF-0022)** | 2025-12-30 | Phase 1-2: Adapter + QueryExecutor + Extractor integration, 78 tests |
+| **Real Database Integration Tests** | 2026-01-02 | 13 tests passing: Pagila, Chinook, Northwind, Knosia |
+| **Wave 2 Reverse Engineering Pipeline** | 2026-01-02 | DB → Vocabulary → SemanticLayer → Dashboard, validated against real schemas |
+| **Data Profiling (Wave 2.5-2.7)** | 2026-01-03 | Three-tier profiling (stats/sampling/detailed), 163 tests, API integration, UI components, data health dashboard |
 
 ---
 

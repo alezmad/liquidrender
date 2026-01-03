@@ -57,6 +57,7 @@ const pathsConfig = {
     page: (slug: string) => `${DASHBOARD_PREFIX}/p/${slug}`,
     connections: `${DASHBOARD_PREFIX}/connections`,
     vocabulary: `${DASHBOARD_PREFIX}/vocabulary`,
+    dataHealth: `${DASHBOARD_PREFIX}/data-health`,
     settings: `${DASHBOARD_PREFIX}/settings`,
     // Canvas routes
     canvas: {

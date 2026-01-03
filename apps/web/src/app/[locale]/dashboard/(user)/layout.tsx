@@ -52,6 +52,11 @@ const menu = [
         icon: Icons.BookOpen,
       },
       {
+        title: "dataHealth",
+        href: pathsConfig.knosia.dataHealth,
+        icon: Icons.Activity,
+      },
+      {
         title: "settings",
         href: pathsConfig.knosia.settings,
         icon: Icons.Settings,

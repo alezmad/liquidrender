@@ -6,16 +6,17 @@ import { useTranslation } from "@turbostarter/i18n";
 import { cn } from "@turbostarter/ui";
 import { Icons } from "@turbostarter/ui-web/icons";
 
-import type { AnalysisProgress as AnalysisProgressType, AnalysisStep } from "../../types";
+import type { AnalysisProgress as AnalysisProgressType, AnalysisStep, AnalysisResult } from "../../types";
 
 interface AnalysisProgressProps {
   progress: AnalysisProgressType;
+  result?: AnalysisResult | null;
 }
 
 /**
  * Shows analysis progress with animated steps.
  */
-export function AnalysisProgress({ progress }: AnalysisProgressProps) {
+export function AnalysisProgress({ progress, result }: AnalysisProgressProps) {
   const { t } = useTranslation("knosia");
   const [showSlowMessage, setShowSlowMessage] = useState(false);
 
@@ -59,6 +60,30 @@ export function AnalysisProgress({ progress }: AnalysisProgressProps) {
           <StepItem key={step.id} step={step} />
         ))}
       </div>
+
+      {progress.isComplete && result?.profiling && (
+        <div className="rounded-lg border border-border bg-muted/50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+              <Icons.CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <p className="font-medium">Data Profiling Complete</p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
+                <div>
+                  <span className="font-medium text-foreground">{result.profiling.tablesProfiled}</span> tables profiled
+                </div>
+                <div>
+                  <span className="font-medium text-foreground">{Math.round(result.profiling.duration)}ms</span> total duration
+                </div>
+                <div className="col-span-2">
+                  Tiers completed: <span className="font-medium text-foreground">Tier 1</span> ({Math.round(result.profiling.tier1Duration)}ms), <span className="font-medium text-foreground">Tier 2</span> ({Math.round(result.profiling.tier2Duration)}ms)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {progress.error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">

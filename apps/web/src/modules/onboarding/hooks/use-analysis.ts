@@ -12,13 +12,16 @@ import type {
   ErrorEvent,
 } from "../types";
 
-/** Initial analysis steps */
+/** Initial analysis steps (8 steps including data profiling) */
 const INITIAL_STEPS: AnalysisStep[] = [
   { id: 1, label: "Connecting to database", status: "pending" },
   { id: 2, label: "Scanning schema", status: "pending" },
   { id: 3, label: "Detecting business type", status: "pending" },
   { id: 4, label: "Extracting entities", status: "pending" },
   { id: 5, label: "Building vocabulary", status: "pending" },
+  { id: 6, label: "Profiling data quality", status: "pending" },
+  { id: 7, label: "Assessing freshness", status: "pending" },
+  { id: 8, label: "Finalizing insights", status: "pending" },
 ];
 
 interface UseAnalysisOptions {
@@ -94,6 +97,7 @@ export function useAnalysis(options: UseAnalysisOptions = {}): UseAnalysisReturn
         summary: event.summary,
         businessType: event.businessType,
         confirmations: event.confirmations as AnalysisResult["confirmations"],
+        profiling: event.profiling,
       };
 
       setResult(analysisResult);

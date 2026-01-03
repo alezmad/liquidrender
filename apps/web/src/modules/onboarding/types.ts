@@ -98,7 +98,7 @@ export interface OnboardingStepConfig {
 
 /** SSE step event from analysis */
 export interface StepEvent {
-  step: 1 | 2 | 3 | 4 | 5;
+  step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   status: "started" | "completed";
   label: string;
   detail?: string;
@@ -120,6 +120,13 @@ export interface CompleteEvent {
     alternatives: Array<{ type: string; confidence: number }>;
   };
   confirmations?: unknown[];
+  profiling?: {
+    tablesProfiled: number;
+    tablesSkipped: number;
+    duration: number;
+    tier1Duration: number;
+    tier2Duration: number;
+  };
 }
 
 /** SSE error event from analysis */
@@ -181,6 +188,13 @@ export interface AnalysisResult {
   summary: AnalysisSummary;
   businessType: DetectedBusinessType;
   confirmations?: VocabularyConfirmation[];
+  profiling?: {
+    tablesProfiled: number;
+    tablesSkipped: number;
+    duration: number;
+    tier1Duration: number;
+    tier2Duration: number;
+  };
 }
 
 // =============================================================================

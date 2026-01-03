@@ -55,12 +55,12 @@ export default function ReviewPage() {
 
   // Show loading while hydrating
   if (!isHydrated) {
-    return <AnalysisProgress progress={analysisProgress} />;
+    return <AnalysisProgress progress={analysisProgress} result={result} />;
   }
 
   // Show progress while analyzing
   if (!analysisProgress.isComplete || !result) {
-    return <AnalysisProgress progress={analysisProgress} />;
+    return <AnalysisProgress progress={analysisProgress} result={result} />;
   }
 
   // Show detection review when complete

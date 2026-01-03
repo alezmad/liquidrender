@@ -8,6 +8,7 @@ import { connectionIdSchema, workspaceIdSchema } from "../shared-schemas";
 
 export const runAnalysisSchema = z.object({
   connectionId: connectionIdSchema,
+  workspaceId: workspaceIdSchema.optional(),
   includeDataProfiling: z.boolean().optional().default(false),
 });
 
@@ -62,6 +63,20 @@ export interface CompleteEvent {
     tier1Duration: number;
     tier2Duration: number;
   };
+  querySuggestions?: {
+    starterQuestions: Array<{
+      question: string;
+      category: string;
+      difficulty: string;
+      insight: string;
+    }>;
+    kpiQuestions: string[];
+    trendQuestions: string[];
+    breakdownQuestions: string[];
+  };
+  llmEnriched?: boolean; // Flag to indicate LLM enrichment was successful
+  quickPreviewComplete?: boolean; // Flag to indicate quick preview done, background enrichment running
+  backgroundEnrichmentPending?: number; // Number of fields still being enriched in background
 }
 
 export interface ErrorEvent {
@@ -70,10 +85,17 @@ export interface ErrorEvent {
   recoverable: boolean;
 }
 
+export interface BackgroundEnrichmentEvent {
+  totalFieldsEnriched: number;
+  quickPreviewCount: number;
+  backgroundEnrichCount: number;
+}
+
 // Union type for all SSE events
 export type AnalysisSSEEvent =
   | { event: "step"; data: StepEvent }
   | { event: "complete"; data: CompleteEvent }
+  | { event: "background_complete"; data: BackgroundEnrichmentEvent }
   | { event: "error"; data: ErrorEvent };
 
 // ============================================================================

@@ -35,6 +35,9 @@ export const UpdatePasswordForm = memo<UpdatePasswordFormProps>(({ token }) => {
   const router = useRouter();
   const form = useForm({
     resolver: standardSchemaResolver(updatePasswordSchema),
+    defaultValues: {
+      password: "",
+    },
   });
 
   const resetPassword = useMutation({

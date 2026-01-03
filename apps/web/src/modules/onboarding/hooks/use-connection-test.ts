@@ -16,6 +16,7 @@ interface TestConnectionResponse {
 interface CreateConnectionResponse {
   id: string;
   orgId: string;
+  workspaceId: string;
   name: string;
   type: string;
   host: string;

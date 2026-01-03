@@ -2,10 +2,17 @@ import { and, eq } from "@turbostarter/db";
 import {
   knosiaConnection,
   knosiaConnectionHealth,
+  knosiaWorkspace,
+  knosiaWorkspaceConnection,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 import { generateId } from "@turbostarter/shared/utils";
-import { PostgresAdapter } from "@repo/liquid-connect/uvb";
+
+// Dynamic import to avoid Turbopack issues with native modules
+const getDuckDBAdapter = async () => {
+  const { DuckDBUniversalAdapter } = await import("@repo/liquid-connect/uvb");
+  return DuckDBUniversalAdapter;
+};
 
 import type {
   CreateConnectionInput,
@@ -30,52 +37,81 @@ export interface TestConnectionResult {
 // =============================================================================
 
 /**
- * Test a database connection using PostgresAdapter
+ * Test a database connection using DuckDB Universal Adapter
  *
  * Validates credentials and measures latency without saving.
  */
 export const testDatabaseConnection = async (
   input: TestConnectionInput
 ): Promise<TestConnectionResult> => {
-  // Only postgres supported currently
-  if (input.type !== "postgres") {
-    return {
-      success: false,
-      message: `Connection type '${input.type}' not yet supported. Only 'postgres' is available.`,
-    };
+  // Build connection string
+  let connectionString: string;
+
+  switch (input.type) {
+    case 'postgres': {
+      const port = input.port ?? 5432;
+      const auth = input.username && input.password
+        ? `${input.username}:${input.password}@`
+        : '';
+      connectionString = `postgresql://${auth}${input.host}:${port}/${input.database}`;
+      break;
+    }
+
+    case 'mysql': {
+      const port = input.port ?? 3306;
+      const auth = input.username && input.password
+        ? `${input.username}:${input.password}@`
+        : '';
+      connectionString = `mysql://${auth}${input.host}:${port}/${input.database}`;
+      break;
+    }
+
+    case 'duckdb': {
+      connectionString = input.database; // database field contains the file path
+      break;
+    }
+
+    default:
+      return {
+        success: false,
+        message: `Connection type '${input.type}' not yet supported.`,
+      };
   }
 
-  const adapter = new PostgresAdapter({
-    host: input.host,
-    port: input.port ?? 5432,
-    database: input.database,
-    user: input.username,
-    password: input.password,
-    ssl: input.ssl,
-  });
+  console.log('[testDatabaseConnection] Connection string:', connectionString.replace(/:[^:@]+@/, ':***@'));
 
+  const DuckDBAdapter = await getDuckDBAdapter();
+  const adapter = new DuckDBAdapter();
   const startTime = Date.now();
 
   try {
-    await adapter.connect();
+    console.log('[testDatabaseConnection] Starting adapter.connect()...');
+    await adapter.connect(connectionString);
+    console.log('[testDatabaseConnection] adapter.connect() completed successfully');
 
-    // Test with a simple query and get server version
-    interface VersionResult {
-      version: string;
-    }
-    const result = await adapter.query<VersionResult>("SELECT version() as version");
+    // Test with a simple query
+    console.log('[testDatabaseConnection] Running test query...');
+    const result = await adapter.query('SELECT 1 AS test');
+    console.log('[testDatabaseConnection] Test query returned:', result);
     const latencyMs = Date.now() - startTime;
-    const serverVersion = result[0]?.version ?? "Unknown";
+
+    if (!result || result.length === 0) {
+      throw new Error('Connection test query returned no results');
+    }
+
+    // Capture type BEFORE disconnecting (disconnect clears this.sourceType)
+    const dbType = adapter.type;
 
     await adapter.disconnect();
 
     return {
       success: true,
-      message: `Connected to ${input.type}://${input.host}:${input.port ?? 5432}/${input.database}`,
+      message: `Successfully connected to ${dbType} database`,
       latencyMs,
-      serverVersion,
+      serverVersion: `DuckDB ${dbType} scanner`,
     };
   } catch (error) {
+    console.error('[testDatabaseConnection] Error:', error);
     const errorMessage = error instanceof Error ? error.message : "Unknown connection error";
     return {
       success: false,
@@ -102,8 +138,9 @@ export const createConnection = async (
   const name =
     input.name || `${input.type}://${input.host}/${input.database}`;
 
-  // Use a transaction to create both connection and initial health record
+  // Use a transaction to create connection, health record, and ensure workspace exists
   const result = await db.transaction(async (tx) => {
+    console.log('[createConnection] Starting transaction');
     // Insert the connection
     const [connection] = await tx
       .insert(knosiaConnection)
@@ -115,9 +152,11 @@ export const createConnection = async (
         host: input.host,
         port: input.port ?? null,
         database: input.database,
-        schema: input.schema ?? "public",
+        schema: input.schema && input.schema.trim() !== "" ? input.schema : "public",
         credentials,
         sslEnabled: input.ssl ?? true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
 
@@ -132,7 +171,35 @@ export const createConnection = async (
       })
       .returning();
 
-    return { connection, health };
+    // Auto-create default workspace if org has no workspaces
+    let workspace = await tx
+      .select()
+      .from(knosiaWorkspace)
+      .where(eq(knosiaWorkspace.orgId, input.orgId))
+      .limit(1);
+
+    if (!workspace.length) {
+      const [newWorkspace] = await tx
+        .insert(knosiaWorkspace)
+        .values({
+          id: generateId(),
+          orgId: input.orgId,
+          name: "Main Workspace",
+          slug: `main-${Date.now()}`,
+          visibility: "org_wide",
+        })
+        .returning();
+      workspace = [newWorkspace!];
+    }
+
+    // Link connection to workspace
+    await tx.insert(knosiaWorkspaceConnection).values({
+      id: generateId(),
+      workspaceId: workspace[0]!.id,
+      connectionId: connectionId,
+    });
+
+    return { connection, health, workspace: workspace[0] };
   });
 
   if (!result.connection) {
@@ -142,6 +209,7 @@ export const createConnection = async (
   return {
     id: result.connection.id,
     orgId: result.connection.orgId,
+    workspaceId: result.workspace!.id,
     name: result.connection.name,
     type: result.connection.type,
     host: result.connection.host,

@@ -43,11 +43,13 @@ export const analysisRouter = new Hono<{ Variables: Variables }>()
   // GET /run - Run analysis with SSE streaming
   // ============================================================================
   .get("/run", async (c) => {
+    const user = c.get("user");
     const query = c.req.query();
 
     // Validate input
     const parsed = runAnalysisSchema.safeParse({
       connectionId: query.connectionId,
+      workspaceId: query.workspaceId,
       includeDataProfiling: query.includeDataProfiling === "true",
     });
 
@@ -61,12 +63,12 @@ export const analysisRouter = new Hono<{ Variables: Variables }>()
       );
     }
 
-    const { connectionId, includeDataProfiling } = parsed.data;
+    const { connectionId, workspaceId, includeDataProfiling } = parsed.data;
 
     // Stream SSE events
     return streamSSE(c, async (stream) => {
       try {
-        for await (const event of runAnalysis(connectionId, includeDataProfiling)) {
+        for await (const event of runAnalysis(connectionId, user.id, workspaceId ?? null, includeDataProfiling)) {
           await stream.writeSSE({
             event: event.event,
             data: JSON.stringify(event.data),

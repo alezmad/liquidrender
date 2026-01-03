@@ -29,6 +29,9 @@ export const ForgotPasswordForm = () => {
   const { t } = useTranslation(["common", "auth"]);
   const form = useForm({
     resolver: standardSchemaResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
   });
 
   const forgetPassword = useMutation({

@@ -21,13 +21,14 @@ export default function ReviewPage() {
   const { startAnalysis, progress: analysisProgress, result, isRunning } = useAnalysis();
 
   const connectionId = progress.connectionId;
+  const workspaceId = progress.workspaceId;
 
   // Start analysis when page loads (only after hydration)
   useEffect(() => {
     if (isHydrated && connectionId && !isRunning && !result) {
-      startAnalysis(connectionId);
+      startAnalysis(connectionId, workspaceId);
     }
-  }, [isHydrated, connectionId, startAnalysis, isRunning, result]);
+  }, [isHydrated, connectionId, workspaceId, startAnalysis, isRunning, result]);
 
   // Redirect if no connection (only after hydration to avoid race condition)
   useEffect(() => {

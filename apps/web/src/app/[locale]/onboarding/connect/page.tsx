@@ -39,7 +39,7 @@ export default function ConnectPage() {
   const [selectedDatabase, setSelectedDatabase] = useState<ConnectionType | undefined>(undefined);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
-  const { addConnection, hasConnections, isHydrated } = useOnboardingState();
+  const { addConnection, hasConnections, isHydrated, setWorkspaceId } = useOnboardingState();
   const { orgId, isLoading: isOrgLoading } = useKnosiaOrg();
 
   // Check URL param and existing connections to determine initial step
@@ -78,7 +78,19 @@ export default function ConnectPage() {
         const testRes = toConnectionTestResult(result);
         setTestResult(testRes);
 
-        if (testRes.success && orgId) {
+        if (testRes.success) {
+          if (!orgId) {
+            // OrgId not loaded yet - show error
+            setTestResult({
+              success: false,
+              error: {
+                code: "ORG_NOT_LOADED",
+                message: "Organization not loaded. Please refresh the page and try again.",
+              },
+            });
+            return;
+          }
+
           // Create the connection and proceed to summary
           // Generate a name from the database type and host
           const connectionName = `${values.type} - ${values.host}`;
@@ -90,6 +102,11 @@ export default function ConnectPage() {
 
           // Add connection to multi-connection state
           addConnection(connection.id);
+
+          // Store workspaceId from the connection response
+          if (connection.workspaceId) {
+            setWorkspaceId(connection.workspaceId);
+          }
 
           // Go to summary step with URL param
           setStep("summary");

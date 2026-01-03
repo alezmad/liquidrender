@@ -43,7 +43,8 @@ export const RegisterForm = memo<RegisterFormProps>(
     const form = useForm({
       resolver: standardSchemaResolver(registerSchema),
       defaultValues: {
-        email,
+        email: email ?? "",
+        password: "",
       },
     });
 

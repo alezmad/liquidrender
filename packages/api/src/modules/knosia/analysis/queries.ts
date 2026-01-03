@@ -2,19 +2,22 @@ import { eq, and } from "@turbostarter/db";
 import {
   knosiaAnalysis,
   knosiaConnection,
+  knosiaWorkspace,
   knosiaTableProfile,
   knosiaColumnProfile,
+  knosiaWorkspaceCanvas,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
+import { generateId } from "@turbostarter/shared/utils";
 
 // Dynamic import to avoid Turbopack issues with native modules
 const getDuckDBAdapter = async () => {
-  const { DuckDBUniversalAdapter, applyHardRules, profileSchema } = await import("@repo/liquid-connect/uvb");
-  return { DuckDBUniversalAdapter, applyHardRules, profileSchema };
+  const { DuckDBUniversalAdapter, applyHardRules, profileSchema, extractProfilingData } = await import("@repo/liquid-connect/uvb");
+  return { DuckDBUniversalAdapter, applyHardRules, profileSchema, extractProfilingData };
 };
 
 import type { GetAnalysisInput } from "./schemas";
-import type { StepEvent, CompleteEvent, ErrorEvent } from "./schemas";
+import type { StepEvent, CompleteEvent, ErrorEvent, BackgroundEnrichmentEvent } from "./schemas";
 
 // ============================================================================
 // ANALYSIS STEP DEFINITIONS
@@ -25,7 +28,7 @@ const ANALYSIS_STEPS = [
   { step: 2, label: "Scanning schema", detail: "Discovering tables and relationships..." },
   { step: 3, label: "Detecting business type", detail: "Analyzing naming patterns..." },
   { step: 4, label: "Classifying fields", detail: "Identifying metrics, dimensions, entities..." },
-  { step: 5, label: "Generating vocabulary", detail: "Building semantic mappings..." },
+  { step: 5, label: "Quick vocabulary preview", detail: "Enriching most important fields..." },
   // Profiling steps (optional - enabled via includeDataProfiling parameter)
   { step: 6, label: "Profiling data quality", detail: "Analyzing data completeness and patterns..." },
   { step: 7, label: "Assessing freshness", detail: "Checking recency and update patterns..." },
@@ -152,14 +155,19 @@ export const getProfilingSummary = async (analysisId: string) => {
  * and hard rules detection.
  *
  * @param connectionId - Database connection ID
+ * @param userId - User ID (for canvas ownership)
+ * @param workspaceId - Workspace ID (for canvas creation and organization)
  * @param includeDataProfiling - Optional: Enable data profiling (steps 6-8)
  */
 export async function* runAnalysis(
   connectionId: string,
+  userId: string,
+  workspaceId: string | null,
   includeDataProfiling: boolean = false
 ): AsyncGenerator<
   | { event: "step"; data: StepEvent }
   | { event: "complete"; data: CompleteEvent }
+  | { event: "background_complete"; data: BackgroundEnrichmentEvent }
   | { event: "error"; data: ErrorEvent }
 > {
   const totalSteps = includeDataProfiling ? 8 : 5;
@@ -182,6 +190,7 @@ export async function* runAnalysis(
     .insert(knosiaAnalysis)
     .values({
       connectionId,
+      workspaceId,
       status: "running",
       currentStep: 0,
       totalSteps,
@@ -261,7 +270,7 @@ export async function* runAnalysis(
   }
 
   // Create DuckDB Universal Adapter (using dynamic import)
-  const { DuckDBUniversalAdapter, applyHardRules, profileSchema } = await getDuckDBAdapter();
+  const { DuckDBUniversalAdapter, applyHardRules, profileSchema, extractProfilingData } = await getDuckDBAdapter();
   const adapter = new DuckDBUniversalAdapter();
 
   try {
@@ -319,7 +328,7 @@ export async function* runAnalysis(
       },
     };
 
-    // Step 3: Detect business type (mock for now - could use LLM)
+    // Step 3: Detect business type using LLM
     yield {
       event: "step",
       data: {
@@ -335,9 +344,30 @@ export async function* runAnalysis(
       .set({ currentStep: 3 })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
-    // Simple heuristic for business type detection
-    const tableNames = schema.tables.map((t) => t.name.toLowerCase());
-    const businessType = detectBusinessType(tableNames);
+    // Use LLM-based detection (with fallback to regex if LLM fails)
+    let businessType: {
+      detected: string;
+      confidence: number;
+      reasoning: string;
+      alternatives: { type: string; confidence: number }[];
+    };
+
+    try {
+      const { detectBusinessTypeLLM } = await import("@turbostarter/ai/businessType/detect");
+      const llmResult = await detectBusinessTypeLLM(schema, { model: "haiku" });
+
+      businessType = {
+        detected: llmResult.businessType,
+        confidence: llmResult.confidence,
+        reasoning: llmResult.reasoning,
+        alternatives: llmResult.alternatives,
+      };
+    } catch (error) {
+      // Fallback to regex-based detection if LLM fails
+      console.warn('[Analysis] LLM business type detection failed, falling back to regex:', error);
+      const tableNames = schema.tables.map((t) => t.name.toLowerCase());
+      businessType = detectBusinessType(tableNames);
+    }
 
     yield {
       event: "step",
@@ -348,7 +378,17 @@ export async function* runAnalysis(
       },
     };
 
-    // Step 4: Apply hard rules
+    // V2: Profile schema BEFORE applying hard rules (for enhanced vocabulary detection)
+    // This runs unconditionally to improve vocabulary accuracy (~500ms overhead)
+    const profilingResult = await profileSchema(adapter, schema, {
+      enableTier1: true,
+      enableTier2: true,
+      enableTier3: false, // Tier 3 is expensive, skip for initial analysis
+      maxConcurrentTables: 5,
+    });
+    const profilingData = extractProfilingData(profilingResult.schema);
+
+    // Step 4: Apply hard rules (with profiling data for enhanced detection)
     yield {
       event: "step",
       data: {
@@ -364,7 +404,9 @@ export async function* runAnalysis(
       .set({ currentStep: 4 })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
-    const { detected, confirmations } = applyHardRules(schema);
+    const { detected, confirmations } = applyHardRules(schema, {
+      profilingData,
+    });
 
     yield {
       event: "step",
@@ -375,7 +417,7 @@ export async function* runAnalysis(
       },
     };
 
-    // Step 5: Generate vocabulary
+    // Step 5: Quick vocabulary preview (fast, top fields only)
     yield {
       event: "step",
       data: {
@@ -391,12 +433,65 @@ export async function* runAnalysis(
       .set({ currentStep: 5 })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
+    // PHASE 1: Quick Preview - Enrich top 25 most important fields
+    let quickEnrichedVocab = detected;
+    let querySuggestions: any = null;
+    let remainingFieldsCount = 0;
+
+    try {
+      const {
+        selectTopFields,
+        enrichVocabularyDescriptions,
+        generateQuerySuggestions,
+      } = await import("./llm-enrichment");
+
+      // Select top fields for quick preview (typically 15-25 fields)
+      const topFields = selectTopFields(detected, 25);
+      const topFieldsCount = topFields.metrics.length + topFields.dimensions.length;
+
+      console.log(`[Analysis] Quick preview: enriching ${topFieldsCount} top fields`);
+
+      // Enrich top fields + generate query suggestions in parallel
+      const [enrichedTopResult, querySuggestionsResult] = await Promise.all([
+        enrichVocabularyDescriptions(
+          { metrics: topFields.metrics, dimensions: topFields.dimensions, entities: detected.entities },
+          schema,
+          businessType.detected
+        ),
+        generateQuerySuggestions(detected, businessType.detected),
+      ]);
+
+      // Merge enriched top fields back into detected vocabulary
+      quickEnrichedVocab = {
+        ...detected,
+        metrics: detected.metrics.map(m => {
+          const enriched = enrichedTopResult.metrics?.find((e: any) => e.name === m.name);
+          return enriched || m;
+        }),
+        dimensions: detected.dimensions.map(d => {
+          const enriched = enrichedTopResult.dimensions?.find((e: any) => e.name === d.name);
+          return enriched || d;
+        }),
+      };
+
+      querySuggestions = querySuggestionsResult;
+
+      // Calculate remaining fields for background enrichment
+      const totalFields = detected.metrics.length + detected.dimensions.length;
+      remainingFieldsCount = totalFields - topFieldsCount;
+
+      console.log(`[Analysis] Quick preview complete: ${topFieldsCount} enriched, ${remainingFieldsCount} pending`);
+    } catch (error) {
+      console.warn("[Analysis] Quick preview enrichment skipped:", error);
+      quickEnrichedVocab = detected;
+    }
+
     // Build summary from detected vocabulary
     const summary = {
       tables: schema.tables.length,
-      metrics: detected.metrics.length,
-      dimensions: detected.dimensions.length,
-      entities: detected.entities.map((e) => e.name),
+      metrics: quickEnrichedVocab.metrics.length,
+      dimensions: quickEnrichedVocab.dimensions.length,
+      entities: quickEnrichedVocab.entities.map((e) => e.name),
     };
 
     yield {
@@ -408,10 +503,10 @@ export async function* runAnalysis(
       },
     };
 
-    // Optional: Data Profiling (Steps 6-8)
-    let profilingResult;
+    // Optional: Data Profiling UI Steps (Steps 6-8)
+    // Note: Profiling was already done before step 4 for vocabulary enhancement
     if (includeDataProfiling) {
-      // Step 6: Profile data quality
+      // Step 6: Profile data quality (UI step - already computed)
       yield {
         event: "step",
         data: {
@@ -427,13 +522,7 @@ export async function* runAnalysis(
         .set({ currentStep: 6 })
         .where(eq(knosiaAnalysis.id, analysis.id));
 
-      profilingResult = await profileSchema(adapter, schema, {
-        enableTier1: true,
-        enableTier2: true,
-        enableTier3: false, // Tier 3 is expensive, skip for now
-        maxConcurrentTables: 5,
-      });
-
+      // Profiling already completed, just show the UI step
       yield {
         event: "step",
         data: {
@@ -500,7 +589,7 @@ export async function* runAnalysis(
     // Disconnect from database
     await adapter.disconnect();
 
-    // Update analysis with results
+    // Update analysis with results (including LLM enrichments)
     await db
       .update(knosiaAnalysis)
       .set({
@@ -508,12 +597,79 @@ export async function* runAnalysis(
         currentStep: totalSteps,
         summary,
         businessType,
-        detectedVocab: detected,
+        detectedVocab: quickEnrichedVocab,
         completedAt: new Date(),
       })
       .where(eq(knosiaAnalysis.id, analysis.id));
 
-    // Emit completion
+    // Save quick preview enriched vocabulary to knosia_vocabulary_item table
+    let workspaceId: string | null = null;
+    let orgId: string | null = null;
+
+    try {
+      const { saveEnrichedVocabulary } = await import("../vocabulary/from-detected");
+
+      // Get connection to access orgId
+      const connection = await db
+        .select()
+        .from(knosiaConnection)
+        .where(eq(knosiaConnection.id, analysis.connectionId))
+        .limit(1)
+        .then(rows => rows[0]);
+
+      if (connection) {
+        orgId = connection.orgId;
+
+        // Get default workspace for this org (or create one)
+        let workspace = await db
+          .select()
+          .from(knosiaWorkspace)
+          .where(eq(knosiaWorkspace.orgId, connection.orgId))
+          .limit(1)
+          .then(rows => rows[0]);
+
+        if (!workspace) {
+          // Create default workspace if none exists
+          const newWorkspace = await db
+            .insert(knosiaWorkspace)
+            .values({
+              orgId: connection.orgId,
+              name: "Main Workspace",
+              slug: "main",
+              visibility: "org_wide",
+            })
+            .returning()
+            .then(rows => rows[0]);
+
+          if (!newWorkspace) {
+            throw new Error("Failed to create workspace");
+          }
+          workspace = newWorkspace;
+        }
+
+        workspaceId = workspace.id;
+
+        console.log("[Analysis] Saving quick preview vocabulary to workspace:", workspace.id);
+        const saveResult = await saveEnrichedVocabulary(
+          quickEnrichedVocab, // Quick preview vocabulary
+          connection.orgId,
+          workspace.id,
+          { skipExisting: false }
+        );
+
+        console.log("[Analysis] Saved quick preview vocabulary items:", {
+          metrics: saveResult.metrics.created,
+          dimensions: saveResult.dimensions.created,
+          entities: saveResult.entities.created,
+          errors: saveResult.errors.length,
+        });
+      }
+    } catch (error) {
+      console.error("[Analysis] Failed to save vocabulary items:", error);
+      // Don't fail the analysis if vocabulary saving fails
+    }
+
+    // Emit completion (quick preview ready, background enrichment pending)
     yield {
       event: "complete",
       data: {
@@ -530,8 +686,158 @@ export async function* runAnalysis(
               tier2Duration: profilingResult.stats.tier2Duration,
             }
           : undefined,
+        querySuggestions,
+        llmEnriched: !!querySuggestions,
+        quickPreviewComplete: remainingFieldsCount > 0,
+        backgroundEnrichmentPending: remainingFieldsCount,
       },
     };
+
+    // PHASE 1.5: Create default workspace canvas (non-blocking)
+    console.log("[Canvas] Checking canvas creation conditions:", { workspaceId, orgId, hasWorkspace: !!workspaceId, hasOrg: !!orgId, businessType: businessType.detected });
+
+    // Log why canvas creation is being skipped
+    if (!workspaceId) console.log("[Canvas] ❌ Skipping: workspaceId is null");
+    if (!orgId) console.log("[Canvas] ❌ Skipping: orgId is null");
+    if (!businessType.detected) console.log("[Canvas] ❌ Skipping: businessType.detected is empty");
+
+    if (workspaceId && orgId && businessType.detected) {
+      try {
+        console.log("[Canvas] Generating default canvas for workspace:", workspaceId);
+
+        // Import canvas generation dependencies
+        const { mapToTemplate, getTemplate } = await import("@repo/liquid-connect/business-types");
+        const { generateDashboardSpec } = await import("@repo/liquid-connect/dashboard");
+        const { dashboardSpecToLiquidSchema } = await import("@repo/liquid-render/dashboard");
+
+        // Use already-detected business type (convert to lowercase for template lookup)
+        const businessTypeKey = businessType.detected.toLowerCase().replace(/[^a-z]/g, '') as any;
+        const template = getTemplate(businessTypeKey);
+        console.log("[Canvas] Vocabulary for mapping:", {
+          businessType: businessType.detected,
+          businessTypeKey,
+          metrics: quickEnrichedVocab.metrics?.length || 0,
+          dimensions: quickEnrichedVocab.dimensions?.length || 0,
+          entities: quickEnrichedVocab.entities?.length || 0,
+          templateKPIs: template.kpis?.length || 0,
+        });
+        const mappingResult = mapToTemplate(quickEnrichedVocab, template);
+        console.log("[Canvas] Mapping result:", { coverage: mappingResult.coverage, matched: mappingResult.matched?.length || 0 });
+
+        // For generic/custom templates (Media, etc.), bypass mapping if we have vocabulary
+        const hasVocabulary = (quickEnrichedVocab.metrics?.length || 0) > 0 ||
+                             (quickEnrichedVocab.dimensions?.length || 0) > 0;
+        const isGenericTemplate = template.id === 'custom';
+        const shouldCreateCanvas = mappingResult.coverage >= 10 || (isGenericTemplate && hasVocabulary);
+
+        console.log("[Canvas] Creation decision:", {
+          coverage: mappingResult.coverage,
+          hasVocabulary,
+          isGenericTemplate,
+          shouldCreateCanvas
+        });
+
+        if (shouldCreateCanvas) { // At least 10% KPI coverage (or vocabulary for generic templates)
+          const dashboardSpec = generateDashboardSpec(mappingResult);
+          const liquidSchema = dashboardSpecToLiquidSchema(dashboardSpec);
+
+          // Check if default canvas already exists
+          const existingCanvas = await db
+            .select()
+            .from(knosiaWorkspaceCanvas)
+            .where(
+              and(
+                eq(knosiaWorkspaceCanvas.workspaceId, workspaceId),
+                eq(knosiaWorkspaceCanvas.isDefault, true)
+              )
+            )
+            .limit(1);
+
+          if (existingCanvas.length === 0) {
+            await db.insert(knosiaWorkspaceCanvas).values({
+              id: generateId(),
+              workspaceId,
+              title: "Main Dashboard",
+              schema: liquidSchema,
+              scope: "workspace",
+              ownerId: userId,
+              isDefault: true,
+              currentVersion: 1,
+              lastEditedBy: userId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            console.log("[Canvas] Default canvas created successfully");
+          } else {
+            console.log("[Canvas] Default canvas already exists, skipping");
+          }
+        } else {
+          console.log(`[Canvas] Skipping canvas creation - low KPI coverage: ${mappingResult.coverage}%`);
+        }
+      } catch (error) {
+        console.error("[Canvas] Failed to create default canvas:", error);
+        // Don't fail the analysis if canvas creation fails
+      }
+    }
+
+    // PHASE 2: Background Enrichment (runs AFTER user sees results)
+    if (remainingFieldsCount > 0 && workspaceId && orgId) {
+      console.log(`[Background] Starting background enrichment of ${remainingFieldsCount} remaining fields`);
+
+      try {
+        const { enrichRemainingFieldsAdaptive } = await import("./llm-enrichment");
+        const { saveEnrichedVocabulary } = await import("../vocabulary/from-detected");
+
+        // Get remaining fields (those not in quick preview)
+        const enrichedFieldNames = new Set([
+          ...quickEnrichedVocab.metrics.filter((m: any) => m.description || m.displayName).map((m: any) => m.name),
+          ...quickEnrichedVocab.dimensions.filter((d: any) => d.description || d.displayName).map((d: any) => d.name),
+        ]);
+
+        const remainingVocab = {
+          metrics: detected.metrics.filter((m: any) => !enrichedFieldNames.has(m.name)),
+          dimensions: detected.dimensions.filter((d: any) => !enrichedFieldNames.has(d.name)),
+        };
+
+        // Enrich remaining fields adaptively
+        const backgroundEnriched = await enrichRemainingFieldsAdaptive(
+          remainingVocab,
+          schema,
+          businessType.detected
+        );
+
+        // Save background enriched vocabulary
+        const saveResult = await saveEnrichedVocabulary(
+          backgroundEnriched,
+          orgId,
+          workspaceId,
+          { skipExisting: true } // Don't override quick preview items
+        );
+
+        const totalEnriched =
+          saveResult.metrics.created +
+          saveResult.dimensions.created +
+          saveResult.entities.created;
+
+        console.log("[Background] Background enrichment complete:", {
+          enriched: totalEnriched,
+          errors: saveResult.errors.length,
+        });
+
+        // Yield background completion event (for toast notification)
+        yield {
+          event: "background_complete",
+          data: {
+            totalFieldsEnriched: totalEnriched + (summary.metrics + summary.dimensions),
+            quickPreviewCount: summary.metrics + summary.dimensions,
+            backgroundEnrichCount: totalEnriched,
+          },
+        };
+      } catch (error) {
+        console.warn("[Background] Background enrichment failed:", error);
+        // Don't fail the analysis - user already has quick preview
+      }
+    }
   } catch (error) {
     // Ensure we disconnect on error
     try {

@@ -188,6 +188,31 @@ export async function enrichVocabularyWithCalculatedMetrics(
 }
 
 /**
+ * Semantic hints for columns that enable specific KPIs
+ * These help the LLM understand what columns can be used for
+ */
+const COLUMN_SEMANTIC_HINTS: Record<string, string> = {
+  // Fulfillment & Delivery
+  shipped_date: "fulfillment:shipped_date - when order was shipped",
+  ship_date: "fulfillment:ship_date - when order was shipped",
+  required_date: "fulfillment:required_date - expected delivery deadline",
+  delivery_date: "fulfillment:delivery_date - actual delivery date",
+  order_date: "transaction:order_date - when order was placed",
+  // Freight & Logistics
+  freight: "logistics:freight - shipping cost",
+  shipping_cost: "logistics:shipping_cost - delivery expense",
+  // Inventory
+  reorder_level: "inventory:reorder_level - minimum stock threshold",
+  units_in_stock: "inventory:units_in_stock - current inventory",
+  units_on_order: "inventory:units_on_order - pending inventory",
+  discontinued: "inventory:discontinued - product status flag",
+  // Employee
+  employee_id: "sales:employee_id - sales rep dimension",
+  // Discounts
+  discount: "finance:discount - price reduction",
+};
+
+/**
  * Build enhanced vocabulary context using profiling insights
  * This provides the LLM with additional context to generate smarter metrics
  *
@@ -199,9 +224,26 @@ function buildEnhancedVocabularyContext(
   _profilingData: ProfilingData | null,
   schema: ExtractedSchema
 ): GenerateRecipeRequest["vocabularyContext"] {
-  // For MVP, just use base context from schema + vocabulary
-  // Profiling insights can be added in future iterations
-  return schemaToVocabularyContext(schema, vocabulary);
+  // Start with base context from schema + vocabulary
+  const baseContext = schemaToVocabularyContext(schema, vocabulary);
+
+  // Enhance with semantic hints for special columns
+  return {
+    ...baseContext,
+    tables: baseContext.tables.map((table) => ({
+      ...table,
+      columns: table.columns.map((col) => {
+        const hint = COLUMN_SEMANTIC_HINTS[col.name.toLowerCase()];
+        if (hint) {
+          return {
+            ...col,
+            businessType: hint, // Add semantic hint for LLM
+          };
+        }
+        return col;
+      }),
+    })),
+  };
 }
 
 /**
@@ -210,17 +252,41 @@ function buildEnhancedVocabularyContext(
 function categorizeMetric(name: string): string {
   const lower = name.toLowerCase();
 
-  if (lower.includes("revenue") || lower.includes("sales") || lower.includes("mrr") || lower.includes("arr")) {
+  // Revenue & Sales
+  if (lower.includes("revenue") || lower.includes("sales") || lower.includes("mrr") || lower.includes("arr") || lower.includes("gmv")) {
     return "revenue";
   }
-  if (lower.includes("growth") || lower.includes("churn") || lower.includes("retention") || lower.includes("acquisition")) {
+  // Growth & Retention
+  if (lower.includes("growth") || lower.includes("churn") || lower.includes("retention") || lower.includes("acquisition") || lower.includes("repeat")) {
     return "growth";
   }
+  // Engagement
   if (lower.includes("active") || lower.includes("usage") || lower.includes("engagement") || lower.includes("dau") || lower.includes("mau")) {
     return "engagement";
   }
-  if (lower.includes("cost") || lower.includes("efficiency") || lower.includes("time") || lower.includes("duration")) {
+  // Fulfillment & Delivery
+  if (lower.includes("delivery") || lower.includes("shipping") || lower.includes("fulfillment") || lower.includes("on-time") || lower.includes("shipped")) {
+    return "fulfillment";
+  }
+  // Inventory & Supply Chain
+  if (lower.includes("inventory") || lower.includes("stock") || lower.includes("reorder") || lower.includes("turnover") || lower.includes("coverage")) {
+    return "inventory";
+  }
+  // Logistics & Freight
+  if (lower.includes("freight") || lower.includes("logistics") || lower.includes("transport")) {
+    return "logistics";
+  }
+  // Finance & Discounting
+  if (lower.includes("discount") || lower.includes("margin") || lower.includes("profit")) {
+    return "finance";
+  }
+  // Operational Efficiency
+  if (lower.includes("cost") || lower.includes("efficiency") || lower.includes("time") || lower.includes("duration") || lower.includes("per employee") || lower.includes("per order")) {
     return "operational";
+  }
+  // Customer Risk & Concentration
+  if (lower.includes("concentration") || lower.includes("top customer") || lower.includes("risk")) {
+    return "risk";
   }
 
   return "other";
@@ -338,12 +404,13 @@ export async function generateAndStoreCalculatedMetrics(
   );
 
   // Generate recipes via LLM (Phase 1)
+  // No artificial limit - generate all KPIs defined for the business type
   const result = await enrichVocabularyWithCalculatedMetrics(
     detectedVocabulary,
     extractedSchema,
     businessType,
     {
-      maxRecipes: 10,
+      maxRecipes: 50, // High ceiling - actual count determined by COMMON_KPIS_BY_BUSINESS_TYPE
       model: "haiku", // Fast + cheap for onboarding
       enabled: true,
     }

@@ -188,65 +188,753 @@ export type GenerateRecipeResponse = z.infer<typeof GenerateRecipeResponseSchema
  * Common KPI definitions by business type
  */
 export const COMMON_KPIS_BY_BUSINESS_TYPE: Record<string, string[]> = {
+  // ===================
+  // SaaS / Subscription
+  // ===================
   saas: [
+    // Revenue
     "Monthly Recurring Revenue (MRR)",
     "Annual Recurring Revenue (ARR)",
+    "Average Revenue Per User (ARPU)",
+    "Net Revenue Retention (NRR)",
+    "Expansion Revenue",
+    "Revenue per Employee",
+    // Growth & Retention
     "Customer Churn Rate",
     "Revenue Churn Rate",
     "Customer Lifetime Value (LTV)",
     "Customer Acquisition Cost (CAC)",
     "LTV/CAC Ratio",
-    "Active Users (DAU/MAU)",
-    "Net Revenue Retention",
-    "Expansion Revenue",
+    "Payback Period",
+    // Engagement
+    "Daily Active Users (DAU)",
+    "Monthly Active Users (MAU)",
+    "DAU/MAU Ratio",
+    "Feature Adoption Rate",
+    "Time to Value",
+    // Operational
+    "Trial-to-Paid Conversion Rate",
+    "Onboarding Completion Rate",
+    "Support Tickets per Customer",
+    // Risk
+    "Customer Concentration",
+    "Revenue Concentration",
   ],
+
+  // ===================
+  // E-Commerce / Retail
+  // ===================
   ecommerce: [
+    // Revenue & Sales
     "Gross Merchandise Value (GMV)",
     "Average Order Value (AOV)",
     "Customer Lifetime Value (LTV)",
-    "Cart Abandonment Rate",
-    "Conversion Rate",
-    "Return Rate",
-    "Customer Acquisition Cost (CAC)",
-    "Repeat Purchase Rate",
     "Revenue Per Visitor",
+    "Net Revenue (after discounts)",
+    "Revenue per Employee",
+    // Conversion & Growth
+    "Conversion Rate",
+    "Repeat Purchase Rate",
+    "Customer Acquisition Cost (CAC)",
+    // Fulfillment & Operations
+    "On-Time Delivery Rate",
+    "Average Shipping Days",
+    "Order Fulfillment Rate",
+    "Average Items per Order",
+    // Finance & Discounting
+    "Discount Rate",
+    "Average Freight per Order",
+    "Total Freight Cost",
+    // Inventory & Supply Chain
     "Inventory Turnover",
+    "Products Below Reorder Level",
+    "Stock Coverage Days",
+    // Customer Risk
+    "Top Customer Concentration",
+    "Cart Abandonment Rate",
+    "Return Rate",
   ],
+
+  // ===================
+  // ERP / Operations
+  // ===================
+  erp: [
+    // Financial
+    "Total Revenue",
+    "Gross Profit Margin",
+    "Operating Expenses",
+    "Net Profit Margin",
+    "Accounts Receivable Days",
+    "Accounts Payable Days",
+    // Inventory
+    "Inventory Turnover",
+    "Stock Coverage Days",
+    "Products Below Reorder Level",
+    "Inventory Accuracy",
+    // Procurement
+    "Purchase Order Cycle Time",
+    "Supplier On-Time Delivery",
+    "Cost Savings from Procurement",
+    // Operations
+    "Order-to-Cash Cycle Time",
+    "On-Time Delivery Rate",
+    "Order Fulfillment Rate",
+    "Revenue per Employee",
+    // Workforce
+    "Employee Headcount",
+    "Revenue per Employee",
+    "Labor Cost Ratio",
+  ],
+
+  // ===================
+  // Marketplace
+  // ===================
+  marketplace: [
+    // GMV & Revenue
+    "Gross Merchandise Value (GMV)",
+    "Take Rate (Commission %)",
+    "Net Revenue",
+    "Average Order Value (AOV)",
+    // Supply Side (Sellers)
+    "Active Sellers",
+    "New Seller Acquisition",
+    "Seller Churn Rate",
+    "GMV per Seller",
+    "Seller NPS",
+    // Demand Side (Buyers)
+    "Active Buyers",
+    "Buyer Acquisition Cost",
+    "Repeat Purchase Rate",
+    "Buyer-to-Seller Ratio",
+    // Liquidity
+    "Listing-to-Sale Conversion",
+    "Time to First Sale",
+    "Search-to-Purchase Rate",
+    // Trust & Safety
+    "Dispute Rate",
+    "Fraud Rate",
+    "Review Coverage",
+  ],
+
+  // ===================
+  // CRM / Sales
+  // ===================
   crm: [
-    "Lead Conversion Rate",
-    "Sales Cycle Length",
-    "Win Rate",
-    "Average Deal Size",
+    // Pipeline
     "Pipeline Value",
+    "Pipeline Coverage Ratio",
+    "Deals in Pipeline",
+    "Average Deal Size",
+    // Conversion
+    "Lead Conversion Rate",
+    "Win Rate",
+    "Sales Cycle Length",
+    "Quote-to-Close Rate",
+    // Revenue
+    "Revenue Per Customer",
+    "Upsell Rate",
+    "Cross-sell Rate",
+    "Expansion Revenue",
+    // Retention
     "Customer Retention Rate",
     "Net Promoter Score (NPS)",
     "Customer Satisfaction Score (CSAT)",
-    "Revenue Per Customer",
-    "Upsell Rate",
+    // Productivity
+    "Deals per Sales Rep",
+    "Activities per Deal",
+    "Revenue per Sales Rep",
+    "Forecast Accuracy",
   ],
+
+  // ===================
+  // Marketing
+  // ===================
   marketing: [
+    // Acquisition
     "Cost Per Lead (CPL)",
     "Cost Per Acquisition (CPA)",
-    "Return on Ad Spend (ROAS)",
+    "Customer Acquisition Cost (CAC)",
+    "Lead-to-Customer Rate",
+    // Pipeline
     "Marketing Qualified Leads (MQL)",
     "Sales Qualified Leads (SQL)",
-    "Lead-to-Customer Rate",
+    "MQL-to-SQL Conversion",
+    // Campaign Performance
+    "Return on Ad Spend (ROAS)",
     "Campaign ROI",
     "Click-Through Rate (CTR)",
     "Conversion Rate by Channel",
-    "Customer Engagement Score",
+    // Engagement
+    "Email Open Rate",
+    "Email Click Rate",
+    "Website Traffic",
+    "Bounce Rate",
+    // Attribution
+    "Marketing Sourced Revenue",
+    "Marketing Influenced Revenue",
+    "Channel Mix Efficiency",
+    // Budget
+    "Marketing Spend",
+    "Budget Utilization",
   ],
+
+  // ===================
+  // Support / Service
+  // ===================
   support: [
+    // Response & Resolution
     "First Response Time",
     "Average Resolution Time",
-    "Customer Satisfaction Score (CSAT)",
+    "First Contact Resolution Rate",
+    "Resolution Rate",
+    // Volume
     "Ticket Volume",
     "Ticket Backlog",
-    "Resolution Rate",
-    "Escalation Rate",
-    "Self-Service Rate",
-    "Agent Utilization",
+    "Tickets per Customer",
+    "Peak Hour Volume",
+    // Quality
+    "Customer Satisfaction Score (CSAT)",
     "Net Promoter Score (NPS)",
+    "Quality Assurance Score",
+    "Customer Effort Score (CES)",
+    // Efficiency
+    "Agent Utilization",
+    "Average Handle Time",
+    "Cost per Ticket",
+    "Self-Service Rate",
+    // Escalation
+    "Escalation Rate",
+    "Reopened Ticket Rate",
+    "SLA Compliance Rate",
+  ],
+
+  // ===================
+  // FinTech / Banking
+  // ===================
+  fintech: [
+    // Volume
+    "Total Transaction Volume",
+    "Transaction Count",
+    "Average Transaction Size",
+    "Active Accounts",
+    // Revenue
+    "Net Interest Margin",
+    "Fee Revenue",
+    "Revenue per Account",
+    "Cost per Transaction",
+    // Risk
+    "Default Rate",
+    "Non-Performing Loans",
+    "Fraud Rate",
+    "Chargeback Rate",
+    // Growth
+    "New Account Openings",
+    "Account Churn Rate",
+    "Customer Acquisition Cost",
+    // Compliance
+    "KYC Completion Rate",
+    "Regulatory Compliance Score",
+    "Audit Finding Rate",
+  ],
+
+  // ===================
+  // Healthcare
+  // ===================
+  healthcare: [
+    // Patient Volume
+    "Patient Volume",
+    "New Patient Registrations",
+    "Patient Retention Rate",
+    "No-Show Rate",
+    // Clinical
+    "Average Length of Stay",
+    "Readmission Rate",
+    "Bed Occupancy Rate",
+    "Patient Satisfaction Score",
+    // Financial
+    "Revenue per Patient",
+    "Cost per Patient",
+    "Collection Rate",
+    "Days in Accounts Receivable",
+    // Operational
+    "Appointment Wait Time",
+    "Staff-to-Patient Ratio",
+    "Equipment Utilization",
+    // Quality
+    "Clinical Outcome Score",
+    "Infection Rate",
+    "Medication Error Rate",
+  ],
+
+  // ===================
+  // Logistics / Supply Chain
+  // ===================
+  logistics: [
+    // Delivery
+    "On-Time Delivery Rate",
+    "Average Delivery Time",
+    "Delivery Success Rate",
+    "Failed Delivery Rate",
+    // Cost
+    "Cost per Delivery",
+    "Cost per Mile",
+    "Fuel Cost Ratio",
+    "Total Freight Cost",
+    // Fleet
+    "Fleet Utilization",
+    "Vehicle Downtime",
+    "Maintenance Cost per Vehicle",
+    // Warehouse
+    "Warehouse Utilization",
+    "Pick Accuracy",
+    "Order Cycle Time",
+    "Inventory Accuracy",
+    // Performance
+    "Orders per Driver",
+    "Revenue per Route",
+    "Capacity Utilization",
+  ],
+
+  // ===================
+  // Manufacturing
+  // ===================
+  manufacturing: [
+    // Production
+    "Total Output",
+    "Production Yield",
+    "Defect Rate",
+    "Scrap Rate",
+    // Efficiency
+    "Overall Equipment Effectiveness (OEE)",
+    "Machine Utilization",
+    "Downtime Percentage",
+    "Cycle Time",
+    // Quality
+    "First Pass Yield",
+    "Rework Rate",
+    "Customer Return Rate",
+    "Quality Score",
+    // Inventory
+    "Raw Material Inventory Days",
+    "Work-in-Progress Inventory",
+    "Finished Goods Turnover",
+    // Cost
+    "Cost per Unit",
+    "Labor Cost per Unit",
+    "Energy Cost per Unit",
+    // Safety
+    "Incident Rate",
+    "Lost Time Injury Rate",
+  ],
+
+  // ===================
+  // Education / E-Learning
+  // ===================
+  education: [
+    // Enrollment
+    "Total Enrollments",
+    "New Student Registrations",
+    "Course Enrollment Rate",
+    "Student Retention Rate",
+    // Engagement
+    "Course Completion Rate",
+    "Average Time on Platform",
+    "Content Engagement Score",
+    "Assignment Submission Rate",
+    // Performance
+    "Average Grade/Score",
+    "Pass Rate",
+    "Certification Rate",
+    "Student Progress Rate",
+    // Revenue
+    "Revenue per Student",
+    "Course Revenue",
+    "Tuition Collection Rate",
+    // Satisfaction
+    "Student Satisfaction Score",
+    "Net Promoter Score (NPS)",
+    "Instructor Rating",
+  ],
+
+  // ===================
+  // Real Estate / Property
+  // ===================
+  realestate: [
+    // Portfolio
+    "Total Properties",
+    "Occupied Units",
+    "Vacancy Rate",
+    "Average Rent per Unit",
+    // Revenue
+    "Gross Rental Income",
+    "Net Operating Income",
+    "Revenue per Square Foot",
+    "Rent Collection Rate",
+    // Leasing
+    "New Leases Signed",
+    "Lease Renewal Rate",
+    "Average Lease Term",
+    "Days on Market",
+    // Maintenance
+    "Maintenance Requests",
+    "Average Resolution Time",
+    "Maintenance Cost per Unit",
+    // Tenant
+    "Tenant Satisfaction Score",
+    "Tenant Turnover Rate",
+    "Eviction Rate",
+  ],
+
+  // ===================
+  // Hospitality / Hotels
+  // ===================
+  hospitality: [
+    // Occupancy
+    "Occupancy Rate",
+    "Average Daily Rate (ADR)",
+    "Revenue Per Available Room (RevPAR)",
+    "Room Nights Sold",
+    // Revenue
+    "Total Revenue",
+    "Food & Beverage Revenue",
+    "Ancillary Revenue",
+    "Revenue per Guest",
+    // Booking
+    "Booking Conversion Rate",
+    "Direct Booking Rate",
+    "Cancellation Rate",
+    "Average Length of Stay",
+    // Service
+    "Guest Satisfaction Score",
+    "Net Promoter Score (NPS)",
+    "Online Review Score",
+    "Complaint Rate",
+    // Operations
+    "Housekeeping Efficiency",
+    "Check-in Time",
+    "Staff-to-Room Ratio",
+  ],
+
+  // ===================
+  // Media / Publishing
+  // ===================
+  media: [
+    // Audience
+    "Total Subscribers",
+    "Monthly Active Users",
+    "New Subscribers",
+    "Subscriber Churn Rate",
+    // Engagement
+    "Content Views",
+    "Average Time on Content",
+    "Pages per Session",
+    "Engagement Rate",
+    // Revenue
+    "Subscription Revenue",
+    "Ad Revenue",
+    "Revenue per User",
+    "ARPU (Average Revenue Per User)",
+    // Content
+    "Content Published",
+    "Content Performance Score",
+    "Viral Coefficient",
+    // Advertising
+    "Ad Impressions",
+    "Click-Through Rate",
+    "CPM (Cost Per Mille)",
+    "Fill Rate",
+  ],
+
+  // ===================
+  // Insurance
+  // ===================
+  insurance: [
+    // Policies
+    "Total Policies",
+    "New Policies Written",
+    "Policy Renewal Rate",
+    "Premium Volume",
+    // Claims
+    "Claims Filed",
+    "Claims Paid",
+    "Loss Ratio",
+    "Average Claim Amount",
+    // Efficiency
+    "Claims Processing Time",
+    "First Notice of Loss (FNOL) Time",
+    "Claims Settlement Rate",
+    "Expense Ratio",
+    // Risk
+    "Combined Ratio",
+    "Reserve Adequacy",
+    "Fraud Detection Rate",
+    // Customer
+    "Customer Retention Rate",
+    "Net Promoter Score (NPS)",
+    "Policy Lapse Rate",
+  ],
+
+  // ===================
+  // Telecom
+  // ===================
+  telecom: [
+    // Subscribers
+    "Total Subscribers",
+    "New Activations",
+    "Subscriber Churn Rate",
+    "Net Subscriber Additions",
+    // Revenue
+    "Average Revenue Per User (ARPU)",
+    "Total Revenue",
+    "Data Revenue",
+    "Voice Revenue",
+    // Usage
+    "Data Usage per Subscriber",
+    "Minutes of Use",
+    "Network Utilization",
+    // Service
+    "Network Uptime",
+    "Call Drop Rate",
+    "Customer Complaints",
+    "First Call Resolution",
+    // Quality
+    "Net Promoter Score (NPS)",
+    "Customer Satisfaction Score",
+    "Service Level Agreement (SLA) Compliance",
+  ],
+
+  // ===================
+  // HR / Recruiting
+  // ===================
+  hr: [
+    // Hiring
+    "Open Positions",
+    "Applications Received",
+    "Time to Hire",
+    "Cost per Hire",
+    // Pipeline
+    "Interview-to-Offer Ratio",
+    "Offer Acceptance Rate",
+    "Quality of Hire Score",
+    "Source of Hire",
+    // Retention
+    "Employee Turnover Rate",
+    "Voluntary Turnover Rate",
+    "Average Tenure",
+    "Retention Rate",
+    // Engagement
+    "Employee Satisfaction Score",
+    "Employee Net Promoter Score (eNPS)",
+    "Engagement Score",
+    // Performance
+    "Training Completion Rate",
+    "Performance Review Completion",
+    "Promotion Rate",
+    "Internal Mobility Rate",
+  ],
+
+  // ===================
+  // Travel / Booking
+  // ===================
+  travel: [
+    // Bookings
+    "Total Bookings",
+    "Booking Value",
+    "Average Booking Value",
+    "Bookings per User",
+    // Conversion
+    "Search-to-Book Conversion",
+    "Cart Abandonment Rate",
+    "Mobile Booking Rate",
+    "Repeat Booking Rate",
+    // Revenue
+    "Gross Booking Revenue",
+    "Net Revenue",
+    "Commission Revenue",
+    "Ancillary Revenue",
+    // Customer
+    "Customer Acquisition Cost",
+    "Customer Lifetime Value",
+    "Net Promoter Score (NPS)",
+    // Operations
+    "Cancellation Rate",
+    "Refund Rate",
+    "Support Tickets per Booking",
+  ],
+
+  // ===================
+  // Non-Profit
+  // ===================
+  nonprofit: [
+    // Donations
+    "Total Donations",
+    "Number of Donors",
+    "Average Donation Size",
+    "Recurring Donation Rate",
+    // Fundraising
+    "Fundraising Goal Attainment",
+    "Cost per Dollar Raised",
+    "Donor Retention Rate",
+    "New Donor Acquisition",
+    // Programs
+    "Program Expense Ratio",
+    "Beneficiaries Served",
+    "Cost per Beneficiary",
+    "Program Outcomes Score",
+    // Volunteers
+    "Active Volunteers",
+    "Volunteer Hours",
+    "Volunteer Retention Rate",
+    // Financial
+    "Operating Reserve Ratio",
+    "Administrative Cost Ratio",
+    "Grant Success Rate",
+  ],
+
+  // ===================
+  // Energy / Utilities
+  // ===================
+  energy: [
+    // Supply
+    "Total Energy Generated",
+    "Peak Demand",
+    "Capacity Utilization",
+    "Renewable Energy Percentage",
+    // Distribution
+    "System Average Interruption Duration (SAIDI)",
+    "System Average Interruption Frequency (SAIFI)",
+    "Line Loss Percentage",
+    "Grid Reliability",
+    // Customer
+    "Total Customers",
+    "Customer Churn Rate",
+    "Average Revenue per Customer",
+    "Bill Collection Rate",
+    // Operations
+    "Operating Cost per Unit",
+    "Maintenance Backlog",
+    "Outage Response Time",
+    // Sustainability
+    "Carbon Emissions",
+    "Energy Efficiency Score",
+    "Renewable Capacity Growth",
+  ],
+
+  // ===================
+  // Construction
+  // ===================
+  construction: [
+    // Projects
+    "Active Projects",
+    "Project Completion Rate",
+    "On-Time Delivery Rate",
+    "On-Budget Delivery Rate",
+    // Financial
+    "Total Contract Value",
+    "Revenue Recognition",
+    "Gross Profit Margin",
+    "Backlog Value",
+    // Efficiency
+    "Labor Productivity",
+    "Equipment Utilization",
+    "Rework Percentage",
+    "Change Order Rate",
+    // Safety
+    "Incident Rate",
+    "Lost Time Injury Rate",
+    "Safety Compliance Score",
+    // Quality
+    "Defect Rate",
+    "Customer Satisfaction Score",
+    "Warranty Claims",
+  ],
+
+  // ===================
+  // Legal
+  // ===================
+  legal: [
+    // Cases
+    "Active Cases",
+    "New Cases Opened",
+    "Cases Closed",
+    "Win Rate",
+    // Billing
+    "Billable Hours",
+    "Realization Rate",
+    "Collection Rate",
+    "Revenue per Lawyer",
+    // Efficiency
+    "Average Case Duration",
+    "Hours per Case",
+    "Utilization Rate",
+    "Leverage Ratio",
+    // Client
+    "Client Retention Rate",
+    "Client Satisfaction Score",
+    "Net Promoter Score (NPS)",
+    "New Client Acquisition",
+    // Financial
+    "Revenue per Partner",
+    "Profit per Partner",
+    "Operating Margin",
+  ],
+
+  // ===================
+  // Gaming
+  // ===================
+  gaming: [
+    // Users
+    "Daily Active Users (DAU)",
+    "Monthly Active Users (MAU)",
+    "New User Registrations",
+    "User Retention (Day 1/7/30)",
+    // Engagement
+    "Average Session Length",
+    "Sessions per User",
+    "Level Completion Rate",
+    "Feature Usage Rate",
+    // Monetization
+    "Average Revenue Per User (ARPU)",
+    "Average Revenue Per Paying User (ARPPU)",
+    "Conversion to Paying",
+    "In-App Purchase Revenue",
+    // Virality
+    "Viral Coefficient",
+    "Invite Conversion Rate",
+    "Social Shares",
+    // Retention
+    "Churn Rate",
+    "Lifetime Value (LTV)",
+    "LTV/CAC Ratio",
+  ],
+
+  // ===================
+  // Agriculture
+  // ===================
+  agriculture: [
+    // Production
+    "Total Yield",
+    "Yield per Acre",
+    "Crop Quality Score",
+    "Harvest Efficiency",
+    // Costs
+    "Cost per Acre",
+    "Input Costs (Seeds/Fertilizer)",
+    "Labor Cost per Unit",
+    "Equipment Operating Cost",
+    // Inventory
+    "Livestock Count",
+    "Feed Conversion Ratio",
+    "Storage Utilization",
+    // Revenue
+    "Revenue per Acre",
+    "Price per Unit",
+    "Gross Margin",
+    // Sustainability
+    "Water Usage per Acre",
+    "Pesticide Usage",
+    "Soil Health Score",
+    "Carbon Footprint",
   ],
 };
 

@@ -46,6 +46,7 @@ export function useComments({
   return useQuery({
     queryKey: ["knosia", "comments", targetType, targetId, page, perPage],
     queryFn: async () => {
+      // @ts-expect-error - Route not yet implemented in backend (V2 feature)
       const res = await api.knosia.comment.$get({
         query: {
           targetType,
@@ -79,6 +80,7 @@ export function useCreateComment() {
       content: string;
       mentions?: string[];
     }) => {
+      // @ts-expect-error - Route not yet implemented in backend (V2 feature)
       const res = await api.knosia.comment.$post({
         json: input,
       });
@@ -115,6 +117,7 @@ export function useUpdateComment() {
       targetType: CommentTargetType;
       targetId: string;
     }) => {
+      // @ts-expect-error - Route not yet implemented in backend (V2 feature)
       const res = await api.knosia.comment[":id"].$patch({
         param: { id },
         json: { content },
@@ -150,6 +153,7 @@ export function useDeleteComment() {
       targetType: CommentTargetType;
       targetId: string;
     }) => {
+      // @ts-expect-error - Route not yet implemented in backend (V2 feature)
       const res = await api.knosia.comment[":id"].$delete({
         param: { id },
       });

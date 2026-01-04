@@ -124,6 +124,11 @@ export function useOnboardingState() {
     setProgress((prev) => ({ ...prev, selectedRole: role }));
   }, []);
 
+  /** Update selected metric IDs */
+  const setSelectedMetricIds = useCallback((metricIds: string[]) => {
+    setProgress((prev) => ({ ...prev, selectedMetricIds: metricIds }));
+  }, []);
+
   /** Add or update an answer */
   const setAnswer = useCallback((answer: ConfirmationAnswer) => {
     setProgress((prev) => {
@@ -206,6 +211,7 @@ export function useOnboardingState() {
     setAnalysisId,
     setWorkspaceId,
     setSelectedRole,
+    setSelectedMetricIds,
     setAnswer,
     completeStep,
 

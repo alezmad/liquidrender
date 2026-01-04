@@ -28,6 +28,7 @@ const blockIcons: Record<BlockType, keyof typeof Icons> = {
   comparison: "ArrowRight",
   insight: "Lightbulb",
   text: "FileText",
+  metric_kpi: "BarChart3",
 };
 
 export function CanvasBlockComponent({

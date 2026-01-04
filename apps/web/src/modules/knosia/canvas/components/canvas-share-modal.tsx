@@ -138,13 +138,15 @@ export function CanvasShareModal({
   const queryClient = useQueryClient();
 
   // Fetch collaborators from API
+  // TODO: Implement /canvas/canvases/:canvasId/collaborators route in backend
   const {
     data: collaboratorsData,
     isLoading: isLoadingCollaborators,
   } = useQuery({
     queryKey: ["canvas", canvas.id, "collaborators"],
     queryFn: async () => {
-      const res = await api.knosia.canvas[":canvasId"].collaborators.$get({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].collaborators.$get({
         param: { canvasId: canvas.id },
       });
       if (!res.ok) throw new Error("Failed to fetch collaborators");
@@ -154,16 +156,18 @@ export function CanvasShareModal({
   });
 
   // Map API response to component's Collaborator type
-  const collaborators: Collaborator[] = (collaboratorsData?.data ?? []).map((c) => ({
+  const collaborators: Collaborator[] = (collaboratorsData?.data ?? []).map((c: { userId: string; permission: PermissionLevel }) => ({
     id: c.userId,
     email: c.userId, // Note: API returns userId, not email. For V1, we display userId.
     permission: c.permission,
   }));
 
   // Share canvas mutation
+  // TODO: Implement /canvas/canvases/:canvasId/share route in backend
   const shareMutation = useMutation({
     mutationFn: async ({ userIds, mode }: { userIds: string[]; mode: PermissionLevel }) => {
-      const res = await api.knosia.canvas[":canvasId"].share.$post({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].share.$post({
         param: { canvasId: canvas.id },
         json: { userIds, mode },
       });
@@ -176,9 +180,11 @@ export function CanvasShareModal({
   });
 
   // Remove collaborator mutation
+  // TODO: Implement /canvas/canvases/:canvasId/collaborators/:userId route in backend
   const removeMutation = useMutation({
     mutationFn: async (collaboratorUserId: string) => {
-      const res = await api.knosia.canvas[":canvasId"].collaborators[":userId"].$delete({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].collaborators[":userId"].$delete({
         param: { canvasId: canvas.id, userId: collaboratorUserId },
       });
       if (!res.ok) throw new Error("Failed to remove collaborator");

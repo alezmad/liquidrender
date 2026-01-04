@@ -54,28 +54,36 @@ export function useCanvasesList({
   } = useQuery({
     queryKey: ["knosia", "canvases", workspaceId, { status, page, perPage }],
     queryFn: async () => {
-      const res = await api.knosia.canvas.$get({
+      // Use workspace-specific endpoint if workspaceId provided
+      const res = await api.knosia.canvas.workspaces[":workspaceId"].canvases.$get({
+        param: { workspaceId },
         query: {
-          workspaceId,
-          status,
-          page: String(page),
-          perPage: String(perPage),
+          scope: status === "archived" ? "private" : "workspace",
+          includeDeleted: status === "archived" ? "true" : undefined,
         },
       });
       if (!res.ok) throw new Error("Failed to fetch canvases");
-      return res.json() as Promise<CanvasesListResponse>;
+      // Type assertion: API schema differs from frontend types
+      return res.json() as unknown as Promise<CanvasesListResponse>;
     },
     enabled: !!workspaceId,
   });
 
   // Create canvas mutation
+  // Note: API requires title, scope, and schema - frontend uses name/description
   const createMutation = useMutation({
     mutationFn: async (input: CreateCanvasInput) => {
-      const res = await api.knosia.canvas.$post({
-        json: { workspaceId, ...input },
+      const res = await api.knosia.canvas.canvases.$post({
+        json: {
+          workspaceId,
+          title: input.name,
+          scope: "private" as const,
+          schema: { version: "1.0", layers: [] },
+        },
       });
       if (!res.ok) throw new Error("Failed to create canvas");
-      return res.json() as Promise<Canvas>;
+      // Type assertion: API returns different structure than frontend Canvas type
+      return res.json() as unknown as Promise<Canvas>;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -87,7 +95,7 @@ export function useCanvasesList({
   // Delete canvas mutation
   const deleteMutation = useMutation({
     mutationFn: async (canvasId: string) => {
-      const res = await api.knosia.canvas[":id"].$delete({
+      const res = await api.knosia.canvas.canvases[":id"].$delete({
         param: { id: canvasId },
       });
       if (!res.ok) throw new Error("Failed to delete canvas");

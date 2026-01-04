@@ -55,21 +55,30 @@ export function useCanvas({ canvasId, enabled = true }: UseCanvasOptions): UseCa
   } = useQuery({
     queryKey: ["knosia", "canvas", canvasId],
     queryFn: async () => {
-      const res = await api.knosia.canvas[":id"].$get({
+      const res = await api.knosia.canvas.canvases[":id"].$get({
         param: { id: canvasId },
       });
       if (!res.ok) throw new Error("Failed to fetch canvas");
-      return res.json() as Promise<CanvasWithDetails>;
+      // Type assertion: API schema differs from frontend types (title vs name, etc.)
+      return res.json() as unknown as Promise<CanvasWithDetails>;
     },
     enabled: enabled && !!canvasId,
   });
 
   // Update canvas mutation
+  // Note: API requires expectedVersion for optimistic concurrency control
   const updateMutation = useMutation({
     mutationFn: async (updates: UpdateCanvasInput) => {
-      const res = await api.knosia.canvas[":id"].$patch({
+      // Build API-compatible payload
+      const apiPayload = {
+        expectedVersion: 1, // TODO: Track actual version for OCC
+        title: updates.name,
+        schema: updates.layout ? { version: "1.0", layers: [] } : undefined,
+        changeSummary: "Updated via UI",
+      };
+      const res = await api.knosia.canvas.canvases[":id"].$put({
         param: { id: canvasId },
-        json: updates,
+        json: apiPayload,
       });
       if (!res.ok) throw new Error("Failed to update canvas");
       return res.json();

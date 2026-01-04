@@ -1,11 +1,13 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTranslation } from "@turbostarter/i18n";
 import { Button } from "@turbostarter/ui-web/button";
 import { Icons } from "@turbostarter/ui-web/icons";
 
 import { BusinessTypeCard } from "./business-type-card";
 import { SchemaSummary } from "./schema-summary";
+import { MetricsSection } from "./metrics-section";
 
 import type { AnalysisResult } from "../../types";
 
@@ -14,19 +16,33 @@ interface DetectionReviewProps {
   onContinue: () => void;
   onChangeType?: () => void;
   onReviewMatch?: () => void;
+  /** Connection ID for fetching metrics */
+  connectionId?: string;
+  /** Callback when metric selection changes */
+  onMetricsSelected?: (metricIds: string[]) => void;
 }
 
 /**
  * Shows analysis results for user review.
- * Displays detected business type and schema summary.
+ * Displays detected business type, schema summary, and calculated metrics.
  */
 export function DetectionReview({
   result,
   onContinue,
   onChangeType,
   onReviewMatch,
+  connectionId,
+  onMetricsSelected,
 }: DetectionReviewProps) {
   const { t } = useTranslation("knosia");
+
+  // Memoize metrics selection handler
+  const handleMetricsSelected = useCallback(
+    (metricIds: string[]) => {
+      onMetricsSelected?.(metricIds);
+    },
+    [onMetricsSelected]
+  );
 
   return (
     <div className="space-y-6">
@@ -59,6 +75,14 @@ export function DetectionReview({
       />
 
       <SchemaSummary summary={result.summary} />
+
+      {/* Calculated Metrics Section (Phase 3) */}
+      {connectionId && (
+        <MetricsSection
+          connectionId={connectionId}
+          onMetricsSelected={handleMetricsSelected}
+        />
+      )}
 
       <div className="flex gap-3 pt-4">
         {onReviewMatch && (

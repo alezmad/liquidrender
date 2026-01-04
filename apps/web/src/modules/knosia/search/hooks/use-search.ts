@@ -48,6 +48,7 @@ export function useSearch({
   return useQuery({
     queryKey: ["knosia", "search", workspaceId, debouncedQuery, types, limit],
     queryFn: async () => {
+      // @ts-expect-error - Route not yet implemented in backend (V2 feature)
       const res = await api.knosia.search.$get({
         query: {
           workspaceId,

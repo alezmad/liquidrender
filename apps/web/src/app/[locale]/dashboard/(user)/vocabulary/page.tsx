@@ -6,7 +6,7 @@ import {
   DashboardHeaderDescription,
   DashboardHeaderTitle,
 } from "~/modules/common/layout/dashboard/header";
-import { VocabularyBrowser } from "~/modules/knosia/vocabulary";
+import { VocabularyPageContent } from "~/modules/knosia/vocabulary";
 
 export const generateMetadata = getMetadata({
   title: "Vocabulary",
@@ -30,7 +30,7 @@ export default async function VocabularyPage() {
       </DashboardHeader>
 
       <div className="py-6">
-        <VocabularyBrowser workspaceId="default" />
+        <VocabularyPageContent workspaceId="default" />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 
 import { pathsConfig } from "~/config/paths";
 import {
@@ -17,11 +17,19 @@ import {
 export default function ReviewPage() {
   const router = useRouter();
 
-  const { progress, setAnalysisId, isHydrated } = useOnboardingState();
+  const { progress, setAnalysisId, setSelectedMetricIds, isHydrated } = useOnboardingState();
   const { startAnalysis, progress: analysisProgress, result, isRunning } = useAnalysis();
 
   const connectionId = progress.connectionId;
   const workspaceId = progress.workspaceId;
+
+  // Handle metric selection
+  const handleMetricsSelected = useCallback(
+    (metricIds: string[]) => {
+      setSelectedMetricIds(metricIds);
+    },
+    [setSelectedMetricIds]
+  );
 
   // Start analysis when page loads (only after hydration)
   useEffect(() => {
@@ -71,6 +79,8 @@ export default function ReviewPage() {
       onContinue={handleContinue}
       onChangeType={handleChangeType}
       onReviewMatch={handleReviewMatch}
+      connectionId={connectionId ?? undefined}
+      onMetricsSelected={handleMetricsSelected}
     />
   );
 }

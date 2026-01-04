@@ -279,6 +279,9 @@ export interface OnboardingProgress {
   selectedRole: UserRole | null;
   answers: ConfirmationAnswer[];
   completedSteps: OnboardingStep[];
+
+  /** Selected metric IDs for canvas (Phase 3) */
+  selectedMetricIds: string[];
 }
 
 /** Default empty progress state */
@@ -291,6 +294,7 @@ export const DEFAULT_ONBOARDING_PROGRESS: OnboardingProgress = {
   selectedRole: null,
   answers: [],
   completedSteps: [],
+  selectedMetricIds: [],
 };
 
 // =============================================================================

@@ -34,6 +34,7 @@ export { AnalysisProgress } from "./components/review/analysis-progress";
 export { DetectionReview } from "./components/review/detection-review";
 export { BusinessTypeCard } from "./components/review/business-type-card";
 export { SchemaSummary } from "./components/review/schema-summary";
+export { MetricsSection } from "./components/review/metrics-section";
 
 // Role Components
 export { RoleCard } from "./components/role/role-card";

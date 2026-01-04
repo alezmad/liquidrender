@@ -51,9 +51,11 @@ export function useActivityFeed({
   perPage = 50,
   enabled = true,
 }: UseActivityFeedOptions) {
+  // TODO: Activity route not yet implemented in backend (V2 feature)
   return useQuery({
     queryKey: ["knosia", "activity", workspaceId, type, page, perPage],
     queryFn: async () => {
+      // @ts-expect-error - Route not yet implemented in backend
       const res = await api.knosia.activity.$get({
         query: {
           workspaceId,

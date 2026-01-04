@@ -15,6 +15,7 @@ interface ShareInput {
 
 /**
  * Share a thread or canvas with other users
+ * TODO: Implement sharing routes in backend
  */
 export function useShare() {
   const queryClient = useQueryClient();
@@ -22,7 +23,8 @@ export function useShare() {
   return useMutation({
     mutationFn: async ({ targetType, targetId, userIds, mode }: ShareInput) => {
       if (targetType === "canvas") {
-        const res = await api.knosia.canvas[":canvasId"].share.$post({
+        // @ts-expect-error - Route not yet implemented in backend
+        const res = await api.knosia.canvas.canvases[":canvasId"].share.$post({
           param: { canvasId: targetId },
           json: { userIds, mode },
         });

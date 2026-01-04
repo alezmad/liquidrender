@@ -46,9 +46,11 @@ export function useCanvasBlocks({ canvasId }: UseCanvasBlocksOptions): UseCanvas
   };
 
   // Create block
+  // TODO: Implement /canvas/canvases/:canvasId/blocks route in backend
   const createMutation = useMutation({
     mutationFn: async (input: CreateBlockInput) => {
-      const res = await api.knosia.canvas[":canvasId"].blocks.$post({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].blocks.$post({
         param: { canvasId },
         json: input,
       });
@@ -59,9 +61,11 @@ export function useCanvasBlocks({ canvasId }: UseCanvasBlocksOptions): UseCanvas
   });
 
   // Update block
+  // TODO: Implement /canvas/canvases/:canvasId/blocks/:blockId route in backend
   const updateMutation = useMutation({
     mutationFn: async ({ blockId, updates }: { blockId: string; updates: UpdateBlockInput }) => {
-      const res = await api.knosia.canvas[":canvasId"].blocks[":blockId"].$patch({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].blocks[":blockId"].$patch({
         param: { canvasId, blockId },
         json: updates,
       });
@@ -72,9 +76,11 @@ export function useCanvasBlocks({ canvasId }: UseCanvasBlocksOptions): UseCanvas
   });
 
   // Delete block
+  // TODO: Implement /canvas/canvases/:canvasId/blocks/:blockId route in backend
   const deleteMutation = useMutation({
     mutationFn: async (blockId: string) => {
-      const res = await api.knosia.canvas[":canvasId"].blocks[":blockId"].$delete({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].blocks[":blockId"].$delete({
         param: { canvasId, blockId },
       });
       if (!res.ok) throw new Error("Failed to delete block");
@@ -83,9 +89,11 @@ export function useCanvasBlocks({ canvasId }: UseCanvasBlocksOptions): UseCanvas
   });
 
   // Reorder blocks
+  // TODO: Implement /canvas/canvases/:canvasId/blocks/reorder route in backend
   const reorderMutation = useMutation({
     mutationFn: async (blocks: Array<{ id: string; position: BlockPosition }>) => {
-      const res = await api.knosia.canvas[":canvasId"].blocks.reorder.$post({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].blocks.reorder.$post({
         param: { canvasId },
         json: { blocks },
       });

@@ -39,7 +39,8 @@ export type BlockType =
   | "watch_list"
   | "comparison"
   | "insight"
-  | "text";
+  | "text"
+  | "metric_kpi";
 
 export interface CanvasBlock {
   id: string;

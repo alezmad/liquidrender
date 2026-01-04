@@ -45,9 +45,11 @@ export function CanvasView({
   // ============================================================================
 
   // AI Canvas Edit mutation
+  // TODO: Implement /canvas/canvases/:id/edit route in backend
   const editCanvasMutation = useMutation({
     mutationFn: async (instruction: string) => {
-      const res = await api.knosia.canvas[":id"].edit.$post({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":id"].edit.$post({
         param: { id: canvasId },
         json: { instruction },
       });
@@ -70,6 +72,7 @@ export function CanvasView({
   });
 
   // Create Alert mutation
+  // TODO: Implement /canvas/canvases/:canvasId/alerts route in backend
   const createAlertMutation = useMutation({
     mutationFn: async (alertData: {
       name: string;
@@ -82,7 +85,8 @@ export function CanvasView({
       channels?: ("in_app" | "email" | "slack")[];
       blockId?: string;
     }) => {
-      const res = await api.knosia.canvas[":canvasId"].alerts.$post({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].alerts.$post({
         param: { canvasId },
         json: alertData,
       });
@@ -101,6 +105,7 @@ export function CanvasView({
   });
 
   // Update Alert mutation
+  // TODO: Implement /canvas/canvases/:canvasId/alerts/:alertId route in backend
   const updateAlertMutation = useMutation({
     mutationFn: async ({
       alertId,
@@ -119,7 +124,8 @@ export function CanvasView({
         enabled?: boolean;
       };
     }) => {
-      const res = await api.knosia.canvas[":canvasId"].alerts[":alertId"].$patch({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].alerts[":alertId"].$patch({
         param: { canvasId, alertId },
         json: updates,
       });
@@ -138,9 +144,11 @@ export function CanvasView({
   });
 
   // Delete Alert mutation
+  // TODO: Implement /canvas/canvases/:canvasId/alerts/:alertId route in backend
   const deleteAlertMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      const res = await api.knosia.canvas[":canvasId"].alerts[":alertId"].$delete({
+      // @ts-expect-error - Route not yet implemented in backend
+      const res = await api.knosia.canvas.canvases[":canvasId"].alerts[":alertId"].$delete({
         param: { canvasId, alertId },
       });
       if (!res.ok) {

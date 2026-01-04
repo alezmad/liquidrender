@@ -9,6 +9,7 @@ import { HeroMetricBlock, type HeroMetricData } from "./hero-metric";
 import { WatchListBlock, type WatchItem } from "./watch-list";
 import { ComparisonCardBlock, type ComparisonCardData } from "./comparison-card";
 import { InsightCardBlock, type InsightCardData } from "./insight-card";
+import { MetricKPIBlock, type MetricKPIBlockConfig } from "./metric-kpi-block";
 
 // Block types that should be delegated to LiquidRender
 const LIQUID_RENDER_BLOCK_TYPES = new Set(Object.keys(BLOCK_TYPE_TO_LIQUID_TYPE));
@@ -59,6 +60,8 @@ export function BlockRenderer({
   switch (block.type) {
     case "hero_metric":
       return <HeroMetricBlock block={block} data={data as HeroMetricData | undefined} />;
+    case "metric_kpi":
+      return <MetricKPIBlock block={block} config={block.config as MetricKPIBlockConfig | undefined} />;
     case "watch_list":
       return <WatchListBlock block={block} data={data as WatchItem[] | undefined} />;
     case "comparison":

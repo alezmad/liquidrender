@@ -15,6 +15,9 @@ export * from './utils';
 export { KPICard } from './kpi-card';
 export { KPICard as default } from './kpi-card';
 
+// MetricKPI (Calculated Metrics)
+export { MetricKPI, StaticMetricKPI } from './metric-kpi';
+
 // Button
 export { Button, StaticButton } from './button';
 
@@ -315,6 +318,7 @@ export { Flow, StaticFlow } from './flow';
 // ============================================================================
 
 import { KPICard } from './kpi-card';
+import { MetricKPI } from './metric-kpi';
 import { Button } from './button';
 import { Text } from './text';
 import { Heading } from './heading';
@@ -408,6 +412,7 @@ import type { ComponentType } from 'react';
  */
 export const liquidComponents: Record<string, ComponentType<LiquidComponentProps>> = {
   kpi: KPICard,
+  metricKPI: MetricKPI,
   button: Button,
   text: Text,
   heading: Heading,

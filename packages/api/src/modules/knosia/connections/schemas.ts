@@ -28,6 +28,7 @@ export const testConnectionInputSchema = z.object({
 export const createConnectionInputSchema = testConnectionInputSchema.extend({
   name: z.string().min(1, "Connection name is required").max(255).optional(),
   orgId: z.string(),
+  userId: z.string(), // User who creates the connection (added as workspace member)
 });
 
 // Get connection schema
@@ -51,6 +52,7 @@ export const getConnectionsInputSchema = z.object({
 export const connectionWithHealthSchema = z.object({
   id: z.string(),
   orgId: z.string(),
+  workspaceId: z.string(), // Auto-created or existing workspace
   name: z.string(),
   type: connectionTypeSchema,
   host: z.string(),

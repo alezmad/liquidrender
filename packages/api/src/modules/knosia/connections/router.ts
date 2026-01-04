@@ -49,12 +49,14 @@ export const connectionsRouter = new Hono<{ Variables: Variables }>()
   // Create new connection
   .post("/", async (c) => {
     const body = await c.req.json();
+    const user = c.get("user");
 
     // For now, use a placeholder orgId from the request body
     // In production, this would come from the user's active organization
     const input = createConnectionInputSchema.parse({
       ...body,
       orgId: body.orgId,
+      userId: user.id,
     });
 
     // First test the connection

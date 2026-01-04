@@ -4,6 +4,7 @@ import {
   knosiaConnectionHealth,
   knosiaWorkspace,
   knosiaWorkspaceConnection,
+  knosiaWorkspaceMembership,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 import { generateId } from "@turbostarter/shared/utils";
@@ -198,6 +199,28 @@ export const createConnection = async (
       workspaceId: workspace[0]!.id,
       connectionId: connectionId,
     });
+
+    // Add user as workspace member if not already a member
+    const existingMembership = await tx
+      .select()
+      .from(knosiaWorkspaceMembership)
+      .where(
+        and(
+          eq(knosiaWorkspaceMembership.workspaceId, workspace[0]!.id),
+          eq(knosiaWorkspaceMembership.userId, input.userId)
+        )
+      )
+      .limit(1);
+
+    if (!existingMembership.length) {
+      await tx.insert(knosiaWorkspaceMembership).values({
+        id: generateId(),
+        workspaceId: workspace[0]!.id,
+        userId: input.userId,
+        status: "active",
+        joinedAt: new Date(),
+      });
+    }
 
     return { connection, health, workspace: workspace[0] };
   });

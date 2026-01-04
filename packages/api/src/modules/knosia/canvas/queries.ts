@@ -1,116 +1,243 @@
-import { and, desc, eq, count } from "@turbostarter/db";
-import {
-  knosiaCanvas,
-  knosiaCanvasBlock,
-  knosiaCanvasAlert,
-} from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
+import {
+  knosiaWorkspaceCanvas,
+  knosiaCanvasVersion,
+  knosiaWorkspaceMembership,
+} from "@turbostarter/db/schema";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 
-import type { GetCanvasesInput } from "./schemas";
-
-// ============================================================================
-// CANVAS QUERIES
-// ============================================================================
+import type { ListCanvasesQuery, ListVersionsQuery } from "./schemas";
+import { canViewCanvas } from "./permissions";
 
 /**
- * Get a canvas by ID with access check
+ * Get all workspaces user is a member of
  */
-export async function getCanvas(id: string, userId: string) {
-  const result = await db
+async function getUserWorkspaceIds(userId: string): Promise<string[]> {
+  const memberships = await db
+    .select({ workspaceId: knosiaWorkspaceMembership.workspaceId })
+    .from(knosiaWorkspaceMembership)
+    .where(eq(knosiaWorkspaceMembership.userId, userId));
+
+  return memberships.map((m) => m.workspaceId);
+}
+
+/**
+ * List all canvases across all user's workspaces
+ */
+export async function listUserCanvases(
+  userId: string,
+  options: ListCanvasesQuery,
+) {
+  // Get all workspaces user is a member of
+  const workspaceIds = await getUserWorkspaceIds(userId);
+
+  if (workspaceIds.length === 0) {
+    return { canvases: [] };
+  }
+
+  // Build query conditions
+  const conditions = [
+    // User can see workspace canvases OR their own private canvases
+    or(
+      eq(knosiaWorkspaceCanvas.scope, "workspace"),
+      eq(knosiaWorkspaceCanvas.ownerId, userId),
+    ),
+  ];
+
+  // Apply filters
+  if (options.scope) {
+    conditions.push(eq(knosiaWorkspaceCanvas.scope, options.scope));
+  }
+
+  if (!options.includeDeleted) {
+    conditions.push(isNull(knosiaWorkspaceCanvas.deletedAt));
+  }
+
+  const dbCanvases = await db
+    .select({
+      id: knosiaWorkspaceCanvas.id,
+      workspaceId: knosiaWorkspaceCanvas.workspaceId,
+      title: knosiaWorkspaceCanvas.title,
+      scope: knosiaWorkspaceCanvas.scope,
+      ownerId: knosiaWorkspaceCanvas.ownerId,
+      isDefault: knosiaWorkspaceCanvas.isDefault,
+      currentVersion: knosiaWorkspaceCanvas.currentVersion,
+      lastEditedBy: knosiaWorkspaceCanvas.lastEditedBy,
+      createdAt: knosiaWorkspaceCanvas.createdAt,
+      updatedAt: knosiaWorkspaceCanvas.updatedAt,
+      deletedAt: knosiaWorkspaceCanvas.deletedAt,
+    })
+    .from(knosiaWorkspaceCanvas)
+    .where(and(...conditions))
+    .orderBy(
+      desc(knosiaWorkspaceCanvas.isDefault),
+      desc(knosiaWorkspaceCanvas.updatedAt),
+    );
+
+  // Map database fields to frontend Canvas type
+  const canvases = dbCanvases.map(canvas => ({
+    id: canvas.id,
+    workspaceId: canvas.workspaceId,
+    name: canvas.title, // Map title -> name
+    description: null, // TODO: Add description field to database
+    icon: null, // TODO: Add icon field to database
+    status: canvas.deletedAt ? "archived" as const : "active" as const,
+    layout: null, // TODO: Add layout field to database
+    createdAt: canvas.createdAt.toISOString(),
+    updatedAt: canvas.updatedAt.toISOString(),
+  }));
+
+  return { canvases };
+}
+
+/**
+ * List canvases in a workspace
+ *
+ * Returns all canvases the user can view:
+ * - Workspace-scoped canvases (all members)
+ * - User's private canvases
+ */
+export async function listCanvases(
+  workspaceId: string,
+  userId: string,
+  options: ListCanvasesQuery,
+) {
+  // Verify workspace membership
+  const memberships = await db
     .select()
-    .from(knosiaCanvas)
+    .from(knosiaWorkspaceMembership)
     .where(
       and(
-        eq(knosiaCanvas.id, id),
-        eq(knosiaCanvas.createdBy, userId),
+        eq(knosiaWorkspaceMembership.workspaceId, workspaceId),
+        eq(knosiaWorkspaceMembership.userId, userId),
       ),
     )
     .limit(1);
 
-  return result[0] ?? null;
+  if (!memberships.length) {
+    throw new Error("Not a workspace member");
+  }
+
+  // Build query conditions
+  const conditions = [
+    eq(knosiaWorkspaceCanvas.workspaceId, workspaceId),
+    // User can see workspace canvases OR their own private canvases
+    or(
+      eq(knosiaWorkspaceCanvas.scope, "workspace"),
+      eq(knosiaWorkspaceCanvas.ownerId, userId),
+    ),
+  ];
+
+  // Apply filters
+  if (options.scope) {
+    conditions.push(eq(knosiaWorkspaceCanvas.scope, options.scope));
+  }
+
+  if (!options.includeDeleted) {
+    conditions.push(isNull(knosiaWorkspaceCanvas.deletedAt));
+  }
+
+  const canvases = await db
+    .select({
+      id: knosiaWorkspaceCanvas.id,
+      workspaceId: knosiaWorkspaceCanvas.workspaceId,
+      title: knosiaWorkspaceCanvas.title,
+      scope: knosiaWorkspaceCanvas.scope,
+      ownerId: knosiaWorkspaceCanvas.ownerId,
+      isDefault: knosiaWorkspaceCanvas.isDefault,
+      currentVersion: knosiaWorkspaceCanvas.currentVersion,
+      lastEditedBy: knosiaWorkspaceCanvas.lastEditedBy,
+      createdAt: knosiaWorkspaceCanvas.createdAt,
+      updatedAt: knosiaWorkspaceCanvas.updatedAt,
+      deletedAt: knosiaWorkspaceCanvas.deletedAt,
+    })
+    .from(knosiaWorkspaceCanvas)
+    .where(and(...conditions))
+    .orderBy(
+      desc(knosiaWorkspaceCanvas.isDefault),
+      desc(knosiaWorkspaceCanvas.updatedAt),
+    );
+
+  return { canvases };
 }
 
 /**
- * Get canvases for a workspace
+ * Get a single canvas
+ *
+ * Returns full canvas including LiquidSchema
  */
-export async function getCanvases(input: GetCanvasesInput & { userId: string }) {
-  const offset = (input.page - 1) * input.perPage;
-
-  const where = and(
-    eq(knosiaCanvas.workspaceId, input.workspaceId),
-    eq(knosiaCanvas.createdBy, input.userId),
-    input.status ? eq(knosiaCanvas.status, input.status) : undefined,
-  );
-
-  const data = await db
+export async function getCanvas(canvasId: string, userId: string) {
+  const [canvas] = await db
     .select()
-    .from(knosiaCanvas)
-    .where(where)
-    .orderBy(desc(knosiaCanvas.updatedAt))
-    .limit(input.perPage)
-    .offset(offset);
-
-  const total = await db
-    .select({ count: count() })
-    .from(knosiaCanvas)
-    .where(where)
-    .then((res) => res[0]?.count ?? 0);
-
-  return { data, total };
-}
-
-// ============================================================================
-// BLOCK QUERIES
-// ============================================================================
-
-/**
- * Get all blocks for a canvas
- */
-export async function getCanvasBlocks(canvasId: string) {
-  return db
-    .select()
-    .from(knosiaCanvasBlock)
-    .where(eq(knosiaCanvasBlock.canvasId, canvasId))
-    .orderBy(knosiaCanvasBlock.createdAt);
-}
-
-/**
- * Get a block by ID
- */
-export async function getBlock(id: string) {
-  const result = await db
-    .select()
-    .from(knosiaCanvasBlock)
-    .where(eq(knosiaCanvasBlock.id, id))
+    .from(knosiaWorkspaceCanvas)
+    .where(eq(knosiaWorkspaceCanvas.id, canvasId))
     .limit(1);
 
-  return result[0] ?? null;
-}
+  if (!canvas) {
+    throw new Error("Canvas not found");
+  }
 
-// ============================================================================
-// ALERT QUERIES
-// ============================================================================
+  // Check permissions
+  const userWorkspaceIds = await getUserWorkspaceIds(userId);
+  if (!canViewCanvas(canvas, userId, userWorkspaceIds)) {
+    throw new Error("No view permission");
+  }
 
-/**
- * Get all alerts for a canvas
- */
-export async function getCanvasAlerts(canvasId: string) {
-  return db
-    .select()
-    .from(knosiaCanvasAlert)
-    .where(eq(knosiaCanvasAlert.canvasId, canvasId))
-    .orderBy(knosiaCanvasAlert.createdAt);
+  return canvas;
 }
 
 /**
- * Get an alert by ID
+ * List version history for a canvas
  */
-export async function getAlert(id: string) {
-  const result = await db
+export async function getCanvasVersions(
+  canvasId: string,
+  userId: string,
+  options: ListVersionsQuery,
+) {
+  // Verify user can view canvas
+  const canvas = await getCanvas(canvasId, userId);
+
+  const versions = await db
+    .select({
+      id: knosiaCanvasVersion.id,
+      versionNumber: knosiaCanvasVersion.versionNumber,
+      createdBy: knosiaCanvasVersion.createdBy,
+      changeSummary: knosiaCanvasVersion.changeSummary,
+      createdAt: knosiaCanvasVersion.createdAt,
+    })
+    .from(knosiaCanvasVersion)
+    .where(eq(knosiaCanvasVersion.canvasId, canvasId))
+    .orderBy(desc(knosiaCanvasVersion.versionNumber))
+    .limit(options.limit || 50);
+
+  return { versions };
+}
+
+/**
+ * Get a specific version of a canvas
+ */
+export async function getCanvasVersion(
+  canvasId: string,
+  versionNumber: number,
+  userId: string,
+) {
+  // Verify user can view canvas
+  await getCanvas(canvasId, userId);
+
+  const [version] = await db
     .select()
-    .from(knosiaCanvasAlert)
-    .where(eq(knosiaCanvasAlert.id, id))
+    .from(knosiaCanvasVersion)
+    .where(
+      and(
+        eq(knosiaCanvasVersion.canvasId, canvasId),
+        eq(knosiaCanvasVersion.versionNumber, versionNumber),
+      ),
+    )
     .limit(1);
 
-  return result[0] ?? null;
+  if (!version) {
+    throw new Error("Version not found");
+  }
+
+  return version;
 }

@@ -1,7 +1,12 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { enforceAuth } from "../../../middleware";
-import type { Variables } from "../../../types";
+import type { Session, User } from "@turbostarter/auth";
+
+type Variables = {
+  user: User;
+  session: Session;
+};
 
 import {
   listCanvases,

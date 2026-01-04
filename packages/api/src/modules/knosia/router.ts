@@ -7,6 +7,7 @@ import { canvasRouter } from "./canvas";
 // import { commentRouter } from "./comment"; // V2: Not implemented yet
 import { connectionsRouter } from "./connections";
 // import { insightRouter } from "./insight"; // V2: Not implemented yet
+import { metricsRouter } from "./metrics";
 import { notificationRouter } from "./notification";
 // import { searchRouter } from "./search"; // V2: Not implemented yet
 import { threadRouter } from "./thread";
@@ -25,7 +26,7 @@ type Variables = {
  * Main Knosia API router
  * Mounts all Knosia-related sub-routers
  *
- * Active: analysis, briefing, canvas, connections, notification, thread, organization, preferences, vocabulary
+ * Active: analysis, briefing, canvas, connections, metrics, notification, thread, organization, preferences, vocabulary
  * V2 Roadmap: activity, comment, insight, search (not yet implemented)
  */
 export const knosiaRouter = new Hono<{ Variables: Variables }>()
@@ -36,6 +37,7 @@ export const knosiaRouter = new Hono<{ Variables: Variables }>()
   // .route("/comment", commentRouter)
   .route("/connections", connectionsRouter)
   // .route("/insight", insightRouter)
+  .route("/metrics", metricsRouter)
   .route("/notification", notificationRouter)
   // .route("/search", searchRouter)
   .route("/thread", threadRouter)

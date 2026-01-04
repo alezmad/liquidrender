@@ -35,10 +35,15 @@ export const getProfilingSummarySchema = z.object({
 // ============================================================================
 
 export interface StepEvent {
-  step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-  status: "started" | "completed";
+  step: 1 | 2 | 3 | 4 | 4.5 | 5 | 6 | 7 | 8;
+  status: "started" | "completed" | "warning";
   label: string;
   detail?: string;
+  metrics?: {
+    total: number;
+    feasible: number;
+    categories: string[];
+  };
 }
 
 export interface CompleteEvent {

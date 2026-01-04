@@ -190,46 +190,18 @@ export async function enrichVocabularyWithCalculatedMetrics(
 /**
  * Build enhanced vocabulary context using profiling insights
  * This provides the LLM with additional context to generate smarter metrics
+ *
+ * Note: Profiling insights extraction is simplified for MVP.
+ * Future: Extract high-cardinality columns, enums, required fields from ProfilingData
  */
 function buildEnhancedVocabularyContext(
   vocabulary: DetectedVocabulary,
-  profilingData: ProfilingData | null,
+  _profilingData: ProfilingData | null,
   schema: ExtractedSchema
 ): GenerateRecipeRequest["vocabularyContext"] {
-  const baseContext = schemaToVocabularyContext(schema, vocabulary);
-
-  // If no profiling data, return base context
-  if (!profilingData?.columnProfiles) {
-    return baseContext;
-  }
-
-  // Extract profiling insights
-  const highCardinalityColumns = Object.entries(profilingData.columnProfiles)
-    .filter(([_, profile]) => {
-      const cardinality = profile.cardinality ?? 0;
-      const rowCount = profile.rowCount ?? 1;
-      return cardinality / rowCount > 0.9;
-    })
-    .map(([col]) => col);
-
-  const enumColumns = Object.entries(profilingData.columnProfiles)
-    .filter(([_, profile]) => {
-      const distinctValues = profile.distinctValues ?? [];
-      const coverage = profile.coverage ?? 0;
-      return distinctValues.length < 100 && coverage > 0.8;
-    })
-    .map(([col, profile]) => ({
-      column: col,
-      values: profile.distinctValues ?? [],
-    }));
-
-  const requiredFields = Object.entries(profilingData.columnProfiles)
-    .filter(([_, profile]) => (profile.nullPercentage ?? 100) < 5)
-    .map(([col]) => col);
-
-  // Return base context (profiling insights are informational only)
-  // The LLM recipe generator doesn't currently accept profilingInsights
-  return baseContext;
+  // For MVP, just use base context from schema + vocabulary
+  // Profiling insights can be added in future iterations
+  return schemaToVocabularyContext(schema, vocabulary);
 }
 
 /**
@@ -397,7 +369,7 @@ export async function generateAndStoreCalculatedMetrics(
       name: recipe.name,
       category,
       description,
-      semanticDefinition: recipe.semanticDefinition,
+      semanticDefinition: recipe.semanticDefinition as any, // Type assertion needed due to JSONB complexity
       confidence: recipe.confidence?.toString() ?? null,
       feasible: recipe.feasible,
       source: "ai_generated",

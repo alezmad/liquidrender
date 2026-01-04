@@ -469,14 +469,24 @@ export const knosiaCalculatedMetric = pgTable("knosia_calculated_metric", {
 
   // Semantic definition (from Phase 1)
   semanticDefinition: jsonb().$type<{
-    type: "simple" | "formula" | "ratio" | "trend";
+    type: "simple" | "derived" | "cumulative";
     expression: string;
     aggregation?: string;
     entity?: string;
     timeField?: string;
     timeGranularity?: string;
-    filters?: { field: string; operator: string; value: unknown }[];
-    format?: { type: string; currency?: string };
+    filters?: Array<{ field: string; operator: string; value: unknown }>;
+    dependencies?: string[];
+    label?: string;
+    description?: string;
+    unit?: string;
+    format?: {
+      type: string;
+      decimals?: number;
+      currency?: string;
+      prefix?: string;
+      suffix?: string;
+    };
   }>().notNull(),
 
   // Generation metadata

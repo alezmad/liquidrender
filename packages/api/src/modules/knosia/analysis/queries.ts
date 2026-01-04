@@ -434,13 +434,38 @@ export async function* runAnalysis(
     try {
       const { generateAndStoreCalculatedMetrics } = await import("./calculated-metrics");
 
+      // Get workspace ID for metrics storage (use provided workspaceId or lookup from connection)
+      let metricsWorkspaceId = workspaceId;
+      if (!metricsWorkspaceId) {
+        const conn = await db
+          .select()
+          .from(knosiaConnection)
+          .where(eq(knosiaConnection.id, connectionId))
+          .limit(1);
+
+        if (conn[0]) {
+          const workspace = await db
+            .select()
+            .from(knosiaWorkspace)
+            .where(eq(knosiaWorkspace.orgId, conn[0].orgId))
+            .limit(1);
+          metricsWorkspaceId = workspace[0]?.id ?? null;
+        }
+      }
+
+      // Skip if no workspace available
+      if (!metricsWorkspaceId) {
+        console.warn("[Analysis] Skipping calculated metrics - no workspace ID available");
+        throw new Error("No workspace ID available");
+      }
+
       const calculatedMetricsResult = await generateAndStoreCalculatedMetrics({
         detectedVocabulary: detected,
         profilingData,
         businessType: businessType.detected || "unknown",
         extractedSchema: schema,
         connectionId,
-        workspaceId: workspaceId || "",
+        workspaceId: metricsWorkspaceId,
         analysisId: analysis.id,
       });
 

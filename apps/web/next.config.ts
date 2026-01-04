@@ -73,8 +73,12 @@ const config: NextConfig = {
   reactStrictMode: true,
   serverExternalPackages: [
     "duckdb",
+    "duckdb-async",
+    "@duckdb/node-api",
+    "@duckdb/node-bindings",
     "better-sqlite3",
     "@mapbox/node-pre-gyp",
+    "@repo/liquid-connect", // Contains DuckDB adapter with native modules
   ],
   turbopack: {
     rules: {

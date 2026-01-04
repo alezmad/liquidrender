@@ -417,6 +417,71 @@ export async function* runAnalysis(
       },
     };
 
+    // ────────────────────────────────────────────────────────────────
+    // Step 4.5: Generate Calculated Metrics
+    // ────────────────────────────────────────────────────────────────
+
+    yield {
+      event: "step",
+      data: {
+        step: 4.5,
+        status: "started",
+        label: "Generating business metrics",
+        detail: "Analyzing vocabulary to generate calculated KPIs...",
+      },
+    };
+
+    try {
+      const { generateAndStoreCalculatedMetrics } = await import("./calculated-metrics");
+
+      const calculatedMetricsResult = await generateAndStoreCalculatedMetrics({
+        detectedVocabulary: detected,
+        profilingData,
+        businessType: businessType.detected || "unknown",
+        extractedSchema: schema,
+        connectionId,
+        workspaceId: workspaceId || "",
+        analysisId: analysis.id,
+      });
+
+      // Update analysis record
+      await db
+        .update(knosiaAnalysis)
+        .set({
+          calculatedMetricsGenerated: calculatedMetricsResult.totalGenerated,
+          calculatedMetricsFeasible: calculatedMetricsResult.feasibleCount,
+        })
+        .where(eq(knosiaAnalysis.id, analysis.id));
+
+      yield {
+        event: "step",
+        data: {
+          step: 4.5,
+          status: "completed",
+          label: "Metrics generated",
+          detail: `Generated ${calculatedMetricsResult.totalGenerated} calculated metrics (${calculatedMetricsResult.feasibleCount} feasible)`,
+          metrics: {
+            total: calculatedMetricsResult.totalGenerated,
+            feasible: calculatedMetricsResult.feasibleCount,
+            categories: calculatedMetricsResult.categories,
+          },
+        },
+      };
+    } catch (error) {
+      // Graceful degradation: analysis continues without calculated metrics
+      console.error("[Analysis] Failed to generate calculated metrics:", error);
+
+      yield {
+        event: "step",
+        data: {
+          step: 4.5,
+          status: "warning",
+          label: "Metric generation skipped",
+          detail: error instanceof Error ? error.message : "LLM unavailable",
+        },
+      };
+    }
+
     // Step 5: Quick vocabulary preview (fast, top fields only)
     yield {
       event: "step",
@@ -502,6 +567,48 @@ export async function* runAnalysis(
         label: ANALYSIS_STEPS[4].label,
       },
     };
+
+    // Step 7.5: Generate Calculated Metrics (KPI Recipes)
+    // This step enriches vocabulary with business KPIs calculated from raw data
+    let calculatedMetricsResult: {
+      recipes: any[];
+      stats: { feasibleCount: number; totalGenerated: number; averageConfidence: number };
+    } | null = null;
+
+    if (businessType.detected) {
+      try {
+        const { enrichVocabularyWithCalculatedMetrics } = await import("./calculated-metrics");
+
+        console.log("[Analysis] Generating calculated metrics for business type:", businessType.detected);
+
+        calculatedMetricsResult = await enrichVocabularyWithCalculatedMetrics(
+          quickEnrichedVocab,
+          schema,
+          businessType.detected,
+          {
+            maxRecipes: 10,
+            model: "haiku",
+            enabled: true, // Enable by default
+          }
+        );
+
+        // Use enriched vocabulary for canvas creation
+        if (calculatedMetricsResult.enrichedVocabulary.calculatedMetrics?.length) {
+          quickEnrichedVocab = calculatedMetricsResult.enrichedVocabulary;
+          console.log(`[Analysis] Added ${calculatedMetricsResult.enrichedVocabulary.calculatedMetrics.length} calculated metrics to vocabulary`);
+        }
+
+        console.log("[Analysis] Calculated metrics generation complete:", {
+          totalGenerated: calculatedMetricsResult.stats.totalGenerated,
+          feasible: calculatedMetricsResult.stats.feasibleCount,
+          avgConfidence: calculatedMetricsResult.stats.averageConfidence.toFixed(2),
+        });
+      } catch (error) {
+        console.warn("[Analysis] Calculated metrics generation skipped:", error);
+      }
+    } else {
+      console.log("[Analysis] Skipping calculated metrics - no business type detected");
+    }
 
     // Optional: Data Profiling UI Steps (Steps 6-8)
     // Note: Profiling was already done before step 4 for vocabulary enhancement

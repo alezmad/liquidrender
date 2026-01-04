@@ -1,6 +1,10 @@
 import { generateId } from "@turbostarter/shared/utils";
 import { db } from "@turbostarter/db/server";
-import { knosiaConnection, knosiaAnalysis } from "@turbostarter/db/schema";
+import {
+  knosiaConnection,
+  knosiaAnalysis,
+  knosiaWorkspaceCanvas,
+} from "@turbostarter/db/schema";
 import { eq } from "drizzle-orm";
 
 // Dynamic import to avoid Turbopack issues with native modules
@@ -9,8 +13,16 @@ const getUVB = async () => {
     DuckDBUniversalAdapter,
     extractSchema: extractSchemaFn,
     applyHardRules: applyHardRulesFn,
+    profileSchema: profileSchemaFn,
+    extractProfilingData: extractProfilingDataFn,
   } = await import("@repo/liquid-connect/uvb");
-  return { DuckDBUniversalAdapter, extractSchema: extractSchemaFn, applyHardRules: applyHardRulesFn };
+  return {
+    DuckDBUniversalAdapter,
+    extractSchema: extractSchemaFn,
+    applyHardRules: applyHardRulesFn,
+    profileSchema: profileSchemaFn,
+    extractProfilingData: extractProfilingDataFn,
+  };
 };
 
 // LiquidConnect imports
@@ -43,6 +55,7 @@ interface PipelineOptions {
   skipSaveVocabulary?: boolean;
   skipDashboardGeneration?: boolean;
   forceBusinessType?: BusinessType;
+  enableProfiling?: boolean; // V2: Enable profiling-enhanced vocabulary detection
   debug?: boolean;
 }
 
@@ -51,7 +64,13 @@ interface PipelineResult {
   analysisId: string;
   businessType: BusinessType | null;
   businessTypeConfidence: number;
-  vocabularyStats: { metrics: number; dimensions: number; entities: number };
+  vocabularyStats: {
+    metrics: number;
+    dimensions: number;
+    entities: number;
+    requiredFields?: number;
+    enumFields?: number;
+  };
   dashboardSpec: DashboardSpec | null;
   liquidSchema: LiquidSchema | null;
   warnings: string[];
@@ -62,6 +81,7 @@ interface PipelineResult {
     resolvedVocabulary: ResolvedVocabulary;
     semanticLayer: SemanticLayer;
     mappingResult: MappingResult;
+    profilingUsed?: boolean;
   };
 }
 
@@ -132,8 +152,13 @@ export async function runKnosiaPipeline(
     }
 
     // Step 3: Get UVB modules dynamically
-    const { DuckDBUniversalAdapter, extractSchema, applyHardRules } =
-      await getUVB();
+    const {
+      DuckDBUniversalAdapter,
+      extractSchema,
+      applyHardRules,
+      profileSchema,
+      extractProfilingData,
+    } = await getUVB();
 
     // Step 4: Create database adapter
     const duckdbAdapter = new DuckDBUniversalAdapter();
@@ -149,16 +174,23 @@ export async function runKnosiaPipeline(
       },
     );
 
-    // Step 6: Apply hard rules → DetectedVocabulary
-    const rulesResult = await applyHardRules(extractedSchema);
-    const detectedVocabulary: DetectedVocabulary = {
-      entities: rulesResult.detected.entities,
-      metrics: rulesResult.detected.metrics,
-      dimensions: rulesResult.detected.dimensions,
-      timeFields: rulesResult.detected.timeFields,
-      filters: rulesResult.detected.filters,
-      relationships: rulesResult.detected.relationships,
-    };
+    // Step 5.5: Optional profiling (V2)
+    let profilingData;
+    if (options?.enableProfiling) {
+      const profileResult = await profileSchema(duckdbAdapter as any, extractedSchema, {
+        enableTier1: true,
+        enableTier2: true,
+        enableTier3: false, // Tier 3 is expensive, skip for pipeline
+        maxConcurrentTables: 5,
+      });
+      profilingData = extractProfilingData(profileResult.schema);
+    }
+
+    // Step 6: Apply hard rules → DetectedVocabulary (with optional profiling)
+    const rulesResult = await applyHardRules(extractedSchema, {
+      profilingData,
+    });
+    const detectedVocabulary: DetectedVocabulary = rulesResult.detected;
 
     // Step 7: Detect business type
     const detection: DetectionResult = options?.forceBusinessType
@@ -227,6 +259,32 @@ export async function runKnosiaPipeline(
       completedAt: new Date(),
     });
 
+    // Step 13: Create default workspace canvas
+    let canvasCreated = false;
+    if (liquidSchema && !options?.skipDashboardGeneration) {
+      try {
+        await db.insert(knosiaWorkspaceCanvas).values({
+          id: generateId(),
+          workspaceId,
+          title: "Main Dashboard",
+          schema: liquidSchema,
+          scope: "workspace",
+          ownerId: userId,
+          isDefault: true,
+          currentVersion: 1,
+          lastEditedBy: userId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        canvasCreated = true;
+      } catch (error) {
+        // If canvas already exists (e.g., duplicate run), just warn
+        warnings.push(
+          `Could not create default canvas: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
     return {
       success: true,
       analysisId,
@@ -236,6 +294,8 @@ export async function runKnosiaPipeline(
         metrics: detectedVocabulary.metrics.length,
         dimensions: detectedVocabulary.dimensions.length,
         entities: detectedVocabulary.entities.length,
+        requiredFields: detectedVocabulary.requiredFields?.length,
+        enumFields: detectedVocabulary.enumFields?.length,
       },
       dashboardSpec,
       liquidSchema,
@@ -248,6 +308,7 @@ export async function runKnosiaPipeline(
             resolvedVocabulary,
             semanticLayer,
             mappingResult: mappingResult!,
+            profilingUsed: rulesResult.profilingUsed,
           }
         : undefined,
     };

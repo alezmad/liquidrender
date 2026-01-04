@@ -20,6 +20,8 @@ import { SidebarTrigger } from "@turbostarter/ui-web/sidebar";
 
 import { pathsConfig } from "~/config/paths";
 import { TurboLink } from "~/modules/common/turbo-link";
+import { useKnosiaOrg } from "~/modules/onboarding/hooks/use-knosia-org";
+import Link from "next/link";
 
 const ROOT_KEY = "home";
 
@@ -102,6 +104,7 @@ const getPath = (
 export const DashboardActionBar = () => {
   const { t, i18n } = useTranslation("common");
   const pathname = usePathname();
+  const { isGuest, isLoading } = useKnosiaOrg();
 
   const rawPath = getPath(pathsConfig, pathname);
   const path =
@@ -152,7 +155,17 @@ export const DashboardActionBar = () => {
         ) : null}
       </div>
 
-      <div className="text-muted-foreground flex items-center">
+      <div className="text-muted-foreground flex items-center gap-2">
+        {!isLoading && isGuest && (
+          <Link
+            href={pathsConfig.auth.register}
+            className={buttonVariants({ variant: "default", size: "sm" })}
+          >
+            <Icons.Sparkles className="mr-2 size-4" />
+            Sign Up Free
+          </Link>
+        )}
+
         <a
           href="https://github.com/turbostarter"
           rel="noopener noreferrer"

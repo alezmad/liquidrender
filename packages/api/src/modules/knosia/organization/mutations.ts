@@ -22,6 +22,7 @@ interface KnosiaOrgResult {
  * - Each user gets their own knosia org (keyed by their user ID)
  * - For anonymous users: org name is "Guest Workspace" with 7-day TTL
  * - For real users: org name is their name or email, no expiration
+ * - Auto-converts guest orgs when user registers (isAnonymous changes to false)
  */
 export async function getOrCreateKnosiaOrg(user: User): Promise<KnosiaOrgResult> {
   // Use user ID as org ID for 1:1 mapping
@@ -41,6 +42,19 @@ export async function getOrCreateKnosiaOrg(user: User): Promise<KnosiaOrgResult>
     .limit(1);
 
   if (existing[0]) {
+    // Auto-convert: if user is no longer anonymous but org is still guest, convert it
+    const isAnonymous = user.isAnonymous ?? false;
+    const isGuestOrg = existing[0].isGuest ?? false;
+
+    if (!isAnonymous && isGuestOrg) {
+      // User converted from guest to registered - update org
+      const newName = user.name ?? user.email ?? "My Workspace";
+      const converted = await convertGuestToRegistered(orgId, newName);
+      if (converted) {
+        return converted;
+      }
+    }
+
     return {
       id: existing[0].id,
       name: existing[0].name,

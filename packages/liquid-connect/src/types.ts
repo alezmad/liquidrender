@@ -27,7 +27,8 @@ export type FieldType =
   | 'decimal'
   | 'boolean'
   | 'date'
-  | 'timestamp';
+  | 'timestamp'
+  | 'json';
 
 /**
  * Aggregation functions

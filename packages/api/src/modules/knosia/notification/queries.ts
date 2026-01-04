@@ -3,9 +3,9 @@ import {
   knosiaNotification,
   knosiaDigest,
   knosiaAiInsight,
-  knosiaCanvas,
-  knosiaCanvasBlock,
-  knosiaCanvasAlert,
+  // knosiaCanvas, // TODO: Implement canvas tables (see vision docs)
+  // knosiaCanvasBlock,
+  // knosiaCanvasAlert,
   knosiaVocabularyItem,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
@@ -170,45 +170,13 @@ export async function getAiInsight(id: string, userId: string) {
 
 /**
  * Get canvases data for digest preview
+ * TODO: Implement when canvas tables are added (see vision docs)
  */
-export async function getCanvasesData(canvasIds: string[]) {
-  if (!canvasIds.length) return [];
-
-  const canvases = await db
-    .select({
-      id: knosiaCanvas.id,
-      name: knosiaCanvas.name,
-      description: knosiaCanvas.description,
-      status: knosiaCanvas.status,
-      viewCount: knosiaCanvas.viewCount,
-      updatedAt: knosiaCanvas.updatedAt,
-    })
-    .from(knosiaCanvas)
-    .where(inArray(knosiaCanvas.id, canvasIds));
-
-  // Get block counts for each canvas
-  const canvasWithBlocks = await Promise.all(
-    canvases.map(async (canvas) => {
-      const blocks = await db
-        .select({
-          id: knosiaCanvasBlock.id,
-          type: knosiaCanvasBlock.type,
-          title: knosiaCanvasBlock.title,
-        })
-        .from(knosiaCanvasBlock)
-        .where(eq(knosiaCanvasBlock.canvasId, canvas.id))
-        .limit(5);
-
-      return {
-        ...canvas,
-        summary: canvas.description ?? `${blocks.length} blocks`,
-        blockCount: blocks.length,
-        blockTypes: [...new Set(blocks.map(b => b.type))],
-      };
-    })
-  );
-
-  return canvasWithBlocks;
+export async function getCanvasesData(
+  _canvasIds: string[]
+): Promise<Array<{ name: string; summary: string }>> {
+  // Stub implementation - canvas tables not yet implemented
+  return [];
 }
 
 /**
@@ -258,67 +226,17 @@ export async function getMetricsData(workspaceId: string, metricSlugs: string[])
 
 /**
  * Get recent alerts for digest preview
+ * TODO: Implement when canvas alert tables are added (see vision docs)
  */
-export async function getRecentAlerts(workspaceId: string, limit = 10) {
-  // Get canvases in this workspace first
-  const workspaceCanvases = await db
-    .select({ id: knosiaCanvas.id })
-    .from(knosiaCanvas)
-    .where(eq(knosiaCanvas.workspaceId, workspaceId));
-
-  if (!workspaceCanvases.length) return [];
-
-  const canvasIds = workspaceCanvases.map(c => c.id);
-
-  const alerts = await db
-    .select({
-      id: knosiaCanvasAlert.id,
-      canvasId: knosiaCanvasAlert.canvasId,
-      name: knosiaCanvasAlert.name,
-      condition: knosiaCanvasAlert.condition,
-      enabled: knosiaCanvasAlert.enabled,
-      lastTriggeredAt: knosiaCanvasAlert.lastTriggeredAt,
-    })
-    .from(knosiaCanvasAlert)
-    .where(
-      and(
-        inArray(knosiaCanvasAlert.canvasId, canvasIds),
-        eq(knosiaCanvasAlert.enabled, true),
-      ),
-    )
-    .orderBy(desc(knosiaCanvasAlert.lastTriggeredAt))
-    .limit(limit);
-
-  return alerts.map((a) => ({
-    id: a.id,
-    name: a.name,
-    message: formatAlertCondition(a.condition),
-    severity: "info" as const, // Default severity
-    lastTriggeredAt: a.lastTriggeredAt,
-  }));
+export async function getRecentAlerts(
+  _workspaceId: string,
+  _limit = 10
+): Promise<Array<{ name: string; message: string; severity: string }>> {
+  // Stub implementation - canvas alert tables not yet implemented
+  return [];
 }
 
-/**
- * Format alert condition for display
- */
-function formatAlertCondition(condition: {
-  metric: string;
-  operator: string;
-  threshold: number;
-  timeWindow?: string;
-}): string {
-  const opLabels: Record<string, string> = {
-    gt: ">",
-    lt: "<",
-    eq: "=",
-    gte: ">=",
-    lte: "<=",
-    change_gt: "change >",
-    change_lt: "change <",
-  };
-  const op = opLabels[condition.operator] ?? condition.operator;
-  return `${condition.metric} ${op} ${condition.threshold}${condition.timeWindow ? ` (${condition.timeWindow})` : ""}`;
-}
+// formatAlertCondition removed - will be needed when alert tables are implemented
 
 /**
  * Get recent AI insights for digest preview

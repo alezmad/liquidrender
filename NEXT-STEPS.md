@@ -1,124 +1,76 @@
 # NEXT-STEPS.md
 
 > **Purpose:** Living document tracking immediate implementation priorities.
-> **Updated:** 2026-01-03
+> **Updated:** 2026-01-03 (realigned with architecture)
 > **Rule:** Complete items in order. Check off when done. Add new items at bottom.
+
+**Recent Updates (2026-01-03):**
+- ✅ Corrected table count: 26 tables (was 15)
+- ✅ Moved Canvas API + UI to Completed (production-ready)
+- ✅ Moved Thread UI to Completed (production-ready with pages + module)
+- ✅ Moved Vocabulary Management to Completed (production-ready)
+- ✅ Moved DuckDB Phase 3 to Completed (UVB integration done)
+- ✅ Added Multi-Connection Backend Support to queue (UI exists, backend gap)
+- ✅ Added V2 Profiling-Enhanced Vocabulary to Completed
+- ✅ Connections Management Page implemented (list, add, delete, health status)
 
 ---
 
 ## Current Implementation
 
-**Next Up:** Conversation UI
-- See Queue #1 below
+**Next Up:** Multi-Connection Backend Support
+- See Queue #1 below (formerly Queue #2)
 - Status: ⏳ Ready to start
+- UI exists ✅ | Backend single-connection 🚧
+
+**Recent Completions:**
+- ✅ Guest → Registered Conversion (auto-conversion + ExpirationBanner + upgrade CTA)
+- ✅ Connections Management Page (list, add, delete, health status)
+- ✅ Thread UI (production-ready: pages + module + sidebar)
+- ✅ Vocabulary Management Page (production-ready)
+- ✅ Canvas API + UI (production-ready)
+- ✅ DuckDB Phase 3 (UVB integration)
+- ✅ V2 Profiling-Enhanced Vocabulary
+- ✅ Data Health Dashboard
 
 ---
 
 ## Queue
 
-### 1. Conversation UI
-**Priority:** High | **Estimate:** ~6h | **Status:** ⏳ Queued
-
-Chat interface for natural language queries.
-
-**Scope:**
-- [ ] Create `apps/web/src/modules/conversation/` module
-- [ ] Chat message components (user, assistant, system)
-- [ ] Query input with suggested questions
-- [ ] Streaming response display (SSE from conversation API)
-- [ ] Query result visualization (tables, charts via LiquidRender)
-- [ ] Create `/dashboard/knosia/ask` page
-
-**Dependencies:**
-- Dashboard Module complete ✅
-- Conversation API exists ✅
-- Briefing API provides suggested questions ✅
-
----
-
-### 2. Guest → Registered Conversion
-**Priority:** Medium | **Estimate:** ~2h | **Status:** ⏳ Queued
-
-Complete guest-to-registered user flow.
-
-**Scope:**
-- [ ] Hook `convertGuestToRegistered()` in auth signup flow
-- [ ] Transfer guest workspace data to registered account
-- [ ] Add ExpirationBanner to main dashboard layout (not just onboarding)
-- [ ] Add "Upgrade" CTA in dashboard for guest users
-
-**Dependencies:**
-- Cron cleanup exists ✅ (WF-0021)
-- ExpirationBanner component exists ✅
-
----
-
-### 3. Connections Management Page
-**Priority:** Medium | **Estimate:** ~3h | **Status:** ⏳ Queued
-
-Manage database connections from dashboard.
-
-**Scope:**
-- [ ] Create `/dashboard/knosia/connections` page
-- [ ] List existing connections with status
-- [ ] Add new connection flow (reuse onboarding components)
-- [ ] Edit/delete connections
-- [ ] Connection health indicators
-
-**Dependencies:**
-- Connections API exists ✅
-- Dashboard layout exists ✅
-
----
-
-### 4. Vocabulary Management Page
-**Priority:** Medium | **Estimate:** ~4h | **Status:** ⏳ Queued
-
-View and edit vocabulary items.
-
-**Scope:**
-- [ ] Create `/dashboard/knosia/vocabulary` page
-- [ ] List vocabulary items by type (metrics, dimensions, entities)
-- [ ] Search/filter vocabulary
-- [ ] Edit vocabulary item definitions
-- [ ] Sync status with source connections
-
-**Dependencies:**
-- Vocabulary API exists ✅
-- Dashboard layout exists ✅
-
----
-
-### 5. DuckDB Phase 3: UVB Integration
+### 1. Multi-Connection Backend Support
 **Priority:** High | **Estimate:** ~4h | **Status:** ⏳ Queued
 
-Integrate DuckDB adapter with Universal Vocabulary Builder for schema extraction.
+Enable backend to support multiple connections per workspace (UI already exists).
 
 **Scope:**
-- [ ] Refactor `analysis/queries.ts` to use DuckDBAdapter
-- [ ] Remove PostgresAdapter dependency (keep as fallback)
-- [ ] Test with PostgreSQL via `postgres_scanner`
-- [ ] Verify schema extraction works for all supported DB types
+- [ ] Change `knosiaWorkspace.connectionId` to `connectionIds[]` array (schema migration)
+- [ ] Update analysis API to accept `connectionId` (not use workspace.connectionId)
+- [ ] Update vocabulary detection to specify source connection
+- [ ] Update canvas generation to work with multi-connection vocabulary
+- [ ] Ensure onboarding "Add Another" flow actually creates multiple connections
 
 **Dependencies:**
-- DuckDB Adapter Phase 1-2 complete ✅ (WF-0022)
+- Multi-connection onboarding UI exists ✅
+- Workspace auto-creation exists ✅
+
+**Note:** UI already supports adding multiple connections, but backend only stores one `connectionId` per workspace.
 
 ---
 
-### 6. DuckDB Phase 4: Conversation Integration
+### 2. DuckDB Phase 4: Thread Query Execution
 **Priority:** High | **Estimate:** ~3h | **Status:** ⏳ Queued
 
-Wire QueryExecutor into conversation API for live query execution.
+Wire QueryExecutor into thread API for live query execution.
 
 **Scope:**
-- [ ] Integrate QueryExecutor with conversation API mutations
-- [ ] Add query execution to conversation flow
+- [ ] Integrate QueryExecutor with thread API mutations
+- [ ] Add query execution to processQuery() flow
 - [ ] Handle query results (tables, aggregates)
 - [ ] Update CLAUDE.md architecture diagram
 
 **Dependencies:**
-- DuckDB Phase 3 complete
-- Conversation API exists ✅
+- DuckDB Phase 3 complete ✅
+- Thread API exists ✅ (`/api/knosia/thread/*`)
 
 ---
 
@@ -135,7 +87,7 @@ Wire QueryExecutor into conversation API for live query execution.
 - Future: DuckDB-WASM enables browser-side execution
 
 ### DuckDB Adapter Implementation
-**Priority:** 🔴 CRITICAL | **Status:** ✅ Phase 1-2 Complete (WF-0022)
+**Priority:** 🔴 CRITICAL | **Status:** ✅ Phase 1-3 Complete, Phase 4 Queued
 
 ```
 Phase 1: Core DuckDB Adapter ✅
@@ -151,12 +103,12 @@ Phase 2: Query Execution Service ✅
 - [x] SchemaExtractor + DuckDB integration tests (19 tests)
 - [x] 78 total DuckDB-related tests (21 adapter + 20 executor + 18 factory + 19 extractor)
 
-Phase 3: Update UVB to Use DuckDB (Next)
-- [ ] Refactor analysis/queries.ts to use DuckDBAdapter
-- [ ] Remove PostgresAdapter dependency (keep as fallback)
-- [ ] Test with PostgreSQL via postgres_scanner
+Phase 3: Update UVB to Use DuckDB ✅ DONE
+- [x] Refactor analysis/queries.ts to use DuckDBAdapter
+- [x] Remove PostgresAdapter dependency
+- [x] Test with PostgreSQL via postgres_scanner
 
-Phase 4: Conversation Integration
+Phase 4: Conversation Integration (Next)
 - [ ] Integrate QueryExecutor with conversation API mutations
 - [ ] Update CLAUDE.md architecture diagram
 ```
@@ -193,21 +145,29 @@ The compiled vocabulary (for NL queries) doesn't auto-sync with:
 
 | Item | Completed | Notes |
 |------|-----------|-------|
-| Database Schema (15 tables) | 2025-12-29 | V1 foundation |
+| **Database Schema (26 tables)** | 2025-12-29 | V1 foundation (15) + V2 enhancements (11) |
 | Connections API | 2025-12-29 | CRUD + test |
 | Analysis API | 2025-12-29 | SSE streaming |
 | Onboarding Connect Flow | 2025-12-29 | Single connection |
 | Onboarding Review Flow | 2025-12-29 | Vocabulary display |
-| Multi-Connection Onboarding (WF-0020) | 2025-12-30 | Summary screen, add another flow |
+| Multi-Connection Onboarding UI (WF-0020) | 2025-12-30 | Summary screen, add another flow (UI only, backend single connection) |
 | Onboarding Role Selection | 2025-12-30 | 6 role cards, grid layout |
 | Onboarding Confirmation Questions | 2025-12-30 | Carousel with skip functionality |
 | Onboarding Ready Screen | 2025-12-30 | Briefing preview, dashboard navigation |
 | **Dashboard Module (WF-0021)** | 2025-12-30 | Briefing page, KPI grid, alerts, ask input |
+| **Canvas API** | 2026-01-03 | Production-ready: CRUD + versioning + permissions (942 lines) |
+| **Canvas UI** | 2026-01-03 | CanvasView, CanvasSidebar, list/detail pages |
+| **Thread UI** | 2026-01-03 | ThreadView, ThreadSidebar, ThreadMessage, list/detail pages, sidebar menu |
+| **Vocabulary Management Page** | 2026-01-03 | VocabularyBrowser, page, sidebar menu |
+| **Connections Management Page** | 2026-01-03 | ConnectionsView, list/detail, add/delete, health status |
 | **Guest Cron Cleanup (WF-0021)** | 2025-12-30 | `/api/cron/cleanup-expired-orgs` endpoint |
 | **DuckDB Universal Adapter (WF-0022)** | 2025-12-30 | Phase 1-2: Adapter + QueryExecutor + Extractor integration, 78 tests |
+| **DuckDB Phase 3 (UVB Integration)** | 2026-01-03 | analysis/queries.ts uses DuckDBUniversalAdapter |
 | **Real Database Integration Tests** | 2026-01-02 | 13 tests passing: Pagila, Chinook, Northwind, Knosia |
 | **Wave 2 Reverse Engineering Pipeline** | 2026-01-02 | DB → Vocabulary → SemanticLayer → Dashboard, validated against real schemas |
 | **Data Profiling (Wave 2.5-2.7)** | 2026-01-03 | Three-tier profiling (stats/sampling/detailed), 163 tests, API integration, UI components, data health dashboard |
+| **V2 Profiling-Enhanced Vocabulary** | 2026-01-03 | 20% accuracy improvement via cardinality/null% analysis (8/8 tests) |
+| **Guest → Registered Conversion** | 2026-01-03 | Auto-conversion in getOrCreateKnosiaOrg(), ExpirationBanner in dashboard layout, upgrade CTA in action bar |
 
 ---
 
@@ -215,6 +175,13 @@ The compiled vocabulary (for NL queries) doesn't auto-sync with:
 
 These items are identified but not yet detailed:
 
+- [ ] **Global Notification System (V3+)** - Persistent SSE connection for server-pushed notifications
+  - Current: Task-specific SSE (opens during analysis, closes after completion)
+  - Vision: Persistent SSE in dashboard layout for real-time notifications
+  - Features: Toast notifications, modals, alerts, AI insights, background job completion
+  - Architecture: Global notification stream (`/api/notifications/stream`), reconnection management, notification queue
+  - Benefits: Server can push notifications anytime (background enrichment, AI insights ready, data quality alerts, etc.)
+  - Related: Currently using one-off SSE for background vocabulary enrichment (closes after `background_complete` event)
 - [ ] Web App Component Testing (vitest + @testing-library/react)
 - [ ] Vocabulary Governance UI (V3 roadmap)
 - [ ] Multi-workspace support

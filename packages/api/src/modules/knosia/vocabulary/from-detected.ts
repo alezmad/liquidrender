@@ -33,6 +33,175 @@ export interface SaveDetectedVocabularyResult {
 // =============================================================================
 
 /**
+ * Save LLM-enriched vocabulary (with displayName, description, category, etc.)
+ *
+ * This is the preferred method when LLM enrichment is available, as it creates
+ * vocabulary items with human-friendly names and business context.
+ *
+ * @param enriched - LLM-enriched vocabulary (from enrichVocabularyDescriptions)
+ * @param orgId - Organization ID (required)
+ * @param workspaceId - Workspace ID (for workspace-scoped items)
+ * @param options - Configuration options
+ * @returns Summary of created/skipped items and errors
+ */
+export async function saveEnrichedVocabulary(
+  enriched: any, // EnrichedVocabulary with LLM fields
+  orgId: string,
+  workspaceId: string,
+  options?: SaveDetectedVocabularyOptions,
+): Promise<SaveDetectedVocabularyResult> {
+  const opts: Required<SaveDetectedVocabularyOptions> = {
+    promoteHighCertaintyToOrg: options?.promoteHighCertaintyToOrg ?? true,
+    certaintyThreshold: options?.certaintyThreshold ?? 0.8,
+    skipExisting: options?.skipExisting ?? false,
+  };
+
+  const result: SaveDetectedVocabularyResult = {
+    metrics: { created: 0, skipped: 0 },
+    dimensions: { created: 0, skipped: 0 },
+    entities: { created: 0, skipped: 0 },
+    errors: [],
+  };
+
+  // Process metrics with LLM enrichments
+  for (const metric of enriched.metrics || []) {
+    try {
+      const displayName = metric.displayName || metric.suggestedDisplayName || metric.name;
+      const slug = createSlug(displayName);
+      const uniqueSlug = await ensureUniqueSlug(slug, orgId, workspaceId);
+
+      const status = metric.certainty >= opts.certaintyThreshold ? "approved" : "draft";
+      const formulaSql = generateMetricFormula(metric);
+      const dbAggregation = metric.aggregation === "COUNT_DISTINCT" ? "COUNT" : metric.aggregation;
+
+      if (opts.skipExisting) {
+        const exists = await checkExists(uniqueSlug, orgId, workspaceId);
+        if (exists) {
+          result.metrics.skipped++;
+          continue;
+        }
+      }
+
+      await db.insert(knosiaVocabularyItem).values({
+        id: generateId(),
+        orgId,
+        workspaceId: opts.promoteHighCertaintyToOrg && metric.certainty >= opts.certaintyThreshold ? null : workspaceId,
+        canonicalName: displayName, // Use LLM display name
+        slug: uniqueSlug,
+        type: "metric",
+        status,
+        category: metric.category || null, // LLM category (Finance, Marketing, etc.)
+        aggregation: dbAggregation as "SUM" | "AVG" | "COUNT" | "MIN" | "MAX",
+        aggregationConfidence: Math.round(metric.certainty * 100),
+        definition: {
+          formulaSql,
+          sourceTables: [metric.table],
+          sourceColumn: metric.column,
+          descriptionHuman: metric.description || `${metric.aggregation} of ${metric.column} from ${metric.table}`, // LLM description
+          caveats: metric.caveats || undefined, // LLM caveats
+        },
+        semantics: inferMetricSemantics(metric),
+        currentVersion: 1,
+      });
+
+      result.metrics.created++;
+    } catch (error) {
+      result.errors.push({
+        item: metric.name,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  // Process dimensions with LLM enrichments
+  for (const dimension of enriched.dimensions || []) {
+    try {
+      const displayName = dimension.displayName || dimension.name;
+      const slug = createSlug(displayName);
+      const uniqueSlug = await ensureUniqueSlug(slug, orgId, workspaceId);
+
+      const status = dimension.certainty >= opts.certaintyThreshold ? "approved" : "draft";
+
+      if (opts.skipExisting) {
+        const exists = await checkExists(uniqueSlug, orgId, workspaceId);
+        if (exists) {
+          result.dimensions.skipped++;
+          continue;
+        }
+      }
+
+      await db.insert(knosiaVocabularyItem).values({
+        id: generateId(),
+        orgId,
+        workspaceId: opts.promoteHighCertaintyToOrg && dimension.certainty >= opts.certaintyThreshold ? null : workspaceId,
+        canonicalName: displayName, // Use LLM display name
+        slug: uniqueSlug,
+        type: "dimension",
+        status,
+        category: dimension.category || null, // LLM category
+        cardinality: dimension.cardinality,
+        definition: {
+          sourceTables: [dimension.table],
+          sourceColumn: dimension.column,
+          descriptionHuman: dimension.description || `${dimension.name} dimension from ${dimension.table}`, // LLM description
+          caveats: dimension.caveats || undefined, // LLM caveats
+        },
+        currentVersion: 1,
+      });
+
+      result.dimensions.created++;
+    } catch (error) {
+      result.errors.push({
+        item: dimension.name,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  // Process entities (no LLM enrichment for entities yet)
+  for (const entity of enriched.entities || []) {
+    try {
+      const slug = createSlug(entity.name);
+      const uniqueSlug = await ensureUniqueSlug(slug, orgId, workspaceId);
+
+      const status = entity.certainty >= opts.certaintyThreshold ? "approved" : "draft";
+
+      if (opts.skipExisting) {
+        const exists = await checkExists(uniqueSlug, orgId, workspaceId);
+        if (exists) {
+          result.entities.skipped++;
+          continue;
+        }
+      }
+
+      await db.insert(knosiaVocabularyItem).values({
+        id: generateId(),
+        orgId,
+        workspaceId: opts.promoteHighCertaintyToOrg && entity.certainty >= opts.certaintyThreshold ? null : workspaceId,
+        canonicalName: entity.name,
+        slug: uniqueSlug,
+        type: "entity",
+        status,
+        definition: {
+          sourceTables: [entity.table],
+          descriptionHuman: `${entity.name} entity from ${entity.table} (${entity.columnCount} columns)`,
+        },
+        currentVersion: 1,
+      });
+
+      result.entities.created++;
+    } catch (error) {
+      result.errors.push({
+        item: entity.name,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
  * Transform DetectedVocabulary from UVB into knosia_vocabulary_item rows
  *
  * @param detected - DetectedVocabulary output from UVB hard rules

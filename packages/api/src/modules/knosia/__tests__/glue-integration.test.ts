@@ -20,6 +20,7 @@ import {
   generateDashboardSpec,
 } from "@repo/liquid-connect";
 import { dashboardSpecToLiquidSchema, type Block } from "@repo/liquid-render";
+import type { ResolvedVocabulary, ResolvedVocabularyItem } from "../vocabulary/resolution";
 
 // ============================================================================
 // Mock Data Factories
@@ -143,47 +144,52 @@ function createMockExtractedSchema(): ExtractedSchema {
   };
 }
 
-function createMockResolvedVocabulary() {
+function createMockResolvedVocabulary(): ResolvedVocabulary {
+  const items: ResolvedVocabularyItem[] = [
+    {
+      id: "mrr-1",
+      slug: "mrr",
+      canonicalName: "Monthly Recurring Revenue",
+      abbreviation: "MRR",
+      type: "metric",
+      category: "revenue",
+      scope: "org",
+      definition: {
+        descriptionHuman: "Total monthly recurring revenue from active subscriptions",
+        formulaSql: "SUM(subscriptions.amount) WHERE status = 'active'",
+        sourceTables: ["subscriptions"],
+      },
+      suggestedForRoles: ["executive", "finance"],
+      isFavorite: false,
+      recentlyUsedAt: null,
+      useCount: 0,
+    },
+    {
+      id: "created-date-1",
+      slug: "created_date",
+      canonicalName: "Created Date",
+      abbreviation: null,
+      type: "dimension",
+      category: "time",
+      scope: "org",
+      definition: {
+        descriptionHuman: "Date when subscription was created",
+        formulaSql: "subscriptions.created_at",
+        sourceTables: ["subscriptions"],
+      },
+      suggestedForRoles: null,
+      isFavorite: false,
+      recentlyUsedAt: null,
+      useCount: 0,
+    },
+  ];
+
+  const bySlug = new Map<string, ResolvedVocabularyItem>();
+  items.forEach((item) => bySlug.set(item.slug, item));
+
   return {
-    items: [
-      {
-        id: "mrr-1",
-        slug: "mrr",
-        canonicalName: "Monthly Recurring Revenue",
-        abbreviation: "MRR",
-        type: "metric" as const,
-        category: "revenue",
-        scope: "org" as const,
-        definition: {
-          descriptionHuman: "Total monthly recurring revenue from active subscriptions",
-          formulaSql: "SUM(subscriptions.amount) WHERE status = 'active'",
-          sourceTables: ["subscriptions"],
-        },
-        suggestedForRoles: ["executive", "finance"],
-        isFavorite: false,
-        recentlyUsedAt: null,
-        useCount: 0,
-      },
-      {
-        id: "created-date-1",
-        slug: "created_date",
-        canonicalName: "Created Date",
-        abbreviation: null,
-        type: "dimension" as const,
-        category: "time",
-        scope: "org" as const,
-        definition: {
-          descriptionHuman: "Date when subscription was created",
-          formulaSql: "subscriptions.created_at",
-          sourceTables: ["subscriptions"],
-        },
-        suggestedForRoles: null,
-        isFavorite: false,
-        recentlyUsedAt: null,
-        useCount: 0,
-      },
-    ],
-    bySlug: new Map(),
+    items,
+    bySlug,
     favorites: [],
     recentlyUsed: [],
     synonyms: { "monthly revenue": "mrr" },
@@ -233,12 +239,21 @@ describe("Glue Integration", () => {
     const liquidSchema = dashboardSpecToLiquidSchema(dashboardSpec);
     expect(liquidSchema.version).toBe("1.0");
     expect(liquidSchema.layers.length).toBe(1);
-    expect(liquidSchema.layers[0].root.type).toBe("container");
-    expect(liquidSchema.layers[0].root.children).toBeDefined();
-    expect(liquidSchema.layers[0].root.children!.length).toBeGreaterThan(0);
+
+    const firstLayer = liquidSchema.layers[0];
+    if (!firstLayer) {
+      throw new Error("Expected first layer to be defined");
+    }
+    expect(firstLayer.root.type).toBe("container");
+    expect(firstLayer.root.children).toBeDefined();
+
+    const rootChildren = firstLayer.root.children;
+    if (!rootChildren) {
+      throw new Error("Expected root children to be defined");
+    }
+    expect(rootChildren.length).toBeGreaterThan(0);
 
     // Verify structure contains KPI blocks (inside grid blocks)
-    const rootChildren = liquidSchema.layers[0].root.children!;
     const gridBlocks = rootChildren.filter((block: Block) => block.type === "grid");
     expect(gridBlocks.length).toBeGreaterThan(0);
 
@@ -262,7 +277,15 @@ describe("Glue Integration", () => {
       gap: "lg",
     });
 
-    const rootChildren = liquidSchema.layers[0].root.children!;
+    const firstLayer = liquidSchema.layers[0];
+    if (!firstLayer) {
+      throw new Error("Expected first layer to be defined");
+    }
+
+    const rootChildren = firstLayer.root.children;
+    if (!rootChildren) {
+      throw new Error("Expected root children to be defined");
+    }
     const gridBlocks = rootChildren.filter((block: Block) => block.type === "grid");
 
     expect(gridBlocks.length).toBeGreaterThan(0);

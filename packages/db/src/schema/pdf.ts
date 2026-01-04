@@ -30,10 +30,10 @@ export const pdfMessageRoleEnum = pdfSchema.enum("role", [
  * Tracks the state of embedding generation for RAG
  */
 export const pdfProcessingStatusEnum = pdfSchema.enum("processing_status", [
-  "pending",    // Just uploaded, processing not started
+  "pending", // Just uploaded, processing not started
   "processing", // Dual-resolution chunking in progress
-  "ready",      // Embeddings generated, searchable
-  "failed",     // Processing failed
+  "ready", // Embeddings generated, searchable
+  "failed", // Processing failed
 ]);
 
 export const pdfChat = pdfSchema.table("chat", {

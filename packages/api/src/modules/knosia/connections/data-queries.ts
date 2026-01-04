@@ -84,6 +84,7 @@ export async function getWorkspaceConnections(
     .select({
       id: knosiaConnection.id,
       orgId: knosiaConnection.orgId,
+      workspaceId: knosiaWorkspaceConnection.workspaceId,
       name: knosiaConnection.name,
       type: knosiaConnection.type,
       host: knosiaConnection.host,
@@ -113,6 +114,7 @@ export async function getWorkspaceConnections(
   return results.map((row) => ({
     id: row.id,
     orgId: row.orgId,
+    workspaceId: row.workspaceId,
     name: row.name,
     type: row.type,
     host: row.host,

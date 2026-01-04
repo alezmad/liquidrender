@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -218,12 +214,8 @@
           "name": "invitation_organization_id_organization_id_fk",
           "tableFrom": "invitation",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -231,12 +223,8 @@
           "name": "invitation_inviter_id_user_id_fk",
           "tableFrom": "invitation",
           "tableTo": "user",
-          "columnsFrom": [
-            "inviter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inviter_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -320,12 +308,8 @@
           "name": "member_organization_id_organization_id_fk",
           "tableFrom": "member",
           "tableTo": "organization",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -333,12 +317,8 @@
           "name": "member_user_id_user_id_fk",
           "tableFrom": "member",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -397,9 +377,7 @@
         "organization_slug_unique": {
           "name": "organization_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -514,12 +492,8 @@
           "name": "passkey_user_id_user_id_fk",
           "tableFrom": "passkey",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -618,12 +592,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -633,9 +603,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -708,12 +676,8 @@
           "name": "two_factor_user_id_user_id_fk",
           "tableFrom": "two_factor",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -820,9 +784,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -963,12 +925,8 @@
           "name": "credit_transaction_customer_id_customer_id_fk",
           "tableFrom": "credit_transaction",
           "tableTo": "customer",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1042,12 +1000,8 @@
           "name": "customer_user_id_user_id_fk",
           "tableFrom": "customer",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1057,16 +1011,12 @@
         "customer_userId_unique": {
           "name": "customer_userId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "customer_customerId_unique": {
           "name": "customer_customerId_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "customer_id"
-          ]
+          "columns": ["customer_id"]
         }
       },
       "policies": {},
@@ -1140,12 +1090,8 @@
           "name": "knosia_activity_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_activity",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1153,12 +1099,8 @@
           "name": "knosia_activity_user_id_user_id_fk",
           "tableFrom": "knosia_activity",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1268,12 +1210,8 @@
           "name": "knosia_ai_insight_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_ai_insight",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1281,12 +1219,8 @@
           "name": "knosia_ai_insight_target_user_id_user_id_fk",
           "tableFrom": "knosia_ai_insight",
           "tableTo": "user",
-          "columnsFrom": [
-            "target_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1294,12 +1228,8 @@
           "name": "knosia_ai_insight_thread_id_knosia_thread_id_fk",
           "tableFrom": "knosia_ai_insight",
           "tableTo": "knosia_thread",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1405,12 +1335,8 @@
           "name": "knosia_analysis_connection_id_knosia_connection_id_fk",
           "tableFrom": "knosia_analysis",
           "tableTo": "knosia_connection",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["connection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1418,12 +1344,8 @@
           "name": "knosia_analysis_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_analysis",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1544,12 +1466,8 @@
           "name": "knosia_canvas_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_canvas",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1557,12 +1475,8 @@
           "name": "knosia_canvas_created_by_user_id_fk",
           "tableFrom": "knosia_canvas",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1641,12 +1555,8 @@
           "name": "knosia_canvas_alert_canvas_id_knosia_canvas_id_fk",
           "tableFrom": "knosia_canvas_alert",
           "tableTo": "knosia_canvas",
-          "columnsFrom": [
-            "canvas_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["canvas_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1654,12 +1564,8 @@
           "name": "knosia_canvas_alert_block_id_knosia_canvas_block_id_fk",
           "tableFrom": "knosia_canvas_alert",
           "tableTo": "knosia_canvas_block",
-          "columnsFrom": [
-            "block_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["block_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1756,12 +1662,8 @@
           "name": "knosia_canvas_block_canvas_id_knosia_canvas_id_fk",
           "tableFrom": "knosia_canvas_block",
           "tableTo": "knosia_canvas",
-          "columnsFrom": [
-            "canvas_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["canvas_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1834,12 +1736,8 @@
           "name": "knosia_comment_user_id_user_id_fk",
           "tableFrom": "knosia_comment",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1937,12 +1835,8 @@
           "name": "knosia_connection_org_id_knosia_organization_id_fk",
           "tableFrom": "knosia_connection",
           "tableTo": "knosia_organization",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2015,12 +1909,8 @@
           "name": "knosia_connection_health_connection_id_knosia_connection_id_fk",
           "tableFrom": "knosia_connection_health",
           "tableTo": "knosia_connection",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["connection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2081,12 +1971,8 @@
           "name": "knosia_connection_schema_connection_id_knosia_connection_id_fk",
           "tableFrom": "knosia_connection_schema",
           "tableTo": "knosia_connection",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["connection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2177,12 +2063,8 @@
           "name": "knosia_digest_user_id_user_id_fk",
           "tableFrom": "knosia_digest",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2190,12 +2072,8 @@
           "name": "knosia_digest_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_digest",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2287,12 +2165,8 @@
           "name": "knosia_mismatch_report_item_id_knosia_vocabulary_item_id_fk",
           "tableFrom": "knosia_mismatch_report",
           "tableTo": "knosia_vocabulary_item",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2300,12 +2174,8 @@
           "name": "knosia_mismatch_report_user_id_user_id_fk",
           "tableFrom": "knosia_mismatch_report",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2313,12 +2183,8 @@
           "name": "knosia_mismatch_report_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_mismatch_report",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2326,12 +2192,8 @@
           "name": "knosia_mismatch_report_resolved_by_user_id_fk",
           "tableFrom": "knosia_mismatch_report",
           "tableTo": "user",
-          "columnsFrom": [
-            "resolved_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["resolved_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2429,12 +2291,8 @@
           "name": "knosia_notification_user_id_user_id_fk",
           "tableFrom": "knosia_notification",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2442,12 +2300,8 @@
           "name": "knosia_notification_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_notification",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2644,12 +2498,8 @@
           "name": "knosia_role_template_org_id_knosia_organization_id_fk",
           "tableFrom": "knosia_role_template",
           "tableTo": "knosia_organization",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2760,12 +2610,8 @@
           "name": "knosia_thread_user_id_user_id_fk",
           "tableFrom": "knosia_thread",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2773,12 +2619,8 @@
           "name": "knosia_thread_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_thread",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2875,12 +2717,8 @@
           "name": "knosia_thread_message_thread_id_knosia_thread_id_fk",
           "tableFrom": "knosia_thread_message",
           "tableTo": "knosia_thread",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2951,12 +2789,8 @@
           "name": "knosia_thread_snapshot_thread_id_knosia_thread_id_fk",
           "tableFrom": "knosia_thread_snapshot",
           "tableTo": "knosia_thread",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2964,12 +2798,8 @@
           "name": "knosia_thread_snapshot_created_by_user_id_fk",
           "tableFrom": "knosia_thread_snapshot",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3065,12 +2895,8 @@
           "name": "knosia_user_preference_user_id_user_id_fk",
           "tableFrom": "knosia_user_preference",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3078,12 +2904,8 @@
           "name": "knosia_user_preference_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_user_preference",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3193,12 +3015,8 @@
           "name": "knosia_user_vocabulary_prefs_user_id_user_id_fk",
           "tableFrom": "knosia_user_vocabulary_prefs",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3206,12 +3024,8 @@
           "name": "knosia_user_vocabulary_prefs_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_user_vocabulary_prefs",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3373,12 +3187,8 @@
           "name": "knosia_vocabulary_item_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_vocabulary_item",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3386,12 +3196,8 @@
           "name": "knosia_vocabulary_item_org_id_knosia_organization_id_fk",
           "tableFrom": "knosia_vocabulary_item",
           "tableTo": "knosia_organization",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3462,12 +3268,8 @@
           "name": "knosia_vocabulary_version_item_id_knosia_vocabulary_item_id_fk",
           "tableFrom": "knosia_vocabulary_version",
           "tableTo": "knosia_vocabulary_item",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3475,12 +3277,8 @@
           "name": "knosia_vocabulary_version_created_by_user_id_fk",
           "tableFrom": "knosia_vocabulary_version",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3488,12 +3286,8 @@
           "name": "knosia_vocabulary_version_approved_by_user_id_fk",
           "tableFrom": "knosia_vocabulary_version",
           "tableTo": "user",
-          "columnsFrom": [
-            "approved_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approved_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3597,12 +3391,8 @@
           "name": "knosia_workspace_org_id_knosia_organization_id_fk",
           "tableFrom": "knosia_workspace",
           "tableTo": "knosia_organization",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3655,12 +3445,8 @@
           "name": "knosia_workspace_connection_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_workspace_connection",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3668,12 +3454,8 @@
           "name": "knosia_workspace_connection_connection_id_knosia_connection_id_fk",
           "tableFrom": "knosia_workspace_connection",
           "tableTo": "knosia_connection",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["connection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3746,12 +3528,8 @@
           "name": "knosia_workspace_membership_user_id_user_id_fk",
           "tableFrom": "knosia_workspace_membership",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3759,12 +3537,8 @@
           "name": "knosia_workspace_membership_workspace_id_knosia_workspace_id_fk",
           "tableFrom": "knosia_workspace_membership",
           "tableTo": "knosia_workspace",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3772,12 +3546,8 @@
           "name": "knosia_workspace_membership_role_id_knosia_role_template_id_fk",
           "tableFrom": "knosia_workspace_membership",
           "tableTo": "knosia_role_template",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3785,12 +3555,8 @@
           "name": "knosia_workspace_membership_invited_by_user_id_fk",
           "tableFrom": "knosia_workspace_membership",
           "tableTo": "user",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invited_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3916,12 +3682,8 @@
           "name": "vocabulary_user_id_user_id_fk",
           "tableFrom": "vocabulary",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3968,12 +3730,8 @@
           "name": "chat_user_id_user_id_fk",
           "tableFrom": "chat",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4022,12 +3780,8 @@
           "tableFrom": "message",
           "tableTo": "chat",
           "schemaTo": "chat",
-          "columnsFrom": [
-            "chat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chat_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4087,12 +3841,8 @@
           "tableFrom": "part",
           "tableTo": "message",
           "schemaTo": "chat",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4139,12 +3889,8 @@
           "name": "chat_user_id_user_id_fk",
           "tableFrom": "chat",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4339,12 +4085,8 @@
           "tableFrom": "citation_unit",
           "tableTo": "document",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -4353,12 +4095,8 @@
           "tableFrom": "citation_unit",
           "tableTo": "retrieval_chunk",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "retrieval_chunk_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["retrieval_chunk_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -4426,12 +4164,8 @@
           "tableFrom": "document",
           "tableTo": "chat",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "chat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chat_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4526,12 +4260,8 @@
           "tableFrom": "embedding",
           "tableTo": "document",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4586,12 +4316,8 @@
           "tableFrom": "message",
           "tableTo": "chat",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "chat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chat_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4702,12 +4428,8 @@
           "tableFrom": "retrieval_chunk",
           "tableTo": "document",
           "schemaTo": "pdf",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4781,12 +4503,8 @@
           "name": "generation_user_id_user_id_fk",
           "tableFrom": "generation",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4834,12 +4552,8 @@
           "tableFrom": "image",
           "tableTo": "generation",
           "schemaTo": "image",
-          "columnsFrom": [
-            "generation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["generation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -4884,11 +4598,7 @@
     "public.plan": {
       "name": "plan",
       "schema": "public",
-      "values": [
-        "free",
-        "premium",
-        "enterprise"
-      ]
+      "values": ["free", "premium", "enterprise"]
     },
     "public.knosia_activity_type": {
       "name": "knosia_activity_type",
@@ -4906,33 +4616,17 @@
     "public.knosia_aggregation": {
       "name": "knosia_aggregation",
       "schema": "public",
-      "values": [
-        "SUM",
-        "AVG",
-        "COUNT",
-        "MIN",
-        "MAX"
-      ]
+      "values": ["SUM", "AVG", "COUNT", "MIN", "MAX"]
     },
     "public.knosia_ai_insight_status": {
       "name": "knosia_ai_insight_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "viewed",
-        "engaged",
-        "dismissed",
-        "converted"
-      ]
+      "values": ["pending", "viewed", "engaged", "dismissed", "converted"]
     },
     "public.knosia_analysis_status": {
       "name": "knosia_analysis_status",
       "schema": "public",
-      "values": [
-        "running",
-        "completed",
-        "failed"
-      ]
+      "values": ["running", "completed", "failed"]
     },
     "public.knosia_canvas_block_type": {
       "name": "knosia_canvas_block_type",
@@ -4954,29 +4648,17 @@
     "public.knosia_canvas_status": {
       "name": "knosia_canvas_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "active",
-        "archived"
-      ]
+      "values": ["draft", "active", "archived"]
     },
     "public.knosia_comment_target": {
       "name": "knosia_comment_target",
       "schema": "public",
-      "values": [
-        "thread_message",
-        "canvas_block",
-        "thread"
-      ]
+      "values": ["thread_message", "canvas_block", "thread"]
     },
     "public.knosia_connection_status": {
       "name": "knosia_connection_status",
       "schema": "public",
-      "values": [
-        "connected",
-        "error",
-        "stale"
-      ]
+      "values": ["connected", "error", "stale"]
     },
     "public.knosia_connection_type": {
       "name": "knosia_connection_type",
@@ -4993,39 +4675,22 @@
     "public.knosia_membership_status": {
       "name": "knosia_membership_status",
       "schema": "public",
-      "values": [
-        "active",
-        "invited",
-        "suspended"
-      ]
+      "values": ["active", "invited", "suspended"]
     },
     "public.knosia_message_role": {
       "name": "knosia_message_role",
       "schema": "public",
-      "values": [
-        "user",
-        "assistant"
-      ]
+      "values": ["user", "assistant"]
     },
     "public.knosia_mismatch_issue": {
       "name": "knosia_mismatch_issue",
       "schema": "public",
-      "values": [
-        "wrong_mapping",
-        "wrong_name",
-        "missing",
-        "other"
-      ]
+      "values": ["wrong_mapping", "wrong_name", "missing", "other"]
     },
     "public.knosia_mismatch_status": {
       "name": "knosia_mismatch_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "reviewed",
-        "resolved",
-        "dismissed"
-      ]
+      "values": ["pending", "reviewed", "resolved", "dismissed"]
     },
     "public.knosia_notification_type": {
       "name": "knosia_notification_type",
@@ -5042,128 +4707,67 @@
     "public.knosia_role_archetype": {
       "name": "knosia_role_archetype",
       "schema": "public",
-      "values": [
-        "strategist",
-        "operator",
-        "analyst",
-        "builder"
-      ]
+      "values": ["strategist", "operator", "analyst", "builder"]
     },
     "public.knosia_seniority": {
       "name": "knosia_seniority",
       "schema": "public",
-      "values": [
-        "executive",
-        "director",
-        "manager",
-        "ic"
-      ]
+      "values": ["executive", "director", "manager", "ic"]
     },
     "public.knosia_thread_status": {
       "name": "knosia_thread_status",
       "schema": "public",
-      "values": [
-        "active",
-        "archived",
-        "shared"
-      ]
+      "values": ["active", "archived", "shared"]
     },
     "public.knosia_vocabulary_status": {
       "name": "knosia_vocabulary_status",
       "schema": "public",
-      "values": [
-        "approved",
-        "draft",
-        "deprecated",
-        "archived"
-      ]
+      "values": ["approved", "draft", "deprecated", "archived"]
     },
     "public.knosia_vocabulary_type": {
       "name": "knosia_vocabulary_type",
       "schema": "public",
-      "values": [
-        "metric",
-        "dimension",
-        "entity",
-        "event"
-      ]
+      "values": ["metric", "dimension", "entity", "event"]
     },
     "public.knosia_workspace_visibility": {
       "name": "knosia_workspace_visibility",
       "schema": "public",
-      "values": [
-        "org_wide",
-        "team_only",
-        "private"
-      ]
+      "values": ["org_wide", "team_only", "private"]
     },
     "public.database_type": {
       "name": "database_type",
       "schema": "public",
-      "values": [
-        "postgres",
-        "mysql",
-        "sqlite",
-        "duckdb"
-      ]
+      "values": ["postgres", "mysql", "sqlite", "duckdb"]
     },
     "public.vocabulary_status": {
       "name": "vocabulary_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "active",
-        "archived"
-      ]
+      "values": ["draft", "active", "archived"]
     },
     "chat.role": {
       "name": "role",
       "schema": "chat",
-      "values": [
-        "system",
-        "assistant",
-        "user"
-      ]
+      "values": ["system", "assistant", "user"]
     },
     "pdf.role": {
       "name": "role",
       "schema": "pdf",
-      "values": [
-        "user",
-        "assistant",
-        "system"
-      ]
+      "values": ["user", "assistant", "system"]
     },
     "pdf.processing_status": {
       "name": "processing_status",
       "schema": "pdf",
-      "values": [
-        "pending",
-        "processing",
-        "ready",
-        "failed"
-      ]
+      "values": ["pending", "processing", "ready", "failed"]
     },
     "pdf.unit_type": {
       "name": "unit_type",
       "schema": "pdf",
-      "values": [
-        "prose",
-        "heading",
-        "list",
-        "table",
-        "code"
-      ]
+      "values": ["prose", "heading", "list", "table", "code"]
     },
     "image.aspect_ratio": {
       "name": "aspect_ratio",
       "schema": "image",
-      "values": [
-        "square",
-        "standard",
-        "landscape",
-        "portrait"
-      ]
+      "values": ["square", "standard", "landscape", "portrait"]
     }
   },
   "schemas": {

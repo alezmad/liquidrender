@@ -144,6 +144,7 @@ export interface NumericProfile {
   };
   zeroCount?: number;
   negativeCount?: number;
+  distinctCount?: number; // V2: For cardinality-based metric detection
 }
 
 /**
@@ -158,6 +159,9 @@ export interface TemporalProfile {
   hasTime: boolean; // vs date-only
   uniqueDates: number; // Cardinality at date level
 
+  // V2: Data freshness
+  daysSinceLatest?: number; // Days since max date (for stale detection)
+
   // Patterns
   gaps?: Array<{
     // Detected missing date ranges
@@ -171,7 +175,8 @@ export interface TemporalProfile {
  * CategoricalProfile - profiling for low-cardinality columns
  */
 export interface CategoricalProfile {
-  cardinality: number; // Unique values
+  cardinality: number; // Unique values (alias for distinctCount)
+  distinctCount?: number; // V2: Consistent naming with NumericProfile
 
   topValues: Array<{
     // Most common values
@@ -254,6 +259,44 @@ export interface ProfileResult {
   }>;
 }
 
+/**
+ * ProfilingData - profiling data extracted from ProfiledSchema
+ * Passed to applyHardRules() for enhanced vocabulary detection
+ */
+export interface ProfilingData {
+  // Table-level profiling
+  tableProfiles: Record<string, TableProfile>;
+
+  // Column-level profiling (indexed by table.column)
+  columnProfiles: Record<string, ColumnProfile>;
+
+  // Profiling metadata
+  profiledAt: string;
+  samplingStrategy: "full" | "adaptive" | "statistics-only";
+}
+
+/**
+ * Extract profiling data from ProfiledSchema for applyHardRules()
+ */
+export function extractProfilingData(profiledSchema: ProfiledSchema): ProfilingData {
+  const columnProfiles: Record<string, ColumnProfile> = {};
+
+  // Flatten column profiles to tableName.columnName keys
+  for (const [tableName, columns] of Object.entries(profiledSchema.columnProfiles)) {
+    for (const [columnName, profile] of Object.entries(columns)) {
+      const key = `${tableName}.${columnName}`;
+      columnProfiles[key] = profile;
+    }
+  }
+
+  return {
+    tableProfiles: profiledSchema.tableProfiles,
+    columnProfiles,
+    profiledAt: profiledSchema.profiledAt,
+    samplingStrategy: profiledSchema.samplingStrategy,
+  };
+}
+
 // =============================================================================
 // Detection Types (output of hard rules)
 // =============================================================================
@@ -293,6 +336,8 @@ export interface DetectedDimension {
   dataType: string;
   cardinality?: number;
   certainty: number;
+  // V2: Profiling-enhanced fields
+  type?: "categorical" | "free-text" | "enum";
 }
 
 export interface DetectedTimeField {
@@ -303,6 +348,9 @@ export interface DetectedTimeField {
   dataType: string;
   isPrimaryCandidate: boolean;
   certainty: number;
+  // V2: Profiling-enhanced fields
+  isStale?: boolean;
+  daysSinceLatest?: number;
 }
 
 export interface DetectedFilter {
@@ -326,6 +374,26 @@ export interface DetectedRelationship {
 
 export type RelationshipType = "one_to_one" | "one_to_many" | "many_to_one" | "many_to_many";
 
+export interface DetectedRequiredField {
+  id: string;
+  table: string;
+  column: string;
+  nullPercentage: number;
+  certainty: number;
+  suggestedDisplayName: string;
+}
+
+export interface DetectedEnumField {
+  id: string;
+  table: string;
+  column: string;
+  dataType: string;
+  distinctCount: number;
+  topValues: Array<{ value: string; count: number; percentage: number }>;
+  certainty: number;
+  suggestedDisplayName: string;
+}
+
 export interface DetectedVocabulary {
   entities: DetectedEntity[];
   metrics: DetectedMetric[];
@@ -333,6 +401,9 @@ export interface DetectedVocabulary {
   timeFields: DetectedTimeField[];
   filters: DetectedFilter[];
   relationships: DetectedRelationship[];
+  // V2: Profiling-enhanced detections
+  requiredFields?: DetectedRequiredField[];
+  enumFields?: DetectedEnumField[];
 }
 
 // =============================================================================

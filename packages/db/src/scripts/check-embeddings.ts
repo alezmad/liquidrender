@@ -4,7 +4,9 @@ import { db } from "../server";
 
 async function checkEmbeddings() {
   // Check total embeddings
-  const countResult = await db.execute(sql`SELECT COUNT(*) as count FROM pdf.embedding`);
+  const countResult = await db.execute(
+    sql`SELECT COUNT(*) as count FROM pdf.embedding`,
+  );
   console.log("Total embeddings:", countResult);
 
   // Check recent documents with embeddings

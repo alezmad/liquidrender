@@ -35,8 +35,16 @@ export function useOnboardingState() {
     try {
       const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as OnboardingProgress;
-        setProgress(parsed);
+        const parsed = JSON.parse(stored) as Partial<OnboardingProgress>;
+        // Merge with defaults to handle migration from old localStorage data
+        const migratedProgress: OnboardingProgress = {
+          ...DEFAULT_ONBOARDING_PROGRESS,
+          ...parsed,
+          // Ensure connectionIds exists (migrate from old single connectionId if needed)
+          connectionIds: parsed.connectionIds ?? (parsed.connectionId ? [parsed.connectionId] : []),
+          primaryConnectionId: parsed.primaryConnectionId ?? parsed.connectionId ?? null,
+        };
+        setProgress(migratedProgress);
       }
     } catch (err) {
       console.error("[useOnboardingState] Failed to load from localStorage:", err);
@@ -67,8 +75,11 @@ export function useOnboardingState() {
       return {
         ...prev,
         connectionIds: newIds,
-        primaryConnectionId: prev.primaryConnectionId ?? connectionId,
-        connectionId: prev.connectionId ?? connectionId,
+        // Always set new connection as primary and active during onboarding
+        primaryConnectionId: connectionId,
+        connectionId: connectionId,
+        // Clear old analysis since we're using a new connection
+        analysisId: null,
       };
     });
   }, []);

@@ -65,11 +65,11 @@ async function backfillCustomers() {
         });
       });
 
-      console.log(`✓ Created customer for ${u.email ?? u.name ?? u.id}`);
+      console.log(`✓ Created customer for ${u.email} (${u.name})`);
       created++;
     } catch (error) {
       console.error(
-        `✗ Failed for ${u.email ?? u.id}:`,
+        `✗ Failed for ${u.email}:`,
         error instanceof Error ? error.message : error,
       );
       errors++;

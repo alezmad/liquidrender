@@ -11,7 +11,16 @@
     "./pdf/*": "./src/modules/pdf/*.ts",
     "./tts/*": "./src/modules/tts/*.ts",
     "./stt/*": "./src/modules/stt/*.ts",
-    "./credits/*": "./src/modules/credits/*.ts"
+    "./credits/*": "./src/modules/credits/*.ts",
+    "./businessType/*": "./src/modules/businessType/*.ts",
+    "./vocabulary/*": "./src/modules/vocabulary/*.ts",
+    "./relationships/*": "./src/modules/relationships/*.ts",
+    "./quality/*": "./src/modules/quality/*.ts",
+    "./classification/*": "./src/modules/classification/*.ts",
+    "./suggestions/*": "./src/modules/suggestions/*.ts",
+    "./coach/*": "./src/modules/coach/*.ts",
+    "./kpi": "./src/modules/kpi/index.ts",
+    "./kpi/*": "./src/modules/kpi/*.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -34,6 +43,7 @@
   "prettier": "@turbostarter/prettier-config",
   "dependencies": {
     "@ai-sdk/anthropic": "2.0.41",
+    "@anthropic-ai/sdk": "0.34.0",
     "@ai-sdk/deepseek": "1.0.27",
     "@ai-sdk/fireworks": "1.0.27",
     "@ai-sdk/google": "2.0.28",
@@ -43,6 +53,7 @@
     "@elevenlabs/elevenlabs-js": "2.9.0",
     "@langchain/community": "1.0.0",
     "@langchain/core": "1.0.3",
+    "@repo/liquid-connect": "workspace:*",
     "@tavily/core": "0.5.12",
     "@turbostarter/db": "workspace:*",
     "@turbostarter/shared": "workspace:*",

@@ -15,6 +15,20 @@
       "when": 1767326780175,
       "tag": "0001_wise_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767438900000,
+      "tag": "0002_canvas_api_migration",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767532800000,
+      "tag": "0003_add_calculated_metrics",
+      "breakpoints": true
     }
   ]
 }

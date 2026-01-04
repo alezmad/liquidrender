@@ -35,6 +35,8 @@ export type {
   DetectedTimeField,
   DetectedFilter,
   DetectedRelationship,
+  DetectedRequiredField,
+  DetectedEnumField,
   DetectedVocabulary,
   Confirmation,
   SelectOneConfirmation,
@@ -51,6 +53,7 @@ export type {
   ProfiledSchema,
   ProfileOptions,
   ProfileResult,
+  ProfilingData,
   TableProfile,
   ColumnProfile,
   NumericProfile,
@@ -59,14 +62,14 @@ export type {
   TextProfile,
 } from "./models";
 
-export { DEFAULT_HARD_RULES_CONFIG } from "./models";
+export { DEFAULT_HARD_RULES_CONFIG, extractProfilingData } from "./models";
 
 // Extractor
 export type { DatabaseAdapter, ParsedConnection } from "./extractor";
 export { SchemaExtractor, parseConnectionString, extractSchema } from "./extractor";
 
 // Hard rules engine
-export type { ApplyHardRulesResult } from "./rules";
+export type { ApplyHardRulesResult, ApplyHardRulesOptions } from "./rules";
 export {
   applyHardRules,
   isJunctionTable,
@@ -76,6 +79,8 @@ export {
   detectDimensions,
   detectTimeFields,
   detectFilters,
+  detectRequiredFields,
+  detectEnumFields,
   generateConfirmations,
 } from "./rules";
 

@@ -1,29 +1,28 @@
 /**
- * DuckDB Universal Adapter
+ * DuckDB Universal Adapter (DEPRECATED)
  *
- * Connects to multiple database types through DuckDB extensions:
- * - postgres_scanner: PostgreSQL, CockroachDB, Supabase
- * - mysql_scanner: MySQL, MariaDB
- * - sqlite_scanner: SQLite files
+ * @deprecated This adapter uses the old 'duckdb' package which is incompatible with Next.js 16 Turbopack.
+ * Use DuckDBUniversalAdapter from '../duckdb-adapter' instead.
  *
- * @see https://duckdb.org/docs/extensions/overview
+ * This file is kept for type exports only. The implementation is deprecated.
+ *
+ * Migration guide:
+ * OLD: new DuckDBAdapter({ type: 'postgres', host, port, database, user, password })
+ * NEW: new DuckDBUniversalAdapter().connect('postgresql://user:pass@host:port/database')
  */
 
+// @ts-nocheck - Skip type checking for deprecated file
 import type { DatabaseAdapter } from "../extractor";
 import type { DatabaseType } from "../models";
 
-// Dynamic import for optional dependency
+// Deprecated - types kept for backward compatibility
 let duckdb: typeof import("duckdb") | null = null;
 
 async function loadDuckDB() {
-  if (!duckdb) {
-    try {
-      duckdb = await import("duckdb");
-    } catch {
-      throw new Error("DuckDB is not installed. Run: pnpm add duckdb");
-    }
-  }
-  return duckdb;
+  throw new Error(
+    "DuckDB adapter is deprecated. Use DuckDBUniversalAdapter with connection strings instead.\n" +
+    "Example: new DuckDBUniversalAdapter().connect('postgresql://user:pass@host/db')"
+  );
 }
 
 // =============================================================================

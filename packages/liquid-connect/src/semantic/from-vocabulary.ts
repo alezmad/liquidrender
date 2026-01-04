@@ -382,26 +382,44 @@ function generateRelationships(schema: ExtractedSchema): RelationshipDefinition[
 // =============================================================================
 
 /**
- * Map database data type to FieldType
+ * Map DuckDB data type to FieldType
+ *
+ * DuckDB normalizes all source database types, so we only need to handle
+ * DuckDB's type system (much simpler than handling 4 different databases)
  */
 function mapDataTypeToFieldType(dataType: string): FieldType {
   const normalized = dataType.toLowerCase();
 
-  // Timestamp/Date types
-  if (normalized.includes('timestamp') || normalized.includes('datetime')) {
+  // Timestamp types
+  if (normalized.includes('timestamp')) {
     return 'timestamp';
   }
-  if (normalized.includes('date')) {
+  if (normalized.includes('date') && !normalized.includes('datetime')) {
     return 'date';
   }
 
   // Numeric types
-  if (normalized.includes('int') || normalized.includes('serial')) {
+  if (
+    normalized.includes('int') ||
+    normalized.includes('serial') ||
+    normalized.includes('bigint') ||
+    normalized.includes('smallint') ||
+    normalized.includes('tinyint') ||
+    normalized.includes('hugeint') ||
+    normalized.includes('ubigint') ||
+    normalized.includes('uinteger') ||
+    normalized.includes('usmallint') ||
+    normalized.includes('utinyint')
+  ) {
     return 'integer';
   }
-  if (normalized.includes('decimal') || normalized.includes('numeric') ||
-      normalized.includes('real') || normalized.includes('double') ||
-      normalized.includes('float') || normalized.includes('money')) {
+  if (
+    normalized.includes('decimal') ||
+    normalized.includes('numeric') ||
+    normalized.includes('real') ||
+    normalized.includes('double') ||
+    normalized.includes('float')
+  ) {
     return 'decimal';
   }
 
@@ -410,7 +428,17 @@ function mapDataTypeToFieldType(dataType: string): FieldType {
     return 'boolean';
   }
 
-  // Default to string
+  // JSON (DuckDB has native JSON type)
+  if (normalized === 'json' || normalized === 'jsonb') {
+    return 'json';
+  }
+
+  // UUID (DuckDB has native UUID type)
+  if (normalized === 'uuid') {
+    return 'string';
+  }
+
+  // Fallback to string
   return 'string';
 }
 

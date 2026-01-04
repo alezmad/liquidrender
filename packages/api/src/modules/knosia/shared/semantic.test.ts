@@ -42,6 +42,8 @@ const createConnection = (
   schema: "public",
   credentials: JSON.stringify({ username: "user", password: "pass" }),
   sslEnabled: true,
+  duckdbAttachedName: null,
+  scannerType: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,

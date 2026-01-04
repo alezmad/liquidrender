@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -7,6 +8,7 @@ import {
   text,
   timestamp,
   real,
+  decimal,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -127,6 +129,11 @@ export const knosiaCanvasSourceTypeEnum = pgEnum("knosia_canvas_source_type", [
   "template", // Generated from business type template
   "custom", // User created from scratch
   "hybrid", // Template that was customized
+]);
+
+export const knosiaCanvasScopeEnum = pgEnum("knosia_canvas_scope", [
+  "private", // Owner only
+  "workspace", // All workspace members
 ]);
 
 // ============================================================================
@@ -310,6 +317,7 @@ export const knosiaConnection = pgTable("knosia_connection", {
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
+    .defaultNow()
     .$onUpdate(() => new Date()),
 });
 
@@ -438,6 +446,70 @@ export const knosiaVocabularyVersion = pgTable("knosia_vocabulary_version", {
   approvedBy: text().references(() => user.id),
   changelog: text(),
   createdAt: timestamp().notNull().defaultNow(),
+});
+
+/**
+ * Calculated Metrics - AI-generated and user-defined KPI recipes
+ * Derived from base vocabulary (detectedVocab) via LLM enrichment
+ */
+export const knosiaCalculatedMetric = pgTable("knosia_calculated_metric", {
+  // Identity
+  id: text().primaryKey().$defaultFn(generateId),
+  workspaceId: text()
+    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+    .notNull(),
+  connectionId: text()
+    .references(() => knosiaConnection.id, { onDelete: "cascade" })
+    .notNull(),
+
+  // Metric definition
+  name: text().notNull(),
+  category: text(), // "revenue", "growth", "operational", "engagement"
+  description: text(),
+
+  // Semantic definition (from Phase 1)
+  semanticDefinition: jsonb().$type<{
+    type: "simple" | "formula" | "ratio" | "trend";
+    expression: string;
+    aggregation?: string;
+    entity?: string;
+    timeField?: string;
+    timeGranularity?: string;
+    filters?: { field: string; operator: string; value: unknown }[];
+    format?: { type: string; currency?: string };
+  }>().notNull(),
+
+  // Generation metadata
+  confidence: decimal({ precision: 3, scale: 2 }),
+  feasible: boolean().notNull().default(true),
+  source: text().notNull().default("ai_generated"), // "ai_generated" | "user_created"
+
+  // Vocabulary lineage
+  vocabularyItemIds: text().array(),
+
+  // Usage tracking
+  canvasCount: integer().notNull().default(0),
+  executionCount: integer().notNull().default(0),
+  lastExecutedAt: timestamp({ withTimezone: true }),
+
+  // Cached execution result
+  lastExecutionResult: jsonb().$type<{
+    value?: number | string;
+    formattedValue?: string;
+    executedAt?: string;
+    executionTimeMs?: number;
+  }>(),
+
+  // Governance
+  status: text().notNull().default("active"), // "active" | "draft" | "deprecated"
+  createdBy: text().references(() => user.id),
+
+  // Timestamps
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 // ============================================================================
@@ -593,7 +665,7 @@ export const knosiaUserVocabularyPrefs = pgTable(
   },
   (table) => [
     uniqueIndex("idx_user_vocab_prefs").on(table.userId, table.workspaceId),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -639,6 +711,9 @@ export const knosiaAnalysis = pgTable("knosia_analysis", {
     message?: string;
     details?: string;
   }>(),
+  // Calculated metrics tracking (Step 4.5)
+  calculatedMetricsGenerated: integer().default(0),
+  calculatedMetricsFeasible: integer().default(0),
   startedAt: timestamp().notNull().defaultNow(),
   completedAt: timestamp(),
   createdAt: timestamp().notNull().defaultNow(),
@@ -686,10 +761,9 @@ export const knosiaTableProfile = pgTable(
   (table) => [
     {
       // Index for looking up profiles by analysis
-      analysisTableIdx: uniqueIndex("knosia_table_profile_analysis_table_idx").on(
-        table.analysisId,
-        table.tableName,
-      ),
+      analysisTableIdx: uniqueIndex(
+        "knosia_table_profile_analysis_table_idx",
+      ).on(table.analysisId, table.tableName),
     },
   ],
 );
@@ -907,31 +981,91 @@ export const knosiaThreadSnapshot = pgTable("knosia_thread_snapshot", {
 // ============================================================================
 
 /**
- * Workspace Canvas - Stores LiquidSchema-based canvas
+ * Workspace Canvas - Visual dashboards powered by LiquidRender
  *
- * Canvas is the HOME page for a workspace. It stores a LiquidSchema
- * that defines the entire layout. LiquidRender handles all visualization.
+ * Canvases can be private (owner-only) or workspace-scoped (shared with team).
+ * All changes are versioned for safe experimentation and easy rollback.
  *
- * One canvas per workspace (for V1). Future: multiple named canvases.
+ * V1: Multiple canvases per workspace with scope-based permissions
  */
-export const knosiaWorkspaceCanvas = pgTable("knosia_workspace_canvas", {
-  id: text().primaryKey().$defaultFn(generateId),
-  workspaceId: text()
-    .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
-    .notNull()
-    .unique(), // One canvas per workspace in V1
-  // LiquidSchema JSON (complete layout definition)
-  schema: jsonb().notNull(), // LiquidSchema from @repo/liquid-render
-  // Source tracking
-  sourceType: knosiaCanvasSourceTypeEnum().notNull().default("template"),
-  templateId: text(), // Business type if sourced from template (e.g., "saas")
-  // Metadata
-  lastEditedBy: text().references(() => user.id),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp()
-    .notNull()
-    .$onUpdate(() => new Date()),
-});
+export const knosiaWorkspaceCanvas = pgTable(
+  "knosia_workspace_canvas",
+  {
+    // Identity
+    id: text().primaryKey().$defaultFn(generateId),
+    workspaceId: text()
+      .references(() => knosiaWorkspace.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Core Data
+    title: text().notNull(),
+    schema: jsonb().notNull(), // LiquidSchema from @repo/liquid-render
+
+    // Ownership & Permissions
+    ownerId: text()
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    scope: knosiaCanvasScopeEnum().notNull(),
+
+    // Metadata
+    isDefault: boolean().default(false), // Auto-created workspace canvas
+    currentVersion: integer().default(1), // Current version number
+    lastEditedBy: text().references(() => user.id, { onDelete: "set null" }),
+
+    // Soft Delete
+    deletedAt: timestamp(),
+
+    // Timestamps
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // Ensure only one default canvas per workspace
+    uniqueIndex("idx_default_workspace_canvas")
+      .on(table.workspaceId)
+      .where(eq(table.isDefault, true)),
+  ],
+);
+
+/**
+ * Canvas Version History
+ *
+ * Stores snapshots of canvas schema at each version.
+ * Enables version restore and audit trail.
+ * Automatically pruned to keep last 50 versions.
+ */
+export const knosiaCanvasVersion = pgTable(
+  "knosia_canvas_version",
+  {
+    // Identity
+    id: text().primaryKey().$defaultFn(generateId),
+    canvasId: text()
+      .references(() => knosiaWorkspaceCanvas.id, { onDelete: "cascade" })
+      .notNull(),
+    versionNumber: integer().notNull(),
+
+    // Version Data
+    schema: jsonb().notNull(), // Snapshot at this version
+
+    // Change Metadata
+    createdBy: text()
+      .references(() => user.id)
+      .notNull(),
+    changeSummary: text(),
+
+    // Timestamp
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => [
+    // Unique version per canvas
+    uniqueIndex("unique_canvas_version").on(
+      table.canvasId,
+      table.versionNumber,
+    ),
+  ],
+);
 
 // ============================================================================
 // COLLABORATION TABLES
@@ -992,7 +1126,9 @@ export const knosiaNotification = pgTable("knosia_notification", {
   userId: text()
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
-  workspaceId: text().references(() => knosiaWorkspace.id, { onDelete: "cascade" }),
+  workspaceId: text().references(() => knosiaWorkspace.id, {
+    onDelete: "cascade",
+  }),
   type: knosiaNotificationTypeEnum().notNull(),
   title: text().notNull(),
   body: text(),
@@ -1164,6 +1300,23 @@ export type SelectKnosiaVocabularyVersion = z.infer<
   typeof selectKnosiaVocabularyVersionSchema
 >;
 
+// Calculated Metrics
+export const insertKnosiaCalculatedMetricSchema = createInsertSchema(
+  knosiaCalculatedMetric,
+);
+export const selectKnosiaCalculatedMetricSchema = createSelectSchema(
+  knosiaCalculatedMetric,
+);
+export const updateKnosiaCalculatedMetricSchema = createUpdateSchema(
+  knosiaCalculatedMetric,
+);
+export type InsertKnosiaCalculatedMetric = z.infer<
+  typeof insertKnosiaCalculatedMetricSchema
+>;
+export type SelectKnosiaCalculatedMetric = z.infer<
+  typeof selectKnosiaCalculatedMetricSchema
+>;
+
 // Role Templates
 export const insertKnosiaRoleTemplateSchema =
   createInsertSchema(knosiaRoleTemplate);
@@ -1276,17 +1429,34 @@ export type SelectKnosiaThreadSnapshot = z.infer<
 >;
 
 // Workspace Canvas
-export const insertKnosiaWorkspaceCanvasSchema =
-  createInsertSchema(knosiaWorkspaceCanvas);
-export const selectKnosiaWorkspaceCanvasSchema =
-  createSelectSchema(knosiaWorkspaceCanvas);
-export const updateKnosiaWorkspaceCanvasSchema =
-  createUpdateSchema(knosiaWorkspaceCanvas);
+export const insertKnosiaWorkspaceCanvasSchema = createInsertSchema(
+  knosiaWorkspaceCanvas,
+);
+export const selectKnosiaWorkspaceCanvasSchema = createSelectSchema(
+  knosiaWorkspaceCanvas,
+);
+export const updateKnosiaWorkspaceCanvasSchema = createUpdateSchema(
+  knosiaWorkspaceCanvas,
+);
 export type InsertKnosiaWorkspaceCanvas = z.infer<
   typeof insertKnosiaWorkspaceCanvasSchema
 >;
 export type SelectKnosiaWorkspaceCanvas = z.infer<
   typeof selectKnosiaWorkspaceCanvasSchema
+>;
+
+// Canvas Version
+export const insertKnosiaCanvasVersionSchema =
+  createInsertSchema(knosiaCanvasVersion);
+export const selectKnosiaCanvasVersionSchema =
+  createSelectSchema(knosiaCanvasVersion);
+export const updateKnosiaCanvasVersionSchema =
+  createUpdateSchema(knosiaCanvasVersion);
+export type InsertKnosiaCanvasVersion = z.infer<
+  typeof insertKnosiaCanvasVersionSchema
+>;
+export type SelectKnosiaCanvasVersion = z.infer<
+  typeof selectKnosiaCanvasVersionSchema
 >;
 
 // Comments

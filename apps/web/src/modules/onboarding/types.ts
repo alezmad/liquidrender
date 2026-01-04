@@ -127,6 +127,15 @@ export interface CompleteEvent {
     tier1Duration: number;
     tier2Duration: number;
   };
+  quickPreviewComplete?: boolean;
+  backgroundEnrichmentPending?: number;
+}
+
+/** SSE background enrichment complete event */
+export interface BackgroundEnrichmentEvent {
+  totalFieldsEnriched: number;
+  quickPreviewCount: number;
+  backgroundEnrichCount: number;
 }
 
 /** SSE error event from analysis */
@@ -140,6 +149,7 @@ export interface ErrorEvent {
 export type AnalysisSSEEvent =
   | { event: "step"; data: StepEvent }
   | { event: "complete"; data: CompleteEvent }
+  | { event: "background_complete"; data: BackgroundEnrichmentEvent }
   | { event: "error"; data: ErrorEvent };
 
 // =============================================================================
@@ -195,6 +205,8 @@ export interface AnalysisResult {
     tier1Duration: number;
     tier2Duration: number;
   };
+  quickPreviewComplete?: boolean;
+  backgroundEnrichmentPending?: number;
 }
 
 // =============================================================================

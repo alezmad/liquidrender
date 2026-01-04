@@ -13,35 +13,44 @@
 
 export { PostgresAdapter, createPostgresAdapter, type PostgresConfig } from "./postgres";
 
-export {
-  DuckDBAdapter,
-  type DuckDBConnectionConfig,
-  type QueryResult,
-} from "./duckdb";
+// Legacy DuckDB adapter - deprecated in favor of DuckDBUniversalAdapter
+// Commented out during migration to @duckdb/node-api
+// export {
+//   DuckDBAdapter,
+//   type DuckDBConnectionConfig,
+//   type QueryResult,
+// } from "./duckdb";
+
+// Re-export types for backward compatibility
+export type { QueryResult, DuckDBConnectionConfig } from "./duckdb";
 
 // =============================================================================
 // Factory Functions
 // =============================================================================
 
 import type { DatabaseAdapter } from "../extractor";
-import { DuckDBAdapter as DuckDBAdapterClass, type DuckDBConnectionConfig } from "./duckdb";
+// import { DuckDBAdapter as DuckDBAdapterClass, type DuckDBConnectionConfig } from "./duckdb";
 
 /**
- * Create a DuckDB adapter for any supported database type
+ * @deprecated Use DuckDBUniversalAdapter with connection strings instead
+ * Legacy factory function - temporarily disabled during migration to @duckdb/node-api
  */
 export function createDuckDBAdapter(
-  config: DuckDBConnectionConfig
+  _config: unknown
 ): DatabaseAdapter {
-  // Uses the imported DuckDBAdapter class
-  return new DuckDBAdapterClass(config);
+  throw new Error(
+    'createDuckDBAdapter (legacy) is deprecated. Use DuckDBUniversalAdapter with connection strings instead.\n' +
+    'Example: new DuckDBUniversalAdapter().connect("postgresql://user:pass@host/db")'
+  );
 }
 
 /**
- * Create the appropriate adapter for the given configuration
- * Uses DuckDB as the universal adapter for all database types
+ * @deprecated Use DuckDBUniversalAdapter instead
  */
 export function createAdapter(
-  config: DuckDBConnectionConfig
+  _config: unknown
 ): DatabaseAdapter {
-  return createDuckDBAdapter(config);
+  throw new Error(
+    'createAdapter is deprecated. Use DuckDBUniversalAdapter with connection strings instead.'
+  );
 }

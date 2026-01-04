@@ -2,6 +2,7 @@ import { and, eq } from "@turbostarter/db";
 import {
   knosiaConnection,
   knosiaConnectionHealth,
+  knosiaWorkspaceConnection,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 
@@ -22,6 +23,7 @@ export const getConnection = async (
     .select({
       id: knosiaConnection.id,
       orgId: knosiaConnection.orgId,
+      workspaceId: knosiaWorkspaceConnection.workspaceId,
       name: knosiaConnection.name,
       type: knosiaConnection.type,
       host: knosiaConnection.host,
@@ -41,6 +43,10 @@ export const getConnection = async (
       knosiaConnectionHealth,
       eq(knosiaConnection.id, knosiaConnectionHealth.connectionId),
     )
+    .leftJoin(
+      knosiaWorkspaceConnection,
+      eq(knosiaConnection.id, knosiaWorkspaceConnection.connectionId),
+    )
     .where(
       and(
         eq(knosiaConnection.id, input.id),
@@ -57,6 +63,7 @@ export const getConnection = async (
   return {
     id: row.id,
     orgId: row.orgId,
+    workspaceId: row.workspaceId!,
     name: row.name,
     type: row.type,
     host: row.host,
@@ -87,6 +94,7 @@ export const getConnections = async (
     .select({
       id: knosiaConnection.id,
       orgId: knosiaConnection.orgId,
+      workspaceId: knosiaWorkspaceConnection.workspaceId,
       name: knosiaConnection.name,
       type: knosiaConnection.type,
       host: knosiaConnection.host,
@@ -106,12 +114,17 @@ export const getConnections = async (
       knosiaConnectionHealth,
       eq(knosiaConnection.id, knosiaConnectionHealth.connectionId),
     )
+    .leftJoin(
+      knosiaWorkspaceConnection,
+      eq(knosiaConnection.id, knosiaWorkspaceConnection.connectionId),
+    )
     .where(eq(knosiaConnection.orgId, input.orgId))
     .orderBy(knosiaConnection.createdAt);
 
   return results.map((row) => ({
     id: row.id,
     orgId: row.orgId,
+    workspaceId: row.workspaceId!,
     name: row.name,
     type: row.type,
     host: row.host,

@@ -25,9 +25,12 @@ import type {
   DetectedTimeField,
   DetectedFilter,
   DetectedRelationship,
+  DetectedRequiredField,
+  DetectedEnumField,
   Confirmation,
   HardRulesConfig,
   AggregationType,
+  ProfilingData,
 } from "./models";
 import { DEFAULT_HARD_RULES_CONFIG } from "./models";
 
@@ -183,7 +186,8 @@ function detectRelationships(tables: Table[]): DetectedRelationship[] {
 function detectMetric(
   column: Column,
   tableName: string,
-  config: HardRulesConfig
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
 ): DetectedMetric | null {
   // Skip PK and FK columns
   if (column.isPrimaryKey || column.isForeignKey) {
@@ -207,6 +211,42 @@ function detectMetric(
 
   if (!isDecimal && !(isInteger && hasMetricName)) {
     return null;
+  }
+
+  // V2: Use profiling data to disambiguate IDs vs metrics
+  if (profilingData) {
+    const profile = profilingData.columnProfiles[`${tableName}.${column.name}`];
+
+    if (profile?.numeric) {
+      // High cardinality (> 90% unique) → likely an ID, not a metric
+      const cardinality = profile.numeric.distinctCount || 0;
+      const totalRows = profilingData.tableProfiles[tableName]?.rowCountEstimate || 1;
+      const uniqueRatio = totalRows > 0 ? cardinality / totalRows : 0;
+
+      if (uniqueRatio > 0.9 && isInteger) {
+        console.log(
+          `[UVB] Skipping ${tableName}.${column.name}: High cardinality (${(uniqueRatio * 100).toFixed(0)}%) suggests ID`
+        );
+        return null; // Skip IDs
+      }
+
+      // Low cardinality (< 20 distinct values) → use COUNT_DISTINCT instead of SUM
+      if (cardinality < 20 && isInteger) {
+        return {
+          id: generateId(tableName, column.name),
+          name: column.name,
+          table: tableName,
+          column: column.name,
+          dataType: column.dataType,
+          aggregation: "COUNT_DISTINCT",
+          certainty: 1.0,
+          suggestedDisplayName: toDisplayName(column.name),
+          expression: `COUNT(DISTINCT ${tableName}.${column.name})`,
+        };
+      }
+
+      // Decimal types remain SUM/AVG based on name patterns (continue below)
+    }
   }
 
   // Determine aggregation type
@@ -235,7 +275,11 @@ function detectMetric(
   };
 }
 
-function detectMetrics(tables: Table[], config: HardRulesConfig): DetectedMetric[] {
+function detectMetrics(
+  tables: Table[],
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
+): DetectedMetric[] {
   const metrics: DetectedMetric[] = [];
 
   for (const table of tables) {
@@ -245,7 +289,7 @@ function detectMetrics(tables: Table[], config: HardRulesConfig): DetectedMetric
     }
 
     for (const column of table.columns) {
-      const metric = detectMetric(column, table.name, config);
+      const metric = detectMetric(column, table.name, config, profilingData);
       if (metric) {
         metrics.push(metric);
       }
@@ -278,7 +322,8 @@ function detectMetrics(tables: Table[], config: HardRulesConfig): DetectedMetric
 function detectDimension(
   column: Column,
   tableName: string,
-  config: HardRulesConfig
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
 ): DetectedDimension | null {
   // Skip PK and FK columns
   if (column.isPrimaryKey || column.isForeignKey) {
@@ -309,17 +354,68 @@ function detectDimension(
     return null;
   }
 
+  let certainty = hasGoodName ? 1.0 : 0.9;
+  let type: "categorical" | "free-text" | "enum" = "categorical";
+  let cardinality: number | undefined;
+
+  // V2: Use profiling data for smarter classification
+  if (profilingData) {
+    const profile = profilingData.columnProfiles[`${tableName}.${column.name}`];
+
+    if (profile?.categorical) {
+      cardinality = profile.categorical.distinctCount || profile.categorical.cardinality;
+      const topValuesCoverage =
+        profile.categorical.topValues?.reduce((sum, v) => sum + v.percentage, 0) || 0;
+
+      // Low cardinality (< 100 unique) + high top values coverage (> 80%) → enum
+      if (cardinality < 100 && topValuesCoverage > 80) {
+        type = "enum";
+        certainty = 1.0;
+        console.log(
+          `[UVB] ${tableName}.${column.name}: Detected enum (${cardinality} values, ${topValuesCoverage.toFixed(0)}% coverage)`
+        );
+      }
+      // Medium cardinality (100-1000) → categorical dimension
+      else if (cardinality < 1000) {
+        type = "categorical";
+        certainty = 0.9;
+      }
+      // High cardinality (> 1000) → likely free text, lower certainty
+      else {
+        type = "free-text";
+        certainty = 0.5;
+        console.log(
+          `[UVB] ${tableName}.${column.name}: High cardinality (${cardinality}), likely free text`
+        );
+      }
+
+      // Null% > 80% → sparse dimension, lower priority
+      if (profile.nullPercentage > 80) {
+        certainty *= 0.5;
+        console.log(
+          `[UVB] ${tableName}.${column.name}: Sparse (${profile.nullPercentage.toFixed(0)}% null)`
+        );
+      }
+    }
+  }
+
   return {
     id: generateId(tableName, column.name),
     name: column.name,
     table: tableName,
     column: column.name,
     dataType: column.dataType,
-    certainty: hasGoodName ? 1.0 : 0.9,
+    cardinality,
+    certainty,
+    type,
   };
 }
 
-function detectDimensions(tables: Table[], config: HardRulesConfig): DetectedDimension[] {
+function detectDimensions(
+  tables: Table[],
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
+): DetectedDimension[] {
   const dimensions: DetectedDimension[] = [];
 
   for (const table of tables) {
@@ -328,7 +424,7 @@ function detectDimensions(tables: Table[], config: HardRulesConfig): DetectedDim
     }
 
     for (const column of table.columns) {
-      const dimension = detectDimension(column, table.name, config);
+      const dimension = detectDimension(column, table.name, config, profilingData);
       if (dimension) {
         dimensions.push(dimension);
       }
@@ -345,7 +441,8 @@ function detectDimensions(tables: Table[], config: HardRulesConfig): DetectedDim
 function detectTimeField(
   column: Column,
   tableName: string,
-  config: HardRulesConfig
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
 ): DetectedTimeField | null {
   // Must be temporal type
   if (!isTemporalType(column.dataType)) {
@@ -361,6 +458,34 @@ function detectTimeField(
   const isPrimaryCandidate =
     !isAuditColumn && matchesAnyPattern(colLower, config.primaryTimePatterns);
 
+  let certainty = isPrimaryCandidate ? 1.0 : isAuditColumn ? 0.3 : 0.7;
+  let isStale = false;
+  let daysSinceLatest: number | undefined;
+
+  // V2: Use profiling data to detect stale columns
+  if (profilingData) {
+    const profile = profilingData.columnProfiles[`${tableName}.${column.name}`];
+
+    if (profile?.temporal) {
+      daysSinceLatest = profile.temporal.daysSinceLatest;
+
+      // No data in last 30 days → stale
+      if (daysSinceLatest !== undefined && daysSinceLatest > 30) {
+        isStale = true;
+        certainty = 0.3;
+        console.log(
+          `[UVB] ${tableName}.${column.name}: Stale (${daysSinceLatest} days since latest)`
+        );
+      }
+
+      // No data at all (100% null)
+      if (profile.nullPercentage === 100) {
+        console.log(`[UVB] ${tableName}.${column.name}: Empty time field, skipping`);
+        return null;
+      }
+    }
+  }
+
   // Still include audit columns but mark them
   return {
     id: generateId(tableName, column.name),
@@ -369,11 +494,17 @@ function detectTimeField(
     column: column.name,
     dataType: column.dataType,
     isPrimaryCandidate,
-    certainty: isPrimaryCandidate ? 1.0 : isAuditColumn ? 0.3 : 0.7,
+    certainty,
+    isStale,
+    daysSinceLatest,
   };
 }
 
-function detectTimeFields(tables: Table[], config: HardRulesConfig): DetectedTimeField[] {
+function detectTimeFields(
+  tables: Table[],
+  config: HardRulesConfig,
+  profilingData?: ProfilingData
+): DetectedTimeField[] {
   const timeFields: DetectedTimeField[] = [];
 
   for (const table of tables) {
@@ -382,7 +513,7 @@ function detectTimeFields(tables: Table[], config: HardRulesConfig): DetectedTim
     }
 
     for (const column of table.columns) {
-      const timeField = detectTimeField(column, table.name, config);
+      const timeField = detectTimeField(column, table.name, config, profilingData);
       if (timeField) {
         timeFields.push(timeField);
       }
@@ -443,6 +574,100 @@ function detectFilters(tables: Table[], config: HardRulesConfig): DetectedFilter
   }
 
   return filters;
+}
+
+// =============================================================================
+// V2: Required Field Detection
+// =============================================================================
+
+/**
+ * Detect required fields (null% < 5%)
+ * These are high-priority fields for data quality
+ */
+function detectRequiredFields(
+  tables: Table[],
+  profilingData?: ProfilingData
+): DetectedRequiredField[] {
+  if (!profilingData) return [];
+
+  const requiredFields: DetectedRequiredField[] = [];
+
+  for (const table of tables) {
+    // Skip junction tables
+    if (isJunctionTable(table)) {
+      continue;
+    }
+
+    for (const column of table.columns) {
+      const profile = profilingData.columnProfiles[`${table.name}.${column.name}`];
+
+      if (profile && profile.nullPercentage < 5) {
+        requiredFields.push({
+          id: generateId(table.name, column.name, "required"),
+          table: table.name,
+          column: column.name,
+          nullPercentage: profile.nullPercentage,
+          certainty: profile.nullPercentage === 0 ? 1.0 : 0.9,
+          suggestedDisplayName: toDisplayName(column.name),
+        });
+      }
+    }
+  }
+
+  return requiredFields;
+}
+
+// =============================================================================
+// V2: Enum Field Detection
+// =============================================================================
+
+/**
+ * Detect enum fields (low cardinality + high coverage)
+ */
+function detectEnumFields(
+  tables: Table[],
+  profilingData?: ProfilingData
+): DetectedEnumField[] {
+  if (!profilingData) return [];
+
+  const enumFields: DetectedEnumField[] = [];
+
+  for (const table of tables) {
+    // Skip junction tables
+    if (isJunctionTable(table)) {
+      continue;
+    }
+
+    for (const column of table.columns) {
+      const profile = profilingData.columnProfiles[`${table.name}.${column.name}`];
+
+      if (profile?.categorical) {
+        const cardinality = profile.categorical.distinctCount || profile.categorical.cardinality;
+        const topValues = profile.categorical.topValues || [];
+        const coverage = topValues.reduce((sum, v) => sum + v.percentage, 0);
+
+        // Enum criteria: < 100 distinct values, > 80% coverage by top values
+        if (cardinality < 100 && coverage > 80) {
+          enumFields.push({
+            id: generateId(table.name, column.name, "enum"),
+            table: table.name,
+            column: column.name,
+            dataType: column.dataType,
+            distinctCount: cardinality,
+            topValues: topValues.map((v) => ({
+              value: String(v.value),
+              count: v.count,
+              percentage: v.percentage,
+            })),
+            certainty: coverage / 100,
+            suggestedDisplayName: toDisplayName(column.name),
+          });
+        }
+      }
+    }
+  }
+
+  return enumFields;
 }
 
 // =============================================================================
@@ -524,6 +749,11 @@ function generateConfirmations(detected: DetectedVocabulary): Confirmation[] {
 // Main Function
 // =============================================================================
 
+export interface ApplyHardRulesOptions {
+  config?: HardRulesConfig;
+  profilingData?: ProfilingData;
+}
+
 export interface ApplyHardRulesResult {
   detected: DetectedVocabulary;
   confirmations: Confirmation[];
@@ -536,19 +766,46 @@ export interface ApplyHardRulesResult {
     timeFields: number;
     filters: number;
     relationships: number;
+    requiredFields?: number;
+    enumFields?: number;
   };
+  profilingUsed: boolean;
 }
 
 export function applyHardRules(
   schema: ExtractedSchema,
-  config: HardRulesConfig = DEFAULT_HARD_RULES_CONFIG
+  options: ApplyHardRulesOptions | HardRulesConfig = {}
 ): ApplyHardRulesResult {
+  // Handle backward compatibility: if options is HardRulesConfig, wrap it
+  let opts: ApplyHardRulesOptions;
+
+  // Check if this is ApplyHardRulesOptions (has config or profilingData as properties)
+  // or HardRulesConfig (has metricNamePatterns etc)
+  const isHardRulesConfig =
+    "metricNamePatterns" in options ||
+    "dimensionMaxLength" in options ||
+    "timeTypes" in options;
+
+  if (isHardRulesConfig) {
+    // It's a HardRulesConfig - wrap it
+    opts = { config: options as HardRulesConfig };
+  } else {
+    // It's ApplyHardRulesOptions (or empty object)
+    opts = options as ApplyHardRulesOptions;
+  }
+
+  const config = opts.config || DEFAULT_HARD_RULES_CONFIG;
+  const profilingData = opts.profilingData;
   const entities = detectEntities(schema.tables);
   const relationships = detectRelationships(schema.tables);
-  const metrics = detectMetrics(schema.tables, config);
-  const dimensions = detectDimensions(schema.tables, config);
-  const timeFields = detectTimeFields(schema.tables, config);
+  const metrics = detectMetrics(schema.tables, config, profilingData);
+  const dimensions = detectDimensions(schema.tables, config, profilingData);
+  const timeFields = detectTimeFields(schema.tables, config, profilingData);
   const filters = detectFilters(schema.tables, config);
+
+  // V2: New profiling-enhanced detections
+  const requiredFields = detectRequiredFields(schema.tables, profilingData);
+  const enumFields = detectEnumFields(schema.tables, profilingData);
 
   const detected: DetectedVocabulary = {
     entities: entities.filter((e) => !e.isJunction),
@@ -557,6 +814,8 @@ export function applyHardRules(
     timeFields,
     filters,
     relationships,
+    requiredFields,
+    enumFields,
   };
 
   const confirmations = generateConfirmations(detected);
@@ -573,7 +832,10 @@ export function applyHardRules(
       timeFields: timeFields.length,
       filters: filters.length,
       relationships: relationships.length,
+      requiredFields: requiredFields.length,
+      enumFields: enumFields.length,
     },
+    profilingUsed: !!profilingData,
   };
 }
 
@@ -586,5 +848,7 @@ export {
   detectDimensions,
   detectTimeFields,
   detectFilters,
+  detectRequiredFields,
+  detectEnumFields,
   generateConfirmations,
 };

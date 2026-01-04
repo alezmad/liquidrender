@@ -1,7 +1,8 @@
 import { and, eq, ilike, or, desc, sql } from "@turbostarter/db";
 import {
   knosiaThread,
-  knosiaCanvas,
+  // TODO: Re-implement canvas search with knosiaWorkspaceCanvas once Canvas API is complete
+  // knosiaWorkspaceCanvas,
   knosiaVocabularyItem,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
@@ -66,50 +67,11 @@ export async function globalSearch(
   }
 
   // Search canvases
+  // TODO: Re-implement canvas search with knosiaWorkspaceCanvas once Canvas API is complete (Wave 3 Task 3)
+  // New schema stores LiquidSchema JSON instead of name/description fields
   if (searchTypes.includes("canvas")) {
-    const canvases = await db
-      .select({
-        id: knosiaCanvas.id,
-        name: knosiaCanvas.name,
-        description: knosiaCanvas.description,
-        status: knosiaCanvas.status,
-        updatedAt: knosiaCanvas.updatedAt,
-      })
-      .from(knosiaCanvas)
-      .where(
-        and(
-          eq(knosiaCanvas.workspaceId, workspaceId),
-          eq(knosiaCanvas.createdBy, userId),
-          or(
-            ilike(knosiaCanvas.name, searchPattern),
-            ilike(knosiaCanvas.description, searchPattern),
-          ),
-        ),
-      )
-      .orderBy(desc(knosiaCanvas.updatedAt))
-      .limit(limit);
-
-    counts.canvas = canvases.length;
-
-    for (const canvas of canvases) {
-      const matchedField = canvas.name.toLowerCase().includes(query.toLowerCase())
-        ? "name"
-        : "description";
-
-      results.push({
-        id: canvas.id,
-        type: "canvas",
-        title: canvas.name,
-        description: canvas.description,
-        matchedField,
-        excerpt: highlightMatch(
-          matchedField === "name" ? canvas.name : (canvas.description || ""),
-          query,
-        ),
-        updatedAt: canvas.updatedAt?.toISOString() || new Date().toISOString(),
-        link: `/dashboard/knosia/canvases/${canvas.id}`,
-      });
-    }
+    // Temporarily disabled - canvas search will be implemented after Canvas API rewrite
+    counts.canvas = 0;
   }
 
   // Search vocabulary items

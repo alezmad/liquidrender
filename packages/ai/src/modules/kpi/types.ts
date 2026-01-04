@@ -530,7 +530,7 @@ export const COMMON_KPIS_BY_BUSINESS_TYPE: Record<string, string[]> = {
   // ===================
   // Education / E-Learning
   // ===================
-  education: [
+  edtech: [
     // Enrollment
     "Total Enrollments",
     "New Student Registrations",

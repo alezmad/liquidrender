@@ -10,8 +10,9 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { ExtractedSchema } from "@repo/liquid-connect/uvb";
 
-// Business types
+// Business types (must normalize to lowercase for KPI lookup)
 const BUSINESS_TYPES = [
+  // Core business models
   "SaaS",
   "E-Commerce",
   "Marketplace",
@@ -22,6 +23,23 @@ const BUSINESS_TYPES = [
   "EdTech",
   "Media",
   "Logistics",
+  // Extended business types
+  "Marketing",
+  "Support",
+  "Manufacturing",
+  "RealEstate",
+  "Hospitality",
+  "Insurance",
+  "Telecom",
+  "HR",
+  "Travel",
+  "Nonprofit",
+  "Energy",
+  "Construction",
+  "Legal",
+  "Gaming",
+  "Agriculture",
+  // Fallback
   "Custom",
 ] as const;
 
@@ -88,13 +106,28 @@ ${JSON.stringify(tableInfo, null, 2)}
 - SaaS: subscriptions, tenants, plans, workspaces, billing
 - E-Commerce: orders, products, cart, inventory, shipping, fulfillment
 - Marketplace: buyers, sellers, vendors, listings, commissions
-- ERP: inventory, warehouse, suppliers, purchase orders, manufacturing
+- ERP: inventory, warehouse, suppliers, purchase orders, bill of materials
 - CRM: contacts, leads, opportunities, accounts, deals, pipelines
 - FinTech: transactions, accounts, payments, wallets, transfers
 - Healthcare: patients, appointments, medical records, prescriptions
 - EdTech: students, courses, lessons, enrollments, grades
 - Media: content, articles, videos, subscriptions, engagement
 - Logistics: shipments, routes, drivers, warehouses, tracking
+- Marketing: campaigns, audiences, ads, analytics, conversions
+- Support: tickets, agents, SLA, knowledge base, customer service
+- Manufacturing: work orders, BOM, quality control, production
+- RealEstate: properties, listings, agents, leases, tenants
+- Hospitality: reservations, rooms, guests, amenities, check-in
+- Insurance: policies, claims, underwriting, premiums, coverage
+- Telecom: subscribers, plans, usage, billing, network
+- HR: employees, payroll, benefits, performance, recruiting
+- Travel: bookings, flights, hotels, itineraries, travelers
+- Nonprofit: donors, donations, programs, volunteers, grants
+- Energy: meters, consumption, generation, billing, grid
+- Construction: projects, contracts, materials, labor, phases
+- Legal: cases, clients, documents, billing hours, matters
+- Gaming: players, sessions, achievements, purchases, leaderboards
+- Agriculture: farms, crops, yields, equipment, livestock
 - Custom: if none of the above fit well
 
 Provide:

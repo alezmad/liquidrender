@@ -318,6 +318,31 @@ export {
 } from './dashboard';
 
 // =============================================================================
+// KPI EXECUTION (Phase 3)
+// =============================================================================
+
+export {
+  // Recipe → LiquidFlow → SQL pipeline
+  compileRecipeToSQL,
+  compileRecipesToSQL,
+  executeCompiledMetric,
+  executeRecipe,
+  executeRecipes,
+  previewRecipeSQL,
+  // Recipe builder
+  buildLiquidFlowFromRecipe,
+  buildLiquidFlowsFromRecipes,
+  validateRecipeForFlow,
+  // Types
+  type CompiledMetric,
+  type MetricExecutionResult,
+  type KPIExecutionOptions,
+  type CalculatedMetricRecipe,
+  type SemanticMetricDefinition as KPISemanticMetricDefinition,
+  type RecipeBuildOptions,
+} from './kpi';
+
+// =============================================================================
 // CONVENIENCE FUNCTIONS
 // =============================================================================
 

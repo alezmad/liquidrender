@@ -60,7 +60,6 @@ describe("Analysis Canvas Creation E2E", () => {
         username: "postgres",
         password: "postgres",
       }),
-      status: "connected",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -80,7 +79,7 @@ describe("Analysis Canvas Creation E2E", () => {
     const events: any[] = [];
     let workspaceId: string | null = null;
 
-    for await (const event of runAnalysis(testConnectionId, testUserId, false)) {
+    for await (const event of runAnalysis(testConnectionId, testUserId, null, false)) {
       console.log(`📡 SSE Event: ${event.event}`);
       events.push(event);
 
@@ -93,7 +92,7 @@ describe("Analysis Canvas Creation E2E", () => {
           .where(eq(knosiaWorkspace.orgId, testOrgId))
           .limit(1);
 
-        if (workspaces.length > 0) {
+        if (workspaces.length > 0 && workspaces[0]) {
           workspaceId = workspaces[0].id;
         }
       }
@@ -129,6 +128,7 @@ describe("Analysis Canvas Creation E2E", () => {
     expect(canvases.length, "Should create default canvas").toBeGreaterThan(0);
 
     const canvas = canvases[0];
+    if (!canvas) throw new Error("Canvas should exist");
     console.log(`✅ Canvas created: ${canvas.title}`);
 
     // Verify canvas has valid schema
@@ -178,7 +178,7 @@ describe("Analysis Canvas Creation E2E", () => {
     console.log(`📊 Canvases before re-run: ${countBefore}`);
 
     // Run analysis again
-    for await (const event of runAnalysis(testConnectionId, testUserId, false)) {
+    for await (const event of runAnalysis(testConnectionId, testUserId, null, false)) {
       if (event.event === "complete" || event.event === "error") {
         break;
       }

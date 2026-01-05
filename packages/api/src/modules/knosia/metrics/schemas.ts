@@ -17,8 +17,15 @@ export const getMetricSchema = z.object({
 });
 
 export const executeMetricSchema = z.object({
-  // Phase 2 execution options (stub for now)
   useCache: z.boolean().optional().default(true),
+  timeRange: z.object({
+    start: z.string().optional(),
+    end: z.string().optional(),
+  }).optional(),
+});
+
+export const previewSQLSchema = z.object({
+  dialect: z.enum(["postgres", "duckdb", "trino"]).optional().default("postgres"),
   timeRange: z.object({
     start: z.string().optional(),
     end: z.string().optional(),
@@ -79,5 +86,6 @@ export const updateMetricSchema = z.object({
 export type ListMetricsInput = z.infer<typeof listMetricsSchema>;
 export type GetMetricInput = z.infer<typeof getMetricSchema>;
 export type ExecuteMetricInput = z.infer<typeof executeMetricSchema>;
+export type PreviewSQLInput = z.infer<typeof previewSQLSchema>;
 export type CreateMetricInput = z.infer<typeof createMetricSchema>;
 export type UpdateMetricInput = z.infer<typeof updateMetricSchema>;

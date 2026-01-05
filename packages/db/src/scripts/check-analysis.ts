@@ -19,11 +19,16 @@ async function checkAnalysis() {
   }
 
   const analysis = analyses[0];
+  if (!analysis) {
+    console.log("No analysis found");
+    process.exit(0);
+  }
   console.log("Most recent analysis:");
   console.log(`  ID: ${analysis.id}`);
   console.log(`  Status: ${analysis.status}`);
   console.log(`  Created: ${analysis.createdAt}`);
-  console.log(`  Result:`, JSON.stringify(analysis.result, null, 2));
+  console.log(`  Summary:`, JSON.stringify(analysis.summary, null, 2));
+  console.log(`  Business Type:`, JSON.stringify(analysis.businessType, null, 2));
 
   process.exit(0);
 }

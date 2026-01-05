@@ -21,6 +21,15 @@ export type {
 
 export { LiquidFlowBuilder } from './builder';
 export { validateFlow, isValidFlow } from './validator';
+export {
+  buildLiquidFlowFromRecipe,
+  buildLiquidFlowsFromRecipes,
+  validateRecipeForFlow,
+  type CalculatedMetricRecipe,
+  type SemanticMetricDefinition,
+  type FilterCondition,
+  type RecipeBuildOptions,
+} from './recipe-builder';
 
 /**
  * Current LiquidFlow IR version

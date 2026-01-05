@@ -596,8 +596,9 @@ export async function* runAnalysis(
     // Step 7.5: Generate Calculated Metrics (KPI Recipes)
     // This step enriches vocabulary with business KPIs calculated from raw data
     let calculatedMetricsResult: {
+      enrichedVocabulary: typeof quickEnrichedVocab & { calculatedMetrics?: any[] };
       recipes: any[];
-      stats: { feasibleCount: number; totalGenerated: number; averageConfidence: number };
+      stats: { feasibleCount: number; totalGenerated: number; averageConfidence: number; infeasibleCount: number };
     } | null = null;
 
     if (businessType.detected) {
@@ -735,8 +736,8 @@ export async function* runAnalysis(
       .where(eq(knosiaAnalysis.id, analysis.id));
 
     // Save quick preview enriched vocabulary to knosia_vocabulary_item table
-    let workspaceId: string | null = null;
-    let orgId: string | null = null;
+    let savedWorkspaceId: string | null = null;
+    let savedOrgId: string | null = null;
 
     try {
       const { saveEnrichedVocabulary } = await import("../vocabulary/from-detected");
@@ -750,7 +751,7 @@ export async function* runAnalysis(
         .then(rows => rows[0]);
 
       if (connection) {
-        orgId = connection.orgId;
+        savedOrgId = connection.orgId;
 
         // Get default workspace for this org (or create one)
         let workspace = await db
@@ -779,7 +780,7 @@ export async function* runAnalysis(
           workspace = newWorkspace;
         }
 
-        workspaceId = workspace.id;
+        savedWorkspaceId = workspace.id;
 
         console.log("[Analysis] Saving quick preview vocabulary to workspace:", workspace.id);
         const saveResult = await saveEnrichedVocabulary(
@@ -826,16 +827,16 @@ export async function* runAnalysis(
     };
 
     // PHASE 1.5: Create default workspace canvas (non-blocking)
-    console.log("[Canvas] Checking canvas creation conditions:", { workspaceId, orgId, hasWorkspace: !!workspaceId, hasOrg: !!orgId, businessType: businessType.detected });
+    console.log("[Canvas] Checking canvas creation conditions:", { workspaceId: savedWorkspaceId, orgId: savedOrgId, hasWorkspace: !!savedWorkspaceId, hasOrg: !!savedOrgId, businessType: businessType.detected });
 
     // Log why canvas creation is being skipped
-    if (!workspaceId) console.log("[Canvas] ❌ Skipping: workspaceId is null");
-    if (!orgId) console.log("[Canvas] ❌ Skipping: orgId is null");
+    if (!savedWorkspaceId) console.log("[Canvas] ❌ Skipping: workspaceId is null");
+    if (!savedOrgId) console.log("[Canvas] ❌ Skipping: orgId is null");
     if (!businessType.detected) console.log("[Canvas] ❌ Skipping: businessType.detected is empty");
 
-    if (workspaceId && orgId && businessType.detected) {
+    if (savedWorkspaceId && savedOrgId && businessType.detected) {
       try {
-        console.log("[Canvas] Generating default canvas for workspace:", workspaceId);
+        console.log("[Canvas] Generating default canvas for workspace:", savedWorkspaceId);
 
         // Import canvas generation dependencies
         const { mapToTemplate, getTemplate } = await import("@repo/liquid-connect/business-types");
@@ -851,10 +852,10 @@ export async function* runAnalysis(
           metrics: quickEnrichedVocab.metrics?.length || 0,
           dimensions: quickEnrichedVocab.dimensions?.length || 0,
           entities: quickEnrichedVocab.entities?.length || 0,
-          templateKPIs: template.kpis?.length || 0,
+          templateKPIs: (template.kpis?.primary?.length || 0) + (template.kpis?.secondary?.length || 0),
         });
         const mappingResult = mapToTemplate(quickEnrichedVocab, template);
-        console.log("[Canvas] Mapping result:", { coverage: mappingResult.coverage, matched: mappingResult.matched?.length || 0 });
+        console.log("[Canvas] Mapping result:", { coverage: mappingResult.coverage, matched: mappingResult.mappedKPIs?.length || 0 });
 
         // Bypass template mapping if we have vocabulary detected
         // Rationale: Template matching may fail even for correct business type if column naming differs
@@ -880,7 +881,7 @@ export async function* runAnalysis(
             .from(knosiaWorkspaceCanvas)
             .where(
               and(
-                eq(knosiaWorkspaceCanvas.workspaceId, workspaceId),
+                eq(knosiaWorkspaceCanvas.workspaceId, savedWorkspaceId),
                 eq(knosiaWorkspaceCanvas.isDefault, true)
               )
             )
@@ -889,7 +890,7 @@ export async function* runAnalysis(
           if (existingCanvas.length === 0) {
             await db.insert(knosiaWorkspaceCanvas).values({
               id: generateId(),
-              workspaceId,
+              workspaceId: savedWorkspaceId,
               title: "Main Dashboard",
               schema: liquidSchema,
               scope: "workspace",
@@ -914,7 +915,7 @@ export async function* runAnalysis(
     }
 
     // PHASE 2: Background Enrichment (runs AFTER user sees results)
-    if (remainingFieldsCount > 0 && workspaceId && orgId) {
+    if (remainingFieldsCount > 0 && savedWorkspaceId && savedOrgId) {
       console.log(`[Background] Starting background enrichment of ${remainingFieldsCount} remaining fields`);
 
       try {
@@ -942,8 +943,8 @@ export async function* runAnalysis(
         // Save background enriched vocabulary
         const saveResult = await saveEnrichedVocabulary(
           backgroundEnriched,
-          orgId,
-          workspaceId,
+          savedOrgId,
+          savedWorkspaceId,
           { skipExisting: true } // Don't override quick preview items
         );
 

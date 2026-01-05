@@ -17,7 +17,6 @@ async function checkConnections() {
     console.log(`${i + 1}. ${conn.name} (${conn.type})`);
     console.log(`   Database: ${conn.host}:${conn.port}/${conn.database}`);
     console.log(`   Schema: ${conn.schema}`);
-    console.log(`   Status: ${conn.status}`);
     console.log(`   Created: ${conn.createdAt}`);
     console.log(`   ID: ${conn.id}\n`);
   });

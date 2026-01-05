@@ -23,7 +23,7 @@ async function checkAnalysisConnection() {
     console.log(`  Status: ${analysis.status}`);
     console.log(`  Created: ${analysis.createdAt}`);
     console.log(`  Connection: ${connection[0]?.name || 'NOT FOUND'} (${connection[0]?.database || 'N/A'})`);
-    console.log(`  Result saved: ${analysis.result !== null && analysis.result !== undefined}`);
+    console.log(`  Summary saved: ${analysis.summary !== null && analysis.summary !== undefined}`);
     console.log();
   }
 

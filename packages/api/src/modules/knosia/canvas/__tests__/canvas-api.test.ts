@@ -31,22 +31,19 @@ import type {
 function createMockLiquidSchema(): LiquidSchema {
   return {
     version: "1.0",
-    metadata: {
-      title: "Test Dashboard",
-      description: "Test dashboard for Canvas API",
-      tags: ["test"],
-    },
-    theme: "light",
+    signals: [],
     layers: [
       {
-        id: "layer-1",
-        type: "page",
+        id: 1,
+        visible: true,
         root: {
+          uid: "root-1",
           type: "container",
           children: [
             {
+              uid: "kpi-1",
               type: "kpi",
-              binding: { source: "metrics", field: "revenue" },
+              binding: { kind: "field", value: "metrics.revenue" },
               label: "Revenue",
             },
           ],
@@ -79,7 +76,7 @@ function createMockCanvas(overrides?: Partial<any>) {
     title: "Test Canvas",
     schema: createMockLiquidSchema(),
     ownerId: "user-1",
-    scope: "private" as const,
+    scope: "private" as "private" | "workspace",
     isDefault: false,
     currentVersion: 1,
     lastEditedBy: "user-1",
@@ -481,11 +478,12 @@ describe("Canvas API - Change Canvas Scope", () => {
   });
 
   it("denies invalid scope transitions (workspace to private)", async () => {
-    const canvas = createMockCanvas({ scope: "workspace" });
-    const newScope = "private";
+    const canvas = createMockCanvas({ scope: "workspace" as "private" | "workspace" });
+    const newScope = "private" as "private" | "workspace";
 
     // Only private → workspace is allowed
-    const isValidTransition = canvas.scope === "private" && newScope === "workspace";
+    const currentScope = canvas.scope as "private" | "workspace";
+    const isValidTransition = currentScope === "private" && newScope === "workspace";
     expect(isValidTransition).toBe(false);
   });
 });

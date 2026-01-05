@@ -108,13 +108,14 @@ export async function updateCanvas(
       throw new Error("Version conflict");
     }
 
-    const nextVersion = canvas.currentVersion + 1;
+    const currentVersion = canvas.currentVersion ?? 0;
+    const nextVersion = currentVersion + 1;
 
     // 4. Save current state as version
     await tx.insert(knosiaCanvasVersion).values({
       id: generateId(),
       canvasId,
-      versionNumber: canvas.currentVersion,
+      versionNumber: currentVersion,
       schema: canvas.schema,
       createdBy: canvas.lastEditedBy || canvas.ownerId,
       changeSummary: null,
@@ -276,13 +277,14 @@ export async function restoreCanvasVersion(
       throw new Error("Version not found");
     }
 
-    const nextVersion = canvas.currentVersion + 1;
+    const currentVersion = canvas.currentVersion ?? 0;
+    const nextVersion = currentVersion + 1;
 
     // 4. Save current state as version
     await tx.insert(knosiaCanvasVersion).values({
       id: generateId(),
       canvasId,
-      versionNumber: canvas.currentVersion,
+      versionNumber: currentVersion,
       schema: canvas.schema,
       createdBy: canvas.lastEditedBy || canvas.ownerId,
       changeSummary: null,

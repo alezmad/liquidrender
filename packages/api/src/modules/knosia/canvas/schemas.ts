@@ -54,7 +54,7 @@ export const listVersionsQuerySchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().min(1).max(50))
     .optional()
-    .default("50"),
+    .default(50),
 });
 
 export type ListVersionsQuery = z.infer<typeof listVersionsQuerySchema>;

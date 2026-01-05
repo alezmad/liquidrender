@@ -9,7 +9,8 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { generateKPIRecipes, executeRecipe, type CalculatedMetricRecipe } from "../recipe-generator";
+import { generateKPIRecipes, executeRecipe } from "../recipe-generator";
+import type { CalculatedMetricRecipe } from "../types";
 
 // Skip if no API key
 const SKIP_TEST = !process.env.ANTHROPIC_API_KEY;
@@ -81,6 +82,7 @@ describe("Calculated Metrics E2E", () => {
         {
           businessType: "saas",
           vocabularyContext,
+          generateCommonKPIs: false,
           requestedKPIs: ["Monthly Recurring Revenue", "Active Subscriptions"],
         },
         { model: "haiku", maxRecipes: 3 }
@@ -171,6 +173,9 @@ describe("Calculated Metrics E2E", () => {
 
     const invalidRecipe: CalculatedMetricRecipe = {
       name: "Invalid Metric",
+      description: "Test invalid metric for error handling",
+      category: "custom",
+      businessType: ["test"],
       semanticDefinition: {
         type: "simple",
         aggregation: "SUM",

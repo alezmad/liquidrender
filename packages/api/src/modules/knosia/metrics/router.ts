@@ -20,7 +20,7 @@ import {
   deleteMetric,
 } from "./mutations";
 
-import { executeMetricWithCache } from "./execution";
+import { executeMetricWithCache, previewMetricSQL } from "./execution";
 
 import * as schemas from "./schemas";
 
@@ -77,6 +77,28 @@ export const metricsRouter = new Hono<{ Variables: Variables }>()
       try {
         const result = await executeMetricWithCache(id, options);
         return c.json({ result });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        if (message.includes("not found")) {
+          return c.json({ error: message }, 404);
+        }
+        return c.json({ error: message }, 500);
+      }
+    },
+  )
+
+  // Preview SQL for metric (without executing)
+  .post(
+    "/:id/preview-sql",
+    enforceAuth,
+    zValidator("json", schemas.previewSQLSchema),
+    async (c) => {
+      const id = c.req.param("id");
+      const { dialect, timeRange } = c.req.valid("json");
+
+      try {
+        const preview = await previewMetricSQL(id, dialect, timeRange);
+        return c.json({ preview });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         if (message.includes("not found")) {

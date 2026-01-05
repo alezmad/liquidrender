@@ -54,7 +54,7 @@ async function main() {
   console.log("\nSample Enriched Items:");
   enrichedItems.slice(0, 5).forEach((item) => {
     const def = item.definition as any;
-    console.log(`  - ${item.canonicalName} (${item.itemType})`);
+    console.log(`  - ${item.canonicalName} (${item.type})`);
     console.log(`    Category: ${item.category || "N/A"}`);
     console.log(`    Description: ${def.descriptionHuman?.slice(0, 60)}...`);
     if (def.caveats && def.caveats.length > 0) {
@@ -70,7 +70,7 @@ async function main() {
   if (nonEnrichedItems.length > 0) {
     console.log("\nNon-Enriched Items (should be IDs, timestamps, etc.):");
     nonEnrichedItems.slice(0, 10).forEach((item) => {
-      console.log(`  - ${item.canonicalName} (${item.itemType})`);
+      console.log(`  - ${item.canonicalName} (${item.type})`);
     });
   }
 

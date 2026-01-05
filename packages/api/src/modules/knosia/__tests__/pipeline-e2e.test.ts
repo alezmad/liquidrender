@@ -113,8 +113,9 @@ describe("Pipeline End-to-End", () => {
     if (canvases.length > 0) {
       const canvas = canvases[0];
       expect(canvas?.schema).toBeDefined();
-      expect(canvas?.schema.version).toBe("1.0");
-      expect(canvas?.schema.layers).toBeDefined();
+      const schema = canvas?.schema as { version?: string; layers?: unknown[] } | undefined;
+      expect(schema?.version).toBe("1.0");
+      expect(schema?.layers).toBeDefined();
       expect(canvas?.isDefault).toBe(true);
     }
 

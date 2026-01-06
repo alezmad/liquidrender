@@ -8,9 +8,9 @@ import { Alert, AlertDescription } from "@turbostarter/ui-web/alert";
 import { Loader2 } from "lucide-react";
 
 export function ConnectionsView({ user }: ConnectionsViewProps) {
-  // For V1, use user's email as orgId (simplified org model)
-  // TODO: In V2, get actual orgId from user's organization membership
-  const orgId = user.id;
+  // Knosia org ID follows the pattern: user-{userId}
+  // See: packages/api/src/modules/knosia/organization/mutations.ts:29
+  const orgId = `user-${user.id}`;
 
   const { data, isLoading, error } = useConnections(orgId);
 

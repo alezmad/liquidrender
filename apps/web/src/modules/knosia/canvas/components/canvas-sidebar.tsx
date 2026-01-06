@@ -23,11 +23,8 @@ export function CanvasSidebar({ workspaceId, selectedId }: CanvasSidebarProps) {
   const [showArchived, setShowArchived] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Use a default workspaceId for now - will be properly wired when workspace context is available
-  const effectiveWorkspaceId = workspaceId ?? "default";
-
   const { canvases, isLoading, createCanvas } = useCanvasesList({
-    workspaceId: effectiveWorkspaceId,
+    workspaceId: workspaceId ?? "",
     status: showArchived ? "archived" : "active",
   });
 

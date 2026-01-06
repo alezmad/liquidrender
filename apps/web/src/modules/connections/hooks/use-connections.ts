@@ -39,6 +39,7 @@ export function useDeleteConnection() {
     mutationFn: async ({ id, orgId }: { id: string; orgId: string }) => {
       const res = await api.knosia.connections[":id"].$delete({
         param: { id },
+        query: { orgId },
       });
 
       if (!res.ok) {

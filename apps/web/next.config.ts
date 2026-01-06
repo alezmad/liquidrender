@@ -103,8 +103,12 @@ const config: NextConfig = {
     optimizePackageImports: INTERNAL_PACKAGES,
   },
 
-  // Apply security headers to all routes
+  // Apply security headers only in production
+  // CSP with upgrade-insecure-requests breaks Next.js client-side navigation in dev
   async headers() {
+    if (process.env.NODE_ENV !== "production") {
+      return [];
+    }
     return [
       {
         // Apply to all routes

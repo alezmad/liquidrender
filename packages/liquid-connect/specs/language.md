@@ -110,10 +110,10 @@ Sigils are single-character markers that denote token semantics. They are the fo
 | `#` | Dimension | Grouping column | `#region`, `#product_category` |
 | `.` | Entity | Record listing (no aggregation) | `.customers`, `.orders` |
 | `?` | Filter | Condition (named or explicit) | `?active`, `?:status="open"` |
-| `~` | Time | Temporal expression | `~last_30_days`, `~2024-Q1` |
+| `t:` | Time | Temporal expression | `t:last_30_days`, `t:2024-Q1` |
 | `top:` | Limit | Result set limit | `top:10`, `top:100` |
 | `+` / `-` | Sort | Ascending / Descending | `+@revenue`, `-@order_count` |
-| `vs` | Compare | Period-over-period comparison | `~this_month vs ~last_month` |
+| `vs` | Compare | Period-over-period comparison | `t:this_month vs t:last_month` |
 
 ### 3.2 Sigil Semantics
 
@@ -191,33 +191,33 @@ Q @revenue ?:amount>1000
 Q @revenue ?:region="APAC" ?:status="closed"
 ```
 
-#### `~` - Time Expression
+#### `t:` - Time Expression
 
-Time expressions constrain or define temporal scope.
+Time expressions constrain or define temporal scope. The `t:` prefix tells the scanner to parse what follows as a time expression.
 
 **Relative:**
 ```
-~today
-~yesterday
-~last_7_days
-~last_30_days
-~this_week
-~this_month
-~this_quarter
-~this_year
-~last_week
-~last_month
-~last_quarter
-~last_year
+t:today
+t:yesterday
+t:last_7_days
+t:last_30_days
+t:this_week
+t:this_month
+t:this_quarter
+t:this_year
+t:last_week
+t:last_month
+t:last_quarter
+t:last_year
 ```
 
 **Absolute:**
 ```
-~2024-01-01
-~2024-01-01..2024-03-31
-~2024-Q1
-~2024-W01
-~2024-01
+t:2024-01-01
+t:2024-01-01..2024-03-31
+t:2024-Q1
+t:2024-W01
+t:2024-01
 ```
 
 #### `top:` - Limit
@@ -246,9 +246,9 @@ Q .customers +#name                      # Customers sorted by name ASC
 Compares two time periods.
 
 ```
-Q @revenue ~this_month vs ~last_month
-Q @revenue #region ~this_quarter vs ~last_quarter
-Q @revenue ~2024-Q1 vs ~2023-Q1
+Q @revenue t:this_month vs t:last_month
+Q @revenue #region t:this_quarter vs t:last_quarter
+Q @revenue t:2024-Q1 vs t:2023-Q1
 ```
 
 Produces additional columns:
@@ -366,43 +366,43 @@ Q .orders ?:created_at>"2024-01-01"
 
 ### 4.5 Stage 3: Time Expressions
 
-Add temporal constraints with `~`.
+Add temporal constraints with `t:`.
 
 **Syntax:**
 ```
-Q @metric [#dimension...] [?filter...] ~time_expression
+Q @metric [#dimension...] [?filter...] t:time_expression
 ```
 
 **Relative Time Examples:**
 ```
-Q @revenue ~today
-Q @revenue ~yesterday
-Q @revenue ~last_7_days
-Q @revenue ~last_30_days
-Q @revenue #region ~this_month
-Q @revenue ~this_quarter
-Q @revenue ~this_year
-Q @revenue ~last_week
-Q @revenue ~last_month
-Q @revenue ~last_quarter
-Q @revenue ~last_year
+Q @revenue t:today
+Q @revenue t:yesterday
+Q @revenue t:last_7_days
+Q @revenue t:last_30_days
+Q @revenue #region t:this_month
+Q @revenue t:this_quarter
+Q @revenue t:this_year
+Q @revenue t:last_week
+Q @revenue t:last_month
+Q @revenue t:last_quarter
+Q @revenue t:last_year
 ```
 
 **Absolute Time Examples:**
 ```
-Q @revenue ~2024-01-01                 # Single day
-Q @revenue ~2024-01-01..2024-03-31     # Date range
-Q @revenue ~2024-Q1                    # Quarter
-Q @revenue ~2024-Q1..2024-Q2           # Quarter range
-Q @revenue ~2024-W01                   # ISO week
-Q @revenue ~2024-01                    # Month (January 2024)
+Q @revenue t:2024-01-01                 # Single day
+Q @revenue t:2024-01-01..2024-03-31     # Date range
+Q @revenue t:2024-Q1                    # Quarter
+Q @revenue t:2024-Q1..2024-Q2           # Quarter range
+Q @revenue t:2024-W01                   # ISO week
+Q @revenue t:2024-01                    # Month (January 2024)
 ```
 
 **Time with Dimensions and Filters:**
 ```
-Q @revenue #region ?active ~last_30_days
-Q @order_count #product_category ~this_quarter
-Q .orders ?:status="pending" ~today
+Q @revenue #region ?active t:last_30_days
+Q @order_count #product_category t:this_quarter
+Q .orders ?:status="pending" t:today
 ```
 
 ### 4.6 Stage 4: Limit and Sort
@@ -411,7 +411,7 @@ Add result limiting with `top:N` and sorting with `+`/`-`.
 
 **Syntax:**
 ```
-Q @metric [#dimension...] [?filter...] [~time] [±@metric|±#dimension] [top:N]
+Q @metric [#dimension...] [?filter...] [t:time] [±@metric|±#dimension] [top:N]
 ```
 
 **Examples:**
@@ -419,7 +419,7 @@ Q @metric [#dimension...] [?filter...] [~time] [±@metric|±#dimension] [top:N]
 Q @revenue #customer top:10                    # Top 10 customers
 Q @revenue #customer -@revenue top:10          # Explicit: top 10 by revenue DESC
 Q @revenue #customer +@revenue top:10          # Bottom 10 by revenue ASC
-Q @revenue #product -@revenue top:5 ~this_month
+Q @revenue #product -@revenue top:5 t:this_month
 Q @order_count #region +@order_count top:3     # Bottom 3 regions
 Q .customers +#name top:100                    # First 100 customers by name
 ```
@@ -441,21 +441,21 @@ Add period-over-period comparison with `vs`.
 
 **Syntax:**
 ```
-Q @metric [#dimension...] [?filter...] ~period_a vs ~period_b
+Q @metric [#dimension...] [?filter...] t:period_a vs t:period_b
 ```
 
 **Examples:**
 ```
-Q @revenue ~this_month vs ~last_month
-Q @revenue #region ~this_quarter vs ~last_quarter
-Q @revenue #product ~2024-Q1 vs ~2023-Q1
-Q @order_count ~this_week vs ~last_week
-Q @revenue @margin #customer ~this_year vs ~last_year top:10
+Q @revenue t:this_month vs t:last_month
+Q @revenue #region t:this_quarter vs t:last_quarter
+Q @revenue #product t:2024-Q1 vs t:2023-Q1
+Q @order_count t:this_week vs t:last_week
+Q @revenue @margin #customer t:this_year vs t:last_year top:10
 ```
 
 **Output Columns:**
 
-For `Q @revenue ~this_month vs ~last_month`:
+For `Q @revenue t:this_month vs t:last_month`:
 
 | Column | Description |
 |--------|-------------|
@@ -474,7 +474,7 @@ Enterprise features: parameterized queries and governance controls.
 
 **Parameterized Queries:**
 ```
-Q @revenue #region ?:region=$selected_region ~$date_range
+Q @revenue #region ?:region=$selected_region t:$date_range
 ```
 
 Parameters are prefixed with `$` and resolved at runtime.
@@ -540,7 +540,7 @@ operator        = "=" | "!=" | ">" | ">=" | "<" | "<=" | "~=" | "^=" | "$=" | "i
 value           = string_literal | number_literal | boolean_literal | list_literal | parameter ;
 
 (* Time Expressions *)
-time_expr       = "~" , time_value ;
+time_expr       = "t:" , time_value ;
 time_value      = relative_time | absolute_time | time_range ;
 relative_time   = "today" | "yesterday" | "last_7_days" | "last_30_days" | "last_90_days"
                 | "this_week" | "last_week" | "this_month" | "last_month"
@@ -553,7 +553,7 @@ year_week       = year , "-W" , week ;
 year_month      = year , "-" , month ;
 
 (* Comparison *)
-comparison      = "vs" , "~" , time_value ;
+comparison      = "vs" , "t:" , time_value ;
 
 (* Sorting *)
 sorts           = sort , { sort } ;
@@ -705,26 +705,26 @@ Q @revenue #customer ?active ?:amount>1000 ?:region="APAC"
 
 ```
 # Relative time
-Q @revenue ~today
-Q @revenue ~last_7_days
-Q @revenue ~last_30_days
-Q @revenue #region ~this_month
-Q @revenue ~this_quarter
-Q @revenue #product ~last_year
+Q @revenue t:today
+Q @revenue t:last_7_days
+Q @revenue t:last_30_days
+Q @revenue #region t:this_month
+Q @revenue t:this_quarter
+Q @revenue #product t:last_year
 
 # Absolute time - dates
-Q @revenue ~2024-01-01
-Q @revenue ~2024-01-01..2024-03-31
+Q @revenue t:2024-01-01
+Q @revenue t:2024-01-01..2024-03-31
 
 # Absolute time - periods
-Q @revenue ~2024-Q1
-Q @revenue ~2024-W01
-Q @revenue ~2024-01
+Q @revenue t:2024-Q1
+Q @revenue t:2024-W01
+Q @revenue t:2024-01
 
 # Combined with dimensions and filters
-Q @revenue #region ?active ~last_30_days
-Q @order_count #product_category ?:status="completed" ~this_quarter
-Q .orders ?:status="pending" ~today
+Q @revenue #region ?active t:last_30_days
+Q @order_count #product_category ?:status="completed" t:this_quarter
+Q .orders ?:status="pending" t:today
 ```
 
 ### 6.5 Stage 4 Examples
@@ -736,7 +736,7 @@ Q .orders top:100
 
 # Descending sort (explicit)
 Q @revenue #customer -@revenue top:10
-Q @revenue #product -@revenue top:5 ~this_month
+Q @revenue #product -@revenue top:5 t:this_month
 
 # Ascending sort
 Q @revenue #customer +@revenue top:10
@@ -746,26 +746,26 @@ Q .customers +#name top:50
 Q @revenue @margin #customer -@revenue +@margin top:20
 
 # Full query with all elements
-Q @revenue @order_count #customer ?active ?:region="US" ~last_30_days -@revenue top:10
+Q @revenue @order_count #customer ?active ?:region="US" t:last_30_days -@revenue top:10
 ```
 
 ### 6.6 Stage 5 Examples
 
 ```
 # Month over month
-Q @revenue ~this_month vs ~last_month
-Q @revenue #region ~this_month vs ~last_month
+Q @revenue t:this_month vs t:last_month
+Q @revenue #region t:this_month vs t:last_month
 
 # Quarter over quarter
-Q @revenue ~this_quarter vs ~last_quarter
-Q @revenue #product ~2024-Q1 vs ~2023-Q4
+Q @revenue t:this_quarter vs t:last_quarter
+Q @revenue #product t:2024-Q1 vs t:2023-Q4
 
 # Year over year
-Q @revenue ~this_year vs ~last_year
-Q @revenue #customer ~2024-Q1 vs ~2023-Q1 top:10
+Q @revenue t:this_year vs t:last_year
+Q @revenue #customer t:2024-Q1 vs t:2023-Q1 top:10
 
 # Complex comparison query
-Q @revenue @margin #region ?active ~this_quarter vs ~last_quarter -@revenue top:5
+Q @revenue @margin #region ?active t:this_quarter vs t:last_quarter -@revenue top:5
 ```
 
 ### 6.7 Stage 6 Examples
@@ -773,8 +773,8 @@ Q @revenue @margin #region ?active ~this_quarter vs ~last_quarter -@revenue top:
 ```
 # Parameterized queries
 Q @revenue #region ?:region=$selected_region
-Q @revenue ~$start_date..$end_date
-Q @revenue #product ?:category=$category ~$period
+Q @revenue t:$start_date..$end_date
+Q @revenue #product ?:category=$category t:$period
 
 # Governance tags
 Q @revenue #customer [audit:pii]
@@ -782,7 +782,7 @@ Q @salary #department [access:hr_only]
 Q @revenue #customer [mask:partial] [audit:gdpr]
 
 # Combined
-Q @salary #employee ?:department=$dept ~this_month [access:hr_only] [audit:pii] [mask:full]
+Q @salary #employee ?:department=$dept t:this_month [access:hr_only] [audit:pii] [mask:full]
 ```
 
 ---
@@ -799,7 +799,7 @@ Q @salary #employee ?:department=$dept ~this_month [access:hr_only] [audit:pii] 
 | `ENTITY_SIGIL` | `.` | `.` |
 | `FILTER_NAMED` | `?` followed by identifier | `?active` |
 | `FILTER_EXPLICIT` | `?:` | `?:` |
-| `TIME_SIGIL` | `~` | `~` |
+| `TIME_PREFIX` | `t:` | `t:` |
 | `LIMIT` | `top:` followed by integer | `top:10` |
 | `SORT_ASC` | `+` | `+` |
 | `SORT_DESC` | `-` | `-` |
@@ -877,7 +877,7 @@ LiquidConnect compiles to LiquidFlow IR (Intermediate Representation) before SQL
 
 **LiquidConnect:**
 ```
-Q @revenue #region ?active ~last_30_days -@revenue top:10
+Q @revenue #region ?active t:last_30_days -@revenue top:10
 ```
 
 **LiquidFlow IR (conceptual):**

@@ -13,7 +13,7 @@ import type {
 import type { ResolvedFilter } from '../liquidflow/types';
 import type { SemanticRegistry } from '../semantic/registry';
 import type { FilterDefinition } from '../semantic/types';
-import type { FilterOperator } from '../types';
+import type { DslOperator, SqlOperator } from '../types';
 import type { ResolverContext, ResolverError, SourceTracker } from './types';
 
 /**
@@ -216,44 +216,65 @@ function negateFilter(filter: ResolvedFilter): ResolvedFilter {
 }
 
 /**
- * Negate an operator
+ * Negate a SQL operator
  */
-function negateOperator(op: FilterOperator): FilterOperator {
-  const negations: Record<string, FilterOperator> = {
-    '=': '!=',
-    '!=': '=',
-    '>': '<=',
-    '>=': '<',
-    '<': '>=',
-    '<=': '>',
-    '~~': '!~~' as FilterOperator, // Not contains (may need to add to types)
-    'in': '!in',
-    '!in': 'in',
-    'null': '!null',
-    '!null': 'null',
-    'IS NULL': 'IS NOT NULL',
-    'IS NOT NULL': 'IS NULL',
-  };
-
-  return negations[op] || op;
+function negateOperator(op: SqlOperator): SqlOperator {
+  switch (op) {
+    case '=': return '!=';
+    case '!=': return '=';
+    case '>': return '<=';
+    case '>=': return '<';
+    case '<': return '>=';
+    case '<=': return '>';
+    case 'LIKE': return 'NOT LIKE';
+    case 'NOT LIKE': return 'LIKE';
+    case 'IN': return 'NOT IN';
+    case 'NOT IN': return 'IN';
+    case 'IS NULL': return 'IS NOT NULL';
+    case 'IS NOT NULL': return 'IS NULL';
+    case 'BETWEEN': return 'NOT IN'; // Approximation for NOT BETWEEN
+    default:
+      const _exhaustive: never = op;
+      throw new Error(`Unknown SQL operator: ${_exhaustive}`);
+  }
 }
 
 /**
- * Map LiquidConnect operator to SQL operator
+ * Map DSL operator to SQL operator
+ * Converts token-efficient LLM syntax to standard SQL
  */
-function mapOperator(op: FilterOperator): FilterOperator {
-  // Most operators map directly
-  // This function handles any special mappings
-  const mappings: Record<string, FilterOperator> = {
-    '~~': '~~', // Contains - emitter handles this
-    'in': 'in',
-    '!in': '!in',
-    'null': 'null',
-    '!null': '!null',
-    'range': 'range', // BETWEEN - emitter handles this
-  };
+function mapOperator(op: DslOperator): SqlOperator {
+  switch (op) {
+    // Direct mappings (same in DSL and SQL)
+    case '=':
+    case '!=':
+    case '>':
+    case '>=':
+    case '<':
+    case '<=':
+      return op;
 
-  return mappings[op] ?? op;
+    // DSL → SQL conversions
+    case '~':
+      return 'LIKE';
+    case '!~':
+      return 'NOT LIKE';
+    case 'in':
+      return 'IN';
+    case '!in':
+      return 'NOT IN';
+    case 'null':
+      return 'IS NULL';
+    case '!null':
+      return 'IS NOT NULL';
+    case 'range':
+      return 'BETWEEN';
+
+    default:
+      // Type safety - should never reach here if all DslOperator cases handled
+      const _exhaustive: never = op;
+      throw new Error(`Unknown DSL operator: ${_exhaustive}`);
+  }
 }
 
 /**

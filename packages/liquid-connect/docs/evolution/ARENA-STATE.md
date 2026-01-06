@@ -98,7 +98,7 @@ stages:
   3:
     name: time
     status: complete
-    features: ["+ ~P30d", "~Q-1", "~Y"]
+    features: ["+ t:P30d", "t:Q-1", "t:Y"]
     depends_on: [2]
     examples_required: 3
     examples_passed: 3
@@ -114,7 +114,7 @@ stages:
   5:
     name: compare
     status: complete
-    features: ["+ vs ~period"]
+    features: ["+ vs t:period"]
     depends_on: [4]
     examples_required: 3
     examples_passed: 3
@@ -163,7 +163,7 @@ stages:
 bugs_fixed:
   - id: BUG-001
     iteration: 10
-    description: "Scanner tokenized ~Q as TIME QUERY instead of TIME PERIOD"
+    description: "Scanner tokenized t:Q as TIME QUERY instead of TIME PERIOD"
     fix: "Check previous token for TIME before classifying PERIOD patterns"
     file: "src/compiler/scanner.ts"
 

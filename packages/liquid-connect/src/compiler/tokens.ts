@@ -15,7 +15,7 @@ export type TokenType =
   | 'DIMENSION'       // #
   | 'ENTITY'          // .
   | 'FILTER'          // ?
-  | 'TIME'            // ~
+  | 'TIME'            // t:
   | 'SORT_ASC'        // +
   | 'SORT_DESC'       // -
 
@@ -42,7 +42,7 @@ export type TokenType =
   | 'GREATER_EQ'      // >=
   | 'LESS'            // <
   | 'LESS_EQ'         // <=
-  | 'CONTAINS'        // ~~
+  | 'CONTAINS'        // ~
   | 'IN'              // :[]
   | 'NOT_IN'          // !:[]
   | 'RANGE'           // :[..]

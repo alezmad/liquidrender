@@ -24,7 +24,7 @@ import type {
 } from './ast';
 import { TIME_ALIASES } from './tokens';
 import { LiquidError, ErrorCode } from './diagnostics';
-import type { FilterOperator } from '../types';
+import type { DslOperator } from '../types';
 
 /**
  * Parser for LiquidConnect queries
@@ -284,14 +284,14 @@ export class Parser {
     };
   }
 
-  private filterOperator(): FilterOperator {
+  private filterOperator(): DslOperator {
     if (this.check('EQUALS')) { this.advance(); return '='; }
     if (this.check('NOT_EQUALS')) { this.advance(); return '!='; }
     if (this.check('GREATER_EQ')) { this.advance(); return '>='; }
     if (this.check('LESS_EQ')) { this.advance(); return '<='; }
     if (this.check('GREATER')) { this.advance(); return '>'; }
     if (this.check('LESS')) { this.advance(); return '<'; }
-    if (this.check('CONTAINS')) { this.advance(); return '~~'; }
+    if (this.check('CONTAINS')) { this.advance(); return '~'; }
 
     throw this.error(ErrorCode.E101, 'Expected filter operator');
   }

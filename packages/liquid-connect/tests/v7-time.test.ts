@@ -11,40 +11,40 @@ import type { DurationNode, PeriodNode, TimeRangeNode } from '../src/compiler/as
 
 describe('v7 Duration without P prefix', () => {
   describe('Scanner', () => {
-    test('tokenizes ~30d as DURATION with value "30d"', () => {
-      const scanner = new Scanner('Q @revenue ~30d');
+    test('tokenizes t:30d as DURATION with value "30d"', () => {
+      const scanner = new Scanner('Q @revenue t:30d');
       const tokens = scanner.scan();
       const durationToken = tokens.find(t => t.type === 'DURATION');
       expect(durationToken).toBeDefined();
       expect(durationToken?.value).toBe('30d');
     });
 
-    test('tokenizes ~6M as DURATION with value "6M"', () => {
-      const scanner = new Scanner('Q @revenue ~6M');
+    test('tokenizes t:6M as DURATION with value "6M"', () => {
+      const scanner = new Scanner('Q @revenue t:6M');
       const tokens = scanner.scan();
       const durationToken = tokens.find(t => t.type === 'DURATION');
       expect(durationToken).toBeDefined();
       expect(durationToken?.value).toBe('6M');
     });
 
-    test('tokenizes ~1Y as DURATION with value "1Y"', () => {
-      const scanner = new Scanner('Q @revenue ~1Y');
+    test('tokenizes t:1Y as DURATION with value "1Y"', () => {
+      const scanner = new Scanner('Q @revenue t:1Y');
       const tokens = scanner.scan();
       const durationToken = tokens.find(t => t.type === 'DURATION');
       expect(durationToken).toBeDefined();
       expect(durationToken?.value).toBe('1Y');
     });
 
-    test('tokenizes ~2w as DURATION with value "2w"', () => {
-      const scanner = new Scanner('Q @revenue ~2w');
+    test('tokenizes t:2w as DURATION with value "2w"', () => {
+      const scanner = new Scanner('Q @revenue t:2w');
       const tokens = scanner.scan();
       const durationToken = tokens.find(t => t.type === 'DURATION');
       expect(durationToken).toBeDefined();
       expect(durationToken?.value).toBe('2w');
     });
 
-    test('tokenizes ~P30d (with P prefix) as DURATION', () => {
-      const scanner = new Scanner('Q @revenue ~P30d');
+    test('tokenizes t:P30d (with P prefix) as DURATION', () => {
+      const scanner = new Scanner('Q @revenue t:P30d');
       const tokens = scanner.scan();
       const durationToken = tokens.find(t => t.type === 'DURATION');
       expect(durationToken).toBeDefined();
@@ -53,8 +53,8 @@ describe('v7 Duration without P prefix', () => {
   });
 
   describe('Parser', () => {
-    test('parses ~30d as Duration with amount=30, unit=d', () => {
-      const ast = parseToAST('Q @revenue ~30d');
+    test('parses t:30d as Duration with amount=30, unit=d', () => {
+      const ast = parseToAST('Q @revenue t:30d');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Duration');
       const duration = ast.time as DurationNode;
@@ -62,8 +62,8 @@ describe('v7 Duration without P prefix', () => {
       expect(duration.unit).toBe('d');
     });
 
-    test('parses ~6M as Duration with amount=6, unit=m', () => {
-      const ast = parseToAST('Q @revenue ~6M');
+    test('parses t:6M as Duration with amount=6, unit=m', () => {
+      const ast = parseToAST('Q @revenue t:6M');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Duration');
       const duration = ast.time as DurationNode;
@@ -71,8 +71,8 @@ describe('v7 Duration without P prefix', () => {
       expect(duration.unit).toBe('m');
     });
 
-    test('parses ~1Y as Duration with amount=1, unit=y', () => {
-      const ast = parseToAST('Q @revenue ~1Y');
+    test('parses t:1Y as Duration with amount=1, unit=y', () => {
+      const ast = parseToAST('Q @revenue t:1Y');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Duration');
       const duration = ast.time as DurationNode;
@@ -80,9 +80,9 @@ describe('v7 Duration without P prefix', () => {
       expect(duration.unit).toBe('y');
     });
 
-    test('~30d and ~P30d parse identically', () => {
-      const astWithoutP = parseToAST('Q @revenue ~30d');
-      const astWithP = parseToAST('Q @revenue ~P30d');
+    test('t:30d and t:P30d parse identically', () => {
+      const astWithoutP = parseToAST('Q @revenue t:30d');
+      const astWithP = parseToAST('Q @revenue t:P30d');
 
       expect(astWithoutP.time?.kind).toBe('Duration');
       expect(astWithP.time?.kind).toBe('Duration');
@@ -94,8 +94,8 @@ describe('v7 Duration without P prefix', () => {
       expect(durationWithoutP.unit).toBe(durationWithP.unit);
     });
 
-    test('parses ~2w as Duration with amount=2, unit=w', () => {
-      const ast = parseToAST('Q @revenue ~2w');
+    test('parses t:2w as Duration with amount=2, unit=w', () => {
+      const ast = parseToAST('Q @revenue t:2w');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Duration');
       const duration = ast.time as DurationNode;
@@ -103,8 +103,8 @@ describe('v7 Duration without P prefix', () => {
       expect(duration.unit).toBe('w');
     });
 
-    test('parses multi-digit durations correctly (~365d)', () => {
-      const ast = parseToAST('Q @revenue ~365d');
+    test('parses multi-digit durations correctly (t:365d)', () => {
+      const ast = parseToAST('Q @revenue t:365d');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Duration');
       const duration = ast.time as DurationNode;
@@ -120,56 +120,56 @@ describe('v7 Duration without P prefix', () => {
 
 describe('v7 Time Aliases', () => {
   describe('Scanner', () => {
-    test('tokenizes ~today as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~today');
+    test('tokenizes t:today as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:today');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('today');
     });
 
-    test('tokenizes ~yesterday as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~yesterday');
+    test('tokenizes t:yesterday as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:yesterday');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('yesterday');
     });
 
-    test('tokenizes ~this_week as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~this_week');
+    test('tokenizes t:this_week as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:this_week');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('this_week');
     });
 
-    test('tokenizes ~last_week as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~last_week');
+    test('tokenizes t:last_week as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:last_week');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('last_week');
     });
 
-    test('tokenizes ~this_month as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~this_month');
+    test('tokenizes t:this_month as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:this_month');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('this_month');
     });
 
-    test('tokenizes ~last_month as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~last_month');
+    test('tokenizes t:last_month as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:last_month');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('last_month');
     });
 
-    test('tokenizes ~this_quarter as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~this_quarter');
+    test('tokenizes t:this_quarter as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:this_quarter');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
@@ -184,8 +184,8 @@ describe('v7 Time Aliases', () => {
       expect(aliasToken?.value).toBe('last_quarter');
     });
 
-    test('tokenizes ~this_year as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~this_year');
+    test('tokenizes t:this_year as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:this_year');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
@@ -202,8 +202,8 @@ describe('v7 Time Aliases', () => {
   });
 
   describe('Parser', () => {
-    test('parses ~today as Period with unit=D, offset=0', () => {
-      const ast = parseToAST('Q @revenue ~today');
+    test('parses t:today as Period with unit=D, offset=0', () => {
+      const ast = parseToAST('Q @revenue t:today');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -211,8 +211,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(0);
     });
 
-    test('parses ~yesterday as Period with unit=D, offset=-1', () => {
-      const ast = parseToAST('Q @revenue ~yesterday');
+    test('parses t:yesterday as Period with unit=D, offset=-1', () => {
+      const ast = parseToAST('Q @revenue t:yesterday');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -220,8 +220,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(-1);
     });
 
-    test('parses ~this_week as Period with unit=W, offset=0', () => {
-      const ast = parseToAST('Q @revenue ~this_week');
+    test('parses t:this_week as Period with unit=W, offset=0', () => {
+      const ast = parseToAST('Q @revenue t:this_week');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -229,8 +229,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(0);
     });
 
-    test('parses ~last_week as Period with unit=W, offset=-1', () => {
-      const ast = parseToAST('Q @revenue ~last_week');
+    test('parses t:last_week as Period with unit=W, offset=-1', () => {
+      const ast = parseToAST('Q @revenue t:last_week');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -238,8 +238,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(-1);
     });
 
-    test('parses ~this_month as Period with unit=M, offset=0', () => {
-      const ast = parseToAST('Q @revenue ~this_month');
+    test('parses t:this_month as Period with unit=M, offset=0', () => {
+      const ast = parseToAST('Q @revenue t:this_month');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -247,8 +247,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(0);
     });
 
-    test('parses ~last_month as Period with unit=M, offset=-1', () => {
-      const ast = parseToAST('Q @revenue ~last_month');
+    test('parses t:last_month as Period with unit=M, offset=-1', () => {
+      const ast = parseToAST('Q @revenue t:last_month');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -256,8 +256,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(-1);
     });
 
-    test('parses ~this_quarter as Period with unit=Q, offset=0', () => {
-      const ast = parseToAST('Q @revenue ~this_quarter');
+    test('parses t:this_quarter as Period with unit=Q, offset=0', () => {
+      const ast = parseToAST('Q @revenue t:this_quarter');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -265,8 +265,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(0);
     });
 
-    test('parses ~last_quarter as Period with unit=Q, offset=-1', () => {
-      const ast = parseToAST('Q @revenue ~last_quarter');
+    test('parses t:last_quarter as Period with unit=Q, offset=-1', () => {
+      const ast = parseToAST('Q @revenue t:last_quarter');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -274,8 +274,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(-1);
     });
 
-    test('parses ~this_year as Period with unit=Y, offset=0', () => {
-      const ast = parseToAST('Q @revenue ~this_year');
+    test('parses t:this_year as Period with unit=Y, offset=0', () => {
+      const ast = parseToAST('Q @revenue t:this_year');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -283,8 +283,8 @@ describe('v7 Time Aliases', () => {
       expect(period.offset).toBe(0);
     });
 
-    test('parses ~last_year as Period with unit=Y, offset=-1', () => {
-      const ast = parseToAST('Q @revenue ~last_year');
+    test('parses t:last_year as Period with unit=Y, offset=-1', () => {
+      const ast = parseToAST('Q @revenue t:last_year');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('Period');
       const period = ast.time as PeriodNode;
@@ -300,24 +300,24 @@ describe('v7 Time Aliases', () => {
 
 describe('v7 To-Date Ranges', () => {
   describe('Scanner', () => {
-    test('tokenizes ~YTD as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~YTD');
+    test('tokenizes t:YTD as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:YTD');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('YTD');
     });
 
-    test('tokenizes ~MTD as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~MTD');
+    test('tokenizes t:MTD as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:MTD');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
       expect(aliasToken?.value).toBe('MTD');
     });
 
-    test('tokenizes ~QTD as TIME_ALIAS', () => {
-      const scanner = new Scanner('Q @revenue ~QTD');
+    test('tokenizes t:QTD as TIME_ALIAS', () => {
+      const scanner = new Scanner('Q @revenue t:QTD');
       const tokens = scanner.scan();
       const aliasToken = tokens.find(t => t.type === 'TIME_ALIAS');
       expect(aliasToken).toBeDefined();
@@ -326,8 +326,8 @@ describe('v7 To-Date Ranges', () => {
   });
 
   describe('Parser', () => {
-    test('parses ~YTD as TimeRange from year start to today', () => {
-      const ast = parseToAST('Q @revenue ~YTD');
+    test('parses t:YTD as TimeRange from year start to today', () => {
+      const ast = parseToAST('Q @revenue t:YTD');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('TimeRange');
       const range = ast.time as TimeRangeNode;
@@ -345,8 +345,8 @@ describe('v7 To-Date Ranges', () => {
       expect(toPeriod.offset).toBe(0);
     });
 
-    test('parses ~MTD as TimeRange from month start to today', () => {
-      const ast = parseToAST('Q @revenue ~MTD');
+    test('parses t:MTD as TimeRange from month start to today', () => {
+      const ast = parseToAST('Q @revenue t:MTD');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('TimeRange');
       const range = ast.time as TimeRangeNode;
@@ -364,8 +364,8 @@ describe('v7 To-Date Ranges', () => {
       expect(toPeriod.offset).toBe(0);
     });
 
-    test('parses ~QTD as TimeRange from quarter start to today', () => {
-      const ast = parseToAST('Q @revenue ~QTD');
+    test('parses t:QTD as TimeRange from quarter start to today', () => {
+      const ast = parseToAST('Q @revenue t:QTD');
       expect(ast.time).toBeDefined();
       expect(ast.time?.kind).toBe('TimeRange');
       const range = ast.time as TimeRangeNode;
@@ -391,7 +391,7 @@ describe('v7 To-Date Ranges', () => {
 
 describe('v7 Time Features Integration', () => {
   test('full query with duration and dimensions', () => {
-    const ast = parseToAST('Q @revenue @orders #region ~30d top:10');
+    const ast = parseToAST('Q @revenue @orders #region t:30d top:10');
     expect(ast.metrics).toHaveLength(2);
     expect(ast.dimensions).toHaveLength(1);
     expect(ast.time?.kind).toBe('Duration');
@@ -399,7 +399,7 @@ describe('v7 Time Features Integration', () => {
   });
 
   test('full query with time alias and filter', () => {
-    const ast = parseToAST('Q @revenue ?active ~last_month');
+    const ast = parseToAST('Q @revenue ?active t:last_month');
     expect(ast.metrics).toHaveLength(1);
     expect(ast.filter).toBeDefined();
     expect(ast.time?.kind).toBe('Period');
@@ -409,7 +409,7 @@ describe('v7 Time Features Integration', () => {
   });
 
   test('full query with YTD and order by', () => {
-    const ast = parseToAST('Q @revenue #region ~YTD -@revenue');
+    const ast = parseToAST('Q @revenue #region t:YTD -@revenue');
     expect(ast.metrics).toHaveLength(1);
     expect(ast.dimensions).toHaveLength(1);
     expect(ast.time?.kind).toBe('TimeRange');
@@ -418,7 +418,7 @@ describe('v7 Time Features Integration', () => {
   });
 
   test('query with time alias and comparison', () => {
-    const ast = parseToAST('Q @revenue ~this_month vs ~M-1');
+    const ast = parseToAST('Q @revenue t:this_month vs t:M-1');
     expect(ast.time?.kind).toBe('Period');
     const period = ast.time as PeriodNode;
     expect(period.unit).toBe('M');
@@ -428,8 +428,8 @@ describe('v7 Time Features Integration', () => {
   });
 
   test('query combining duration with scope pin and time override', () => {
-    // Note: Parser expects time (~7d) before time override (@t:created_at)
-    const ast = parseToAST('Q@sales @revenue ~7d @t:created_at');
+    // Note: Parser expects time (t:7d) before time override (@t:created_at)
+    const ast = parseToAST('Q@sales @revenue t:7d @t:created_at');
     expect(ast.scopePin?.entity).toBe('sales');
     expect(ast.metrics).toHaveLength(1);
     expect(ast.time?.kind).toBe('Duration');
@@ -440,7 +440,7 @@ describe('v7 Time Features Integration', () => {
   });
 
   test('complex query with MTD and explain mode', () => {
-    const ast = parseToAST('Q @revenue #region ?active ~MTD !explain');
+    const ast = parseToAST('Q @revenue #region ?active t:MTD !explain');
     expect(ast.metrics).toHaveLength(1);
     expect(ast.dimensions).toHaveLength(1);
     expect(ast.filter).toBeDefined();

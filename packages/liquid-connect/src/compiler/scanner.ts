@@ -98,12 +98,19 @@ export class Scanner {
         break;
 
       case '~':
-        if (this.match('~')) {
-          this.addToken('CONTAINS', '~~');
-        } else {
-          this.addToken('TIME', c);
-          // After ~, scan for time alias or duration without P prefix
+        // Single tilde = contains operator
+        this.addToken('CONTAINS', '~');
+        break;
+
+      case 't':
+        // Check for t: time prefix
+        if (this.peek() === ':') {
+          this.advance(); // consume ':'
+          this.addToken('TIME', 't:');
           this.scanTimeExpression();
+        } else {
+          // Regular identifier starting with 't'
+          this.identifier(c);
         }
         break;
 

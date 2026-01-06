@@ -16,14 +16,14 @@
 | Stages model | Yes (0-6) | No | **language.md** - learning curve |
 | Governance | No | RLS/CLS | **v6** - enterprise-ready |
 | Explain mode | No | `!explain` | **v6** - debugging |
-| Readable time | `~this_month` | `~M` | **BOTH** - aliases |
+| Readable time | `~this_month` | `t:M` | **BOTH** - aliases |
 
 ---
 
 ## Core Syntax
 
 ```
-Q @metric #dim ?filter ~time top:N ±sort vs period
+Q @metric #dim ?filter t:time top:N ±sort vs t:period
 ```
 
 | Element | Sigil | Example |
@@ -34,10 +34,10 @@ Q @metric #dim ?filter ~time top:N ±sort vs period
 | Entity | `.` | `.customers .orders` |
 | Filter (named) | `?` | `?enterprise ?active` |
 | Filter (explicit) | `?:` | `?:segment="ENT"` |
-| Time | `~` | `~Q-1 ~30d ~YTD` |
+| Time | `t:` | `t:Q-1 t:30d t:YTD` |
 | Limit | `top:` | `top:10` |
 | Sort | `+/-` | `-@revenue +#name` |
-| Compare | `vs` | `vs Q-4` |
+| Compare | `vs` | `vs t:Q-4` |
 
 ---
 
@@ -47,61 +47,61 @@ Q @metric #dim ?filter ~time top:N ±sort vs period
 
 | Expression | Meaning | Equivalent SQL |
 |------------|---------|----------------|
-| `~D` | Today | `DATE(NOW())` |
-| `~D-1` | Yesterday | `DATE(NOW()) - 1` |
-| `~W` | This week | Week containing today |
-| `~W-1` | Last week | Previous week |
-| `~M` | This month | Month containing today |
-| `~M-1` | Last month | Previous month |
-| `~Q` | This quarter | Quarter containing today |
-| `~Q-1` | Last quarter | Previous quarter |
-| `~Y` | This year | Year containing today |
-| `~Y-1` | Last year | Previous year |
+| `t:D` | Today | `DATE(NOW())` |
+| `t:D-1` | Yesterday | `DATE(NOW()) - 1` |
+| `t:W` | This week | Week containing today |
+| `t:W-1` | Last week | Previous week |
+| `t:M` | This month | Month containing today |
+| `t:M-1` | Last month | Previous month |
+| `t:Q` | This quarter | Quarter containing today |
+| `t:Q-1` | Last quarter | Previous quarter |
+| `t:Y` | This year | Year containing today |
+| `t:Y-1` | Last year | Previous year |
 
 ### Duration Notation (ISO 8601 inspired)
 
 | Expression | Meaning |
 |------------|---------|
-| `~7d` | Last 7 days |
-| `~30d` | Last 30 days |
-| `~90d` | Last 90 days |
-| `~6M` | Last 6 months |
-| `~1Y` | Last 1 year |
+| `t:7d` | Last 7 days |
+| `t:30d` | Last 30 days |
+| `t:90d` | Last 90 days |
+| `t:6M` | Last 6 months |
+| `t:1Y` | Last 1 year |
 
 ### Readable Aliases (optional, same as compressed)
 
 | Alias | Equivalent |
 |-------|------------|
-| `~today` | `~D` |
-| `~yesterday` | `~D-1` |
-| `~this_week` | `~W` |
-| `~last_week` | `~W-1` |
-| `~this_month` | `~M` |
-| `~last_month` | `~M-1` |
-| `~this_quarter` | `~Q` |
-| `~last_quarter` | `~Q-1` |
-| `~this_year` | `~Y` |
-| `~last_year` | `~Y-1` |
-| `~YTD` | `~[Y..D]` |
-| `~MTD` | `~[M..D]` |
-| `~QTD` | `~[Q..D]` |
+| `t:today` | `t:D` |
+| `t:yesterday` | `t:D-1` |
+| `t:this_week` | `t:W` |
+| `t:last_week` | `t:W-1` |
+| `t:this_month` | `t:M` |
+| `t:last_month` | `t:M-1` |
+| `t:this_quarter` | `t:Q` |
+| `t:last_quarter` | `t:Q-1` |
+| `t:this_year` | `t:Y` |
+| `t:last_year` | `t:Y-1` |
+| `t:YTD` | `t:[Y..D]` |
+| `t:MTD` | `t:[M..D]` |
+| `t:QTD` | `t:[Q..D]` |
 
 ### Specific Dates
 
 | Expression | Meaning |
 |------------|---------|
-| `~2024` | Year 2024 |
-| `~2024-Q3` | Q3 2024 |
-| `~2024-06` | June 2024 |
-| `~2024-06-15` | June 15, 2024 |
+| `t:2024` | Year 2024 |
+| `t:2024-Q3` | Q3 2024 |
+| `t:2024-06` | June 2024 |
+| `t:2024-06-15` | June 15, 2024 |
 
 ### Ranges
 
 | Expression | Meaning |
 |------------|---------|
-| `~[Q-4..Q-1]` | Last 4 quarters |
-| `~[M-12..M-1]` | Last 12 months |
-| `~[2024-01..2024-06]` | Jan-Jun 2024 |
+| `t:[Q-4..Q-1]` | Last 4 quarters |
+| `t:[M-12..M-1]` | Last 12 months |
+| `t:[2024-01..2024-06]` | Jan-Jun 2024 |
 
 ---
 
@@ -127,7 +127,7 @@ Q @revenue ?enterprise ?active   # ERROR E104
 | `=` | equals | `?:status="active"` |
 | `!=` | not equals | `?:status!="cancelled"` |
 | `>` `>=` `<` `<=` | comparison | `?:amount>=5000` |
-| `~~` | contains | `?:name~~"corp"` |
+| `~` | contains | `?:name~"corp"` |
 | `:[]` | in set | `?:region:["NA","EU"]` |
 | `!:[]` | not in set | `?:region!:["APAC"]` |
 | `:[..]` | range | `?:amount:[1000..5000]` |
@@ -148,7 +148,7 @@ Q @revenue ?enterprise ?active   # ERROR E104
 ## Comparison Output (v7)
 
 ```
-Q @revenue #region ~Q vs Q-4
+Q @revenue #region t:Q vs t:Q-4
 ```
 
 | Column | Meaning |
@@ -174,34 +174,34 @@ Q @revenue #region ~Q vs Q-4
 ### Parameters
 
 ```
-Q @revenue ?:amount>=$minAmount ~[$start..$end]
+Q @revenue ?:amount>=$minAmount t:[$start..$end]
 Q @revenue #customer top:$limit -@revenue
 ```
 
 ### Scope Pins
 
 ```
-Q@orders @revenue #region ~Q-1    # Uses @revenue@orders
-Q@invoices @revenue #region ~Q-1  # Uses @revenue@invoices
+Q@orders @revenue #region t:Q-1    # Uses @revenue@orders
+Q@invoices @revenue #region t:Q-1  # Uses @revenue@invoices
 ```
 
 ### Time Override
 
 ```
-Q @revenue ~Q-1 @t:signupDate     # Filter by signup, not order date
+Q @revenue t:Q-1 @t:signupDate     # Filter by signup, not order date
 ```
 
 ### Explain Mode
 
 ```
-Q @revenue #region ~Q-1 !explain  # Returns resolution trace, not data
+Q @revenue #region t:Q-1 !explain  # Returns resolution trace, not data
 ```
 
 ### Null Checks
 
 ```
 Q .customers ?:email! top:100     # Email IS NOT NULL
-Q .orders ?:shippedDate? ~M-1     # Shipped date IS NULL
+Q .orders ?:shippedDate? t:M-1     # Shipped date IS NULL
 ```
 
 ---
@@ -259,9 +259,9 @@ governance:
 | 0 | `Q @metric` or `Q .entity` | `Q @revenue` |
 | 1 | + `#dimension` | `Q @revenue #region` |
 | 2 | + `?filter` | `Q @revenue ?enterprise` |
-| 3 | + `~time` | `Q @revenue ~Q-1` |
+| 3 | + `t:time` | `Q @revenue t:Q-1` |
 | 4 | + `top:N` `±sort` | `Q @revenue #customer top:10 -@revenue` |
-| 5 | + `vs` comparison | `Q @revenue ~Q vs Q-4` |
+| 5 | + `vs` comparison | `Q @revenue t:Q vs t:Q-4` |
 | 6 | + parameters, governance | Enterprise features |
 
 ---
@@ -283,21 +283,21 @@ Q @revenue ?:segment="ENT"
 Q @revenue ?:segment="ENT"&:amount>=5000
 
 // Stage 3 - Time
-Q @revenue ~Q-1
-Q @revenue #region ~30d
-Q @revenue ~[M-12..M-1]
+Q @revenue t:Q-1
+Q @revenue #region t:30d
+Q @revenue t:[M-12..M-1]
 
 // Stage 4 - Sorted
 Q @revenue #customer top:10 -@revenue
 Q .orders top:100 -:amount
 
 // Stage 5 - Comparison
-Q @revenue ~Q vs Q-4
-Q @revenue #region ~M vs M-1
+Q @revenue t:Q vs t:Q-4
+Q @revenue #region t:M vs t:M-1
 
 // Stage 6 - Enterprise
-Q @revenue ?:amount>=$threshold ~[$start..$end]
-Q@orders @revenue ~Q-1 @t:signupDate !explain
+Q @revenue ?:amount>=$threshold t:[$start..$end]
+Q@orders @revenue t:Q-1 @t:signupDate !explain
 ```
 
 ---
@@ -345,7 +345,7 @@ explicit_pred   = ":" identifier comparator value
                 | ":" identifier set_op
                 | ":" identifier range_op ;
 
-comparator      = "=" | "!=" | ">" | ">=" | "<" | "<=" | "~~" ;
+comparator      = "=" | "!=" | ">" | ">=" | "<" | "<=" | "~" ;
 set_op          = [ "!" ] ":" "[" value_list "]" ;
 range_op        = ":" "[" value ".." value "]" ;
 null_check      = ":" identifier ( "!" | "?" ) ;
@@ -416,7 +416,7 @@ quarter         = "1" | "2" | "3" | "4" ;
 Generate LiquidConnect query. Output ONLY the query starting with Q.
 
 SYNTAX:
-Q @metric #dim ?filter ~time top:N ±sort vs period
+Q @metric #dim ?filter t:time top:N ±sort vs t:period
 
 VOCAB:
 Metrics: @revenue @orders @aov @customers
@@ -426,8 +426,8 @@ Named: ?enterprise ?active ?cancelled
 Entities: .customers .orders
 
 TIME:
-~D (today) ~W (week) ~M (month) ~Q (quarter) ~Y (year)
-~30d (last 30 days) ~Q-1 (last quarter) ~[M-12..M-1] (range)
+t:D (today) t:W (week) t:M (month) t:Q (quarter) t:Y (year)
+t:30d (last 30 days) t:Q-1 (last quarter) t:[M-12..M-1] (range)
 
 RULES:
 - Start with Q
@@ -442,8 +442,8 @@ EXAMPLES:
 "enterprise" → Q @revenue ?enterprise
 "segment ENT" → Q @revenue ?:segment="ENT"
 "top 10" → Q @revenue #customer top:10 -@revenue
-"last quarter" → Q @revenue ~Q-1
-"vs last year" → Q @revenue ~Q vs Q-4
+"last quarter" → Q @revenue t:Q-1
+"vs last year" → Q @revenue t:Q vs t:Q-4
 
 Question: {question}
 ```
@@ -454,9 +454,9 @@ Question: {question}
 
 | Old Syntax | v7 Syntax |
 |------------|-----------|
-| `~last_30_days` | `~30d` |
-| `~last_month` | `~M-1` (or alias `~last_month`) |
-| `~this_quarter` | `~Q` (or alias `~this_quarter`) |
+| `~last_30_days` | `t:30d` |
+| `~last_month` | `t:M-1` (or alias `t:last_month`) |
+| `~this_quarter` | `t:Q` (or alias `t:this_quarter`) |
 | `?:a="x" ?:b="y"` | `?:a="x"&:b="y"` |
 | `_current/_previous` | `_compare/_delta` |
 
@@ -476,9 +476,9 @@ v7 combines:
 │  LIQUIDCONNECT v7.0 - UNIFIED SPECIFICATION                         │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  Q @metric #dim ?filter ~time top:N ±sort vs period                 │
+│  Q @metric #dim ?filter t:time top:N ±sort vs t:period              │
 │                                                                     │
-│  TIME:    ~D ~W ~M ~Q ~Y | ~30d ~6M | ~Q-1 ~M-3 | ~[Q-4..Q-1]       │
+│  TIME:    t:D t:W t:M t:Q t:Y | t:30d t:6M | t:Q-1 t:M-3 | t:[Q-4..Q-1] │
 │  FILTER:  ?name | ?:field=val | ?a&b | ?a|b | ?!x                   │
 │  SORT:    -@revenue (metric) | +:name (entity)                      │
 │                                                                     │

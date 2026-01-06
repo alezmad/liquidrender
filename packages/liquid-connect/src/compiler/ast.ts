@@ -1,7 +1,7 @@
 // LiquidConnect Compiler - AST Types
 // Abstract Syntax Tree node definitions
 
-import type { Span, FilterOperator, BooleanOperator, SortDirection, QueryType } from '../types';
+import type { Span, DslOperator, BooleanOperator, SortDirection, QueryType } from '../types';
 
 /**
  * Base AST node interface
@@ -103,7 +103,7 @@ export interface NamedFilterNode extends ASTNode {
 export interface ExplicitFilterNode extends ASTNode {
   kind: 'ExplicitFilter';
   field: string;
-  operator: FilterOperator;
+  operator: DslOperator;
   value: ValueNode;
   negated: boolean;
 }

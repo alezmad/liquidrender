@@ -2,6 +2,16 @@
 // Abstract base class for SQL emitters
 
 import type { LiquidFlow, ResolvedFilter, ResolvedMetric } from '../liquidflow/types';
+import type { AggregationType } from '../types';
+
+/**
+ * Exhaustive check helper for type-safe switches
+ * Throws at runtime if an unhandled case is reached
+ * TypeScript will error at compile time if any case is missing
+ */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled aggregation type: ${value}`);
+}
 
 /**
  * Emitter result
@@ -297,25 +307,26 @@ export abstract class BaseEmitter {
 
   /**
    * Build aggregation expression
+   * Uses exhaustive switch for compile-time type safety
    */
-  protected buildAggregation(aggregation: string, expression: string): string {
+  protected buildAggregation(aggregation: AggregationType, expression: string): string {
     const funcs = this.getTraits().aggregateFunctions;
 
     switch (aggregation) {
-      case 'count':
+      case 'COUNT':
         return `${funcs.count}(${expression})`;
-      case 'count_distinct':
+      case 'COUNT_DISTINCT':
         return funcs.countDistinct(expression);
-      case 'sum':
+      case 'SUM':
         return `${funcs.sum}(${expression})`;
-      case 'avg':
+      case 'AVG':
         return `${funcs.avg}(${expression})`;
-      case 'min':
+      case 'MIN':
         return `${funcs.min}(${expression})`;
-      case 'max':
+      case 'MAX':
         return `${funcs.max}(${expression})`;
       default:
-        return `${aggregation.toUpperCase()}(${expression})`;
+        return assertNever(aggregation);
     }
   }
 

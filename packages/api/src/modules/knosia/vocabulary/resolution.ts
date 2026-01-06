@@ -14,6 +14,7 @@ import {
   knosiaVocabularyItem,
   knosiaUserVocabularyPrefs,
   knosiaWorkspace,
+  knosiaWorkspaceMembership,
 } from "@turbostarter/db/schema";
 import { db } from "@turbostarter/db/server";
 
@@ -67,35 +68,23 @@ export async function resolveVocabulary(
   userId: string,
   workspaceId: string
 ): Promise<ResolvedVocabulary> {
-  // Handle "default" workspace - return all org-level vocabulary
+  // Handle "default" workspace - find user's actual workspace
   if (workspaceId === "default") {
-    // Fetch all org-level vocabulary items (no specific workspace)
-    const dbItems = await db
-      .select()
-      .from(knosiaVocabularyItem)
-      .where(isNull(knosiaVocabularyItem.workspaceId));
+    // Find user's workspace via membership
+    const membership = await db.query.knosiaWorkspaceMembership.findFirst({
+      where: eq(knosiaWorkspaceMembership.userId, userId),
+    });
 
-    const bySlug = new Map<string, ResolvedVocabularyItem>();
-    for (const item of dbItems) {
-      bySlug.set(item.slug, {
-        id: item.id,
-        slug: item.slug,
-        canonicalName: item.canonicalName,
-        abbreviation: item.abbreviation,
-        type: item.type as "metric" | "dimension" | "entity" | "event",
-        category: item.category,
-        scope: "org",
-        definition: item.definition as ResolvedVocabularyItem["definition"],
-        suggestedForRoles: item.suggestedForRoles as string[] | null,
-        isFavorite: false,
-        recentlyUsedAt: null,
-        useCount: 0,
-      });
+    if (membership) {
+      // Found user's workspace - use it for resolution
+      return resolveVocabulary(userId, membership.workspaceId);
     }
 
+    // No workspace membership found - return empty
+    // (This means onboarding wasn't completed or user has no workspaces)
     return {
-      items: Array.from(bySlug.values()),
-      bySlug,
+      items: [],
+      bySlug: new Map(),
       favorites: [],
       recentlyUsed: [],
       synonyms: {},

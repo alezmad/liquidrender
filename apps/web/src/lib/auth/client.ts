@@ -5,7 +5,6 @@ export const authClient = createClient({
     headers: {
       "x-client-platform": "web-client",
     },
-    // Note: removed `throw: true` as it breaks client-side navigation
-    // Errors are now handled via response status checking
+    throw: true,
   },
 });

@@ -4,6 +4,13 @@ import { env } from "./env";
 
 import type { MonitoringProviderClientStrategy } from "../types";
 
+const isValidPosthogConfig =
+  env.NEXT_PUBLIC_POSTHOG_KEY &&
+  env.NEXT_PUBLIC_POSTHOG_KEY !== "notyet" &&
+  env.NEXT_PUBLIC_POSTHOG_HOST?.startsWith("http");
+
+let initialized = false;
+
 export const {
   captureException,
   identify,
@@ -11,9 +18,11 @@ export const {
   onRouterTransitionStart,
 } = {
   captureException: (exception) => {
+    if (!initialized) return;
     posthog.captureException(exception);
   },
   identify: <T extends { id: string }>(user: T | null) => {
+    if (!initialized) return;
     if (user) {
       posthog.identify(user.id);
     } else {
@@ -21,9 +30,11 @@ export const {
     }
   },
   initialize: () => {
+    if (!isValidPosthogConfig) return;
     posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
       api_host: env.NEXT_PUBLIC_POSTHOG_HOST,
     });
+    initialized = true;
   },
   onRouterTransitionStart: () => {
     /*  PostHog does not provide a way to capture router transitions yet */

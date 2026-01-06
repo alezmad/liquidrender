@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
+import { Suspense } from "react";
 
 import { env } from "./env";
 
@@ -15,7 +16,12 @@ const PageView = dynamic(
   },
 );
 
-if (typeof window !== "undefined") {
+const isValidPosthogConfig =
+  env.NEXT_PUBLIC_POSTHOG_KEY &&
+  env.NEXT_PUBLIC_POSTHOG_KEY !== "notyet" &&
+  env.NEXT_PUBLIC_POSTHOG_HOST?.startsWith("http");
+
+if (typeof window !== "undefined" && isValidPosthogConfig) {
   posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
     api_host: env.NEXT_PUBLIC_POSTHOG_HOST,
     person_profiles: "always",
@@ -27,10 +33,17 @@ if (typeof window !== "undefined") {
 
 export const { Provider, track, identify, reset } = {
   Provider: ({ children }) => {
+    // Skip PostHog wrapper entirely when not configured
+    if (!isValidPosthogConfig) {
+      return <>{children}</>;
+    }
+
     return (
       <PostHogProvider client={posthog}>
         {children}
-        <PageView />
+        <Suspense fallback={null}>
+          <PageView />
+        </Suspense>
       </PostHogProvider>
     );
   },

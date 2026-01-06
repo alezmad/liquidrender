@@ -4,9 +4,18 @@ import { env } from "./env";
 
 import type { MonitoringProviderServerStrategy } from "../types";
 
+const isValidPosthogConfig =
+  env.NEXT_PUBLIC_POSTHOG_KEY &&
+  env.NEXT_PUBLIC_POSTHOG_KEY !== "notyet" &&
+  env.NEXT_PUBLIC_POSTHOG_HOST?.startsWith("http");
+
 let posthogInstance: PostHog | null = null;
 
 export function getPostHogServer() {
+  if (!isValidPosthogConfig) {
+    return null;
+  }
+
   posthogInstance ??= new PostHog(env.NEXT_PUBLIC_POSTHOG_KEY, {
     host: env.NEXT_PUBLIC_POSTHOG_HOST,
     flushAt: 1,
@@ -19,6 +28,7 @@ export function getPostHogServer() {
 export const { captureException, initialize, onRequestError } = {
   captureException: (exception, extra = undefined) => {
     const posthog = getPostHogServer();
+    if (!posthog) return;
 
     const distinctId = typeof extra?.id === "string" ? extra.id : undefined;
     posthog.captureException(exception, distinctId, extra);
@@ -33,6 +43,7 @@ export const { captureException, initialize, onRequestError } = {
     }
 
     const posthog = getPostHogServer();
+    if (!posthog) return;
     let distinctId: string | undefined;
     if (request.headers.cookie) {
       const cookieString = Array.isArray(request.headers.cookie)

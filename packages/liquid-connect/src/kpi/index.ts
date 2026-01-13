@@ -23,3 +23,30 @@ export {
   type FilterCondition,
   type RecipeBuildOptions,
 } from '../liquidflow/recipe-builder';
+
+// ============================================================================
+// NEW: DSL-based KPI Compilation
+// ============================================================================
+
+// KPI Semantic Types (dialect-agnostic definitions)
+export {
+  type KPISemanticDefinition,
+  type SimpleKPIDefinition,
+  type RatioKPIDefinition,
+  type DerivedKPIDefinition,
+  type AggregationComponent,
+  type KPIFilter,
+  isSimpleKPI,
+  isRatioKPI,
+  isDerivedKPI,
+  validateKPIDefinition,
+} from './types';
+
+// KPI Compiler (DSL → SQL via emitter)
+export {
+  compileKPIFormula,
+  compileKPIExpression,
+  compileMultipleKPIs,
+  type CompileKPIOptions,
+  type CompileKPIResult,
+} from './compiler';

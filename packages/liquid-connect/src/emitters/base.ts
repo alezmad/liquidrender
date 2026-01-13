@@ -131,6 +131,10 @@ export interface AggregateFunctions {
   max: string;
   median?: string;
   percentile?: (field: string, p: number) => string;
+  stddev?: string;
+  variance?: string;
+  stringAgg?: (field: string, delimiter: string, orderBy?: string) => string;
+  arrayAgg?: (field: string, orderBy?: string) => string;
 }
 
 /**
@@ -325,6 +329,37 @@ export abstract class BaseEmitter {
         return `${funcs.min}(${expression})`;
       case 'MAX':
         return `${funcs.max}(${expression})`;
+      // v2 aggregations
+      case 'MEDIAN':
+        if (!funcs.median) throw new Error('Dialect does not support MEDIAN');
+        return `${funcs.median}(${expression})`;
+      case 'PERCENTILE_25':
+        if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+        return funcs.percentile(expression, 0.25);
+      case 'PERCENTILE_75':
+        if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+        return funcs.percentile(expression, 0.75);
+      case 'PERCENTILE_90':
+        if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+        return funcs.percentile(expression, 0.90);
+      case 'PERCENTILE_95':
+        if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+        return funcs.percentile(expression, 0.95);
+      case 'PERCENTILE_99':
+        if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+        return funcs.percentile(expression, 0.99);
+      case 'STDDEV':
+        if (!funcs.stddev) return `STDDEV(${expression})`;
+        return `${funcs.stddev}(${expression})`;
+      case 'VARIANCE':
+        if (!funcs.variance) return `VARIANCE(${expression})`;
+        return `${funcs.variance}(${expression})`;
+      case 'ARRAY_AGG':
+        if (!funcs.arrayAgg) return `ARRAY_AGG(${expression})`;
+        return funcs.arrayAgg(expression);
+      case 'STRING_AGG':
+        if (!funcs.stringAgg) return `STRING_AGG(${expression}, ',')`;
+        return funcs.stringAgg(expression, ',');
       default:
         return assertNever(aggregation);
     }

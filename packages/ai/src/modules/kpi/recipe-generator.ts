@@ -9,26 +9,51 @@ import type {
   CalculatedMetricRecipe,
   GenerateRecipeRequest,
   GenerateRecipeResponse,
+  KPIRecipe,
 } from "./types";
-import { CalculatedMetricRecipeSchema, COMMON_KPIS_BY_BUSINESS_TYPE } from "./types";
+import { CalculatedMetricRecipeSchema, KPIRecipeSchema, COMMON_KPIS_BY_BUSINESS_TYPE, type KPISemanticDefinitionType } from "./types";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 /**
+ * Input type for generateKPIRecipes - allows optional fields that have defaults
+ */
+export type GenerateRecipeInput = Omit<GenerateRecipeRequest, "useSchemaFirstGeneration" | "generateCommonKPIs"> & {
+  useSchemaFirstGeneration?: boolean;
+  generateCommonKPIs?: boolean;
+};
+
+/**
  * Generate KPI recipes using Claude
+ *
+ * Supports two modes:
+ * 1. Schema-First (recommended): Ask "what KPIs can you calculate from these columns?"
+ * 2. Legacy: Given a list of KPI names, try to map them to the schema
  */
 export async function generateKPIRecipes(
-  request: GenerateRecipeRequest,
+  input: GenerateRecipeInput,
   options: {
     model?: "haiku" | "sonnet";
     maxRecipes?: number;
   } = {}
 ): Promise<GenerateRecipeResponse> {
-  const { model = "haiku", maxRecipes = 10 } = options;
+  const { model = "haiku", maxRecipes = 20 } = options;
 
-  // Determine which KPIs to generate
+  // Apply defaults
+  const request: GenerateRecipeRequest = {
+    ...input,
+    useSchemaFirstGeneration: input.useSchemaFirstGeneration ?? false,
+    generateCommonKPIs: input.generateCommonKPIs ?? true,
+  };
+
+  // Use schema-first generation if enabled (recommended)
+  if (request.useSchemaFirstGeneration) {
+    return generateSchemaFirstKPIs(request, model, maxRecipes);
+  }
+
+  // Legacy mode: generate from predefined KPI list
   const kpisToGenerate = request.requestedKPIs?.length
     ? request.requestedKPIs
     : request.generateCommonKPIs
@@ -86,6 +111,377 @@ export async function generateKPIRecipes(
     averageConfidence,
     warnings: warnings.length > 0 ? warnings : undefined,
   };
+}
+
+/**
+ * Convert new KPIRecipe (DSL format) to legacy CalculatedMetricRecipe format.
+ *
+ * This enables backward compatibility while we transition to the DSL approach.
+ * The DSL definition is preserved in semanticDefinition.kpiDefinition for
+ * downstream compilation by the KPI compiler.
+ */
+function convertKPIRecipeToLegacy(recipe: KPIRecipe): CalculatedMetricRecipe {
+  const { kpiDefinition } = recipe;
+
+  // Build legacy semanticDefinition from DSL definition
+  // The expression field stores a placeholder - actual SQL is compiled later
+  let expression: string;
+  let aggregation: "SUM" | "AVG" | "COUNT" | "COUNT_DISTINCT" | "MIN" | "MAX" | undefined;
+
+  if (kpiDefinition.type === "simple") {
+    // Simple KPI: aggregation(expression)
+    expression = kpiDefinition.expression;
+    aggregation = kpiDefinition.aggregation;
+  } else if (kpiDefinition.type === "ratio") {
+    // Ratio KPI: Placeholder - will be compiled by KPI compiler
+    // Store a human-readable formula representation
+    const numExpr = kpiDefinition.numerator.expression;
+    const denomExpr = kpiDefinition.denominator.expression;
+    expression = `(${kpiDefinition.numerator.aggregation}(${numExpr})) / (${kpiDefinition.denominator.aggregation}(${denomExpr}))`;
+    if (kpiDefinition.multiplier) {
+      expression = `(${expression}) * ${kpiDefinition.multiplier}`;
+    }
+    // No single aggregation for ratio KPIs
+    aggregation = undefined;
+  } else if (kpiDefinition.type === "derived") {
+    // Derived KPI: expression with @metric references
+    expression = kpiDefinition.expression;
+    aggregation = undefined;
+  } else {
+    expression = "";
+    aggregation = undefined;
+  }
+
+  // Build filters array
+  const filters = "filters" in kpiDefinition ? kpiDefinition.filters : undefined;
+
+  // Build dependencies list (for derived KPIs)
+  const dependencies = kpiDefinition.type === "derived" ? kpiDefinition.dependencies : undefined;
+
+  return {
+    name: recipe.name,
+    description: recipe.description,
+    category: recipe.category as "revenue" | "growth" | "retention" | "engagement" | "efficiency" | "custom",
+    semanticDefinition: {
+      type: kpiDefinition.type === "ratio" ? "simple" : kpiDefinition.type, // Map ratio to simple for legacy
+      expression,
+      aggregation,
+      entity: kpiDefinition.entity,
+      timeField: kpiDefinition.timeField,
+      filters,
+      dependencies,
+      description: recipe.description,
+      format: recipe.format,
+      // CRITICAL: Store original DSL definition for compilation
+      // @ts-expect-error - Adding custom property for DSL compilation
+      _kpiDefinition: kpiDefinition,
+    },
+    businessType: recipe.businessType,
+    confidence: recipe.confidence,
+    feasible: recipe.feasible,
+    infeasibilityReason: recipe.infeasibilityReason,
+    requiredColumns: recipe.requiredColumns,
+  };
+}
+
+/**
+ * Hybrid KPI Generation with DSL Output
+ *
+ * Combines business relevance with schema feasibility using DSL definitions:
+ * 1. Start with KPIs that MATTER for this business type
+ * 2. Check which can be calculated from the available schema
+ * 3. Discover unique KPIs the data enables
+ * 4. Output structured DSL definitions (not raw SQL)
+ *
+ * The DSL definitions are compiled to SQL by the KPI compiler using
+ * dialect-specific emitters (DuckDB, PostgreSQL, etc.).
+ *
+ * Benefits:
+ * - Business-meaningful KPIs (not just technically possible)
+ * - 100% feasibility (constrained to actual columns)
+ * - Dialect-agnostic output (no SQL syntax errors)
+ * - Discovery of unique insights from the data
+ */
+async function generateSchemaFirstKPIs(
+  request: GenerateRecipeRequest,
+  model: "haiku" | "sonnet",
+  maxRecipes: number
+): Promise<GenerateRecipeResponse> {
+  const modelId =
+    model === "sonnet"
+      ? "claude-sonnet-4-5-20250929"
+      : "claude-3-5-haiku-20241022";
+
+  // Use pre-formatted enriched schema if available
+  const schemaMarkdown =
+    request.vocabularyContext.enrichedSchemaMarkdown ||
+    buildSchemaContext(request.vocabularyContext);
+
+  // Get business-relevant KPIs for this type
+  const businessKPIs = COMMON_KPIS_BY_BUSINESS_TYPE[request.businessType] || [];
+  const priorityKPIs = businessKPIs.slice(0, 15); // Top priority KPIs for this business
+
+  const prompt = `You are a senior data analyst helping a ${request.businessType} business understand their data.
+
+## Your Mission
+Generate the most BUSINESS-VALUABLE KPIs possible from the available data. Focus on metrics that executives, managers, and analysts actually use to make decisions.
+
+## Business Context: ${request.businessType.toUpperCase()}
+
+For a ${request.businessType} business, these KPIs typically matter most:
+${priorityKPIs.map((kpi, i) => `${i + 1}. ${kpi}`).join("\n")}
+
+## Available Data
+${schemaMarkdown}
+
+## Task
+
+**Part 1: Priority KPIs (${Math.min(maxRecipes - 5, 15)} KPIs)**
+From the priority list above, identify which KPIs can be calculated from the available data.
+
+**Part 2: Data-Driven Discovery (up to 5 KPIs)**
+Based on the unique columns available, suggest additional KPIs that would be valuable for this business but aren't in the standard list.
+
+## Output Format: DSL Definitions
+
+Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
+
+### KPI Definition Types:
+
+**1. Simple KPI** - Single aggregation:
+{
+  "name": "Total Revenue",
+  "description": "Total revenue from all orders",
+  "category": "revenue",
+  "kpiDefinition": {
+    "type": "simple",
+    "aggregation": "SUM",
+    "expression": "unit_price * quantity",
+    "entity": "order_details",
+    "timeField": "order_date"
+  },
+  "format": {"type": "currency", "decimals": 2},
+  "businessType": ["${request.businessType}"],
+  "confidence": 0.95,
+  "feasible": true,
+  "requiredColumns": [{"tableName": "order_details", "columnName": "unit_price", "purpose": "price component"}]
+}
+
+**2. Ratio KPI** - Numerator / Denominator (use for averages, rates, percentages):
+{
+  "name": "Average Order Value",
+  "description": "Average revenue per order",
+  "category": "revenue",
+  "kpiDefinition": {
+    "type": "ratio",
+    "numerator": {"aggregation": "SUM", "expression": "unit_price * quantity"},
+    "denominator": {"aggregation": "COUNT_DISTINCT", "expression": "order_id"},
+    "entity": "order_details",
+    "timeField": "order_date"
+  },
+  "format": {"type": "currency", "decimals": 2},
+  "businessType": ["${request.businessType}"],
+  "confidence": 0.95,
+  "feasible": true,
+  "requiredColumns": [...]
+}
+
+**3. Percentage KPI** - Use ratio with multiplier:
+{
+  "name": "Discount Rate",
+  "description": "Percentage of revenue discounted",
+  "category": "finance",
+  "kpiDefinition": {
+    "type": "ratio",
+    "numerator": {"aggregation": "SUM", "expression": "discount"},
+    "denominator": {"aggregation": "SUM", "expression": "unit_price * quantity"},
+    "multiplier": 100,
+    "entity": "order_details"
+  },
+  "format": {"type": "percent", "decimals": 1},
+  ...
+}
+
+**4. Filtered KPI** - Conditional aggregation with subquery:
+{
+  "name": "Repeat Purchase Rate",
+  "description": "Percentage of customers with more than one order",
+  "category": "retention",
+  "kpiDefinition": {
+    "type": "filtered",
+    "aggregation": "COUNT_DISTINCT",
+    "expression": "customer_id",
+    "subquery": {
+      "groupBy": "customer_id",
+      "having": "COUNT(*) > 1"
+    },
+    "entity": "orders"
+  },
+  "format": {"type": "percent", "decimals": 1},
+  ...
+}
+
+**5. Window KPI** - Running totals, period comparisons:
+{
+  "name": "Month-over-Month Growth",
+  "description": "Percentage growth compared to previous month",
+  "category": "growth",
+  "kpiDefinition": {
+    "type": "window",
+    "aggregation": "SUM",
+    "expression": "revenue",
+    "window": {
+      "partitionBy": [],
+      "orderBy": [{"field": "month", "direction": "asc"}],
+      "lag": {"offset": 1}
+    },
+    "outputExpression": "(current - lag) / NULLIF(lag, 0) * 100",
+    "entity": "monthly_revenue"
+  },
+  ...
+}
+
+**6. Case KPI** - Conditional value aggregation:
+{
+  "name": "Premium Revenue",
+  "description": "Revenue from premium category only",
+  "category": "revenue",
+  "kpiDefinition": {
+    "type": "case",
+    "aggregation": "SUM",
+    "cases": [
+      {"when": "category = 'premium'", "then": "amount"},
+      {"else": "0"}
+    ],
+    "entity": "orders"
+  },
+  ...
+}
+
+**7. Composite KPI** - Multi-table joins:
+{
+  "name": "Revenue per Segment",
+  "description": "Total revenue grouped by customer segment",
+  "category": "revenue",
+  "kpiDefinition": {
+    "type": "composite",
+    "aggregation": "SUM",
+    "expression": "o.amount",
+    "sources": [
+      {"alias": "o", "table": "orders"},
+      {"alias": "c", "table": "customers", "join": {"type": "LEFT", "on": "o.customer_id = c.id"}}
+    ],
+    "groupBy": ["c.segment"],
+    "entity": "orders"
+  },
+  ...
+}
+
+## CRITICAL RULES
+
+1. **NEVER write SQL syntax** - Use structured definitions only
+   - WRONG: "expression": "COUNT(DISTINCT customer_id)"
+   - RIGHT: "aggregation": "COUNT_DISTINCT", "expression": "customer_id"
+
+2. **expression = column(s) only** - No SQL functions in expressions
+   - WRONG: "expression": "SUM(price) / COUNT(*)"
+   - RIGHT: Use "type": "ratio" with numerator/denominator
+
+3. **Aggregation types**: SUM, AVG, COUNT, COUNT_DISTINCT, MIN, MAX
+   - These are converted to correct SQL by the compiler
+
+4. **ONLY use columns from the schema** - never invent column names
+
+5. **Use exact column names** from the schema
+
+6. **Confidence scoring**:
+   - 0.9-1.0: Perfect data fit
+   - 0.7-0.9: Good fit with minor assumptions
+   - 0.5-0.7: Proxy calculation
+
+7. **Skip if not feasible** - don't force KPIs that can't be calculated
+
+8. **Choose simplest type** - Prefer in this order: simple > ratio > filtered > window > case > composite
+   - Only use advanced types when simpler types cannot express the metric
+
+9. **Window KPIs require pre-aggregated data** - Window functions work best with time-series tables or views that already have period-level aggregation
+
+## Quality Check
+Before finalizing each KPI:
+- Is the definition type correct (simple vs ratio vs filtered vs window vs case vs composite)?
+- Are all column names from the schema?
+- Would an executive find this actionable?
+
+Return ONLY a valid JSON array. No markdown, no explanation.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: modelId,
+      max_tokens: 8000,
+      temperature: 0.3,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const content = response.content[0];
+    if (!content || content.type !== "text") {
+      throw new Error("No text content in response");
+    }
+
+    // Parse JSON array from response
+    const jsonText = content.text.trim();
+    const parsed = JSON.parse(jsonText);
+
+    if (!Array.isArray(parsed)) {
+      throw new Error("Expected JSON array of KPIs");
+    }
+
+    // Validate each recipe using new KPIRecipeSchema (DSL format)
+    // Then convert to legacy format for backward compatibility
+    const recipes: CalculatedMetricRecipe[] = [];
+    const warnings: string[] = [];
+
+    for (const item of parsed) {
+      try {
+        // Validate against new DSL-based schema
+        const validated = KPIRecipeSchema.parse(item);
+
+        // Convert to legacy format for backward compatibility
+        const legacyRecipe = convertKPIRecipeToLegacy(validated);
+        recipes.push(legacyRecipe);
+      } catch (e) {
+        const itemName = (item as { name?: string })?.name ?? "unknown";
+        warnings.push(`Invalid recipe "${itemName}": ${e}`);
+      }
+    }
+
+    // Calculate statistics
+    const feasibleRecipes = recipes.filter((r) => r.feasible);
+    const averageConfidence =
+      recipes.length > 0
+        ? recipes.reduce((sum, r) => sum + r.confidence, 0) / recipes.length
+        : 0;
+
+    console.log(`[SchemaFirstKPI] Generated ${recipes.length} KPIs (${feasibleRecipes.length} feasible)`);
+
+    return {
+      recipes,
+      totalGenerated: recipes.length,
+      feasibleCount: feasibleRecipes.length,
+      infeasibleCount: recipes.length - feasibleRecipes.length,
+      averageConfidence,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    };
+  } catch (error) {
+    console.error("[SchemaFirstKPI] Generation failed:", error);
+    return {
+      recipes: [],
+      totalGenerated: 0,
+      feasibleCount: 0,
+      infeasibleCount: 0,
+      averageConfidence: 0,
+      warnings: [`Schema-first generation failed: ${error}`],
+    };
+  }
 }
 
 /**

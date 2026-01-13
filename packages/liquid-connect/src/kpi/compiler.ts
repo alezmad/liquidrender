@@ -1,0 +1,503 @@
+/**
+ * KPI Formula Compiler v2.0
+ *
+ * Compiles all KPI semantic definitions to dialect-specific SQL.
+ */
+
+import type { BaseEmitter, DialectTraits } from '../emitters/base';
+import type {
+  KPISemanticDefinition,
+  SimpleKPIDefinition,
+  RatioKPIDefinition,
+  DerivedKPIDefinition,
+  FilteredAggregationKPIDefinition,
+  WindowKPIDefinition,
+  CaseKPIDefinition,
+  CompositeKPIDefinition,
+  AggregationComponent,
+  FilterCondition,
+  CompoundFilter,
+  KPIFilter,
+} from './types';
+import {
+  isSimpleKPI,
+  isRatioKPI,
+  isDerivedKPI,
+  isFilteredKPI,
+  isWindowKPI,
+  isCaseKPI,
+  isCompositeKPI,
+} from './types';
+
+export interface CompileKPIOptions {
+  schema?: string;
+  quoteIdentifiers?: boolean;
+  metricExpressions?: Record<string, string>;
+  includeComparison?: boolean;
+}
+
+export interface CompileKPIResult {
+  expression: string;
+  sql: string;
+  sourceTable: string;
+  joinedTables?: string[];
+  success: boolean;
+  error?: string;
+  columns?: string[];
+}
+
+export function compileKPIFormula(
+  definition: KPISemanticDefinition,
+  emitter: BaseEmitter,
+  options: CompileKPIOptions = {}
+): CompileKPIResult {
+  const traits = emitter.getTraits();
+  const { schema, quoteIdentifiers = true } = options;
+
+  try {
+    let expression: string;
+    let sql: string;
+    let joinedTables: string[] | undefined;
+    let columns: string[] = ['value'];
+
+    if (isSimpleKPI(definition)) {
+      expression = compileSimpleKPI(definition, traits);
+    } else if (isRatioKPI(definition)) {
+      expression = compileRatioKPI(definition, traits);
+    } else if (isDerivedKPI(definition)) {
+      expression = compileDerivedKPI(definition, options.metricExpressions || {});
+    } else if (isFilteredKPI(definition)) {
+      expression = compileFilteredKPI(definition, traits, schema, quoteIdentifiers);
+    } else if (isWindowKPI(definition)) {
+      const result = compileWindowKPI(definition, traits);
+      expression = result.expression;
+      columns = result.columns;
+    } else if (isCaseKPI(definition)) {
+      expression = compileCaseKPI(definition, traits);
+    } else if (isCompositeKPI(definition)) {
+      const result = compileCompositeKPI(definition, traits, schema, quoteIdentifiers);
+      return {
+        expression: result.expression,
+        sql: result.sql,
+        sourceTable: definition.entity,
+        joinedTables: result.joinedTables,
+        success: true,
+        columns: result.columns,
+      };
+    } else {
+      return {
+        expression: '',
+        sql: '',
+        sourceTable: '',
+        success: false,
+        error: `Unknown KPI type: ${(definition as any).type}`,
+      };
+    }
+
+    const sourceTable = definition.entity;
+    const tableName = formatTableName(sourceTable, schema, traits, quoteIdentifiers);
+    const whereClause = buildWhereClause(definition.filters, traits, quoteIdentifiers);
+
+    sql = buildFullQuery(expression, tableName, whereClause, columns);
+
+    return {
+      expression,
+      sql,
+      sourceTable,
+      success: true,
+      columns,
+    };
+  } catch (error) {
+    return {
+      expression: '',
+      sql: '',
+      sourceTable: definition.entity || '',
+      success: false,
+      error: error instanceof Error ? error.message : 'Compilation failed',
+    };
+  }
+}
+
+function compileSimpleKPI(def: SimpleKPIDefinition, traits: DialectTraits): string {
+  return buildAggregation(def.aggregation, def.expression, traits);
+}
+
+function compileRatioKPI(def: RatioKPIDefinition, traits: DialectTraits): string {
+  const numerator = buildAggregationComponent(def.numerator, traits);
+  const denominator = buildAggregationComponent(def.denominator, traits);
+  let expression = `${numerator} / NULLIF(${denominator}, 0)`;
+  if (def.multiplier && def.multiplier !== 1) {
+    expression = `(${expression}) * ${def.multiplier}`;
+  }
+  return expression;
+}
+
+function compileDerivedKPI(
+  def: DerivedKPIDefinition,
+  metricExpressions: Record<string, string>
+): string {
+  let expression = def.expression;
+  for (const dep of def.dependencies) {
+    const metricSql = metricExpressions[dep];
+    if (!metricSql) {
+      throw new Error(`Missing expression for referenced metric: @${dep}`);
+    }
+    expression = expression.replace(new RegExp(`@${dep}\\b`, 'g'), `(${metricSql})`);
+  }
+  const unresolvedMatch = expression.match(/@(\w+)/);
+  if (unresolvedMatch) {
+    throw new Error(`Unresolved metric reference: @${unresolvedMatch[1]}`);
+  }
+  return expression;
+}
+
+function compileFilteredKPI(
+  def: FilteredAggregationKPIDefinition,
+  traits: DialectTraits,
+  schema: string | undefined,
+  quoteIdentifiers: boolean
+): string {
+  const { aggregation, expression, subquery, entity } = def;
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  const groupByColumns = Array.isArray(subquery.groupBy)
+    ? subquery.groupBy.join(', ')
+    : subquery.groupBy;
+  const subqueryEntity = subquery.subqueryEntity || entity;
+  const tableName = schema
+    ? `${quote}${schema}${quote}.${quote}${subqueryEntity}${quote}`
+    : `${quote}${subqueryEntity}${quote}`;
+  const subquerySQL = `SELECT ${groupByColumns} FROM ${tableName} GROUP BY ${groupByColumns} HAVING ${subquery.having}`;
+  const mainAgg = buildAggregation(aggregation, expression, traits);
+  return `${mainAgg} /* SUBQUERY_FILTER: ${expression} IN (${subquerySQL}) */`;
+}
+
+function compileWindowKPI(
+  def: WindowKPIDefinition,
+  traits: DialectTraits
+): { expression: string; columns: string[] } {
+  const { aggregation, expression, window, outputExpression } = def;
+
+  if (!traits.supportsWindowFunctions) {
+    throw new Error('Dialect does not support window functions');
+  }
+
+  const partitionClause = window.partitionBy.length > 0
+    ? `PARTITION BY ${window.partitionBy.join(', ')}`
+    : '';
+  const orderClause = `ORDER BY ${window.orderBy.map(o => `${o.field} ${o.direction.toUpperCase()}`).join(', ')}`;
+
+  let frameClause = '';
+  switch (window.frame) {
+    case 'ROWS_UNBOUNDED_PRECEDING':
+    case 'ROWS_BETWEEN_UNBOUNDED_AND_CURRENT':
+      frameClause = 'ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW';
+      break;
+    case 'ROWS_N_PRECEDING':
+      if (!window.frameSize) throw new Error('ROWS_N_PRECEDING requires frameSize');
+      frameClause = `ROWS BETWEEN ${window.frameSize} PRECEDING AND CURRENT ROW`;
+      break;
+    case 'RANGE_UNBOUNDED_PRECEDING':
+      frameClause = 'RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW';
+      break;
+    case 'RANGE_INTERVAL_PRECEDING':
+      if (!window.frameInterval) throw new Error('RANGE_INTERVAL_PRECEDING requires frameInterval');
+      frameClause = `RANGE BETWEEN INTERVAL '${window.frameInterval}' PRECEDING AND CURRENT ROW`;
+      break;
+  }
+
+  const windowSpec = [partitionClause, orderClause, frameClause].filter(Boolean).join(' ');
+  const mainAgg = buildAggregation(aggregation, expression, traits);
+  const windowExpr = `${mainAgg} OVER (${windowSpec})`;
+
+  const columns: string[] = ['value'];
+  let lagExpr: string | null = null;
+  let leadExpr: string | null = null;
+
+  if (window.lag) {
+    const lagDefault = window.lag.default !== undefined ? `, ${window.lag.default}` : '';
+    lagExpr = `LAG(${mainAgg}, ${window.lag.offset}${lagDefault}) OVER (${windowSpec})`;
+    columns.push('lag_value');
+  }
+
+  if (window.lead) {
+    const leadDefault = window.lead.default !== undefined ? `, ${window.lead.default}` : '';
+    leadExpr = `LEAD(${mainAgg}, ${window.lead.offset}${leadDefault}) OVER (${windowSpec})`;
+    columns.push('lead_value');
+  }
+
+  let finalExpression: string;
+  if (outputExpression && (lagExpr || leadExpr)) {
+    finalExpression = outputExpression
+      .replace(/\bcurrent\b/g, `(${windowExpr})`)
+      .replace(/\blag\b/g, lagExpr ? `(${lagExpr})` : 'NULL')
+      .replace(/\blead\b/g, leadExpr ? `(${leadExpr})` : 'NULL');
+  } else {
+    finalExpression = windowExpr;
+  }
+
+  return { expression: finalExpression, columns };
+}
+
+function compileCaseKPI(def: CaseKPIDefinition, traits: DialectTraits): string {
+  const caseParts: string[] = [];
+  for (const c of def.cases) {
+    if ('when' in c) {
+      caseParts.push(`WHEN ${c.when} THEN ${c.then}`);
+    } else if ('else' in c) {
+      caseParts.push(`ELSE ${c.else}`);
+    }
+  }
+  const caseExpr = `CASE ${caseParts.join(' ')} END`;
+  return buildAggregation(def.aggregation, caseExpr, traits);
+}
+
+function compileCompositeKPI(
+  def: CompositeKPIDefinition,
+  traits: DialectTraits,
+  schema: string | undefined,
+  quoteIdentifiers: boolean
+): { expression: string; sql: string; joinedTables: string[]; columns: string[] } {
+  const { aggregation, expression, sources, groupBy } = def;
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  const aggExpr = buildAggregation(aggregation, expression, traits);
+
+  const selectParts: string[] = [];
+  const columns: string[] = [];
+
+  if (groupBy?.length) {
+    for (const col of groupBy) {
+      selectParts.push(col);
+      columns.push(col.includes('.') ? col.split('.')[1]! : col);
+    }
+  }
+
+  selectParts.push(`${aggExpr} AS ${quote}value${quote}`);
+  columns.push('value');
+
+  const primarySource = sources[0]!;
+  const primaryTable = schema
+    ? `${quote}${schema}${quote}.${quote}${primarySource.table}${quote}`
+    : `${quote}${primarySource.table}${quote}`;
+
+  let fromClause = `${primaryTable} AS ${quote}${primarySource.alias}${quote}`;
+  const joinedTables: string[] = [];
+
+  for (let i = 1; i < sources.length; i++) {
+    const source = sources[i]!;
+    if (!source.join) continue;
+
+    const joinTable = source.schema
+      ? `${quote}${source.schema}${quote}.${quote}${source.table}${quote}`
+      : schema
+        ? `${quote}${schema}${quote}.${quote}${source.table}${quote}`
+        : `${quote}${source.table}${quote}`;
+
+    fromClause += `\n${source.join.type} JOIN ${joinTable} AS ${quote}${source.alias}${quote} ON ${source.join.on}`;
+    joinedTables.push(source.table);
+  }
+
+  let sql = `SELECT ${selectParts.join(', ')}\nFROM ${fromClause}`;
+  if (groupBy?.length) {
+    sql += `\nGROUP BY ${groupBy.join(', ')}`;
+  }
+
+  return { expression: aggExpr, sql, joinedTables, columns };
+}
+
+function buildAggregation(
+  aggregationType: string,
+  expression: string,
+  traits: DialectTraits
+): string {
+  const funcs = traits.aggregateFunctions;
+
+  switch (aggregationType) {
+    case 'COUNT':
+      return `${funcs.count}(${expression})`;
+    case 'COUNT_DISTINCT':
+      return funcs.countDistinct(expression);
+    case 'SUM':
+      return `${funcs.sum}(${expression})`;
+    case 'AVG':
+      return `${funcs.avg}(${expression})`;
+    case 'MIN':
+      return `${funcs.min}(${expression})`;
+    case 'MAX':
+      return `${funcs.max}(${expression})`;
+    case 'MEDIAN':
+      if (!funcs.median) throw new Error('Dialect does not support MEDIAN');
+      return `${funcs.median}(${expression})`;
+    case 'PERCENTILE_25':
+    case 'PERCENTILE_75':
+    case 'PERCENTILE_90':
+    case 'PERCENTILE_95':
+    case 'PERCENTILE_99':
+      if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
+      const pValue = parseInt(aggregationType.split('_')[1]!) / 100;
+      return funcs.percentile(expression, pValue);
+    case 'STDDEV':
+      if (!funcs.stddev) return `STDDEV(${expression})`;
+      return `${funcs.stddev}(${expression})`;
+    case 'VARIANCE':
+      if (!funcs.variance) return `VARIANCE(${expression})`;
+      return `${funcs.variance}(${expression})`;
+    default:
+      return `${aggregationType}(${expression})`;
+  }
+}
+
+function buildAggregationComponent(
+  component: AggregationComponent,
+  traits: DialectTraits
+): string {
+  const agg = buildAggregation(component.aggregation, component.expression, traits);
+  if (component.filterCondition) {
+    return `${agg} FILTER (WHERE ${component.filterCondition})`;
+  }
+  return agg;
+}
+
+function buildWhereClause(
+  filters: FilterCondition[] | undefined,
+  traits: DialectTraits,
+  quoteIdentifiers: boolean
+): string | null {
+  if (!filters || filters.length === 0) return null;
+  const conditions = filters.map(f => buildFilterCondition(f, traits, quoteIdentifiers));
+  return conditions.join(' AND ');
+}
+
+function buildFilterCondition(
+  filter: FilterCondition,
+  traits: DialectTraits,
+  quoteIdentifiers: boolean
+): string {
+  if ('type' in filter && filter.type === 'compound') {
+    const compound = filter as CompoundFilter;
+    const subConditions = compound.conditions.map(c =>
+      buildFilterCondition(c, traits, quoteIdentifiers)
+    );
+    return `(${subConditions.join(` ${compound.operator} `)})`;
+  }
+
+  const simple = filter as KPIFilter;
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  const stringQuote = traits.stringQuote;
+  const field = `${quote}${simple.field}${quote}`;
+
+  switch (simple.operator) {
+    case 'IS NULL':
+      return `${field} IS NULL`;
+    case 'IS NOT NULL':
+      return `${field} IS NOT NULL`;
+    case 'IN':
+    case 'NOT IN':
+      if (!Array.isArray(simple.value)) throw new Error(`${simple.operator} requires array`);
+      const values = simple.value
+        .map(v => typeof v === 'string' ? `${stringQuote}${v}${stringQuote}` : v)
+        .join(', ');
+      return `${field} ${simple.operator} (${values})`;
+    case 'BETWEEN':
+      if (!Array.isArray(simple.value) || simple.value.length !== 2) {
+        throw new Error('BETWEEN requires array of two values');
+      }
+      return `${field} BETWEEN ${simple.value[0]} AND ${simple.value[1]}`;
+    default:
+      const formattedValue = typeof simple.value === 'string'
+        ? `${stringQuote}${simple.value}${stringQuote}`
+        : simple.value;
+      return `${field} ${simple.operator} ${formattedValue}`;
+  }
+}
+
+function formatTableName(
+  table: string,
+  schema: string | undefined,
+  traits: DialectTraits,
+  quoteIdentifiers: boolean
+): string {
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  if (schema) {
+    return `${quote}${schema}${quote}.${quote}${table}${quote}`;
+  }
+  return `${quote}${table}${quote}`;
+}
+
+function buildFullQuery(
+  expression: string,
+  tableName: string,
+  whereClause: string | null,
+  columns: string[]
+): string {
+  let additionalWhere: string | null = null;
+  let cleanExpression = expression;
+
+  const subqueryMatch = expression.match(/\/\* SUBQUERY_FILTER: (.+) \*\//);
+  if (subqueryMatch) {
+    additionalWhere = subqueryMatch[1]!;
+    cleanExpression = expression.replace(/\/\* SUBQUERY_FILTER: .+ \*\//, '').trim();
+  }
+
+  const selectExpr = columns.length === 1
+    ? `${cleanExpression} AS value`
+    : cleanExpression;
+
+  let sql = `SELECT ${selectExpr} FROM ${tableName}`;
+
+  const whereParts: string[] = [];
+  if (whereClause) whereParts.push(whereClause);
+  if (additionalWhere) whereParts.push(additionalWhere);
+
+  if (whereParts.length > 0) {
+    sql += ` WHERE ${whereParts.join(' AND ')}`;
+  }
+
+  return sql;
+}
+
+export function compileKPIExpression(
+  definition: KPISemanticDefinition,
+  emitter: BaseEmitter,
+  options: CompileKPIOptions = {}
+): string {
+  const result = compileKPIFormula(definition, emitter, options);
+  if (!result.success) {
+    throw new Error(result.error || 'KPI compilation failed');
+  }
+  return result.expression;
+}
+
+export function compileMultipleKPIs(
+  definitions: Array<{ slug: string; definition: KPISemanticDefinition }>,
+  emitter: BaseEmitter,
+  options: CompileKPIOptions = {}
+): { sql: string; columns: string[] } {
+  if (definitions.length === 0) {
+    throw new Error('No KPI definitions provided');
+  }
+
+  const traits = emitter.getTraits();
+  const { schema, quoteIdentifiers = true } = options;
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+
+  const entities = new Set(definitions.map(d => d.definition.entity));
+  if (entities.size > 1) {
+    throw new Error(`Cannot combine KPIs from different tables: ${[...entities].join(', ')}`);
+  }
+
+  const entity = definitions[0]!.definition.entity;
+  const tableName = formatTableName(entity, schema, traits, quoteIdentifiers);
+
+  const columns: string[] = [];
+  const selectParts: string[] = [];
+
+  for (const { slug, definition } of definitions) {
+    const expr = compileKPIExpression(definition, emitter, options);
+    selectParts.push(`${expr} AS ${quote}${slug}${quote}`);
+    columns.push(slug);
+  }
+
+  const sql = `SELECT ${selectParts.join(', ')} FROM ${tableName}`;
+
+  return { sql, columns };
+}

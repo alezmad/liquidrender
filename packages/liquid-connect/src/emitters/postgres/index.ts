@@ -97,8 +97,17 @@ export class PostgresEmitter extends BaseEmitter {
         avg: 'AVG',
         min: 'MIN',
         max: 'MAX',
-        median: undefined, // PostgreSQL uses percentile_cont
-        percentile: (field, p) => `PERCENTILE_CONT(${p}) WITHIN GROUP (ORDER BY ${field})`,
+        median: undefined, // PostgreSQL uses percentile_cont(0.5)
+        percentile: (field, p) =>
+          `PERCENTILE_CONT(${p}) WITHIN GROUP (ORDER BY ${field})`,
+        stddev: 'STDDEV_SAMP',
+        variance: 'VAR_SAMP',
+        stringAgg: (field, delimiter, orderBy) =>
+          orderBy
+            ? `STRING_AGG(${field}, '${delimiter}' ORDER BY ${orderBy})`
+            : `STRING_AGG(${field}, '${delimiter}')`,
+        arrayAgg: (field, orderBy) =>
+          orderBy ? `ARRAY_AGG(${field} ORDER BY ${orderBy})` : `ARRAY_AGG(${field})`,
       },
     };
   }

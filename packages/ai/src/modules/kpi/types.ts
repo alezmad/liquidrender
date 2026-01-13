@@ -82,8 +82,84 @@ export const FilterConditionSchema = z.object({
 export type FilterCondition = z.infer<typeof FilterConditionSchema>;
 
 /**
- * Semantic Metric Definition (aligned with LiquidConnect MetricDefinition)
- * This is what the LLM generates - database-agnostic metric definition
+ * Aggregation component for ratio KPIs.
+ * Used in numerator/denominator of ratio definitions.
+ */
+export const AggregationComponentSchema = z.object({
+  aggregation: AggregationType.describe("Aggregation function to apply"),
+  expression: z.string().describe("Column name or arithmetic expression (NO SQL functions)"),
+  filterCondition: z.string().optional().describe("Optional FILTER clause condition"),
+});
+
+export type AggregationComponentType = z.infer<typeof AggregationComponentSchema>;
+
+/**
+ * Simple KPI Definition - Single aggregation on a column/expression.
+ *
+ * Examples:
+ *   - Total Revenue: { type: "simple", aggregation: "SUM", expression: "unit_price * quantity" }
+ *   - Order Count: { type: "simple", aggregation: "COUNT", expression: "*" }
+ */
+export const SimpleKPIDefinitionSchema = z.object({
+  type: z.literal("simple"),
+  aggregation: AggregationType.describe("Aggregation function: SUM, AVG, COUNT, COUNT_DISTINCT, MIN, MAX"),
+  expression: z.string().describe("Column name or arithmetic expression (e.g., 'unit_price * quantity'). Use '*' for COUNT(*)"),
+  entity: z.string().describe("Source table name"),
+  timeField: z.string().optional().describe("Timestamp column for time-series"),
+  filters: z.array(FilterConditionSchema).optional().describe("WHERE conditions"),
+});
+
+/**
+ * Ratio KPI Definition - Numerator divided by denominator.
+ *
+ * Examples:
+ *   - Average Order Value: { numerator: {aggregation: "SUM", expression: "revenue"},
+ *                            denominator: {aggregation: "COUNT_DISTINCT", expression: "order_id"} }
+ *   - Discount Rate: { numerator: {...}, denominator: {...}, multiplier: 100 }
+ */
+export const RatioKPIDefinitionSchema = z.object({
+  type: z.literal("ratio"),
+  numerator: AggregationComponentSchema.describe("Numerator aggregation"),
+  denominator: AggregationComponentSchema.describe("Denominator aggregation"),
+  multiplier: z.number().optional().describe("Multiply result by this (e.g., 100 for percentages)"),
+  entity: z.string().describe("Source table name"),
+  timeField: z.string().optional().describe("Timestamp column for time-series"),
+  filters: z.array(FilterConditionSchema).optional().describe("WHERE conditions"),
+});
+
+/**
+ * Derived KPI Definition - References other KPIs/metrics.
+ *
+ * Examples:
+ *   - Profit Margin: { expression: "(@revenue - @cost) / @revenue * 100", dependencies: ["revenue", "cost"] }
+ */
+export const DerivedKPIDefinitionSchema = z.object({
+  type: z.literal("derived"),
+  expression: z.string().describe("Expression using @metric references (e.g., '@revenue - @cost')"),
+  dependencies: z.array(z.string()).describe("List of metric slugs this KPI depends on"),
+  entity: z.string().describe("Source table name (primary)"),
+  timeField: z.string().optional().describe("Timestamp column for time-series"),
+});
+
+/**
+ * NEW: KPI Semantic Definition using DSL types.
+ * This is what the LLM generates - dialect-agnostic KPI definition.
+ *
+ * The compiler transforms this to SQL using the appropriate emitter.
+ */
+export const KPISemanticDefinitionSchema = z.discriminatedUnion("type", [
+  SimpleKPIDefinitionSchema,
+  RatioKPIDefinitionSchema,
+  DerivedKPIDefinitionSchema,
+]);
+
+export type KPISemanticDefinitionType = z.infer<typeof KPISemanticDefinitionSchema>;
+
+/**
+ * LEGACY: Semantic Metric Definition (for backward compatibility)
+ * This is the old format that allowed raw SQL in expression field.
+ *
+ * @deprecated Use KPISemanticDefinitionSchema instead
  */
 export const SemanticMetricDefinitionSchema = z.object({
   // Core definition (LiquidConnect MetricDefinition fields)
@@ -118,8 +194,49 @@ export const SemanticMetricDefinitionSchema = z.object({
 export type SemanticMetricDefinition = z.infer<typeof SemanticMetricDefinitionSchema>;
 
 /**
- * Recipe for calculating a business metric
+ * NEW: Recipe for calculating a business KPI using DSL definitions.
+ * The LLM generates these structured definitions, which are then
+ * compiled to SQL by the KPI compiler using dialect-specific emitters.
+ */
+export const KPIRecipeSchema = z.object({
+  // Display metadata
+  name: z.string().describe("Business-friendly name (e.g., 'Average Order Value')"),
+  description: z.string().describe("What this KPI measures and why it matters"),
+  category: z.enum(["revenue", "growth", "retention", "engagement", "efficiency", "fulfillment", "inventory", "custom"]),
+
+  // DSL-based semantic definition (dialect-agnostic)
+  kpiDefinition: KPISemanticDefinitionSchema,
+
+  // Display formatting
+  format: z.object({
+    type: DisplayFormat,
+    decimals: z.number().optional(),
+    currency: z.string().optional(),
+    prefix: z.string().optional(),
+    suffix: z.string().optional(),
+  }).optional().describe("Display formatting"),
+
+  // Metadata for LLM confidence
+  businessType: z.array(z.string()).describe("Business types this KPI applies to"),
+  confidence: z.number().min(0).max(1).describe("LLM confidence (0-1)"),
+  feasible: z.boolean().describe("Whether this KPI can be calculated from available data"),
+  infeasibilityReason: z.string().optional().describe("Why KPI can't be calculated, if infeasible"),
+
+  // Column dependencies (informational)
+  requiredColumns: z.array(z.object({
+    tableName: z.string(),
+    columnName: z.string(),
+    purpose: z.string(),
+  })).optional().describe("Column dependencies"),
+});
+
+export type KPIRecipe = z.infer<typeof KPIRecipeSchema>;
+
+/**
+ * LEGACY: Recipe for calculating a business metric (backward compatibility)
  * Contains semantic definition + metadata for feasibility/confidence
+ *
+ * @deprecated Use KPIRecipeSchema for new KPI generation
  */
 export const CalculatedMetricRecipeSchema = z.object({
   // Display metadata
@@ -147,6 +264,36 @@ export const CalculatedMetricRecipeSchema = z.object({
 export type CalculatedMetricRecipe = z.infer<typeof CalculatedMetricRecipeSchema>;
 
 /**
+ * Semantic role for column classification
+ */
+export const SemanticRole = z.enum([
+  "measure", // Numeric values that can be summed/averaged
+  "id", // Unique identifier (primary key)
+  "foreign_key", // Reference to another table
+  "date", // Timestamp/date for time-series
+  "dimension", // Categorical values for grouping
+  "boolean", // True/false flags
+  "text", // Free-form text
+]);
+export type SemanticRole = z.infer<typeof SemanticRole>;
+
+/**
+ * Column statistics from profiling
+ */
+export const ColumnStatistics = z.object({
+  min: z.union([z.number(), z.string()]).optional(),
+  max: z.union([z.number(), z.string()]).optional(),
+  mean: z.number().optional(),
+  distinctCount: z.number().optional(),
+  nullPercentage: z.number().optional(),
+  topValues: z.array(z.object({
+    value: z.unknown(),
+    percentage: z.number(),
+  })).optional(),
+});
+export type ColumnStatistics = z.infer<typeof ColumnStatistics>;
+
+/**
  * Request to generate KPI recipes
  */
 export const GenerateRecipeRequestSchema = z.object({
@@ -154,18 +301,27 @@ export const GenerateRecipeRequestSchema = z.object({
   vocabularyContext: z.object({
     tables: z.array(z.object({
       name: z.string(),
+      rowCount: z.number().optional(),
       columns: z.array(z.object({
         name: z.string(),
         type: z.string(),
         semanticType: z.string().optional(),
         businessType: z.string().optional(),
+        // NEW: Enriched column fields for schema-first generation
+        semanticRole: SemanticRole.optional(),
+        aggregationHint: z.enum(["SUM", "AVG", "COUNT_DISTINCT", "COUNT", "MIN", "MAX"]).nullable().optional(),
+        statistics: ColumnStatistics.optional(),
       })),
     })),
     detectedMetrics: z.array(z.string()).optional(),
     detectedDimensions: z.array(z.string()).optional(),
+    // NEW: Pre-formatted markdown for schema-first prompt
+    enrichedSchemaMarkdown: z.string().optional(),
   }),
   requestedKPIs: z.array(z.string()).optional().describe("Specific KPI names to generate (e.g., ['MRR', 'Churn Rate'])"),
-  generateCommonKPIs: z.boolean().default(true).describe("Whether to auto-generate common KPIs for business type"),
+  generateCommonKPIs: z.boolean().optional().default(true).describe("Whether to auto-generate common KPIs for business type"),
+  // NEW: Use schema-first generation approach (recommended)
+  useSchemaFirstGeneration: z.boolean().optional().default(false).describe("Use schema-first approach instead of generic KPI list"),
 });
 
 export type GenerateRecipeRequest = z.infer<typeof GenerateRecipeRequestSchema>;
@@ -1042,3 +1198,175 @@ export const EXAMPLE_RECIPES: CalculatedMetricRecipe[] = [
     ],
   },
 ];
+
+// ============================================================================
+// Extended Aggregation Type Schema (v2)
+// ============================================================================
+
+export const ExtendedAggregationTypeSchema = z.enum([
+  'SUM', 'COUNT', 'COUNT_DISTINCT', 'AVG', 'MIN', 'MAX',
+  'MEDIAN', 'PERCENTILE_25', 'PERCENTILE_75', 'PERCENTILE_90', 'PERCENTILE_95', 'PERCENTILE_99',
+  'STDDEV', 'VARIANCE', 'ARRAY_AGG', 'STRING_AGG'
+]);
+
+// ============================================================================
+// Extended Filter Schemas (v2)
+// ============================================================================
+
+export const ExtendedFilterOperatorSchema = z.enum([
+  '=', '!=', '>', '>=', '<', '<=',
+  'IN', 'NOT IN', 'LIKE', 'NOT LIKE',
+  'IS NULL', 'IS NOT NULL', 'BETWEEN',
+  'EXISTS', 'NOT EXISTS'
+]);
+
+export const ExtendedSimpleFilterSchema = z.object({
+  field: z.string(),
+  operator: ExtendedFilterOperatorSchema,
+  value: z.unknown().optional(),
+});
+
+export const ExtendedCompoundFilterSchema: z.ZodType<any> = z.lazy(() =>
+  z.object({
+    type: z.literal('compound'),
+    operator: z.enum(['AND', 'OR']),
+    conditions: z.array(z.union([ExtendedSimpleFilterSchema, ExtendedCompoundFilterSchema])),
+  })
+);
+
+export const ExtendedFilterConditionSchema = z.union([ExtendedSimpleFilterSchema, ExtendedCompoundFilterSchema]);
+
+// ============================================================================
+// Extended KPI Base Schema (v2)
+// ============================================================================
+
+const ExtendedKPIBaseSchema = z.object({
+  entity: z.string(),
+  timeField: z.string().optional(),
+  filters: z.array(ExtendedFilterConditionSchema).optional(),
+  comparison: z.object({
+    period: z.enum(['previous_period', 'previous_year', 'previous_month', 'previous_week', 'custom']),
+    offsetDays: z.number().optional(),
+  }).optional(),
+});
+
+// ============================================================================
+// Extended KPI Definition Schemas (v2 - NEW TYPES)
+// ============================================================================
+
+// Filtered KPI (v2)
+export const FilteredKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('filtered'),
+  aggregation: ExtendedAggregationTypeSchema,
+  expression: z.string(),
+  subquery: z.object({
+    groupBy: z.union([z.string(), z.array(z.string())]),
+    having: z.string(),
+    subqueryEntity: z.string().optional(),
+  }),
+});
+
+// Window KPI (v2)
+export const WindowKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('window'),
+  aggregation: ExtendedAggregationTypeSchema,
+  expression: z.string(),
+  window: z.object({
+    partitionBy: z.array(z.string()),
+    orderBy: z.array(z.object({
+      field: z.string(),
+      direction: z.enum(['asc', 'desc']),
+    })),
+    frame: z.enum([
+      'ROWS_UNBOUNDED_PRECEDING',
+      'ROWS_BETWEEN_UNBOUNDED_AND_CURRENT',
+      'ROWS_N_PRECEDING',
+      'RANGE_UNBOUNDED_PRECEDING',
+      'RANGE_INTERVAL_PRECEDING',
+    ]).optional(),
+    frameSize: z.number().optional(),
+    frameInterval: z.string().optional(),
+    lag: z.object({
+      offset: z.number(),
+      default: z.unknown().optional(),
+    }).optional(),
+    lead: z.object({
+      offset: z.number(),
+      default: z.unknown().optional(),
+    }).optional(),
+  }),
+  outputExpression: z.string().optional(),
+});
+
+// Case KPI (v2)
+export const CaseKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('case'),
+  aggregation: ExtendedAggregationTypeSchema,
+  cases: z.array(z.union([
+    z.object({ when: z.string(), then: z.string() }),
+    z.object({ else: z.string() }),
+  ])),
+});
+
+// Composite KPI (v2)
+export const CompositeKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('composite'),
+  aggregation: ExtendedAggregationTypeSchema,
+  expression: z.string(),
+  sources: z.array(z.object({
+    alias: z.string(),
+    table: z.string(),
+    schema: z.string().optional(),
+    join: z.object({
+      type: z.enum(['INNER', 'LEFT', 'RIGHT', 'FULL']),
+      on: z.string(),
+    }).optional(),
+  })),
+  groupBy: z.array(z.string()).optional(),
+});
+
+// Extended Simple KPI (v2) - same as v1 but with extended aggregations
+export const ExtendedSimpleKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('simple'),
+  aggregation: ExtendedAggregationTypeSchema,
+  expression: z.string(),
+});
+
+// Extended Ratio KPI (v2)
+export const ExtendedRatioKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('ratio'),
+  numerator: z.object({
+    aggregation: ExtendedAggregationTypeSchema,
+    expression: z.string(),
+    filterCondition: z.string().optional(),
+  }),
+  denominator: z.object({
+    aggregation: ExtendedAggregationTypeSchema,
+    expression: z.string(),
+    filterCondition: z.string().optional(),
+  }),
+  multiplier: z.number().optional(),
+});
+
+// Extended Derived KPI (v2)
+export const ExtendedDerivedKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
+  type: z.literal('derived'),
+  expression: z.string(),
+  dependencies: z.array(z.string()),
+});
+
+// ============================================================================
+// Extended KPI Semantic Definition Union (v2)
+// ============================================================================
+
+export const ExtendedKPISemanticDefinitionSchema = z.discriminatedUnion('type', [
+  ExtendedSimpleKPIDefinitionSchema,
+  ExtendedRatioKPIDefinitionSchema,
+  ExtendedDerivedKPIDefinitionSchema,
+  FilteredKPIDefinitionSchema,
+  WindowKPIDefinitionSchema,
+  CaseKPIDefinitionSchema,
+  CompositeKPIDefinitionSchema,
+]);
+
+export type ExtendedKPISemanticDefinitionType = z.infer<typeof ExtendedKPISemanticDefinitionSchema>;

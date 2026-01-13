@@ -39,7 +39,19 @@ export type AggregationType =
   | 'COUNT_DISTINCT'
   | 'AVG'
   | 'MIN'
-  | 'MAX';
+  | 'MAX'
+  // Statistical aggregations (v2)
+  | 'MEDIAN'
+  | 'PERCENTILE_25'
+  | 'PERCENTILE_75'
+  | 'PERCENTILE_90'
+  | 'PERCENTILE_95'
+  | 'PERCENTILE_99'
+  | 'STDDEV'
+  | 'VARIANCE'
+  // Array aggregations (v2)
+  | 'ARRAY_AGG'
+  | 'STRING_AGG';
 
 /**
  * DSL operators - token-efficient syntax for LLM generation

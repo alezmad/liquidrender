@@ -51,6 +51,10 @@
     "./dashboard": {
       "types": "./dist/dashboard/index.d.ts",
       "import": "./dist/dashboard/index.js"
+    },
+    "./kpi": {
+      "types": "./dist/kpi/index.d.ts",
+      "import": "./dist/kpi/index.js"
     }
   },
   "scripts": {

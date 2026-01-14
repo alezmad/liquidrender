@@ -7,7 +7,7 @@
 
 export const SCHEMA_FIRST_GENERATION_PROMPT = {
   name: "schema-first-kpi-generation",
-  version: "1.1.0",
+  version: "1.2.0",
 
   /**
    * Template with placeholders for dynamic content.
@@ -210,6 +210,27 @@ Example requiredColumns:
   {"tableName": "order_details", "columnName": "quantity", "purpose": "quantity multiplier"}
 ]
 
+## KPI TERMINOLOGY GLOSSARY (use precisely)
+
+These terms have specific meanings - use them correctly:
+
+- **"Items per order"** → COUNT of line items (rows), NOT SUM of quantities
+  - Measures: How many different products in each order
+  - Use: COUNT(*) / COUNT(DISTINCT order_id)
+
+- **"Units per order"** → SUM of quantity column / orders
+  - Measures: Total units (pieces) purchased per order
+  - Use: SUM(quantity) / COUNT(DISTINCT order_id)
+
+- **"Products sold"** → COUNT DISTINCT of product_id
+
+- **"Discount rate"** → If discount column values are 0-1, it's ALREADY a percentage
+  - 0.05 means 5% off, NOT $0.05
+  - Use: AVG(discount) * 100 for average discount percentage
+  - Use: SUM(discount * price * quantity) / SUM(price * quantity) * 100 for weighted
+
+- **"Conversion rate"** → Usually (actions / opportunities) * 100
+
 ## CRITICAL RULES
 
 1. **NEVER write SQL syntax** - Use structured definitions only
@@ -275,6 +296,11 @@ Return ONLY a valid JSON array. No markdown, no explanation.`,
    * Changelog for tracking prompt evolution
    */
   changelog: [
+    {
+      version: "1.2.0",
+      date: "2026-01-14",
+      changes: "Added KPI TERMINOLOGY GLOSSARY to fix semantic confusion (items vs quantity, discount percentages)",
+    },
     {
       version: "1.1.0",
       date: "2026-01-14",

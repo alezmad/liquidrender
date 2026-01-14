@@ -43,6 +43,12 @@ export const deleteConnectionInputSchema = z.object({
   orgId: z.string(),
 });
 
+// Delete connection query schema (for typed query params)
+export const deleteConnectionQuerySchema = z.object({
+  orgId: z.string(),
+  preview: z.string().optional(),
+});
+
 // List connections schema
 export const getConnectionsInputSchema = z.object({
   orgId: z.string(),
@@ -62,6 +68,8 @@ export const connectionWithHealthSchema = z.object({
   sslEnabled: z.boolean().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // Schema info (from knosiaConnectionSchema table)
+  tablesCount: z.number().nullable(),
   // Health info (from joined table)
   health: z
     .object({

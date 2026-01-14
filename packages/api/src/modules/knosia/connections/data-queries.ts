@@ -124,6 +124,7 @@ export async function getWorkspaceConnections(
     sslEnabled: row.sslEnabled,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    tablesCount: null, // TODO: Join with knosiaConnectionSchema for this query
     health: row.healthStatus
       ? {
           status: row.healthStatus,

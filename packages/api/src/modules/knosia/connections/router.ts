@@ -1,15 +1,22 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 
 import { enforceAuth } from "../../../middleware";
 
-import { createConnection, deleteConnection, testDatabaseConnection } from "./mutations";
+import {
+  createConnection,
+  deleteConnection,
+  testDatabaseConnection,
+} from "./mutations";
 import { getConnection, getConnections } from "./queries";
 import {
   testConnectionInputSchema,
   createConnectionInputSchema,
   getConnectionsInputSchema,
   deleteConnectionInputSchema,
+  deleteConnectionQuerySchema,
 } from "./schemas";
+import { getCascadeImpact } from "../shared";
 
 import type { Session, User } from "@turbostarter/auth";
 
@@ -117,21 +124,32 @@ export const connectionsRouter = new Hono<{ Variables: Variables }>()
     return c.json(connection);
   })
 
-  // Delete connection
-  .delete("/:id", async (c) => {
-    const id = c.req.param("id");
-    const orgId = c.req.query("orgId");
+  // Delete connection (with preview support)
+  .delete(
+    "/:id",
+    zValidator("query", deleteConnectionQuerySchema),
+    async (c) => {
+      const id = c.req.param("id");
+      const { orgId, preview } = c.req.valid("query");
 
-    if (!orgId) {
-      return c.json({ error: "orgId query parameter is required" }, 400);
-    }
+      // Preview mode - return impact counts without deleting
+      if (preview === "true") {
+        const impact = await getCascadeImpact("connection", id);
+        return c.json({
+          preview: true,
+          resourceId: id,
+          ...impact,
+        });
+      }
 
-    const input = deleteConnectionInputSchema.parse({ id, orgId });
-    const result = await deleteConnection(input);
+      // Execute mode - perform deletion
+      const input = deleteConnectionInputSchema.parse({ id, orgId });
+      const result = await deleteConnection(input);
 
-    if (!result) {
-      return c.json({ error: "Connection not found" }, 404);
-    }
+      if (!result) {
+        return c.json({ error: "Connection not found" }, 404);
+      }
 
-    return c.json({ success: true, id: result.id });
-  });
+      return c.json({ success: true, id: result.id });
+    },
+  );

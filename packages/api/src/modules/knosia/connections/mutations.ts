@@ -242,6 +242,7 @@ export const createConnection = async (
     sslEnabled: result.connection.sslEnabled,
     createdAt: result.connection.createdAt,
     updatedAt: result.connection.updatedAt,
+    tablesCount: null, // Will be populated after schema extraction
     health: result.health
       ? {
           status: result.health.status,

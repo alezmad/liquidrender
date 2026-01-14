@@ -15,6 +15,7 @@ interface ApiConnection {
   database: string;
   schema: string | null;
   sslEnabled: boolean | null;
+  tablesCount: number | null;
   createdAt: string;
   updatedAt: string;
   health?: {
@@ -53,7 +54,7 @@ function mapToSummary(conn: ApiConnection): ConnectionSummary {
     host: conn.host,
     port: conn.port ?? 5432,
     database: conn.database,
-    tablesCount: 0, // Will be populated by analysis
+    tablesCount: conn.tablesCount ?? 0,
     status: conn.health?.status === "error" ? "error" : "connected",
     connectedAt: new Date(conn.createdAt),
   };

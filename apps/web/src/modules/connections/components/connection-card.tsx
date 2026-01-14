@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, Trash2, Activity } from "lucide-react";
+import { Database, Trash2, Activity, Table } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@turbostarter/ui-web/card";
 import { Badge } from "@turbostarter/ui-web/badge";
 import { Button } from "@turbostarter/ui-web/button";
@@ -64,6 +64,15 @@ export function ConnectionCard({
             <span className="font-mono text-xs">{connection.schema}</span>
           </div>
         )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Table className="h-3 w-3" />
+            Tables
+          </span>
+          <span className="font-medium">
+            {connection.tablesCount ?? "—"}
+          </span>
+        </div>
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <Activity className="h-3 w-3 text-muted-foreground" />
@@ -85,7 +94,7 @@ export function ConnectionCard({
             {connection.health.errorMessage}
           </div>
         )}
-        {connection.health?.latencyMs && (
+        {connection.health?.latencyMs != null && connection.health.latencyMs > 0 && (
           <div className="text-xs text-muted-foreground">
             Latency: {connection.health.latencyMs}ms
           </div>

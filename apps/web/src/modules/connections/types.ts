@@ -17,6 +17,7 @@ export interface ConnectionWithHealth {
   sslEnabled: boolean | null;
   createdAt: Date;
   updatedAt: Date;
+  tablesCount: number | null;
   health: {
     status: "connected" | "error" | "stale";
     lastCheck: Date | null;

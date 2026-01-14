@@ -1,20 +1,16 @@
 "use client";
 
-import { ConnectionCard } from "./connection-card";
-import { useDeleteConnection } from "../hooks/use-connections";
-import type { ConnectionWithHealth } from "../types";
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@turbostarter/ui-web/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+import { ConnectionCard } from "./connection-card";
+import {
+  previewDeleteConnection,
+  executeDeleteConnection,
+} from "../hooks/use-connections";
+import { useDestructiveAction } from "~/modules/common/hooks/use-destructive-action";
+import { DestructiveActionDialog } from "~/modules/common/destructive-action-dialog";
+import type { ConnectionWithHealth } from "../types";
 
 interface ConnectionsListProps {
   connections: ConnectionWithHealth[];
@@ -25,26 +21,31 @@ export function ConnectionsList({
   connections,
   orgId,
 }: ConnectionsListProps) {
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const deleteConnection = useDeleteConnection();
+  const queryClient = useQueryClient();
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-
-    try {
-      await deleteConnection.mutateAsync({ id: deleteId, orgId });
+  const deleteAction = useDestructiveAction({
+    previewFn: async ({ id }: { id: string }) => {
+      return previewDeleteConnection({ id, orgId });
+    },
+    executeFn: async ({ id }: { id: string }) => {
+      await executeDeleteConnection({ id, orgId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["connections", orgId] });
       toast.success("Connection deleted", {
         description: "The connection has been removed successfully.",
       });
-      setDeleteId(null);
-    } catch (error) {
+    },
+    onError: (error) => {
       toast.error("Failed to delete connection", {
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: error.message,
       });
-    }
-  };
+    },
+  });
 
-  const connectionToDelete = connections.find((c) => c.id === deleteId);
+  const connectionToDelete = connections.find(
+    (c) => c.id === (deleteAction.pendingParams as { id: string } | null)?.id,
+  );
 
   if (connections.length === 0) {
     return (
@@ -79,33 +80,23 @@ export function ConnectionsList({
           <ConnectionCard
             key={connection.id}
             connection={connection}
-            onDelete={setDeleteId}
-            isDeleting={deleteConnection.isPending}
+            onDelete={(id) => deleteAction.initiate({ id })}
+            isDeleting={deleteAction.isExecuting}
           />
         ))}
       </div>
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete connection?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>{connectionToDelete?.name}</strong>? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveActionDialog
+        open={deleteAction.isOpen}
+        onOpenChange={() => deleteAction.cancel()}
+        title="Delete connection?"
+        description={`Are you sure you want to delete "${connectionToDelete?.name}"? This action cannot be undone.`}
+        impacts={deleteAction.impacts}
+        isLoading={deleteAction.isLoadingPreview}
+        isExecuting={deleteAction.isExecuting}
+        onConfirm={deleteAction.confirm}
+        onCancel={deleteAction.cancel}
+      />
     </>
   );
 }

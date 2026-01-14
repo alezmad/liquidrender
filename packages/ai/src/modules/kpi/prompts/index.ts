@@ -13,6 +13,7 @@
 export { SCHEMA_FIRST_GENERATION_PROMPT } from "./schema-first-generation";
 export { SCHEMA_REPAIR_PROMPT } from "./schema-repair";
 export { COMPILE_REPAIR_PROMPT } from "./compile-repair";
+export { VALUE_VALIDATION_PROMPT, type KPIValueValidation } from "./value-validation";
 
 /**
  * Get prompt metadata for logging/tracing

@@ -20,7 +20,8 @@
     "./suggestions/*": "./src/modules/suggestions/*.ts",
     "./coach/*": "./src/modules/coach/*.ts",
     "./kpi": "./src/modules/kpi/index.ts",
-    "./kpi/*": "./src/modules/kpi/*.ts"
+    "./kpi/*": "./src/modules/kpi/*.ts",
+    "./kpi/prompts": "./src/modules/kpi/prompts/index.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",

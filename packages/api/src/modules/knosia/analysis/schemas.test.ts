@@ -5,7 +5,9 @@ import { getAnalysisSchema, runAnalysisSchema } from "./schemas";
 describe("runAnalysisSchema", () => {
   it("should accept valid input with alphanumeric connectionId", () => {
     const input = { connectionId: "connabc123def456" };
-    expect(runAnalysisSchema.parse(input)).toEqual(input);
+    const result = runAnalysisSchema.parse(input);
+    expect(result.connectionId).toEqual(input.connectionId);
+    expect(result.includeDataProfiling).toBe(false); // default value
   });
 
   it("should reject missing connectionId", () => {
@@ -32,9 +34,8 @@ describe("runAnalysisSchema", () => {
       extraField: "should be ignored",
     };
     const result = runAnalysisSchema.parse(input);
-    expect(result).toEqual({
-      connectionId: "connabc123def456",
-    });
+    expect(result.connectionId).toEqual("connabc123def456");
+    expect(result.includeDataProfiling).toBe(false); // default value applied
     expect(result).not.toHaveProperty("extraField");
   });
 });

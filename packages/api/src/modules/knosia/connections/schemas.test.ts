@@ -252,6 +252,7 @@ describe("createConnectionInputSchema", () => {
     username: "user",
     password: "pass123",
     orgId: "org_123",
+    userId: "user_456",
   };
 
   it("should accept valid input with required fields", () => {
@@ -401,6 +402,7 @@ describe("connectionWithHealthSchema", () => {
   const validConnection = {
     id: "conn_123",
     orgId: "org_456",
+    workspaceId: "ws_789",
     name: "Production DB",
     type: "postgres",
     host: "db.example.com",
@@ -410,6 +412,7 @@ describe("connectionWithHealthSchema", () => {
     sslEnabled: true,
     createdAt: now,
     updatedAt: now,
+    tablesCount: 10,
     health: null,
   };
 

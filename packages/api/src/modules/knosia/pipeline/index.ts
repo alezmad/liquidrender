@@ -4,6 +4,7 @@ import {
   knosiaConnection,
   knosiaAnalysis,
   knosiaWorkspaceCanvas,
+  knosiaConnectionSchema,
 } from "@turbostarter/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -173,6 +174,30 @@ export async function runKnosiaPipeline(
         schema: connection.schema || "public",
       },
     );
+
+    // Step 5.1: Save extracted schema to knosiaConnectionSchema
+    const schemaSnapshot = {
+      tables: extractedSchema.tables.map((t) => ({
+        name: t.name,
+        columns: t.columns.map((c) => ({
+          name: c.name,
+          type: c.dataType,
+          nullable: !c.isNotNull,
+          primaryKey: c.isPrimaryKey || undefined,
+          foreignKey: c.references
+            ? { table: c.references.table, column: c.references.column }
+            : undefined,
+        })),
+      })),
+    };
+
+    await db.insert(knosiaConnectionSchema).values({
+      connectionId,
+      schemaSnapshot,
+      tablesCount: extractedSchema.tables.length,
+      extractedAt: new Date(),
+      version: 1,
+    });
 
     // Step 5.5: Optional profiling (V2)
     let profilingData;

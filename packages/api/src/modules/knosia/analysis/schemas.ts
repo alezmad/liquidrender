@@ -42,6 +42,7 @@ export interface StepEvent {
   metrics?: {
     total: number;
     feasible: number;
+    stored?: number; // Number of KPIs stored in vocabulary
     categories: string[];
   };
 }

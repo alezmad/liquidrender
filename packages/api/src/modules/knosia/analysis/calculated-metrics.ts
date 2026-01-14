@@ -17,11 +17,8 @@
  */
 
 import type { DetectedVocabulary, ExtractedSchema, ProfilingData } from "@repo/liquid-connect/uvb";
-import { generateKPIRecipes } from "@turbostarter/ai/kpi";
-import type {
-  CalculatedMetricRecipe,
-  GenerateRecipeRequest,
-} from "@turbostarter/ai/kpi";
+import { generateKPIRecipes, type GenerateRecipeInput } from "@turbostarter/ai/kpi";
+import type { CalculatedMetricRecipe } from "@turbostarter/ai/kpi";
 import { db } from "@turbostarter/db/server";
 import { knosiaCalculatedMetric } from "@turbostarter/db/schema/knosia";
 import { generateId } from "@turbostarter/shared/utils";
@@ -39,7 +36,7 @@ export interface EnrichedVocabulary extends DetectedVocabulary {
 function schemaToVocabularyContext(
   schema: ExtractedSchema,
   vocabulary: DetectedVocabulary
-): GenerateRecipeRequest["vocabularyContext"] {
+): GenerateRecipeInput["vocabularyContext"] {
   return {
     tables: schema.tables.map((table) => ({
       name: table.name,
@@ -133,7 +130,7 @@ export async function enrichVocabularyWithCalculatedMetrics(
     const vocabularyContext = schemaToVocabularyContext(schema, vocabulary);
 
     // Generate KPI recipes
-    const request: GenerateRecipeRequest = {
+    const request: GenerateRecipeInput = {
       businessType: businessType.toLowerCase().replace(/[^a-z]/g, ""),
       vocabularyContext,
       generateCommonKPIs: true,
@@ -223,7 +220,7 @@ function buildEnhancedVocabularyContext(
   vocabulary: DetectedVocabulary,
   _profilingData: ProfilingData | null,
   schema: ExtractedSchema
-): GenerateRecipeRequest["vocabularyContext"] {
+): GenerateRecipeInput["vocabularyContext"] {
   // Start with base context from schema + vocabulary
   const baseContext = schemaToVocabularyContext(schema, vocabulary);
 

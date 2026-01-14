@@ -418,7 +418,7 @@ export async function* runAnalysis(
     };
 
     // ────────────────────────────────────────────────────────────────
-    // Step 4.5: Generate Calculated Metrics
+    // Step 4.5: Generate KPIs (stored in unified vocabulary)
     // ────────────────────────────────────────────────────────────────
 
     yield {
@@ -426,55 +426,48 @@ export async function* runAnalysis(
       data: {
         step: 4.5,
         status: "started",
-        label: "Generating business metrics",
+        label: "Generating business KPIs",
         detail: "Analyzing vocabulary to generate calculated KPIs...",
       },
     };
 
     try {
-      const { generateAndStoreCalculatedMetrics } = await import("./calculated-metrics");
+      const { generateAndStoreKPIs } = await import("../vocabulary/kpi-generation");
 
-      // Get workspace ID for metrics storage (use provided workspaceId or lookup from connection)
-      let metricsWorkspaceId = workspaceId;
-      if (!metricsWorkspaceId) {
-        const conn = await db
+      // Get workspace ID for KPI storage (use provided workspaceId or lookup from connection)
+      let kpiWorkspaceId = workspaceId;
+      let kpiOrgId = connection.orgId;
+
+      if (!kpiWorkspaceId) {
+        const workspace = await db
           .select()
-          .from(knosiaConnection)
-          .where(eq(knosiaConnection.id, connectionId))
+          .from(knosiaWorkspace)
+          .where(eq(knosiaWorkspace.orgId, connection.orgId))
           .limit(1);
-
-        if (conn[0]) {
-          const workspace = await db
-            .select()
-            .from(knosiaWorkspace)
-            .where(eq(knosiaWorkspace.orgId, conn[0].orgId))
-            .limit(1);
-          metricsWorkspaceId = workspace[0]?.id ?? null;
-        }
+        kpiWorkspaceId = workspace[0]?.id ?? null;
       }
 
       // Skip if no workspace available
-      if (!metricsWorkspaceId) {
-        console.warn("[Analysis] Skipping calculated metrics - no workspace ID available");
+      if (!kpiWorkspaceId) {
+        console.warn("[Analysis] Skipping KPI generation - no workspace ID available");
         throw new Error("No workspace ID available");
       }
 
-      const calculatedMetricsResult = await generateAndStoreCalculatedMetrics({
+      const kpiResult = await generateAndStoreKPIs({
         detectedVocabulary: detected,
         profilingData,
         businessType: businessType.detected || "unknown",
         extractedSchema: schema,
-        connectionId,
-        workspaceId: metricsWorkspaceId,
-        analysisId: analysis.id,
+        orgId: kpiOrgId,
+        workspaceId: kpiWorkspaceId,
       });
 
       // Update analysis record
       await db
         .update(knosiaAnalysis)
         .set({
-          calculatedMetricsGenerated: calculatedMetricsResult.totalGenerated,
-          calculatedMetricsFeasible: calculatedMetricsResult.feasibleCount,
+          calculatedMetricsGenerated: kpiResult.totalGenerated,
+          calculatedMetricsFeasible: kpiResult.feasibleCount,
         })
         .where(eq(knosiaAnalysis.id, analysis.id));
 
@@ -483,25 +476,26 @@ export async function* runAnalysis(
         data: {
           step: 4.5,
           status: "completed",
-          label: "Metrics generated",
-          detail: `Generated ${calculatedMetricsResult.totalGenerated} calculated metrics (${calculatedMetricsResult.feasibleCount} feasible)`,
+          label: "KPIs generated",
+          detail: `Generated ${kpiResult.totalGenerated} KPIs (${kpiResult.feasibleCount} feasible, ${kpiResult.storedCount} stored)`,
           metrics: {
-            total: calculatedMetricsResult.totalGenerated,
-            feasible: calculatedMetricsResult.feasibleCount,
-            categories: calculatedMetricsResult.categories,
+            total: kpiResult.totalGenerated,
+            feasible: kpiResult.feasibleCount,
+            stored: kpiResult.storedCount,
+            categories: kpiResult.categories,
           },
         },
       };
     } catch (error) {
-      // Graceful degradation: analysis continues without calculated metrics
-      console.error("[Analysis] Failed to generate calculated metrics:", error);
+      // Graceful degradation: analysis continues without KPIs
+      console.error("[Analysis] Failed to generate KPIs:", error);
 
       yield {
         event: "step",
         data: {
           step: 4.5,
           status: "warning",
-          label: "Metric generation skipped",
+          label: "KPI generation skipped",
           detail: error instanceof Error ? error.message : "LLM unavailable",
         },
       };

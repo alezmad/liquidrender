@@ -319,30 +319,42 @@ cd ~/Desktop/liquidgym/infra
 docker compose --profile loader up -d   # Loads Northwind, Pagila, Chinook, AdventureWorks
 ```
 
-### Running the Test
+### Running the Tests
 
 ```bash
-# Full pipeline test with Northwind
+# Northwind - B2B Trading (14 tables, ecommerce KPIs)
 pnpm with-env pnpm tsx packages/api/scripts/test-full-onboarding-pipeline.ts
+
+# Pagila - DVD Rental (22 tables, subscription KPIs)
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline-pagila.ts
+
+# Chinook - Music Store (11 tables, ecommerce KPIs)
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline-chinook.ts
 ```
 
 ### What It Tests
 
-1. **Cleanup** - Deletes existing Northwind connection and related data
+1. **Cleanup** - Deletes existing connection and related data
 2. **Connection** - Creates new database connection record
 3. **Schema Extraction** - Uses DuckDB Universal Adapter to extract tables/columns
 4. **Profiling** - Analyzes data distributions, cardinality, null rates
 5. **Vocabulary Detection** - Applies hard rules to identify metrics/dimensions
-6. **KPI Generation** - Uses AI to generate business KPIs with validation + repair pipeline
+6. **KPI Generation** - AI generates business KPIs with validation + repair pipeline
+
+### Expected Results
+
+| Database | Tables | First-Shot | Repaired | Final Success |
+|----------|--------|------------|----------|---------------|
+| Northwind | 14 | 90% | 10% | 100% |
+| Pagila | 22 | 100% | 0% | 100% |
+| Chinook | 11 | 80% | 20% | 100% |
 
 ### Verifying Tracing
 
-The test outputs trace data for failed KPIs:
-- Prompt name and version (e.g., `schema-repair v1.0.0`)
+The test outputs trace data for repairs:
+- Prompt name and version (e.g., `schema-repair v1.2.0`)
 - Latency in milliseconds
 - Token counts (in/out)
-
-Expected output shows ~60% success rate with repair attempts logged.
 
 ### Related Scripts
 

@@ -69,6 +69,8 @@ export class PostgresEmitter extends BaseEmitter {
       supportsLimitOffset: true,
       supportsWindowFunctions: true,
       supportsCTE: true,
+      supportsFilterClause: true,
+      castToFloat: '::float',
       dateFunctions: {
         currentDate: 'CURRENT_DATE',
         currentTimestamp: 'CURRENT_TIMESTAMP',

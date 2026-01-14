@@ -100,6 +100,12 @@ export interface DialectTraits {
   /** Supports CTEs */
   supportsCTE: boolean;
 
+  /** Supports FILTER (WHERE ...) clause for aggregates (PostgreSQL/DuckDB yes, MySQL no) */
+  supportsFilterClause: boolean;
+
+  /** Cast expression for float division (e.g., "::float", " * 1.0") */
+  castToFloat: string;
+
   /** Date/time function names */
   dateFunctions: DateFunctions;
 

@@ -27,6 +27,8 @@ export class DuckDBEmitter extends BaseEmitter {
       supportsLimitOffset: true,
       supportsWindowFunctions: true,
       supportsCTE: true,
+      supportsFilterClause: true,
+      castToFloat: '::DOUBLE',
       dateFunctions: {
         currentDate: 'CURRENT_DATE',
         currentTimestamp: 'CURRENT_TIMESTAMP',

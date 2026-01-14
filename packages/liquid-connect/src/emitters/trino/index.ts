@@ -27,6 +27,8 @@ export class TrinoEmitter extends BaseEmitter {
       supportsLimitOffset: true,
       supportsWindowFunctions: true,
       supportsCTE: true,
+      supportsFilterClause: true,
+      castToFloat: ' * 1.0',  // Trino: CAST(x AS DOUBLE) or multiply by 1.0
       dateFunctions: {
         currentDate: 'CURRENT_DATE',
         currentTimestamp: 'CURRENT_TIMESTAMP',

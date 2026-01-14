@@ -57,7 +57,10 @@ describe('KPI Compiler v2.0', () => {
       const result = compileKPIFormula(def, emitter);
 
       expect(result.success).toBe(true);
-      expect(result.expression).toContain('SUM(amount) / NULLIF(COUNT(DISTINCT order_id), 0)');
+      // Should have proper division with type casting for decimal result
+      expect(result.expression).toContain('SUM(amount)');
+      expect(result.expression).toContain('NULLIF(COUNT(DISTINCT order_id), 0)');
+      expect(result.expression).toMatch(/::(float|DOUBLE)| \* 1\.0/); // Dialect-specific cast
     });
 
     it('applies multiplier for percentage', () => {
@@ -171,8 +174,8 @@ describe('KPI Compiler v2.0', () => {
       const result = compileKPIFormula(def, emitter);
 
       expect(result.success).toBe(true);
-      // Should calculate (filtered / total) * 100
-      expect(result.expression).toContain('::float');
+      // Should calculate (filtered / total) * 100 with dialect-specific cast
+      expect(result.expression).toMatch(/::(float|DOUBLE)| \* 1\.0/); // PostgreSQL, DuckDB, or Trino
       expect(result.expression).toContain('NULLIF');
       expect(result.expression).toContain('* 100');
       // Should have both filtered count and total count

@@ -125,9 +125,11 @@ function compileSimpleKPI(def: SimpleKPIDefinition, traits: DialectTraits): stri
 function compileRatioKPI(def: RatioKPIDefinition, traits: DialectTraits): string {
   const numerator = buildAggregationComponent(def.numerator, traits);
   const denominator = buildAggregationComponent(def.denominator, traits);
-  let expression = `${numerator} / NULLIF(${denominator}, 0)`;
+  // Cast to float for proper decimal division (PostgreSQL: 5/2=2, but 5.0/2=2.5)
+  const castExpr = traits.castToFloat || '::float';
+  let expression = `(${numerator}${castExpr} / NULLIF(${denominator}, 0))`;
   if (def.multiplier && def.multiplier !== 1) {
-    expression = `(${expression}) * ${def.multiplier}`;
+    expression = `${expression} * ${def.multiplier}`;
   }
   return expression;
 }
@@ -180,7 +182,8 @@ function compileFilteredKPI(
   // e.g., (filtered_count / total_count) * 100
   if (percentOf) {
     const totalAgg = buildAggregation(aggregation, percentOf, traits);
-    return `(${filteredAgg}::float / NULLIF(${totalAgg}, 0)) * 100`;
+    const castExpr = traits.castToFloat || '::float';
+    return `(${filteredAgg}${castExpr} / NULLIF(${totalAgg}, 0)) * 100`;
   }
 
   return filteredAgg;
@@ -367,11 +370,18 @@ function buildAggregationComponent(
   component: AggregationComponent,
   traits: DialectTraits
 ): string {
-  const agg = buildAggregation(component.aggregation, component.expression, traits);
   if (component.filterCondition) {
-    return `${agg} FILTER (WHERE ${component.filterCondition})`;
+    // Use FILTER clause if supported (PostgreSQL, DuckDB), else CASE WHEN (MySQL)
+    if (traits.supportsFilterClause) {
+      const agg = buildAggregation(component.aggregation, component.expression, traits);
+      return `${agg} FILTER (WHERE ${component.filterCondition})`;
+    } else {
+      // Fallback for MySQL: use CASE WHEN inside aggregation
+      const filteredExpr = `CASE WHEN ${component.filterCondition} THEN ${component.expression} END`;
+      return buildAggregation(component.aggregation, filteredExpr, traits);
+    }
   }
-  return agg;
+  return buildAggregation(component.aggregation, component.expression, traits);
 }
 
 function buildWhereClause(
@@ -446,27 +456,14 @@ function buildFullQuery(
   whereClause: string | null,
   columns: string[]
 ): string {
-  let additionalWhere: string | null = null;
-  let cleanExpression = expression;
-
-  const subqueryMatch = expression.match(/\/\* SUBQUERY_FILTER: (.+) \*\//);
-  if (subqueryMatch) {
-    additionalWhere = subqueryMatch[1]!;
-    cleanExpression = expression.replace(/\/\* SUBQUERY_FILTER: .+ \*\//, '').trim();
-  }
-
   const selectExpr = columns.length === 1
-    ? `${cleanExpression} AS value`
-    : cleanExpression;
+    ? `${expression} AS value`
+    : expression;
 
   let sql = `SELECT ${selectExpr} FROM ${tableName}`;
 
-  const whereParts: string[] = [];
-  if (whereClause) whereParts.push(whereClause);
-  if (additionalWhere) whereParts.push(additionalWhere);
-
-  if (whereParts.length > 0) {
-    sql += ` WHERE ${whereParts.join(' AND ')}`;
+  if (whereClause) {
+    sql += ` WHERE ${whereClause}`;
   }
 
   return sql;

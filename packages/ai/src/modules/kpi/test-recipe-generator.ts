@@ -4,7 +4,7 @@
  * Run with: npx tsx packages/ai/src/modules/kpi/test-recipe-generator.ts
  */
 
-import { generateKPIRecipes, validateRecipe } from "./recipe-generator";
+import { generateKPIRecipes, validateRecipe, type GenerateRecipeInput } from "./recipe-generator";
 import type { GenerateRecipeRequest } from "./types";
 
 /**
@@ -96,7 +96,7 @@ const ecommerceSampleSchema: GenerateRecipeRequest["vocabularyContext"] = {
 async function testSaaSKPIs() {
   console.log("\n===== Test 1: Generate SaaS KPIs =====\n");
 
-  const request: GenerateRecipeRequest = {
+  const request: GenerateRecipeInput = {
     businessType: "saas",
     vocabularyContext: saasSampleSchema,
     requestedKPIs: [
@@ -179,7 +179,7 @@ async function testSaaSKPIs() {
 async function testEcommerceKPIs() {
   console.log("\n===== Test 2: Generate E-commerce KPIs =====\n");
 
-  const request: GenerateRecipeRequest = {
+  const request: GenerateRecipeInput = {
     businessType: "ecommerce",
     vocabularyContext: ecommerceSampleSchema,
     requestedKPIs: [
@@ -225,7 +225,7 @@ async function testEcommerceKPIs() {
 async function testAutoGenerateKPIs() {
   console.log("\n===== Test 3: Auto-generate Common SaaS KPIs =====\n");
 
-  const request: GenerateRecipeRequest = {
+  const request: GenerateRecipeInput = {
     businessType: "saas",
     vocabularyContext: saasSampleSchema,
     generateCommonKPIs: true,

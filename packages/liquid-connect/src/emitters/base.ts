@@ -129,7 +129,7 @@ export interface AggregateFunctions {
   avg: string;
   min: string;
   max: string;
-  median?: string;
+  median?: string | ((field: string) => string);
   percentile?: (field: string, p: number) => string;
   stddev?: string;
   variance?: string;
@@ -332,7 +332,9 @@ export abstract class BaseEmitter {
       // v2 aggregations
       case 'MEDIAN':
         if (!funcs.median) throw new Error('Dialect does not support MEDIAN');
-        return `${funcs.median}(${expression})`;
+        return typeof funcs.median === 'function'
+          ? funcs.median(expression)
+          : `${funcs.median}(${expression})`;
       case 'PERCENTILE_25':
         if (!funcs.percentile) throw new Error('Dialect does not support PERCENTILE');
         return funcs.percentile(expression, 0.25);

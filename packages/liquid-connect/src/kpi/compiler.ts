@@ -326,7 +326,9 @@ function buildAggregation(
       return `${funcs.max}(${expression})`;
     case 'MEDIAN':
       if (!funcs.median) throw new Error('Dialect does not support MEDIAN');
-      return `${funcs.median}(${expression})`;
+      return typeof funcs.median === 'function'
+        ? funcs.median(expression)
+        : `${funcs.median}(${expression})`;
     case 'PERCENTILE_25':
     case 'PERCENTILE_75':
     case 'PERCENTILE_90':

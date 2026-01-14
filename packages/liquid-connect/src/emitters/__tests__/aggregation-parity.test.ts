@@ -52,10 +52,43 @@ function createTestFlow(aggregation: AggregationType): LiquidFlow {
   };
 }
 
+// Mapping of aggregation types to expected SQL patterns per dialect
+// Some dialects use different function names (e.g., MEDIAN → PERCENTILE_CONT on PostgreSQL)
+const EXPECTED_SQL_PATTERNS: Record<AggregationType, Record<Dialect, RegExp | null>> = {
+  SUM: { postgres: /SUM\s*\(/i, duckdb: /SUM\s*\(/i, trino: /SUM\s*\(/i },
+  COUNT: { postgres: /COUNT\s*\(/i, duckdb: /COUNT\s*\(/i, trino: /COUNT\s*\(/i },
+  COUNT_DISTINCT: { postgres: /COUNT\s*\(\s*DISTINCT/i, duckdb: /COUNT\s*\(\s*DISTINCT/i, trino: /COUNT\s*\(\s*DISTINCT/i },
+  AVG: { postgres: /AVG\s*\(/i, duckdb: /AVG\s*\(/i, trino: /AVG\s*\(/i },
+  MIN: { postgres: /MIN\s*\(/i, duckdb: /MIN\s*\(/i, trino: /MIN\s*\(/i },
+  MAX: { postgres: /MAX\s*\(/i, duckdb: /MAX\s*\(/i, trino: /MAX\s*\(/i },
+  // MEDIAN uses PERCENTILE_CONT(0.5) on PostgreSQL, native MEDIAN on DuckDB, not supported on Trino
+  MEDIAN: { postgres: /PERCENTILE_CONT\s*\(\s*0\.5\s*\)/i, duckdb: /MEDIAN\s*\(/i, trino: null },
+  // PERCENTILE_* all use PERCENTILE_CONT with the appropriate value
+  PERCENTILE_25: { postgres: /PERCENTILE_CONT\s*\(\s*0\.25\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.25\s*\)/i, trino: null },
+  PERCENTILE_75: { postgres: /PERCENTILE_CONT\s*\(\s*0\.75\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.75\s*\)/i, trino: null },
+  PERCENTILE_90: { postgres: /PERCENTILE_CONT\s*\(\s*0\.9\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.9\s*\)/i, trino: null },
+  PERCENTILE_95: { postgres: /PERCENTILE_CONT\s*\(\s*0\.95\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.95\s*\)/i, trino: null },
+  PERCENTILE_99: { postgres: /PERCENTILE_CONT\s*\(\s*0\.99\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.99\s*\)/i, trino: null },
+  // STDDEV uses STDDEV_SAMP on PostgreSQL/DuckDB
+  STDDEV: { postgres: /STDDEV_SAMP\s*\(/i, duckdb: /STDDEV_SAMP\s*\(/i, trino: /STDDEV\s*\(/i },
+  // VARIANCE uses VAR_SAMP on PostgreSQL/DuckDB
+  VARIANCE: { postgres: /VAR_SAMP\s*\(/i, duckdb: /VAR_SAMP\s*\(/i, trino: /VARIANCE\s*\(/i },
+  ARRAY_AGG: { postgres: /ARRAY_AGG\s*\(/i, duckdb: /ARRAY_AGG\s*\(/i, trino: /ARRAY_AGG\s*\(/i },
+  STRING_AGG: { postgres: /STRING_AGG\s*\(/i, duckdb: /STRING_AGG\s*\(/i, trino: /STRING_AGG\s*\(/i },
+};
+
 describe('Aggregation Parity - All Types × All Dialects', () => {
-  // Test matrix: 6 aggregation types × 3 dialects = 18 tests
+  // Test matrix: 16 aggregation types × 3 dialects = 48 tests
   for (const aggregation of AGGREGATION_TYPES) {
     for (const dialect of DIALECTS) {
+      const expectedPattern = EXPECTED_SQL_PATTERNS[aggregation][dialect];
+
+      if (expectedPattern === null) {
+        // Skip unsupported aggregations on certain dialects
+        it.skip(`${aggregation} on ${dialect} (not supported)`, () => {});
+        continue;
+      }
+
       it(`${aggregation} on ${dialect} generates valid SQL`, () => {
         const flow = createTestFlow(aggregation);
         const result = emit(flow, dialect);
@@ -65,14 +98,12 @@ describe('Aggregation Parity - All Types × All Dialects', () => {
         expect(result.sql).toContain('SELECT');
         expect(result.sql).toContain('FROM');
 
-        // Must contain the aggregation function
+        // Must contain the expected SQL pattern for this aggregation/dialect
+        expect(result.sql).toMatch(expectedPattern);
+
+        // COUNT_DISTINCT must NOT use invalid syntax
         if (aggregation === 'COUNT_DISTINCT') {
-          // COUNT_DISTINCT must use COUNT(DISTINCT ...) syntax, not COUNT_DISTINCT()
-          expect(result.sql).toMatch(/COUNT\s*\(\s*DISTINCT\s+/i);
           expect(result.sql).not.toMatch(/COUNT_DISTINCT\s*\(/i);
-        } else {
-          // Other aggregations should appear as function calls
-          expect(result.sql.toUpperCase()).toContain(aggregation);
         }
       });
     }

@@ -39,7 +39,7 @@ export const reportMismatchSchema = z.object({
 export const listVocabularySchema = z.object({
   workspaceId: z.string().min(1, "Workspace ID is required"),
   search: z.string().optional(),
-  type: z.enum(["metric", "dimension", "entity", "event"]).optional(),
+  type: z.enum(["metric", "measure", "kpi", "dimension", "entity", "event"]).optional(),
   scope: z.enum(["all", "org", "workspace", "private"]).optional(),
   limit: z.coerce.number().min(1).max(100).optional().default(50),
 });
@@ -53,7 +53,7 @@ export const createVocabularyItemSchema = z.object({
   canonicalName: z.string().min(1, "Canonical name is required"),
   slug: z.string().min(1, "Slug is required"),
   abbreviation: z.string().optional(),
-  type: z.enum(["metric", "dimension", "entity", "event"]),
+  type: z.enum(["metric", "measure", "kpi", "dimension", "entity", "event"]),
   category: z.string().optional(),
   definition: z
     .object({
@@ -63,6 +63,12 @@ export const createVocabularyItemSchema = z.object({
       sourceTables: z.array(z.string()).optional(),
     })
     .optional(),
+  // KPI-specific fields
+  formulaSql: z.string().optional(),
+  formulaHuman: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  source: z.enum(["ai_generated", "user_created", "detected"]).optional(),
+  sourceVocabularyIds: z.array(z.string()).optional(),
   suggestedForRoles: z.array(z.string()).optional(),
 });
 
@@ -155,6 +161,14 @@ export const getUserVocabularyPrefsSchema = z.object({
 export const getSuggestionsSchema = z.object({
   workspaceId: z.string().min(1, "Workspace ID is required"),
   roleArchetype: z.string().min(1, "Role archetype is required"),
+});
+
+/**
+ * Schema for previewing a vocabulary item with live data
+ */
+export const previewVocabularySchema = z.object({
+  itemId: z.string().min(1, "Item ID is required"),
+  workspaceId: z.string().min(1, "Workspace ID is required"),
 });
 
 // ============================================================================
@@ -251,3 +265,4 @@ export type TrackVocabularyUsageInput = z.infer<typeof trackVocabularyUsageSchem
 export type GetVocabularyBySlugInput = z.infer<typeof getVocabularyBySlugSchema>;
 export type GetUserVocabularyPrefsInput = z.infer<typeof getUserVocabularyPrefsSchema>;
 export type GetSuggestionsInput = z.infer<typeof getSuggestionsSchema>;
+export type PreviewVocabularyInput = z.infer<typeof previewVocabularySchema>;

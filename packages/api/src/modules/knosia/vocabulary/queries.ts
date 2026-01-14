@@ -311,8 +311,29 @@ export async function getVocabularyList(
 ): Promise<{
   items: ResolvedVocabularyItem[];
   total: number;
+  counts: {
+    all: number;
+    kpi: number;
+    measure: number;
+    metric: number;
+    dimension: number;
+    entity: number;
+    event: number;
+  };
 }> {
   const resolved = await resolveVocabulary(userId, input.workspaceId);
+
+  // Calculate counts by type from ALL items (before filtering)
+  const allItems = resolved.items;
+  const counts = {
+    all: allItems.length,
+    kpi: allItems.filter((i) => i.type === "kpi").length,
+    measure: allItems.filter((i) => i.type === "measure").length,
+    metric: allItems.filter((i) => i.type === "metric").length,
+    dimension: allItems.filter((i) => i.type === "dimension").length,
+    entity: allItems.filter((i) => i.type === "entity").length,
+    event: allItems.filter((i) => i.type === "event").length,
+  };
 
   let items = resolved.items;
 
@@ -323,8 +344,13 @@ export async function getVocabularyList(
   }
 
   // Apply type filter
+  // Note: "measure" includes legacy "metric" type for backwards compatibility
   if (input.type) {
-    items = items.filter((item) => item.type === input.type);
+    if (input.type === "measure") {
+      items = items.filter((item) => item.type === "measure" || item.type === "metric");
+    } else {
+      items = items.filter((item) => item.type === input.type);
+    }
   }
 
   // Apply scope filter
@@ -336,7 +362,7 @@ export async function getVocabularyList(
   const total = items.length;
   items = items.slice(0, input.limit);
 
-  return { items, total };
+  return { items, total, counts };
 }
 
 /**

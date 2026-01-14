@@ -27,7 +27,7 @@ export interface ResolvedVocabularyItem {
   slug: string;
   canonicalName: string;
   abbreviation: string | null;
-  type: "metric" | "dimension" | "entity" | "event";
+  type: "metric" | "measure" | "kpi" | "dimension" | "entity" | "event";
   category: string | null;
   scope: "org" | "workspace" | "private";
   definition: {
@@ -162,7 +162,7 @@ export async function resolveVocabulary(
         slug: item.slug,
         canonicalName: item.canonicalName,
         abbreviation: item.abbreviation,
-        type: item.type as "metric" | "dimension" | "entity" | "event",
+        type: item.type as ResolvedVocabularyItem["type"],
         category: item.category,
         scope: "org",
         definition: item.definition as ResolvedVocabularyItem["definition"],
@@ -183,7 +183,7 @@ export async function resolveVocabulary(
         slug: item.slug,
         canonicalName: item.canonicalName,
         abbreviation: item.abbreviation,
-        type: item.type as "metric" | "dimension" | "entity" | "event",
+        type: item.type as ResolvedVocabularyItem["type"],
         category: item.category,
         scope: "workspace",
         definition: item.definition as ResolvedVocabularyItem["definition"],

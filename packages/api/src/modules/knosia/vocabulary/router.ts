@@ -36,7 +36,9 @@ import {
   getVocabularyBySlugSchema,
   getUserVocabularyPrefsSchema,
   getSuggestionsSchema,
+  previewVocabularySchema,
 } from "./schemas";
+import { previewVocabularyItem } from "./preview";
 
 import type { Session, User } from "@turbostarter/auth";
 
@@ -322,6 +324,64 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
   })
 
   // ============================================================================
+  // Convenience Type Endpoints
+  // ============================================================================
+
+  /**
+   * GET /kpis - List KPI vocabulary items
+   *
+   * Shorthand for: GET /items?type=kpi
+   * Returns calculated business formulas (GMV, Net Revenue, etc.)
+   */
+  .get("/kpis", async (c) => {
+    const user = c.get("user");
+    const query = {
+      workspaceId: c.req.query("workspaceId"),
+      search: c.req.query("search"),
+      type: "kpi" as const,
+      limit: c.req.query("limit"),
+    };
+
+    const parseResult = listVocabularySchema.safeParse(query);
+    if (!parseResult.success) {
+      return c.json(
+        { error: parseResult.error.issues[0]?.message ?? "Invalid input" },
+        400
+      );
+    }
+
+    const result = await getVocabularyList(user.id, parseResult.data);
+    return c.json(result);
+  })
+
+  /**
+   * GET /measures - List measure vocabulary items
+   *
+   * Shorthand for: GET /items?type=measure
+   * Returns raw numeric columns (unit_price, quantity, etc.)
+   */
+  .get("/measures", async (c) => {
+    const user = c.get("user");
+    const query = {
+      workspaceId: c.req.query("workspaceId"),
+      search: c.req.query("search"),
+      type: "measure" as const,
+      limit: c.req.query("limit"),
+    };
+
+    const parseResult = listVocabularySchema.safeParse(query);
+    if (!parseResult.success) {
+      return c.json(
+        { error: parseResult.error.issues[0]?.message ?? "Invalid input" },
+        400
+      );
+    }
+
+    const result = await getVocabularyList(user.id, parseResult.data);
+    return c.json(result);
+  })
+
+  // ============================================================================
   // Vocabulary CRUD Routes
   // ============================================================================
 
@@ -436,4 +496,26 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
     }
 
     return c.json(item);
+  })
+
+  /**
+   * GET /items/:id/preview - Preview vocabulary item with live data
+   *
+   * Executes the vocabulary item's definition against the connected
+   * database and returns the calculated value or sample data.
+   */
+  .get("/items/:id/preview", async (c) => {
+    const itemId = c.req.param("id");
+    const workspaceId = c.req.query("workspaceId");
+
+    const parseResult = previewVocabularySchema.safeParse({ itemId, workspaceId });
+    if (!parseResult.success) {
+      return c.json(
+        { error: parseResult.error.issues[0]?.message ?? "Invalid input" },
+        400
+      );
+    }
+
+    const preview = await previewVocabularyItem(parseResult.data);
+    return c.json(preview);
   });

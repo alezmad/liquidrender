@@ -111,6 +111,8 @@ export interface FilteredAggregationKPIDefinition extends KPIDefinitionBase {
     having: string;
     subqueryEntity?: string;
   };
+  /** Optional: calculate as percentage of total (filtered / total * 100) */
+  percentOf?: string;
 }
 
 export interface WindowKPIDefinition extends KPIDefinitionBase {

@@ -130,10 +130,11 @@ describe('KPI Compiler v2.0', () => {
       const result = compileKPIFormula(def, emitter);
 
       expect(result.success).toBe(true);
-      expect(result.expression).toContain('COUNT(DISTINCT customer_id)');
-      // The final SQL has the subquery processed into a proper IN clause
-      expect(result.sql).toContain('WHERE customer_id IN');
-      expect(result.sql).toContain('GROUP BY customer_id HAVING COUNT(*) > 1');
+      // Filtered KPI uses CASE WHEN to conditionally count matching records
+      expect(result.expression).toContain('CASE WHEN customer_id IN');
+      expect(result.expression).toContain('GROUP BY customer_id HAVING COUNT(*) > 1');
+      expect(result.expression).toContain('THEN customer_id END');
+      expect(result.sql).toContain('SELECT');
     });
 
     it('compiles with array groupBy', () => {
@@ -152,6 +153,31 @@ describe('KPI Compiler v2.0', () => {
 
       expect(result.success).toBe(true);
       expect(result.sql).toContain('GROUP BY customer_id, product_id');
+    });
+
+    it('compiles with percentOf for percentage calculation', () => {
+      const def: FilteredAggregationKPIDefinition = {
+        type: 'filtered',
+        aggregation: 'COUNT_DISTINCT',
+        expression: 'customer_id',
+        subquery: {
+          groupBy: 'customer_id',
+          having: 'COUNT(*) > 1',
+        },
+        percentOf: 'customer_id',
+        entity: 'orders',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      // Should calculate (filtered / total) * 100
+      expect(result.expression).toContain('::float');
+      expect(result.expression).toContain('NULLIF');
+      expect(result.expression).toContain('* 100');
+      // Should have both filtered count and total count
+      expect(result.expression).toContain('CASE WHEN customer_id IN');
+      expect(result.expression).toContain('COUNT(DISTINCT customer_id)');
     });
   });
 

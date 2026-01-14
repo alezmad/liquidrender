@@ -315,11 +315,13 @@ Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
       "groupBy": "customer_id",
       "having": "COUNT(*) > 1"
     },
+    "percentOf": "customer_id",
     "entity": "orders"
   },
   "format": {"type": "percent", "decimals": 1},
   ...
 }
+Note: Use "percentOf" when the KPI is a percentage (filtered / total * 100). The value should be the same expression being counted.
 
 **5. Window KPI** - Running totals, period comparisons:
 {

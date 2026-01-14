@@ -157,7 +157,7 @@ function compileFilteredKPI(
   schema: string | undefined,
   quoteIdentifiers: boolean
 ): string {
-  const { aggregation, expression, subquery, entity } = def;
+  const { aggregation, expression, subquery, entity, percentOf } = def;
   const quote = quoteIdentifiers ? traits.identifierQuote : '';
   const groupByColumns = Array.isArray(subquery.groupBy)
     ? subquery.groupBy.join(', ')
@@ -166,9 +166,24 @@ function compileFilteredKPI(
   const tableName = schema
     ? `${quote}${schema}${quote}.${quote}${subqueryEntity}${quote}`
     : `${quote}${subqueryEntity}${quote}`;
+
+  // Build the subquery that identifies matching records
   const subquerySQL = `SELECT ${groupByColumns} FROM ${tableName} GROUP BY ${groupByColumns} HAVING ${subquery.having}`;
-  const mainAgg = buildAggregation(aggregation, expression, traits);
-  return `${mainAgg} /* SUBQUERY_FILTER: ${expression} IN (${subquerySQL}) */`;
+
+  // Generate CASE WHEN expression to conditionally include values
+  // e.g., COUNT(DISTINCT customer_id) where customer has multiple orders becomes:
+  // COUNT(DISTINCT CASE WHEN customer_id IN (subquery) THEN customer_id END)
+  const caseExpr = `CASE WHEN ${expression} IN (${subquerySQL}) THEN ${expression} END`;
+  const filteredAgg = buildAggregation(aggregation, caseExpr, traits);
+
+  // If percentOf is specified, calculate as percentage of total
+  // e.g., (filtered_count / total_count) * 100
+  if (percentOf) {
+    const totalAgg = buildAggregation(aggregation, percentOf, traits);
+    return `(${filteredAgg}::float / NULLIF(${totalAgg}, 0)) * 100`;
+  }
+
+  return filteredAgg;
 }
 
 function compileWindowKPI(

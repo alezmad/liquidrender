@@ -290,7 +290,9 @@ testing: vitest + playwright
 pnpm install                    # Dependencies
 pnpm services:start             # Docker (PostgreSQL)
 pnpm with-env -F @turbostarter/db db:setup   # First-time DB
-pnpm dev                        # Start all apps
+
+# Development server (use this, not `pnpm dev`)
+pnpm with-env turbo dev --filter=web --concurrency 11   # Web app on :3000
 
 # Database
 pnpm with-env -F @turbostarter/db db:generate  # Generate migration
@@ -300,6 +302,8 @@ pnpm with-env -F @turbostarter/db db:studio    # Drizzle Studio
 # Quality
 pnpm typecheck && pnpm lint && pnpm format
 ```
+
+> **Note:** `pnpm dev` fails due to turbo concurrency + mobile interactive task issues. Always use the filtered command above.
 
 ---
 

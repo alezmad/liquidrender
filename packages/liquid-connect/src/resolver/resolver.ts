@@ -267,7 +267,8 @@ export class Resolver {
 
     // For derived metrics, resolve referenced metrics first
     if (def.type === 'derived') {
-      const refs = def.expression.match(/@(\w+)/g) ?? [];
+      // Match metric references including hyphens (e.g., @product-price)
+      const refs = def.expression.match(/@([\w-]+)/g) ?? [];
       for (const ref of refs) {
         const refName = ref.slice(1); // Remove @ prefix
         this.resolveMetricRecursive(refName, metrics, resolvedNames);

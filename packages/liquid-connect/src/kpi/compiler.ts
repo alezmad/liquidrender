@@ -206,7 +206,8 @@ function compileDerivedKPI(
     }
     expression = expression.replace(new RegExp(`@${dep}\\b`, 'g'), `(${metricSql})`);
   }
-  const unresolvedMatch = expression.match(/@(\w+)/);
+  // Check for unresolved metric references (including hyphens in slugs)
+  const unresolvedMatch = expression.match(/@([\w-]+)/);
   if (unresolvedMatch) {
     throw new Error(`Unresolved metric reference: @${unresolvedMatch[1]}`);
   }

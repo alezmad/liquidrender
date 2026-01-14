@@ -250,14 +250,41 @@ export abstract class BaseEmitter {
       }
 
       // Add metrics
+      // Track primary source for cross-entity detection
+      const primarySource = flow.sources?.[0]?.alias;
+
       for (const metric of flow.metrics ?? []) {
         let metricExpr: string;
-        if (metric.derived) {
-          // Derived metrics: expression should already be expanded by resolver
-          // Just use the expression directly (no aggregation wrapper)
-          metricExpr = this.expandMetricRefs(metric.expression, flow.metrics ?? []);
+
+        // Check if this metric is from a different entity than the primary source
+        const isCrossEntity = primarySource &&
+          metric.sourceEntity &&
+          metric.sourceEntity !== primarySource;
+
+        if (metric.derived && isCrossEntity) {
+          // Cross-entity derived metric: wrap in scalar subquery
+          // First expand any @metric references, then wrap the whole thing
+          const expandedExpr = this.expandMetricRefs(metric.expression, flow.metrics ?? [], flow);
+          const tableName = this.formatTableName(
+            metric.sourceEntity,
+            flow.sources[0]?.schema,
+            flow.sources[0]?.database
+          );
+          metricExpr = `(SELECT ${expandedExpr} FROM ${tableName})`;
+        } else if (metric.derived) {
+          // Derived metrics from primary source: expand @refs without subquery
+          metricExpr = this.expandMetricRefs(metric.expression, flow.metrics ?? [], flow);
+        } else if (isCrossEntity) {
+          // Cross-entity simple metric: wrap in scalar subquery
+          const aggregateExpr = this.buildAggregation(metric.aggregation, metric.expression);
+          const tableName = this.formatTableName(
+            metric.sourceEntity,
+            flow.sources[0]?.schema,
+            flow.sources[0]?.database
+          );
+          metricExpr = `(SELECT ${aggregateExpr} FROM ${tableName})`;
         } else {
-          // Simple metrics: wrap in aggregation function
+          // Simple metrics from primary source: wrap in aggregation function
           metricExpr = this.buildAggregation(metric.aggregation, metric.expression);
         }
         selects.push(`${metricExpr} AS ${this.quoteIdentifier(metric.alias)}`);
@@ -427,15 +454,52 @@ export abstract class BaseEmitter {
 
   /**
    * Expand @metric references in derived expressions
+   *
+   * Handles cross-entity metrics by wrapping them in scalar subqueries when
+   * the metric's source entity differs from the query's main source (FROM clause).
    */
-  protected expandMetricRefs(expression: string, metrics: ResolvedMetric[]): string {
-    // Find all @metricName references
-    return expression.replace(/@(\w+)/g, (match, metricName) => {
+  protected expandMetricRefs(expression: string, metrics: ResolvedMetric[], flow?: LiquidFlow): string {
+    // The FROM clause only uses the FIRST source - other sources need joins or subqueries
+    // For cross-entity aggregates, we need scalar subqueries
+    const primarySource = flow?.sources?.[0]?.alias;
+
+    // Find all @metricName references (including hyphens in slugs)
+    return expression.replace(/@([\w-]+)/g, (match, metricName) => {
       // Find the referenced metric
       const metric = metrics.find(m => m.ref === metricName);
-      if (metric && !metric.derived) {
-        // Expand to aggregated expression
-        return this.buildAggregation(metric.aggregation, metric.expression);
+      if (metric) {
+        // Check if this metric's entity differs from the primary source (FROM clause)
+        const isCrossEntity = flow &&
+          primarySource &&
+          metric.sourceEntity &&
+          metric.sourceEntity !== primarySource;
+
+        if (isCrossEntity) {
+          // Cross-entity metric: wrap in scalar subquery
+          // Build the aggregate expression for the subquery
+          let aggregateExpr: string;
+          if (metric.derived) {
+            aggregateExpr = metric.expression;
+          } else {
+            aggregateExpr = this.buildAggregation(metric.aggregation, metric.expression);
+          }
+
+          // Build the scalar subquery with proper table reference
+          const tableName = this.formatTableName(
+            metric.sourceEntity,
+            flow.sources[0]?.schema,
+            flow.sources[0]?.database
+          );
+          return `(SELECT ${aggregateExpr} FROM ${tableName})`;
+        }
+
+        if (metric.derived) {
+          // Derived metric: expression is already complete (e.g., "SUM(unit_price)")
+          return `(${metric.expression})`;
+        } else {
+          // Simple metric: wrap in aggregation
+          return this.buildAggregation(metric.aggregation, metric.expression);
+        }
       }
       // If not found, keep the reference (resolver should have included it)
       return match;

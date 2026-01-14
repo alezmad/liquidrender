@@ -25,6 +25,20 @@ const AGGREGATION_TYPES: AggregationType[] = [
   'VARIANCE',
   'ARRAY_AGG',
   'STRING_AGG',
+  // v2.1 aggregations
+  'COUNT_IF',
+  'SUM_IF',
+  'AVG_IF',
+  'BOOL_AND',
+  'BOOL_OR',
+  'EVERY',
+  'ANY',
+  'FIRST_VALUE',
+  'LAST_VALUE',
+  'RANK',
+  'DENSE_RANK',
+  'ROW_NUMBER',
+  'NTILE',
 ];
 
 // All supported dialects
@@ -70,11 +84,28 @@ const EXPECTED_SQL_PATTERNS: Record<AggregationType, Record<Dialect, RegExp | nu
   PERCENTILE_95: { postgres: /PERCENTILE_CONT\s*\(\s*0\.95\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.95\s*\)/i, trino: null },
   PERCENTILE_99: { postgres: /PERCENTILE_CONT\s*\(\s*0\.99\s*\)/i, duckdb: /PERCENTILE_CONT\s*\(\s*0\.99\s*\)/i, trino: null },
   // STDDEV uses STDDEV_SAMP on PostgreSQL/DuckDB
-  STDDEV: { postgres: /STDDEV_SAMP\s*\(/i, duckdb: /STDDEV_SAMP\s*\(/i, trino: /STDDEV\s*\(/i },
+  STDDEV: { postgres: /STDDEV_SAMP\s*\(/i, duckdb: /STDDEV_SAMP\s*\(/i, trino: /STDDEV_SAMP\s*\(/i },
   // VARIANCE uses VAR_SAMP on PostgreSQL/DuckDB
-  VARIANCE: { postgres: /VAR_SAMP\s*\(/i, duckdb: /VAR_SAMP\s*\(/i, trino: /VARIANCE\s*\(/i },
+  VARIANCE: { postgres: /VAR_SAMP\s*\(/i, duckdb: /VAR_SAMP\s*\(/i, trino: /VAR_SAMP\s*\(/i },
   ARRAY_AGG: { postgres: /ARRAY_AGG\s*\(/i, duckdb: /ARRAY_AGG\s*\(/i, trino: /ARRAY_AGG\s*\(/i },
-  STRING_AGG: { postgres: /STRING_AGG\s*\(/i, duckdb: /STRING_AGG\s*\(/i, trino: /STRING_AGG\s*\(/i },
+  STRING_AGG: { postgres: /STRING_AGG\s*\(/i, duckdb: /STRING_AGG\s*\(/i, trino: /LISTAGG\s*\(/i },
+  // v2.1 conditional aggregations (use CASE WHEN internally)
+  COUNT_IF: { postgres: /SUM\s*\(\s*CASE\s+WHEN/i, duckdb: /SUM\s*\(\s*CASE\s+WHEN/i, trino: /SUM\s*\(\s*CASE\s+WHEN/i },
+  SUM_IF: { postgres: /SUM\s*\(\s*CASE\s+WHEN/i, duckdb: /SUM\s*\(\s*CASE\s+WHEN/i, trino: /SUM\s*\(\s*CASE\s+WHEN/i },
+  AVG_IF: { postgres: /AVG\s*\(\s*CASE\s+WHEN/i, duckdb: /AVG\s*\(\s*CASE\s+WHEN/i, trino: /AVG\s*\(\s*CASE\s+WHEN/i },
+  // v2.1 boolean aggregations
+  BOOL_AND: { postgres: /BOOL_AND\s*\(/i, duckdb: /BOOL_AND\s*\(/i, trino: /BOOL_AND\s*\(/i },
+  BOOL_OR: { postgres: /BOOL_OR\s*\(/i, duckdb: /BOOL_OR\s*\(/i, trino: /BOOL_OR\s*\(/i },
+  EVERY: { postgres: /EVERY\s*\(/i, duckdb: /BOOL_AND\s*\(/i, trino: /EVERY\s*\(/i },
+  ANY: { postgres: /ANY\s*\(/i, duckdb: /BOOL_OR\s*\(/i, trino: /ANY_VALUE\s*\(/i },
+  // v2.1 positional aggregations (window functions)
+  FIRST_VALUE: { postgres: /FIRST_VALUE\s*\(/i, duckdb: /FIRST_VALUE\s*\(/i, trino: /FIRST_VALUE\s*\(/i },
+  LAST_VALUE: { postgres: /LAST_VALUE\s*\(/i, duckdb: /LAST_VALUE\s*\(/i, trino: /LAST_VALUE\s*\(/i },
+  // v2.1 ranking functions (window functions)
+  RANK: { postgres: /RANK\s*\(\s*\)/i, duckdb: /RANK\s*\(\s*\)/i, trino: /RANK\s*\(\s*\)/i },
+  DENSE_RANK: { postgres: /DENSE_RANK\s*\(\s*\)/i, duckdb: /DENSE_RANK\s*\(\s*\)/i, trino: /DENSE_RANK\s*\(\s*\)/i },
+  ROW_NUMBER: { postgres: /ROW_NUMBER\s*\(\s*\)/i, duckdb: /ROW_NUMBER\s*\(\s*\)/i, trino: /ROW_NUMBER\s*\(\s*\)/i },
+  NTILE: { postgres: /NTILE\s*\(/i, duckdb: /NTILE\s*\(/i, trino: /NTILE\s*\(/i },
 };
 
 describe('Aggregation Parity - All Types × All Dialects', () => {
@@ -195,6 +226,23 @@ describe('Type Safety - Exhaustive Coverage', () => {
         case 'VARIANCE':
         case 'ARRAY_AGG':
         case 'STRING_AGG':
+        // v2.1 conditional aggregations
+        case 'COUNT_IF':
+        case 'SUM_IF':
+        case 'AVG_IF':
+        // v2.1 boolean aggregations
+        case 'BOOL_AND':
+        case 'BOOL_OR':
+        case 'EVERY':
+        case 'ANY':
+        // v2.1 positional aggregations
+        case 'FIRST_VALUE':
+        case 'LAST_VALUE':
+        // v2.1 ranking functions
+        case 'RANK':
+        case 'DENSE_RANK':
+        case 'ROW_NUMBER':
+        case 'NTILE':
           return true;
         default:
           // This line should never be reached if all cases are handled

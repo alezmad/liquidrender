@@ -17,6 +17,7 @@
 import type {
   Table,
   Column,
+  ForeignKeyConstraint,
   ExtractedSchema,
   DetectedVocabulary,
   DetectedEntity,
@@ -91,39 +92,99 @@ function toDisplayName(columnName: string): string {
 // Rule 1 & 2: Entity Detection
 // =============================================================================
 
+/**
+ * Infer primary key columns heuristically when no explicit PK is defined.
+ * Checks for common naming patterns: `id`, `{table_name}_id`, `{singular}_id`
+ */
+function inferPrimaryKey(table: Table): string[] {
+  // Only infer if no explicit PK
+  if (table.primaryKeyColumns.length > 0) {
+    return table.primaryKeyColumns;
+  }
+
+  const tableName = table.name.toLowerCase();
+  const singular = tableName.endsWith("s") ? tableName.slice(0, -1) : tableName;
+
+  // Priority order of PK patterns
+  const pkPatterns = [
+    "id",
+    `${tableName}_id`,
+    `${tableName}id`,
+    `${singular}_id`,
+    `${singular}id`,
+  ];
+
+  for (const pattern of pkPatterns) {
+    const col = table.columns.find(
+      (c) => c.name.toLowerCase() === pattern && (isIntegerType(c.dataType) || isStringType(c.dataType))
+    );
+    if (col) {
+      return [col.name];
+    }
+  }
+
+  return [];
+}
+
 function isJunctionTable(table: Table): boolean {
   // Junction table = composite PK where ALL PK columns are FKs
-  if (table.primaryKeyColumns.length < 2) {
+  const pks = inferPrimaryKey(table);
+  if (pks.length < 2) {
     return false;
   }
 
   const fkColumns = new Set(table.foreignKeys.map((fk) => fk.column));
-  return table.primaryKeyColumns.every((pk) => fkColumns.has(pk));
+  return pks.every((pk) => fkColumns.has(pk));
 }
 
 function detectEntities(tables: Table[]): DetectedEntity[] {
   const entities: DetectedEntity[] = [];
 
   for (const table of tables) {
-    // Must have a primary key
-    if (table.primaryKeyColumns.length === 0) {
+    // Get PKs (explicit or inferred)
+    const pks = inferPrimaryKey(table);
+
+    // Must have a primary key (explicit or inferred)
+    if (pks.length === 0) {
       continue;
     }
 
     // Check if junction table
     const isJunction = isJunctionTable(table);
 
+    // Certainty is lower for inferred PKs
+    const isInferred = table.primaryKeyColumns.length === 0;
+    const certainty = isInferred ? 0.8 : 1.0;
+
+    // Build columns array for query execution
+    const pkSet = new Set(pks.map((pk) => pk.toLowerCase()));
+    const fkMap = new Map(
+      table.foreignKeys.map((fk) => [fk.column.toLowerCase(), fk])
+    );
+
+    const columns = table.columns.map((col) => ({
+      name: col.name,
+      dataType: col.dataType,
+      isNullable: !col.isNotNull,
+      isPrimaryKey: pkSet.has(col.name.toLowerCase()),
+      isForeignKey: fkMap.has(col.name.toLowerCase()),
+      references: fkMap.get(col.name.toLowerCase())
+        ? {
+            table: fkMap.get(col.name.toLowerCase())!.referencedTable,
+            column: fkMap.get(col.name.toLowerCase())!.referencedColumn,
+          }
+        : undefined,
+    }));
+
     entities.push({
       name: table.name,
       table: table.name,
       schema: table.schema,
-      primaryKey:
-        table.primaryKeyColumns.length === 1
-          ? table.primaryKeyColumns[0]
-          : table.primaryKeyColumns,
+      primaryKey: pks.length === 1 ? pks[0] : pks,
       columnCount: table.columns.length,
-      certainty: 1.0,
+      certainty,
       isJunction,
+      columns,
     });
   }
 
@@ -134,25 +195,95 @@ function detectEntities(tables: Table[]): DetectedEntity[] {
 // Rule 3: Relationship Detection
 // =============================================================================
 
+/**
+ * Infer foreign key relationships heuristically when no explicit FKs are defined.
+ * Checks for naming patterns: `{table}_id`, `{singular}_id` → {table}.{pk}
+ */
+function inferForeignKeys(table: Table, allTables: Table[]): ForeignKeyConstraint[] {
+  // Only infer if no explicit FKs
+  if (table.foreignKeys.length > 0) {
+    return table.foreignKeys;
+  }
+
+  const inferred: ForeignKeyConstraint[] = [];
+  const tableMap = new Map(allTables.map((t) => [t.name.toLowerCase(), t]));
+
+  for (const column of table.columns) {
+    // Skip if already a PK
+    if (column.isPrimaryKey) continue;
+
+    // Check for {something}_id pattern
+    const match = column.name.toLowerCase().match(/^(.+)_id$/);
+    if (!match) continue;
+
+    const refName = match[1];
+
+    // Try to find referenced table: exact, plural (+s), plural (+es)
+    const candidates = [
+      refName,
+      refName + "s",
+      refName + "es",
+      refName.replace(/y$/, "ies"), // category → categories
+    ];
+
+    for (const candidate of candidates) {
+      const refTable = tableMap.get(candidate);
+      if (refTable && refTable.name !== table.name) {
+        // Get the PK of referenced table (explicit or inferred)
+        const refPks = inferPrimaryKey(refTable);
+        if (refPks.length === 1) {
+          inferred.push({
+            column: column.name,
+            referencedTable: refTable.name,
+            referencedColumn: refPks[0],
+          });
+          break; // Found match, stop searching
+        }
+      }
+    }
+  }
+
+  return inferred;
+}
+
 function detectRelationships(tables: Table[]): DetectedRelationship[] {
   const relationships: DetectedRelationship[] = [];
-  const junctionTables = new Set(
-    tables.filter(isJunctionTable).map((t) => t.name)
-  );
 
-  // Direct FK relationships
+  // Build FK map (explicit or inferred)
+  const tableFKs = new Map<string, ForeignKeyConstraint[]>();
+  for (const table of tables) {
+    tableFKs.set(table.name, inferForeignKeys(table, tables));
+  }
+
+  // Detect junction tables using inferred FKs
+  const junctionTables = new Set<string>();
+  for (const table of tables) {
+    const pks = inferPrimaryKey(table);
+    const fks = tableFKs.get(table.name) ?? [];
+    if (pks.length >= 2) {
+      const fkColumns = new Set(fks.map((fk) => fk.column));
+      if (pks.every((pk) => fkColumns.has(pk))) {
+        junctionTables.add(table.name);
+      }
+    }
+  }
+
+  // Direct FK relationships (many-to-one)
   for (const table of tables) {
     if (junctionTables.has(table.name)) {
       continue; // Handle junctions separately
     }
 
-    for (const fk of table.foreignKeys) {
+    const fks = tableFKs.get(table.name) ?? [];
+    const isInferred = table.foreignKeys.length === 0 && fks.length > 0;
+
+    for (const fk of fks) {
       relationships.push({
         id: generateId(table.name, fk.column, fk.referencedTable),
         from: { entity: table.name, field: fk.column },
         to: { entity: fk.referencedTable, field: fk.referencedColumn },
         type: "many_to_one",
-        certainty: 1.0,
+        certainty: isInferred ? 0.8 : 1.0,
       });
     }
   }
@@ -163,15 +294,17 @@ function detectRelationships(tables: Table[]): DetectedRelationship[] {
       continue;
     }
 
-    if (table.foreignKeys.length >= 2) {
-      const [fk1, fk2] = table.foreignKeys;
+    const fks = tableFKs.get(table.name) ?? [];
+    if (fks.length >= 2) {
+      const [fk1, fk2] = fks;
+      const isInferred = table.foreignKeys.length === 0;
       relationships.push({
         id: generateId(fk1.referencedTable, "via", table.name, fk2.referencedTable),
         from: { entity: fk1.referencedTable, field: fk1.referencedColumn },
         to: { entity: fk2.referencedTable, field: fk2.referencedColumn },
         type: "many_to_many",
         via: table.name,
-        certainty: 1.0,
+        certainty: isInferred ? 0.8 : 1.0,
       });
     }
   }

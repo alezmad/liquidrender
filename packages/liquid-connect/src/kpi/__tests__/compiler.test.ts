@@ -8,6 +8,9 @@ import type {
   WindowKPIDefinition,
   CaseKPIDefinition,
   CompositeKPIDefinition,
+  MovingAverageKPIDefinition,
+  RankingKPIDefinition,
+  ConditionalKPIDefinition,
 } from '../types';
 import { DuckDBEmitter } from '../../emitters/duckdb';
 
@@ -401,6 +404,260 @@ describe('KPI Compiler v2.0', () => {
       ];
 
       expect(() => compileMultipleKPIs(definitions, emitter)).toThrow('different tables');
+    });
+  });
+
+  describe('Moving Average KPI', () => {
+    it('compiles 7-day moving average', () => {
+      const def: MovingAverageKPIDefinition = {
+        type: 'moving_average',
+        aggregation: 'AVG',
+        expression: 'revenue',
+        periods: 7,
+        periodUnit: 'day',
+        orderBy: 'date',
+        entity: 'daily_sales',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('AVG(revenue) OVER');
+      expect(result.expression).toContain('ORDER BY date');
+      expect(result.expression).toContain('ROWS BETWEEN 6 PRECEDING AND CURRENT ROW');
+    });
+
+    it('compiles with partition', () => {
+      const def: MovingAverageKPIDefinition = {
+        type: 'moving_average',
+        aggregation: 'SUM',
+        expression: 'sales',
+        periods: 30,
+        periodUnit: 'day',
+        partitionBy: ['product_id'],
+        orderBy: 'date',
+        entity: 'product_sales',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('PARTITION BY product_id');
+    });
+  });
+
+  describe('Ranking KPI', () => {
+    it('compiles RANK by revenue', () => {
+      const def: RankingKPIDefinition = {
+        type: 'ranking',
+        rankFunction: 'RANK',
+        rankBy: 'revenue',
+        rankDirection: 'desc',
+        entity: 'customers',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('RANK() OVER');
+      expect(result.expression).toContain('ORDER BY revenue DESC');
+    });
+
+    it('compiles DENSE_RANK with partition', () => {
+      const def: RankingKPIDefinition = {
+        type: 'ranking',
+        rankFunction: 'DENSE_RANK',
+        rankBy: 'sales',
+        rankDirection: 'desc',
+        partitionBy: ['region'],
+        entity: 'sales_reps',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('DENSE_RANK() OVER');
+      expect(result.expression).toContain('PARTITION BY region');
+    });
+
+    it('compiles NTILE for quartiles', () => {
+      const def: RankingKPIDefinition = {
+        type: 'ranking',
+        rankFunction: 'NTILE',
+        ntileBuckets: 4,
+        rankBy: 'score',
+        rankDirection: 'desc',
+        entity: 'students',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('NTILE(4) OVER');
+    });
+
+    it('compiles ROW_NUMBER', () => {
+      const def: RankingKPIDefinition = {
+        type: 'ranking',
+        rankFunction: 'ROW_NUMBER',
+        rankBy: 'created_at',
+        rankDirection: 'asc',
+        entity: 'transactions',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('ROW_NUMBER() OVER');
+      expect(result.expression).toContain('ORDER BY created_at ASC');
+    });
+  });
+
+  describe('Conditional KPI', () => {
+    it('compiles conditional COUNT', () => {
+      const def: ConditionalKPIDefinition = {
+        type: 'conditional',
+        aggregation: 'COUNT',
+        expression: '*',
+        condition: "status = 'active'",
+        entity: 'users',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('COUNT');
+      expect(result.expression).toContain("CASE WHEN status = 'active'");
+    });
+
+    it('compiles conditional SUM', () => {
+      const def: ConditionalKPIDefinition = {
+        type: 'conditional',
+        aggregation: 'SUM',
+        expression: 'amount',
+        condition: "type = 'sale'",
+        entity: 'transactions',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('SUM');
+      expect(result.expression).toContain("CASE WHEN type = 'sale' THEN amount END");
+    });
+  });
+
+  describe('nullFallback', () => {
+    it('wraps expression with COALESCE for numeric fallback', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        nullFallback: 0,
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain('COALESCE(SUM(amount), 0)');
+    });
+
+    it('wraps expression with COALESCE for string fallback', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'MAX',
+        expression: 'name',
+        entity: 'products',
+        nullFallback: 'N/A',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toContain("COALESCE(MAX(name), 'N/A')");
+    });
+  });
+
+  describe('Date Range Filters', () => {
+    it('applies last_30_days date range', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        timeField: 'created_at',
+        dateRange: 'last_30_days',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain('WHERE');
+      expect(result.sql).toContain('created_at');
+      expect(result.sql).toContain('-30');
+    });
+
+    it('applies this_month date range', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'COUNT',
+        expression: '*',
+        entity: 'users',
+        timeField: 'signup_date',
+        dateRange: 'this_month',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain('WHERE');
+      expect(result.sql).toContain("DATE_TRUNC('month'");
+    });
+  });
+
+  describe('Period Comparison', () => {
+    it('generates comparison query with YoY', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'revenue',
+        entity: 'sales',
+        timeField: 'sale_date',
+        comparison: {
+          period: 'previous_year',
+        },
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain('WITH current_period');
+      expect(result.sql).toContain('previous_period');
+      expect(result.sql).toContain('current_value');
+      expect(result.sql).toContain('delta');
+      expect(result.sql).toContain('pct_change');
+    });
+
+    it('generates comparison query with MoM', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'revenue',
+        entity: 'monthly_sales',
+        timeField: 'month_date',
+        comparison: {
+          period: 'previous_month',
+        },
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toContain('WITH current_period');
+      expect(result.sql).toContain('previous_period');
+      // DuckDB uses INTERVAL '-1' month format
+      expect(result.sql).toMatch(/month/i);
     });
   });
 });

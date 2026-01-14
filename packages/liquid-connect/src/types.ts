@@ -51,7 +51,24 @@ export type AggregationType =
   | 'VARIANCE'
   // Array aggregations (v2)
   | 'ARRAY_AGG'
-  | 'STRING_AGG';
+  | 'STRING_AGG'
+  // Conditional aggregations (v2.1)
+  | 'COUNT_IF'
+  | 'SUM_IF'
+  | 'AVG_IF'
+  // Boolean aggregations (v2.1)
+  | 'BOOL_AND'
+  | 'BOOL_OR'
+  | 'EVERY'
+  | 'ANY'
+  // Positional aggregations (v2.1)
+  | 'FIRST_VALUE'
+  | 'LAST_VALUE'
+  // Ranking functions (v2.1)
+  | 'RANK'
+  | 'DENSE_RANK'
+  | 'ROW_NUMBER'
+  | 'NTILE';
 
 /**
  * DSL operators - token-efficient syntax for LLM generation

@@ -301,6 +301,18 @@ export function extractProfilingData(profiledSchema: ProfiledSchema): ProfilingD
 // Detection Types (output of hard rules)
 // =============================================================================
 
+/**
+ * EntityColumn - column metadata for entity querying
+ */
+export interface EntityColumn {
+  name: string;
+  dataType: string;
+  isNullable: boolean;
+  isPrimaryKey: boolean;
+  isForeignKey: boolean;
+  references?: ForeignKeyReference;
+}
+
 export interface DetectedEntity {
   name: string;
   table: string;
@@ -309,6 +321,8 @@ export interface DetectedEntity {
   columnCount: number;
   certainty: number;
   isJunction: boolean;
+  /** Columns with metadata - enables entity querying */
+  columns: EntityColumn[];
 }
 
 export interface DetectedMetric {

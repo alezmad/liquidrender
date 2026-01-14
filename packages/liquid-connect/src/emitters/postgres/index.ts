@@ -110,6 +110,25 @@ export class PostgresEmitter extends BaseEmitter {
             : `STRING_AGG(${field}, '${delimiter}')`,
         arrayAgg: (field, orderBy) =>
           orderBy ? `ARRAY_AGG(${field} ORDER BY ${orderBy})` : `ARRAY_AGG(${field})`,
+        // Boolean aggregations
+        boolAnd: 'BOOL_AND',
+        boolOr: 'BOOL_OR',
+        every: 'EVERY',
+        any: 'ANY',
+        // Positional aggregations
+        firstValue: (field, orderBy) =>
+          orderBy
+            ? `FIRST_VALUE(${field}) OVER (ORDER BY ${orderBy})`
+            : `FIRST_VALUE(${field})`,
+        lastValue: (field, orderBy) =>
+          orderBy
+            ? `LAST_VALUE(${field}) OVER (ORDER BY ${orderBy})`
+            : `LAST_VALUE(${field})`,
+        // Ranking functions
+        rank: 'RANK',
+        denseRank: 'DENSE_RANK',
+        rowNumber: 'ROW_NUMBER',
+        ntile: (buckets) => `NTILE(${buckets})`,
       },
     };
   }

@@ -141,6 +141,19 @@ export interface AggregateFunctions {
   variance?: string;
   stringAgg?: (field: string, delimiter: string, orderBy?: string) => string;
   arrayAgg?: (field: string, orderBy?: string) => string;
+  // Boolean aggregations (v2.1)
+  boolAnd?: string;
+  boolOr?: string;
+  every?: string;
+  any?: string;
+  // Positional aggregations (v2.1)
+  firstValue?: (field: string, orderBy?: string) => string;
+  lastValue?: (field: string, orderBy?: string) => string;
+  // Ranking functions (v2.1)
+  rank?: string;
+  denseRank?: string;
+  rowNumber?: string;
+  ntile?: (buckets: number) => string;
 }
 
 /**
@@ -368,6 +381,45 @@ export abstract class BaseEmitter {
       case 'STRING_AGG':
         if (!funcs.stringAgg) return `STRING_AGG(${expression}, ',')`;
         return funcs.stringAgg(expression, ',');
+      // Conditional aggregations (v2.1)
+      case 'COUNT_IF':
+        // COUNT_IF(condition) -> COUNT(*) FILTER (WHERE condition) or SUM(CASE WHEN ...)
+        return `SUM(CASE WHEN ${expression} THEN 1 ELSE 0 END)`;
+      case 'SUM_IF':
+        // SUM_IF(expr, condition) - expression contains "expr, condition"
+        return `SUM(CASE WHEN ${expression} THEN 1 ELSE 0 END)`;
+      case 'AVG_IF':
+        return `AVG(CASE WHEN ${expression} THEN 1 ELSE 0 END)`;
+      // Boolean aggregations (v2.1)
+      case 'BOOL_AND':
+        if (!funcs.boolAnd) return `BOOL_AND(${expression})`;
+        return `${funcs.boolAnd}(${expression})`;
+      case 'BOOL_OR':
+        if (!funcs.boolOr) return `BOOL_OR(${expression})`;
+        return `${funcs.boolOr}(${expression})`;
+      case 'EVERY':
+        if (!funcs.every) return `EVERY(${expression})`;
+        return `${funcs.every}(${expression})`;
+      case 'ANY':
+        if (!funcs.any) return `ANY(${expression})`;
+        return `${funcs.any}(${expression})`;
+      // Positional aggregations (v2.1)
+      case 'FIRST_VALUE':
+        if (!funcs.firstValue) return `FIRST_VALUE(${expression})`;
+        return funcs.firstValue(expression);
+      case 'LAST_VALUE':
+        if (!funcs.lastValue) return `LAST_VALUE(${expression})`;
+        return funcs.lastValue(expression);
+      // Ranking functions (v2.1) - these are window functions, not standard aggregations
+      case 'RANK':
+        return `RANK()`;
+      case 'DENSE_RANK':
+        return `DENSE_RANK()`;
+      case 'ROW_NUMBER':
+        return `ROW_NUMBER()`;
+      case 'NTILE':
+        // NTILE requires buckets, passed via expression
+        return `NTILE(${expression})`;
       default:
         return assertNever(aggregation);
     }

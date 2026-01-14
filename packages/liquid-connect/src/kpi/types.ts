@@ -50,7 +50,29 @@ export type ComparisonPeriod =
   | 'previous_year'
   | 'previous_month'
   | 'previous_week'
+  | 'previous_quarter'
   | 'custom';
+
+// ============================================================================
+// Date Range Presets
+// ============================================================================
+
+export type DateRangePreset =
+  | 'today'
+  | 'yesterday'
+  | 'last_7_days'
+  | 'last_14_days'
+  | 'last_30_days'
+  | 'last_90_days'
+  | 'last_365_days'
+  | 'this_week'
+  | 'this_month'
+  | 'this_quarter'
+  | 'this_year'
+  | 'last_week'
+  | 'last_month'
+  | 'last_quarter'
+  | 'last_year';
 
 // ============================================================================
 // Aggregation Component (Enhanced)
@@ -77,6 +99,10 @@ interface KPIDefinitionBase {
     period: ComparisonPeriod;
     offsetDays?: number;
   };
+  /** Apply COALESCE to wrap result with fallback value */
+  nullFallback?: number | string;
+  /** Preset date range filter (requires timeField) */
+  dateRange?: DateRangePreset;
 }
 
 // ============================================================================
@@ -153,6 +179,46 @@ export interface CompositeKPIDefinition extends KPIDefinitionBase {
   groupBy?: string[];
 }
 
+export interface MovingAverageKPIDefinition extends KPIDefinitionBase {
+  type: 'moving_average';
+  aggregation: 'AVG' | 'SUM' | 'COUNT';
+  expression: string;
+  /** Number of periods for the moving window */
+  periods: number;
+  /** Unit of the period (day, week, month) */
+  periodUnit: 'day' | 'week' | 'month';
+  /** Field to partition by (optional, e.g., by product) */
+  partitionBy?: string[];
+  /** Field to order by (defaults to timeField) */
+  orderBy?: string;
+}
+
+export interface RankingKPIDefinition extends KPIDefinitionBase {
+  type: 'ranking';
+  /** Ranking function to use */
+  rankFunction: 'RANK' | 'DENSE_RANK' | 'ROW_NUMBER' | 'NTILE';
+  /** For NTILE: number of buckets */
+  ntileBuckets?: number;
+  /** Field to rank by */
+  rankBy: string;
+  /** Direction for ranking */
+  rankDirection: 'asc' | 'desc';
+  /** Optional partition for ranking within groups */
+  partitionBy?: string[];
+  /** Optional: only return top N */
+  topN?: number;
+}
+
+export interface ConditionalKPIDefinition extends KPIDefinitionBase {
+  type: 'conditional';
+  /** Base aggregation (COUNT, SUM, AVG) */
+  aggregation: 'COUNT' | 'SUM' | 'AVG';
+  /** Expression to aggregate */
+  expression: string;
+  /** Condition that must be true for row to be included */
+  condition: string;
+}
+
 // ============================================================================
 // Union Type
 // ============================================================================
@@ -164,7 +230,10 @@ export type KPISemanticDefinition =
   | FilteredAggregationKPIDefinition
   | WindowKPIDefinition
   | CaseKPIDefinition
-  | CompositeKPIDefinition;
+  | CompositeKPIDefinition
+  | MovingAverageKPIDefinition
+  | RankingKPIDefinition
+  | ConditionalKPIDefinition;
 
 // ============================================================================
 // Type Guards
@@ -196,6 +265,18 @@ export function isCaseKPI(def: KPISemanticDefinition): def is CaseKPIDefinition 
 
 export function isCompositeKPI(def: KPISemanticDefinition): def is CompositeKPIDefinition {
   return def.type === 'composite';
+}
+
+export function isMovingAverageKPI(def: KPISemanticDefinition): def is MovingAverageKPIDefinition {
+  return def.type === 'moving_average';
+}
+
+export function isRankingKPI(def: KPISemanticDefinition): def is RankingKPIDefinition {
+  return def.type === 'ranking';
+}
+
+export function isConditionalKPI(def: KPISemanticDefinition): def is ConditionalKPIDefinition {
+  return def.type === 'conditional';
 }
 
 // ============================================================================
@@ -251,6 +332,28 @@ export function validateKPIDefinition(def: KPISemanticDefinition): {
       if (!def.aggregation) errors.push('Composite KPI requires aggregation');
       if (!def.expression) errors.push('Composite KPI requires expression');
       if (!def.sources?.length) errors.push('Composite KPI requires sources');
+      break;
+
+    case 'moving_average':
+      if (!def.aggregation) errors.push('Moving Average KPI requires aggregation');
+      if (!def.expression) errors.push('Moving Average KPI requires expression');
+      if (!def.periods || def.periods < 1) errors.push('Moving Average KPI requires periods > 0');
+      if (!def.periodUnit) errors.push('Moving Average KPI requires periodUnit');
+      break;
+
+    case 'ranking':
+      if (!def.rankFunction) errors.push('Ranking KPI requires rankFunction');
+      if (!def.rankBy) errors.push('Ranking KPI requires rankBy');
+      if (!def.rankDirection) errors.push('Ranking KPI requires rankDirection');
+      if (def.rankFunction === 'NTILE' && !def.ntileBuckets) {
+        errors.push('NTILE ranking requires ntileBuckets');
+      }
+      break;
+
+    case 'conditional':
+      if (!def.aggregation) errors.push('Conditional KPI requires aggregation');
+      if (!def.expression) errors.push('Conditional KPI requires expression');
+      if (!def.condition) errors.push('Conditional KPI requires condition');
       break;
   }
 

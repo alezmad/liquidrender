@@ -46,6 +46,33 @@ export class TrinoEmitter extends BaseEmitter {
         max: 'MAX',
         median: undefined, // Trino uses approx_percentile
         percentile: (field, p) => `APPROX_PERCENTILE(${field}, ${p})`,
+        stddev: 'STDDEV_SAMP',
+        variance: 'VAR_SAMP',
+        stringAgg: (field, delimiter, orderBy) =>
+          orderBy
+            ? `LISTAGG(${field}, '${delimiter}') WITHIN GROUP (ORDER BY ${orderBy})`
+            : `LISTAGG(${field}, '${delimiter}')`,
+        arrayAgg: (field, orderBy) =>
+          orderBy ? `ARRAY_AGG(${field} ORDER BY ${orderBy})` : `ARRAY_AGG(${field})`,
+        // Boolean aggregations
+        boolAnd: 'BOOL_AND',
+        boolOr: 'BOOL_OR',
+        every: 'EVERY',
+        any: 'ANY_VALUE', // Trino uses ANY_VALUE
+        // Positional aggregations
+        firstValue: (field, orderBy) =>
+          orderBy
+            ? `FIRST_VALUE(${field}) OVER (ORDER BY ${orderBy})`
+            : `FIRST_VALUE(${field})`,
+        lastValue: (field, orderBy) =>
+          orderBy
+            ? `LAST_VALUE(${field}) OVER (ORDER BY ${orderBy})`
+            : `LAST_VALUE(${field})`,
+        // Ranking functions
+        rank: 'RANK',
+        denseRank: 'DENSE_RANK',
+        rowNumber: 'ROW_NUMBER',
+        ntile: (buckets) => `NTILE(${buckets})`,
       },
     };
   }

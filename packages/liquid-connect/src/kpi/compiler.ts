@@ -14,10 +14,15 @@ import type {
   WindowKPIDefinition,
   CaseKPIDefinition,
   CompositeKPIDefinition,
+  MovingAverageKPIDefinition,
+  RankingKPIDefinition,
+  ConditionalKPIDefinition,
   AggregationComponent,
   FilterCondition,
   CompoundFilter,
   KPIFilter,
+  DateRangePreset,
+  ComparisonPeriod,
 } from './types';
 import {
   isSimpleKPI,
@@ -27,6 +32,9 @@ import {
   isWindowKPI,
   isCaseKPI,
   isCompositeKPI,
+  isMovingAverageKPI,
+  isRankingKPI,
+  isConditionalKPI,
 } from './types';
 
 export interface CompileKPIOptions {
@@ -84,6 +92,16 @@ export function compileKPIFormula(
         success: true,
         columns: result.columns,
       };
+    } else if (isMovingAverageKPI(definition)) {
+      const result = compileMovingAverageKPI(definition, traits);
+      expression = result.expression;
+      columns = result.columns;
+    } else if (isRankingKPI(definition)) {
+      const result = compileRankingKPI(definition, traits);
+      expression = result.expression;
+      columns = result.columns;
+    } else if (isConditionalKPI(definition)) {
+      expression = compileConditionalKPI(definition, traits);
     } else {
       return {
         expression: '',
@@ -94,11 +112,53 @@ export function compileKPIFormula(
       };
     }
 
+    // Apply nullFallback wrapper if specified
+    if (definition.nullFallback !== undefined) {
+      const fallbackValue = typeof definition.nullFallback === 'string'
+        ? `'${definition.nullFallback}'`
+        : definition.nullFallback;
+      expression = `COALESCE(${expression}, ${fallbackValue})`;
+    }
+
     const sourceTable = definition.entity;
     const tableName = formatTableName(sourceTable, schema, traits, quoteIdentifiers);
-    const whereClause = buildWhereClause(definition.filters, traits, quoteIdentifiers);
+
+    // Build where clause with filters and date range
+    let whereConditions: string[] = [];
+    const filterClause = buildWhereClause(definition.filters, traits, quoteIdentifiers);
+    if (filterClause) {
+      whereConditions.push(filterClause);
+    }
+
+    // Add date range filter if specified
+    if (definition.dateRange && definition.timeField) {
+      const dateRangeCondition = buildDateRangeCondition(
+        definition.timeField,
+        definition.dateRange,
+        traits,
+        quoteIdentifiers
+      );
+      if (dateRangeCondition) {
+        whereConditions.push(dateRangeCondition);
+      }
+    }
+
+    const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : null;
 
     sql = buildFullQuery(expression, tableName, whereClause, columns);
+
+    // Handle period comparison if specified
+    if (definition.comparison && definition.timeField) {
+      sql = buildComparisonQuery(
+        expression,
+        tableName,
+        whereClause,
+        definition.timeField,
+        definition.comparison,
+        traits,
+        columns
+      );
+    }
 
     return {
       expression,
@@ -267,6 +327,105 @@ function compileCaseKPI(def: CaseKPIDefinition, traits: DialectTraits): string {
   }
   const caseExpr = `CASE ${caseParts.join(' ')} END`;
   return buildAggregation(def.aggregation, caseExpr, traits);
+}
+
+function compileMovingAverageKPI(
+  def: MovingAverageKPIDefinition,
+  traits: DialectTraits
+): { expression: string; columns: string[] } {
+  const { aggregation, expression, periods, periodUnit, partitionBy, orderBy, timeField } = def;
+
+  if (!traits.supportsWindowFunctions) {
+    throw new Error('Dialect does not support window functions required for moving average');
+  }
+
+  // Build the base aggregation
+  const baseAgg = buildAggregation(aggregation, expression, traits);
+
+  // Build partition clause
+  const partitionClause = partitionBy?.length
+    ? `PARTITION BY ${partitionBy.join(', ')}`
+    : '';
+
+  // Build order clause - use orderBy or timeField
+  const orderField = orderBy || timeField;
+  if (!orderField) {
+    throw new Error('Moving average requires orderBy or timeField');
+  }
+  const orderClause = `ORDER BY ${orderField}`;
+
+  // Build frame clause for N preceding rows/range
+  const frameClause = `ROWS BETWEEN ${periods - 1} PRECEDING AND CURRENT ROW`;
+
+  const windowSpec = [partitionClause, orderClause, frameClause].filter(Boolean).join(' ');
+  const windowExpr = `${baseAgg} OVER (${windowSpec})`;
+
+  return {
+    expression: windowExpr,
+    columns: ['value'],
+  };
+}
+
+function compileRankingKPI(
+  def: RankingKPIDefinition,
+  traits: DialectTraits
+): { expression: string; columns: string[] } {
+  const { rankFunction, ntileBuckets, rankBy, rankDirection, partitionBy, topN } = def;
+
+  if (!traits.supportsWindowFunctions) {
+    throw new Error('Dialect does not support window functions required for ranking');
+  }
+
+  // Build partition clause
+  const partitionClause = partitionBy?.length
+    ? `PARTITION BY ${partitionBy.join(', ')}`
+    : '';
+
+  // Build order clause
+  const orderClause = `ORDER BY ${rankBy} ${rankDirection.toUpperCase()}`;
+
+  const windowSpec = [partitionClause, orderClause].filter(Boolean).join(' ');
+
+  // Build ranking function
+  let rankExpr: string;
+  switch (rankFunction) {
+    case 'RANK':
+      rankExpr = `RANK() OVER (${windowSpec})`;
+      break;
+    case 'DENSE_RANK':
+      rankExpr = `DENSE_RANK() OVER (${windowSpec})`;
+      break;
+    case 'ROW_NUMBER':
+      rankExpr = `ROW_NUMBER() OVER (${windowSpec})`;
+      break;
+    case 'NTILE':
+      if (!ntileBuckets) throw new Error('NTILE requires ntileBuckets');
+      rankExpr = `NTILE(${ntileBuckets}) OVER (${windowSpec})`;
+      break;
+    default:
+      throw new Error(`Unknown rank function: ${rankFunction}`);
+  }
+
+  // Note: topN filtering should be handled in the outer query
+  // The expression just returns the rank value
+
+  return {
+    expression: rankExpr,
+    columns: ['rank'],
+  };
+}
+
+function compileConditionalKPI(
+  def: ConditionalKPIDefinition,
+  traits: DialectTraits
+): string {
+  const { aggregation, expression, condition } = def;
+
+  // Build conditional expression using CASE WHEN
+  const conditionalExpr = `CASE WHEN ${condition} THEN ${expression} END`;
+
+  // Apply the aggregation
+  return buildAggregation(aggregation, conditionalExpr, traits);
 }
 
 function compileCompositeKPI(
@@ -514,4 +673,145 @@ export function compileMultipleKPIs(
   const sql = `SELECT ${selectParts.join(', ')} FROM ${tableName}`;
 
   return { sql, columns };
+}
+
+// ============================================================================
+// Date Range Helpers
+// ============================================================================
+
+function buildDateRangeCondition(
+  timeField: string,
+  dateRange: DateRangePreset,
+  traits: DialectTraits,
+  quoteIdentifiers: boolean
+): string {
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  const field = `${quote}${timeField}${quote}`;
+  const currentDate = traits.dateFunctions.currentDate;
+  const dateTrunc = traits.dateFunctions.dateTrunc;
+  const dateAdd = traits.dateFunctions.dateAdd;
+
+  switch (dateRange) {
+    case 'today':
+      return `${field} >= ${dateTrunc('day', currentDate)} AND ${field} < ${dateAdd(dateTrunc('day', currentDate), '1', 'day')}`;
+
+    case 'yesterday':
+      return `${field} >= ${dateAdd(dateTrunc('day', currentDate), '-1', 'day')} AND ${field} < ${dateTrunc('day', currentDate)}`;
+
+    case 'last_7_days':
+      return `${field} >= ${dateAdd(currentDate, '-7', 'day')} AND ${field} < ${currentDate}`;
+
+    case 'last_14_days':
+      return `${field} >= ${dateAdd(currentDate, '-14', 'day')} AND ${field} < ${currentDate}`;
+
+    case 'last_30_days':
+      return `${field} >= ${dateAdd(currentDate, '-30', 'day')} AND ${field} < ${currentDate}`;
+
+    case 'last_90_days':
+      return `${field} >= ${dateAdd(currentDate, '-90', 'day')} AND ${field} < ${currentDate}`;
+
+    case 'last_365_days':
+      return `${field} >= ${dateAdd(currentDate, '-365', 'day')} AND ${field} < ${currentDate}`;
+
+    case 'this_week':
+      return `${field} >= ${dateTrunc('week', currentDate)}`;
+
+    case 'this_month':
+      return `${field} >= ${dateTrunc('month', currentDate)}`;
+
+    case 'this_quarter':
+      return `${field} >= ${dateTrunc('quarter', currentDate)}`;
+
+    case 'this_year':
+      return `${field} >= ${dateTrunc('year', currentDate)}`;
+
+    case 'last_week':
+      return `${field} >= ${dateAdd(dateTrunc('week', currentDate), '-1', 'week')} AND ${field} < ${dateTrunc('week', currentDate)}`;
+
+    case 'last_month':
+      return `${field} >= ${dateAdd(dateTrunc('month', currentDate), '-1', 'month')} AND ${field} < ${dateTrunc('month', currentDate)}`;
+
+    case 'last_quarter':
+      return `${field} >= ${dateAdd(dateTrunc('quarter', currentDate), '-3', 'month')} AND ${field} < ${dateTrunc('quarter', currentDate)}`;
+
+    case 'last_year':
+      return `${field} >= ${dateAdd(dateTrunc('year', currentDate), '-1', 'year')} AND ${field} < ${dateTrunc('year', currentDate)}`;
+
+    default:
+      throw new Error(`Unknown date range preset: ${dateRange}`);
+  }
+}
+
+// ============================================================================
+// Period Comparison Helpers
+// ============================================================================
+
+function buildComparisonQuery(
+  expression: string,
+  tableName: string,
+  whereClause: string | null,
+  timeField: string,
+  comparison: { period: ComparisonPeriod; offsetDays?: number },
+  traits: DialectTraits,
+  columns: string[]
+): string {
+  const dateAdd = traits.dateFunctions.dateAdd;
+  const currentDate = traits.dateFunctions.currentDate;
+
+  // Determine the offset based on comparison period
+  let offsetExpr: string;
+  switch (comparison.period) {
+    case 'previous_period':
+      // Use offsetDays if specified, otherwise default to 1 day
+      const days = comparison.offsetDays || 1;
+      offsetExpr = dateAdd(timeField, `-${days}`, 'day');
+      break;
+    case 'previous_week':
+      offsetExpr = dateAdd(timeField, '-7', 'day');
+      break;
+    case 'previous_month':
+      offsetExpr = dateAdd(timeField, '-1', 'month');
+      break;
+    case 'previous_quarter':
+      offsetExpr = dateAdd(timeField, '-3', 'month');
+      break;
+    case 'previous_year':
+      offsetExpr = dateAdd(timeField, '-1', 'year');
+      break;
+    case 'custom':
+      if (!comparison.offsetDays) {
+        throw new Error('Custom comparison period requires offsetDays');
+      }
+      offsetExpr = dateAdd(timeField, `-${comparison.offsetDays}`, 'day');
+      break;
+    default:
+      throw new Error(`Unknown comparison period: ${comparison.period}`);
+  }
+
+  // Build CTE-based comparison query
+  const selectExpr = columns.length === 1
+    ? `${expression} AS value`
+    : expression;
+
+  // Generate comparison SQL using CTEs for current and previous period
+  const sql = `
+WITH current_period AS (
+  SELECT ${selectExpr}
+  FROM ${tableName}
+  ${whereClause ? `WHERE ${whereClause}` : ''}
+),
+previous_period AS (
+  SELECT ${selectExpr}
+  FROM ${tableName}
+  ${whereClause ? `WHERE ${whereClause.replace(new RegExp(timeField, 'g'), `(${offsetExpr})`)}` : ''}
+)
+SELECT
+  c.value AS current_value,
+  p.value AS previous_value,
+  (c.value - p.value) AS delta,
+  CASE WHEN p.value = 0 THEN NULL ELSE ((c.value - p.value)${traits.castToFloat} / p.value) * 100 END AS pct_change
+FROM current_period c
+CROSS JOIN previous_period p`.trim();
+
+  return sql;
 }

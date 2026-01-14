@@ -1,4 +1,4 @@
-// Hook for fetching and managing calculated metrics
+// Hook for fetching and managing metrics (vocabulary items with type='metric')
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "~/lib/api/client";
@@ -7,6 +7,10 @@ import { api } from "~/lib/api/client";
 // TYPES
 // ============================================================================
 
+/**
+ * Vocabulary metric item - this represents a detected metric from the schema
+ * Note: This is different from the older CalculatedMetric which was never populated
+ */
 export interface CalculatedMetric {
   id: string;
   workspaceId: string;
@@ -38,6 +42,7 @@ export interface ExecutionResult {
 
 export interface UseMetricsOptions {
   connectionId: string;
+  workspaceId: string;
   category?: string;
   status?: string;
 }
@@ -56,6 +61,7 @@ export interface UseMetricsReturn {
 
 export function useMetrics({
   connectionId,
+  workspaceId,
   category,
   status,
 }: UseMetricsOptions): UseMetricsReturn {
@@ -63,11 +69,11 @@ export function useMetrics({
   const queryKey = [
     "knosia",
     "metrics",
-    connectionId,
+    workspaceId,
     { category, status },
   ];
 
-  // Fetch metrics list
+  // Fetch vocabulary items with type='metric'
   const {
     data,
     isLoading,
@@ -77,11 +83,10 @@ export function useMetrics({
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const res = await api.knosia.metrics.$get({
+      const res = await api.knosia.vocabulary.items.$get({
         query: {
-          connectionId,
-          category: category as "revenue" | "growth" | "engagement" | "operational" | "other" | undefined,
-          status: status as "active" | "draft" | "deprecated" | undefined,
+          workspaceId,
+          type: "metric",
         },
       });
 
@@ -90,9 +95,53 @@ export function useMetrics({
       }
 
       const result = await res.json();
-      return (result.metrics ?? []) as CalculatedMetric[];
+      const items = result.items ?? [];
+
+      // Transform vocabulary items to CalculatedMetric format for backwards compatibility
+      // The API returns ResolvedVocabularyItem which doesn't have status field
+      return items.map((item: {
+        id: string;
+        canonicalName: string;
+        abbreviation: string | null;
+        category: string | null;
+        slug: string;
+        type: "metric" | "dimension" | "entity" | "event";
+        scope: "org" | "workspace" | "private";
+        definition: {
+          descriptionHuman?: string;
+          formulaHuman?: string;
+          formulaSql?: string;
+          sourceTables?: string[];
+        } | null;
+        suggestedForRoles: string[] | null;
+        isFavorite: boolean;
+        recentlyUsedAt: string | null;
+        useCount: number;
+      }) => ({
+        id: item.id,
+        workspaceId,
+        connectionId,
+        name: item.canonicalName,
+        category: item.category,
+        description: item.definition?.descriptionHuman ?? null,
+        semanticDefinition: {
+          expression: item.definition?.formulaSql,
+          sourceTables: item.definition?.sourceTables,
+        },
+        confidence: null, // Not available in resolved vocabulary
+        feasible: true,
+        source: item.scope,
+        vocabularyItemIds: [item.id],
+        canvasCount: null,
+        executionCount: null,
+        lastExecutedAt: null,
+        lastExecutionResult: null,
+        status: "active", // Vocabulary items don't have status in resolved form
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } satisfies CalculatedMetric));
     },
-    enabled: !!connectionId,
+    enabled: !!workspaceId,
     staleTime: 30000, // 30 seconds
   });
 

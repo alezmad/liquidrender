@@ -29,7 +29,10 @@ import {
 
 interface MetricsTabProps {
   connectionId: string;
+  workspaceId: string;
   onCreateMetric?: () => void;
+  /** Vocabulary type to filter by - "kpi" for KPIs, "metric" for legacy metrics */
+  vocabularyType?: "kpi" | "metric" | "measure";
 }
 
 // ============================================================================
@@ -98,7 +101,7 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
       <p className="mb-4 max-w-sm text-sm text-muted-foreground">
         {hasFilters
           ? "Try adjusting your search or filters to find what you're looking for."
-          : "Metrics are automatically generated during onboarding, or you can create custom metrics."}
+          : "Metrics are detected from your database schema during onboarding. Try running vocabulary detection again if you expect metrics to appear."}
       </p>
     </div>
   );
@@ -130,13 +133,13 @@ function ErrorState({ error, onRetry }: { error: Error; onRetry: () => void }) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function MetricsTab({ connectionId, onCreateMetric }: MetricsTabProps) {
+export function MetricsTab({ connectionId, workspaceId, onCreateMetric }: MetricsTabProps) {
   // Filter state
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
 
-  // Fetch metrics
+  // Fetch metrics from vocabulary items (type='metric')
   const {
     metrics,
     isLoading,
@@ -145,6 +148,7 @@ export function MetricsTab({ connectionId, onCreateMetric }: MetricsTabProps) {
     refetch,
   } = useMetrics({
     connectionId,
+    workspaceId,
     category: categoryFilter === "all" ? undefined : categoryFilter,
     status: statusFilter === "all" ? undefined : statusFilter,
   });

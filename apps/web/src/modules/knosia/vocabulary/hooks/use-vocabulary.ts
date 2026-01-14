@@ -17,14 +17,26 @@ interface UseVocabularyOptions {
   limit?: number;
 }
 
+interface VocabularyCounts {
+  all: number;
+  kpi: number;
+  measure: number;
+  metric: number;
+  dimension: number;
+  entity: number;
+  event: number;
+}
+
 interface VocabularyListResponse {
   items: VocabularyItem[];
   total: number;
+  counts?: VocabularyCounts;
 }
 
 interface UseVocabularyReturn {
   items: VocabularyItem[];
   total: number;
+  counts: VocabularyCounts;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -166,9 +178,20 @@ export function useVocabulary({
     },
   });
 
+  const defaultCounts: VocabularyCounts = {
+    all: 0,
+    kpi: 0,
+    measure: 0,
+    metric: 0,
+    dimension: 0,
+    entity: 0,
+    event: 0,
+  };
+
   return {
     items: data?.items ?? [],
     total: data?.total ?? 0,
+    counts: data?.counts ?? defaultCounts,
     isLoading,
     isError,
     error: error as Error | null,

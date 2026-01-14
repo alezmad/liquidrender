@@ -13,7 +13,28 @@ export {
   type UseVocabularySuggestionsReturn,
 } from "./use-vocabulary-prefs";
 
-// Calculated Metrics hooks
+export {
+  useVocabularyPreview,
+  type PreviewResponse,
+  type PreviewResult,
+  type MetricPreviewResult,
+  type DimensionPreviewResult,
+  type EntityPreviewResult,
+  type UseVocabularyPreviewOptions,
+  type UseVocabularyPreviewReturn,
+} from "./use-vocabulary-preview";
+
+// KPI and Measure hooks (new unified vocabulary)
+export {
+  useKPIs,
+  useMeasures,
+  type UseKPIsOptions,
+  type UseKPIsReturn,
+  type UseMeasuresOptions,
+  type UseMeasuresReturn,
+} from "./use-kpis";
+
+// Legacy Metrics hooks (deprecated - use useKPIs instead)
 export {
   useMetrics,
   useExecuteMetric,

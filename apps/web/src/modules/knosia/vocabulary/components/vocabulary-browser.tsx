@@ -18,6 +18,7 @@ import { ScrollArea } from "@turbostarter/ui-web/scroll-area";
 import { Icons } from "@turbostarter/ui-web/icons";
 
 import { VocabularyList } from "./vocabulary-list";
+import { VocabularyDetailSheet } from "./vocabulary-detail-sheet";
 import { useVocabulary } from "../hooks/use-vocabulary";
 import type {
   VocabularyBrowserProps,
@@ -33,7 +34,8 @@ import type {
 
 const typeFilters: { value: VocabularyTypeFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "metric", label: "Metrics" },
+  { value: "kpi", label: "KPIs" },
+  { value: "measure", label: "Measures" },
   { value: "dimension", label: "Dimensions" },
   { value: "entity", label: "Entities" },
   { value: "event", label: "Events" },
@@ -64,12 +66,18 @@ export function VocabularyBrowser({
   workspaceId,
   initialFilters,
   onItemSelect,
+  hideTypeFilter = false,
 }: VocabularyBrowserProps) {
+  // Hide type tabs when explicitly requested or when type is locked by parent
+  const shouldHideTypeTabs = hideTypeFilter || (initialFilters?.type && initialFilters.type !== "all");
+
   // State
   const [filters, setFilters] = useState<VocabularyFilters>({
     ...defaultFilters,
     ...initialFilters,
   });
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   // Fetch vocabulary data
   const {
@@ -78,7 +86,6 @@ export function VocabularyBrowser({
     isError,
     error,
     toggleFavorite,
-    isTogglingFavorite,
     refetch,
   } = useVocabulary({
     workspaceId,
@@ -86,6 +93,12 @@ export function VocabularyBrowser({
     type: filters.type === "all" ? undefined : filters.type,
     scope: filters.scope === "all" ? undefined : filters.scope,
   });
+
+  // Derive selected item from items list to get updated state (e.g., after favorite toggle)
+  const selectedItem = useMemo(() => {
+    if (!selectedItemId) return null;
+    return items.find((item) => item.id === selectedItemId) ?? null;
+  }, [selectedItemId, items]);
 
   // Filter handlers
   const handleSearchChange = useCallback((value: string) => {
@@ -111,10 +124,20 @@ export function VocabularyBrowser({
   // Item handlers
   const handleItemClick = useCallback(
     (item: VocabularyItem) => {
+      setSelectedItemId(item.id);
+      setDetailSheetOpen(true);
       onItemSelect?.(item);
     },
     [onItemSelect]
   );
+
+  const handleDetailSheetClose = useCallback((open: boolean) => {
+    setDetailSheetOpen(open);
+    if (!open) {
+      // Small delay before clearing to allow animation
+      setTimeout(() => setSelectedItemId(null), 200);
+    }
+  }, []);
 
   const handleFavoriteToggle = useCallback(
     (item: VocabularyItem) => {
@@ -155,7 +178,7 @@ export function VocabularyBrowser({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header with Search */}
+      {/* Header with Search and Scope */}
       <div className="border-b p-4">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -177,6 +200,28 @@ export function VocabularyBrowser({
               </Button>
             )}
           </div>
+          {/* Scope Dropdown */}
+          <Select
+            value={filters.scope}
+            onValueChange={(v) => handleScopeChange(v as VocabularyScopeFilter)}
+          >
+            <SelectTrigger className="h-9 w-40 shrink-0">
+              <SelectValue placeholder="Scope" />
+            </SelectTrigger>
+            <SelectContent>
+              {scopeFilters.map((filter) => {
+                const Icon = Icons[filter.icon];
+                return (
+                  <SelectItem key={filter.value} value={filter.value}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      {filter.label}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
           {hasActiveFilters && (
             <Button
               variant="ghost"
@@ -191,58 +236,27 @@ export function VocabularyBrowser({
         </div>
       </div>
 
-      {/* Filter Tabs & Scope Selector */}
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        {/* Type Tabs */}
-        <Tabs
-          value={filters.type}
-          onValueChange={(v) => handleTypeChange(v as VocabularyTypeFilter)}
-        >
-          <TabsList className="h-8">
-            {typeFilters.map((filter) => (
-              <TabsTrigger
-                key={filter.value}
-                value={filter.value}
-                className="px-3 text-xs"
-              >
-                {filter.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        {/* Scope Dropdown */}
-        <Select
-          value={filters.scope}
-          onValueChange={(v) => handleScopeChange(v as VocabularyScopeFilter)}
-        >
-          <SelectTrigger className="h-8 w-40">
-            <SelectValue placeholder="Scope" />
-          </SelectTrigger>
-          <SelectContent>
-            {scopeFilters.map((filter) => {
-              const Icon = Icons[filter.icon];
-              return (
-                <SelectItem key={filter.value} value={filter.value}>
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    {filter.label}
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Results Count */}
-      <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-2">
-        <span className="text-xs text-muted-foreground">
-          {isLoading
-            ? "Loading..."
-            : `${items.length} item${items.length !== 1 ? "s" : ""} found`}
-        </span>
-      </div>
+      {/* Type Tabs - only show when not hidden */}
+      {!shouldHideTypeTabs && (
+        <div className="flex items-center border-b px-4 py-2">
+          <Tabs
+            value={filters.type}
+            onValueChange={(v) => handleTypeChange(v as VocabularyTypeFilter)}
+          >
+            <TabsList className="h-8">
+              {typeFilters.map((filter) => (
+                <TabsTrigger
+                  key={filter.value}
+                  value={filter.value}
+                  className="px-3 text-xs"
+                >
+                  {filter.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
       {/* Vocabulary List */}
       <ScrollArea className="flex-1">
@@ -252,7 +266,7 @@ export function VocabularyBrowser({
             groupBy="type"
             onFavoriteToggle={handleFavoriteToggle}
             onItemClick={handleItemClick}
-            isLoading={isLoading || isTogglingFavorite}
+            isLoading={isLoading}
             emptyMessage={
               hasActiveFilters
                 ? "No items match your filters"
@@ -261,6 +275,15 @@ export function VocabularyBrowser({
           />
         </div>
       </ScrollArea>
+
+      {/* Detail Sheet */}
+      <VocabularyDetailSheet
+        item={selectedItem}
+        open={detailSheetOpen}
+        onOpenChange={handleDetailSheetClose}
+        onFavoriteToggle={handleFavoriteToggle}
+        workspaceId={workspaceId}
+      />
     </div>
   );
 }

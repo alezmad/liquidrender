@@ -25,8 +25,10 @@ function groupByCategory(items: VocabularyItem[]): GroupedItems {
 }
 
 function groupByType(items: VocabularyItem[]): GroupedItems {
-  const typeOrder = ["metric", "dimension", "entity", "event"];
+  const typeOrder = ["kpi", "measure", "metric", "dimension", "entity", "event"];
   const typeLabels: Record<string, string> = {
+    kpi: "KPIs",
+    measure: "Measures",
     metric: "Metrics",
     dimension: "Dimensions",
     entity: "Entities",
@@ -56,22 +58,24 @@ function groupByType(items: VocabularyItem[]): GroupedItems {
 
 function VocabularyListSkeleton() {
   return (
-    <div className="space-y-3">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="rounded-lg border p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-48" />
-              <div className="flex gap-1.5">
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-5 w-8" />
-                <Skeleton className="h-5 w-20" />
-              </div>
+    <div className="space-y-1">
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div key={i} className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5">
+          {/* Type Icon */}
+          <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+          {/* Content */}
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-16" />
             </div>
-            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-3 w-48" />
           </div>
-          <Skeleton className="mt-2 h-4 w-full" />
-          <Skeleton className="mt-1 h-4 w-3/4" />
+          {/* Right Side */}
+          <div className="flex shrink-0 items-center gap-1">
+            <Skeleton className="h-6 w-6 rounded" />
+            <Skeleton className="h-7 w-7 rounded" />
+          </div>
         </div>
       ))}
     </div>
@@ -135,16 +139,18 @@ export function VocabularyList({
     const groupKeys = Object.keys(groupedItems);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {groupKeys.map((groupName) => (
           <div key={groupName}>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <span>{groupName}</span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+            <div className="mb-2 flex items-center gap-2 px-1">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+                {groupName}
+              </span>
+              <span className="text-xs text-muted-foreground/50">
                 {groupedItems[groupName]?.length ?? 0}
               </span>
-            </h3>
-            <div className="space-y-2">
+            </div>
+            <div className="space-y-1">
               {groupedItems[groupName]?.map((item) => (
                 <VocabularyCard
                   key={item.id}
@@ -162,7 +168,7 @@ export function VocabularyList({
 
   // Flat list rendering
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {items.map((item) => (
         <VocabularyCard
           key={item.id}

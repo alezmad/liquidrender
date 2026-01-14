@@ -8,6 +8,11 @@ export {
   useVocabularySuggestions,
 } from "./hooks/use-vocabulary-prefs";
 export {
+  useVocabularyPreview,
+  type PreviewResponse,
+  type PreviewResult,
+} from "./hooks/use-vocabulary-preview";
+export {
   useMetrics,
   useExecuteMetric,
   useUpdateMetric,
@@ -21,6 +26,7 @@ export {
 export { VocabularyCard } from "./components/vocabulary-card";
 export { VocabularyList } from "./components/vocabulary-list";
 export { VocabularyBrowser } from "./components/vocabulary-browser";
+export { VocabularyDetailSheet } from "./components/vocabulary-detail-sheet";
 export { MetricCard } from "./components/metric-card";
 export { MetricsTab } from "./components/metrics-tab";
 export { VocabularyPageContent } from "./components/vocabulary-page-content";

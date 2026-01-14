@@ -29,6 +29,20 @@
       "when": 1767532800000,
       "tag": "0003_add_calculated_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1767721653995,
+      "tag": "0004_vocabulary_consolidation",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1767721702259,
+      "tag": "0005_vocabulary_data_migration",
+      "breakpoints": true
     }
   ]
 }

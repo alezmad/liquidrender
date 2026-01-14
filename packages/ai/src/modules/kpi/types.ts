@@ -142,10 +142,12 @@ export const DerivedKPIDefinitionSchema = z.object({
 });
 
 /**
- * NEW: KPI Semantic Definition using DSL types.
- * This is what the LLM generates - dialect-agnostic KPI definition.
+ * KPI Semantic Definition - Basic 3 types (simple, ratio, derived).
  *
- * The compiler transforms this to SQL using the appropriate emitter.
+ * NOTE: For advanced types (filtered, window, case, composite, etc.),
+ * see ExtendedKPISemanticDefinitionSchema defined later in this file.
+ * The KPIRecipeSchema below uses this basic schema for initial validation,
+ * but the generator supports all 10 types via the Extended schema.
  */
 export const KPISemanticDefinitionSchema = z.discriminatedUnion("type", [
   SimpleKPIDefinitionSchema,
@@ -327,10 +329,75 @@ export const GenerateRecipeRequestSchema = z.object({
 export type GenerateRecipeRequest = z.infer<typeof GenerateRecipeRequestSchema>;
 
 /**
+ * Validation log entry for tracking repair attempts.
+ *
+ * Enhanced with prompt versioning and full LLM I/O tracing for:
+ * - Reproducing exact generation conditions
+ * - Comparing success rates across prompt versions
+ * - Extracting (failing_input, fixed_output) pairs for learning
+ * - Tracking token usage and latency trends
+ */
+export const ValidationLogEntrySchema = z.object({
+  // === Core fields ===
+  timestamp: z.string(),
+  attempt: z.number(),
+  stage: z.enum(["schema", "compile", "repair"]),
+  error: z.string().optional(),
+  model: z.string().optional(),
+  result: z.enum(["success", "failed", "fixed"]).optional(),
+
+  // === Prompt tracking ===
+  promptName: z.string().optional().describe("Prompt template name (e.g., 'schema-first-kpi-generation')"),
+  promptVersion: z.string().optional().describe("Prompt template version (e.g., '1.0.0')"),
+
+  // === Full LLM I/O (critical for learning) ===
+  fullPrompt: z.string().optional().describe("Complete rendered prompt sent to LLM"),
+  rawInput: z.unknown().optional().describe("Object being validated (before repair)"),
+  rawOutput: z.unknown().optional().describe("LLM response (after repair)"),
+
+  // === Performance metrics ===
+  latencyMs: z.number().optional().describe("LLM call duration in milliseconds"),
+  tokensIn: z.number().optional().describe("Input token count"),
+  tokensOut: z.number().optional().describe("Output token count"),
+});
+
+export type ValidationLogEntry = z.infer<typeof ValidationLogEntrySchema>;
+
+/**
+ * A KPI that failed validation after all repair attempts
+ */
+export const FailedRecipeSchema = z.object({
+  name: z.string(),
+  originalDefinition: z.unknown(),
+  failureStage: z.enum(["schema", "compile"]),
+  lastError: z.string(),
+  validationLog: z.array(ValidationLogEntrySchema),
+});
+
+export type FailedRecipe = z.infer<typeof FailedRecipeSchema>;
+
+/**
+ * Generation statistics for observability
+ */
+export const GenerationStatsSchema = z.object({
+  attempted: z.number().describe("Total KPIs attempted"),
+  passedSchema: z.number().describe("KPIs that passed schema validation"),
+  passedCompile: z.number().describe("KPIs that passed compilation"),
+  repairedByHaiku: z.number().describe("KPIs repaired by Haiku (1st attempt)"),
+  repairedBySonnet: z.number().describe("KPIs repaired by Sonnet (2nd attempt)"),
+  finalSuccess: z.number().describe("KPIs that succeeded after all stages"),
+  finalFailed: z.number().describe("KPIs that failed after all attempts"),
+});
+
+export type GenerationStats = z.infer<typeof GenerationStatsSchema>;
+
+/**
  * Response from recipe generation
  */
 export const GenerateRecipeResponseSchema = z.object({
   recipes: z.array(CalculatedMetricRecipeSchema),
+  failedRecipes: z.array(FailedRecipeSchema).optional(),
+  generationStats: GenerationStatsSchema.optional(),
   totalGenerated: z.number(),
   feasibleCount: z.number(),
   infeasibleCount: z.number(),
@@ -1370,3 +1437,41 @@ export const ExtendedKPISemanticDefinitionSchema = z.discriminatedUnion('type', 
 ]);
 
 export type ExtendedKPISemanticDefinitionType = z.infer<typeof ExtendedKPISemanticDefinitionSchema>;
+
+/**
+ * Extended KPI Recipe Schema - Supports all 7 KPI types.
+ * Use this for LLM validation instead of KPIRecipeSchema.
+ */
+export const ExtendedKPIRecipeSchema = z.object({
+  // Display metadata
+  name: z.string().describe("Business-friendly name (e.g., 'Average Order Value')"),
+  description: z.string().describe("What this KPI measures and why it matters"),
+  category: z.enum(["revenue", "growth", "retention", "engagement", "efficiency", "fulfillment", "inventory", "custom"]),
+
+  // DSL-based semantic definition (supports all 7 types)
+  kpiDefinition: ExtendedKPISemanticDefinitionSchema,
+
+  // Display formatting
+  format: z.object({
+    type: DisplayFormat,
+    decimals: z.number().optional(),
+    currency: z.string().optional(),
+    prefix: z.string().optional(),
+    suffix: z.string().optional(),
+  }).optional().describe("Display formatting"),
+
+  // Metadata for LLM confidence
+  businessType: z.array(z.string()).describe("Business types this KPI applies to"),
+  confidence: z.number().min(0).max(1).describe("LLM confidence (0-1)"),
+  feasible: z.boolean().describe("Whether this KPI can be calculated from available data"),
+  infeasibilityReason: z.string().optional().describe("Why KPI can't be calculated, if infeasible"),
+
+  // Column dependencies (informational)
+  requiredColumns: z.array(z.object({
+    tableName: z.string(),
+    columnName: z.string(),
+    purpose: z.string(),
+  })).optional().describe("Column dependencies"),
+});
+
+export type ExtendedKPIRecipe = z.infer<typeof ExtendedKPIRecipeSchema>;

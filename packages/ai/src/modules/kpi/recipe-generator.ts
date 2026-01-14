@@ -2,6 +2,11 @@
  * KPI Recipe Generator
  *
  * Uses LLMs to generate SQL recipes for business KPIs based on available database schema.
+ *
+ * Features:
+ * - Schema-first generation (recommended)
+ * - Self-healing validation pipeline
+ * - Model escalation on repair (haiku → sonnet)
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -10,12 +15,472 @@ import type {
   GenerateRecipeRequest,
   GenerateRecipeResponse,
   KPIRecipe,
+  FailedRecipe,
+  GenerationStats,
+  ValidationLogEntry,
 } from "./types";
-import { CalculatedMetricRecipeSchema, KPIRecipeSchema, COMMON_KPIS_BY_BUSINESS_TYPE, type KPISemanticDefinitionType } from "./types";
+import { CalculatedMetricRecipeSchema, KPIRecipeSchema, ExtendedKPIRecipeSchema, COMMON_KPIS_BY_BUSINESS_TYPE, type KPISemanticDefinitionType, type ExtendedKPISemanticDefinitionType, type ExtendedKPIRecipe } from "./types";
+import { createEmitter } from "@repo/liquid-connect";
+import { compileKPIFormula, type KPISemanticDefinition } from "@repo/liquid-connect/kpi";
+import {
+  SCHEMA_FIRST_GENERATION_PROMPT,
+  SCHEMA_REPAIR_PROMPT,
+  COMPILE_REPAIR_PROMPT,
+} from "./prompts";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// ============================================================================
+// Validation & Repair Pipeline
+// ============================================================================
+
+/**
+ * Enhanced validation log with full LLM I/O tracing.
+ * Enables prompt version comparison and learning from repair pairs.
+ */
+interface ValidationLog {
+  timestamp: string;
+  attempt: number;
+  stage: "schema" | "compile" | "repair";
+  error?: string;
+  model?: string;
+  result?: "success" | "failed" | "fixed";
+
+  // Prompt tracking
+  promptName?: string;
+  promptVersion?: string;
+
+  // Full LLM I/O (for learning)
+  fullPrompt?: string;
+  rawInput?: unknown;
+  rawOutput?: unknown;
+
+  // Performance metrics
+  latencyMs?: number;
+  tokensIn?: number;
+  tokensOut?: number;
+}
+
+const MODEL_IDS = {
+  haiku: "claude-3-5-haiku-20241022",
+  sonnet: "claude-sonnet-4-5-20250929",
+};
+
+/**
+ * Get model ID based on attempt (escalates from haiku to sonnet)
+ */
+function getModelForAttempt(attempt: number): { tier: "haiku" | "sonnet"; id: string } {
+  const tier = attempt <= 1 ? "haiku" : "sonnet";
+  return { tier, id: MODEL_IDS[tier] };
+}
+
+/**
+ * Test if a KPI definition compiles to valid SQL
+ */
+function testCompilation(
+  kpiDefinition: unknown
+): { success: true; sql: string } | { success: false; error: string } {
+  try {
+    const emitter = createEmitter("duckdb", { defaultSchema: undefined });
+    // Use type assertion since KPISemanticDefinition types may vary between packages
+    const result = compileKPIFormula(kpiDefinition as KPISemanticDefinition, emitter, {
+      quoteIdentifiers: true,
+    });
+
+    if (result.success) {
+      return { success: true, sql: result.expression };
+    }
+    return { success: false, error: result.error || "Unknown compilation error" };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Build repair prompt for compile errors using versioned template.
+ */
+function buildRepairPrompt(
+  error: string,
+  kpiDefinition: unknown,
+  schemaContext?: string
+): string {
+  return COMPILE_REPAIR_PROMPT.render({
+    kpiDefinition,
+    error,
+    schemaContext,
+  });
+}
+
+/**
+ * Result from LLM repair attempt with full trace data.
+ */
+interface RepairResult {
+  success: boolean;
+  fixed?: unknown;
+  error?: string;
+  trace: {
+    fullPrompt: string;
+    rawInput: unknown;
+    rawOutput?: unknown;
+    latencyMs: number;
+    tokensIn?: number;
+    tokensOut?: number;
+  };
+}
+
+/**
+ * Attempt to repair a broken KPI definition using LLM.
+ * Returns full trace data for learning and debugging.
+ */
+async function repairKPIDefinition(
+  kpiDefinition: unknown,
+  error: string,
+  attempt: number,
+  schemaContext?: string
+): Promise<RepairResult> {
+  const { tier, id: modelId } = getModelForAttempt(attempt);
+  const prompt = buildRepairPrompt(error, kpiDefinition, schemaContext);
+  const startTime = Date.now();
+
+  try {
+    const response = await anthropic.messages.create({
+      model: modelId,
+      max_tokens: 4000,
+      temperature: 0.1,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const latencyMs = Date.now() - startTime;
+    const content = response.content[0];
+
+    if (!content || content.type !== "text") {
+      return {
+        success: false,
+        error: "No text response from LLM",
+        trace: {
+          fullPrompt: prompt,
+          rawInput: kpiDefinition,
+          latencyMs,
+          tokensIn: response.usage?.input_tokens,
+          tokensOut: response.usage?.output_tokens,
+        },
+      };
+    }
+
+    let jsonText = content.text.trim();
+    // Strip markdown code blocks if present
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+
+    const fixed = JSON.parse(jsonText) as KPISemanticDefinition;
+    console.log(`[KPIValidator] Repair successful using ${tier}`);
+
+    return {
+      success: true,
+      fixed,
+      trace: {
+        fullPrompt: prompt,
+        rawInput: kpiDefinition,
+        rawOutput: fixed,
+        latencyMs,
+        tokensIn: response.usage?.input_tokens,
+        tokensOut: response.usage?.output_tokens,
+      },
+    };
+  } catch (err) {
+    const latencyMs = Date.now() - startTime;
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[KPIValidator] Repair failed (${tier}):`, message);
+
+    return {
+      success: false,
+      error: message,
+      trace: {
+        fullPrompt: prompt,
+        rawInput: kpiDefinition,
+        latencyMs,
+      },
+    };
+  }
+}
+
+/**
+ * Validate and optionally repair a KPI recipe.
+ * Returns validated recipe or null if validation fails after max attempts.
+ * Supports all 7 KPI types via ExtendedKPIRecipe.
+ * Includes full trace data for each validation/repair attempt.
+ */
+async function validateAndRepairKPI(
+  recipe: ExtendedKPIRecipe,
+  options: {
+    maxAttempts?: number;
+    schemaContext?: string;
+  } = {}
+): Promise<{
+  success: boolean;
+  recipe?: ExtendedKPIRecipe;
+  validationLog: ValidationLog[];
+}> {
+  const { maxAttempts = 2, schemaContext } = options;
+  const log: ValidationLog[] = [];
+  let attempt = 0;
+  let currentDefinition: unknown = recipe.kpiDefinition;
+
+  while (attempt < maxAttempts) {
+    attempt++;
+    const { tier } = getModelForAttempt(attempt);
+
+    // Test compilation
+    const compileResult = testCompilation(currentDefinition);
+
+    if (compileResult.success) {
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "compile",
+        result: "success",
+        rawInput: currentDefinition,
+      });
+
+      // Return recipe with (possibly fixed) definition
+      return {
+        success: true,
+        recipe: {
+          ...recipe,
+          kpiDefinition: currentDefinition as ExtendedKPISemanticDefinitionType,
+        },
+        validationLog: log,
+      };
+    }
+
+    // Compilation failed
+    log.push({
+      timestamp: new Date().toISOString(),
+      attempt,
+      stage: "compile",
+      error: compileResult.error,
+      result: "failed",
+      rawInput: currentDefinition,
+    });
+
+    // Attempt repair
+    const repairResult = await repairKPIDefinition(
+      currentDefinition,
+      compileResult.error,
+      attempt,
+      schemaContext
+    );
+
+    if (repairResult.success && repairResult.fixed) {
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "repair",
+        model: tier,
+        result: "fixed",
+        promptName: COMPILE_REPAIR_PROMPT.name,
+        promptVersion: COMPILE_REPAIR_PROMPT.version,
+        fullPrompt: repairResult.trace.fullPrompt,
+        rawInput: repairResult.trace.rawInput,
+        rawOutput: repairResult.trace.rawOutput,
+        latencyMs: repairResult.trace.latencyMs,
+        tokensIn: repairResult.trace.tokensIn,
+        tokensOut: repairResult.trace.tokensOut,
+      });
+      currentDefinition = repairResult.fixed;
+      // Continue loop to re-validate
+    } else {
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "repair",
+        model: tier,
+        error: repairResult.error,
+        result: "failed",
+        promptName: COMPILE_REPAIR_PROMPT.name,
+        promptVersion: COMPILE_REPAIR_PROMPT.version,
+        fullPrompt: repairResult.trace.fullPrompt,
+        rawInput: repairResult.trace.rawInput,
+        latencyMs: repairResult.trace.latencyMs,
+        tokensIn: repairResult.trace.tokensIn,
+        tokensOut: repairResult.trace.tokensOut,
+      });
+      // Continue to try with escalated model
+    }
+  }
+
+  // Max attempts reached
+  return {
+    success: false,
+    validationLog: log,
+  };
+}
+
+/**
+ * Build repair prompt for Zod schema errors using versioned template.
+ */
+function buildSchemaRepairPrompt(
+  zodError: string,
+  originalItem: unknown,
+  schemaContext?: string
+): string {
+  return SCHEMA_REPAIR_PROMPT.render({
+    originalDefinition: originalItem,
+    zodError,
+    schemaContext,
+  });
+}
+
+/**
+ * Validate and repair a raw LLM output against Zod schema.
+ * Returns validated ExtendedKPIRecipe or null if validation fails after max attempts.
+ * Supports all 7 KPI types: simple, ratio, derived, filtered, window, case, composite.
+ * Includes full trace data for each validation/repair attempt.
+ */
+async function validateAndRepairSchema(
+  item: unknown,
+  options: {
+    maxAttempts?: number;
+    schemaContext?: string;
+  } = {}
+): Promise<{
+  success: boolean;
+  recipe?: ExtendedKPIRecipe;
+  validationLog: ValidationLog[];
+}> {
+  const { maxAttempts = 2, schemaContext } = options;
+  const log: ValidationLog[] = [];
+  let attempt = 0;
+  let currentItem = item;
+
+  while (attempt < maxAttempts) {
+    attempt++;
+    const { tier, id: modelId } = getModelForAttempt(attempt);
+
+    // Try Zod validation with Extended schema (supports all 7 KPI types)
+    const parseResult = ExtendedKPIRecipeSchema.safeParse(currentItem);
+
+    if (parseResult.success) {
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "schema",
+        result: "success",
+        rawInput: currentItem,
+      });
+
+      return {
+        success: true,
+        recipe: parseResult.data,
+        validationLog: log,
+      };
+    }
+
+    // Schema validation failed - extract detailed error
+    const zodError = parseResult.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("\n");
+
+    log.push({
+      timestamp: new Date().toISOString(),
+      attempt,
+      stage: "schema",
+      error: zodError,
+      result: "failed",
+      rawInput: currentItem,
+    });
+
+    // Attempt repair with LLM
+    const prompt = buildSchemaRepairPrompt(zodError, currentItem, schemaContext);
+    const startTime = Date.now();
+
+    try {
+      const response = await anthropic.messages.create({
+        model: modelId,
+        max_tokens: 4000,
+        temperature: 0.1,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const latencyMs = Date.now() - startTime;
+      const content = response.content[0];
+
+      if (!content || content.type !== "text") {
+        log.push({
+          timestamp: new Date().toISOString(),
+          attempt,
+          stage: "repair",
+          model: tier,
+          error: "No text response from LLM",
+          result: "failed",
+          promptName: SCHEMA_REPAIR_PROMPT.name,
+          promptVersion: SCHEMA_REPAIR_PROMPT.version,
+          fullPrompt: prompt,
+          rawInput: currentItem,
+          latencyMs,
+          tokensIn: response.usage?.input_tokens,
+          tokensOut: response.usage?.output_tokens,
+        });
+        continue;
+      }
+
+      let jsonText = content.text.trim();
+      // Strip markdown code blocks if present
+      if (jsonText.startsWith("```")) {
+        jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+      }
+
+      const fixed = JSON.parse(jsonText);
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "repair",
+        model: tier,
+        result: "fixed",
+        promptName: SCHEMA_REPAIR_PROMPT.name,
+        promptVersion: SCHEMA_REPAIR_PROMPT.version,
+        fullPrompt: prompt,
+        rawInput: currentItem,
+        rawOutput: fixed,
+        latencyMs,
+        tokensIn: response.usage?.input_tokens,
+        tokensOut: response.usage?.output_tokens,
+      });
+
+      currentItem = fixed;
+      // Continue loop to re-validate
+    } catch (err) {
+      const latencyMs = Date.now() - startTime;
+      const message = err instanceof Error ? err.message : String(err);
+      log.push({
+        timestamp: new Date().toISOString(),
+        attempt,
+        stage: "repair",
+        model: tier,
+        error: message,
+        result: "failed",
+        promptName: SCHEMA_REPAIR_PROMPT.name,
+        promptVersion: SCHEMA_REPAIR_PROMPT.version,
+        fullPrompt: prompt,
+        rawInput: currentItem,
+        latencyMs,
+      });
+      // Continue to try with escalated model
+    }
+  }
+
+  // Max attempts reached
+  return {
+    success: false,
+    validationLog: log,
+  };
+}
 
 /**
  * Input type for generateKPIRecipes - allows optional fields that have defaults
@@ -120,7 +585,7 @@ export async function generateKPIRecipes(
  * The DSL definition is preserved in semanticDefinition.kpiDefinition for
  * downstream compilation by the KPI compiler.
  */
-function convertKPIRecipeToLegacy(recipe: KPIRecipe): CalculatedMetricRecipe {
+function convertKPIRecipeToLegacy(recipe: ExtendedKPIRecipe | KPIRecipe): CalculatedMetricRecipe {
   const { kpiDefinition } = recipe;
 
   // Build legacy semanticDefinition from DSL definition
@@ -131,7 +596,11 @@ function convertKPIRecipeToLegacy(recipe: KPIRecipe): CalculatedMetricRecipe {
   if (kpiDefinition.type === "simple") {
     // Simple KPI: aggregation(expression)
     expression = kpiDefinition.expression;
-    aggregation = kpiDefinition.aggregation;
+    // Map extended aggregations to basic ones for legacy format
+    const basicAggregations = ["SUM", "AVG", "COUNT", "COUNT_DISTINCT", "MIN", "MAX"];
+    aggregation = basicAggregations.includes(kpiDefinition.aggregation)
+      ? kpiDefinition.aggregation as "SUM" | "AVG" | "COUNT" | "COUNT_DISTINCT" | "MIN" | "MAX"
+      : "SUM"; // Default to SUM for extended aggregations
   } else if (kpiDefinition.type === "ratio") {
     // Ratio KPI: Placeholder - will be compiled by KPI compiler
     // Store a human-readable formula representation
@@ -147,6 +616,22 @@ function convertKPIRecipeToLegacy(recipe: KPIRecipe): CalculatedMetricRecipe {
     // Derived KPI: expression with @metric references
     expression = kpiDefinition.expression;
     aggregation = undefined;
+  } else if (kpiDefinition.type === "filtered") {
+    // Filtered KPI: uses subquery
+    expression = kpiDefinition.expression;
+    aggregation = undefined;
+  } else if (kpiDefinition.type === "window") {
+    // Window KPI: uses window functions
+    expression = kpiDefinition.expression;
+    aggregation = undefined;
+  } else if (kpiDefinition.type === "case") {
+    // Case KPI: CASE WHEN expression
+    expression = "CASE";
+    aggregation = undefined;
+  } else if (kpiDefinition.type === "composite") {
+    // Composite KPI: multi-table join
+    expression = kpiDefinition.expression;
+    aggregation = undefined;
   } else {
     expression = "";
     aggregation = undefined;
@@ -158,24 +643,33 @@ function convertKPIRecipeToLegacy(recipe: KPIRecipe): CalculatedMetricRecipe {
   // Build dependencies list (for derived KPIs)
   const dependencies = kpiDefinition.type === "derived" ? kpiDefinition.dependencies : undefined;
 
+  // Map extended KPI types to legacy types
+  // Legacy only supports: simple, derived, cumulative
+  const legacyType: "simple" | "derived" | "cumulative" =
+    kpiDefinition.type === "derived" ? "derived" : "simple";
+
+  // Build the semantic definition with the extended KPI definition embedded
+  const semanticDefinition = {
+    type: legacyType,
+    expression,
+    aggregation,
+    entity: kpiDefinition.entity,
+    timeField: kpiDefinition.timeField,
+    filters,
+    dependencies,
+    description: recipe.description,
+    format: recipe.format,
+  };
+
+  // CRITICAL: Store original DSL definition for compilation
+  // This is used by the KPI compiler to generate proper SQL
+  (semanticDefinition as Record<string, unknown>)._kpiDefinition = kpiDefinition;
+
   return {
     name: recipe.name,
     description: recipe.description,
     category: recipe.category as "revenue" | "growth" | "retention" | "engagement" | "efficiency" | "custom",
-    semanticDefinition: {
-      type: kpiDefinition.type === "ratio" ? "simple" : kpiDefinition.type, // Map ratio to simple for legacy
-      expression,
-      aggregation,
-      entity: kpiDefinition.entity,
-      timeField: kpiDefinition.timeField,
-      filters,
-      dependencies,
-      description: recipe.description,
-      format: recipe.format,
-      // CRITICAL: Store original DSL definition for compilation
-      // @ts-expect-error - Adding custom property for DSL compilation
-      _kpiDefinition: kpiDefinition,
-    },
+    semanticDefinition,
     businessType: recipe.businessType,
     confidence: recipe.confidence,
     feasible: recipe.feasible,
@@ -221,202 +715,23 @@ async function generateSchemaFirstKPIs(
   const businessKPIs = COMMON_KPIS_BY_BUSINESS_TYPE[request.businessType] || [];
   const priorityKPIs = businessKPIs.slice(0, 15); // Top priority KPIs for this business
 
-  const prompt = `You are a senior data analyst helping a ${request.businessType} business understand their data.
+  // Use versioned prompt template
+  const prompt = SCHEMA_FIRST_GENERATION_PROMPT.render({
+    businessType: request.businessType,
+    priorityKPIs,
+    schemaMarkdown,
+    maxRecipes,
+  });
 
-## Your Mission
-Generate the most BUSINESS-VALUABLE KPIs possible from the available data. Focus on metrics that executives, managers, and analysts actually use to make decisions.
+  // Log initial generation context for tracing
+  const generationTrace = {
+    promptName: SCHEMA_FIRST_GENERATION_PROMPT.name,
+    promptVersion: SCHEMA_FIRST_GENERATION_PROMPT.version,
+    fullPrompt: prompt,
+    model: modelId,
+  };
 
-## Business Context: ${request.businessType.toUpperCase()}
-
-For a ${request.businessType} business, these KPIs typically matter most:
-${priorityKPIs.map((kpi, i) => `${i + 1}. ${kpi}`).join("\n")}
-
-## Available Data
-${schemaMarkdown}
-
-## Task
-
-**Part 1: Priority KPIs (${Math.min(maxRecipes - 5, 15)} KPIs)**
-From the priority list above, identify which KPIs can be calculated from the available data.
-
-**Part 2: Data-Driven Discovery (up to 5 KPIs)**
-Based on the unique columns available, suggest additional KPIs that would be valuable for this business but aren't in the standard list.
-
-## Output Format: DSL Definitions
-
-Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
-
-### KPI Definition Types:
-
-**1. Simple KPI** - Single aggregation:
-{
-  "name": "Total Revenue",
-  "description": "Total revenue from all orders",
-  "category": "revenue",
-  "kpiDefinition": {
-    "type": "simple",
-    "aggregation": "SUM",
-    "expression": "unit_price * quantity",
-    "entity": "order_details",
-    "timeField": "order_date"
-  },
-  "format": {"type": "currency", "decimals": 2},
-  "businessType": ["${request.businessType}"],
-  "confidence": 0.95,
-  "feasible": true,
-  "requiredColumns": [{"tableName": "order_details", "columnName": "unit_price", "purpose": "price component"}]
-}
-
-**2. Ratio KPI** - Numerator / Denominator (use for averages, rates, percentages):
-{
-  "name": "Average Order Value",
-  "description": "Average revenue per order",
-  "category": "revenue",
-  "kpiDefinition": {
-    "type": "ratio",
-    "numerator": {"aggregation": "SUM", "expression": "unit_price * quantity"},
-    "denominator": {"aggregation": "COUNT_DISTINCT", "expression": "order_id"},
-    "entity": "order_details",
-    "timeField": "order_date"
-  },
-  "format": {"type": "currency", "decimals": 2},
-  "businessType": ["${request.businessType}"],
-  "confidence": 0.95,
-  "feasible": true,
-  "requiredColumns": [...]
-}
-
-**3. Percentage KPI** - Use ratio with multiplier:
-{
-  "name": "Discount Rate",
-  "description": "Percentage of revenue discounted",
-  "category": "finance",
-  "kpiDefinition": {
-    "type": "ratio",
-    "numerator": {"aggregation": "SUM", "expression": "discount"},
-    "denominator": {"aggregation": "SUM", "expression": "unit_price * quantity"},
-    "multiplier": 100,
-    "entity": "order_details"
-  },
-  "format": {"type": "percent", "decimals": 1},
-  ...
-}
-
-**4. Filtered KPI** - Conditional aggregation with subquery:
-{
-  "name": "Repeat Purchase Rate",
-  "description": "Percentage of customers with more than one order",
-  "category": "retention",
-  "kpiDefinition": {
-    "type": "filtered",
-    "aggregation": "COUNT_DISTINCT",
-    "expression": "customer_id",
-    "subquery": {
-      "groupBy": "customer_id",
-      "having": "COUNT(*) > 1"
-    },
-    "percentOf": "customer_id",
-    "entity": "orders"
-  },
-  "format": {"type": "percent", "decimals": 1},
-  ...
-}
-Note: Use "percentOf" when the KPI is a percentage (filtered / total * 100). The value should be the same expression being counted.
-
-**5. Window KPI** - Running totals, period comparisons:
-{
-  "name": "Month-over-Month Growth",
-  "description": "Percentage growth compared to previous month",
-  "category": "growth",
-  "kpiDefinition": {
-    "type": "window",
-    "aggregation": "SUM",
-    "expression": "revenue",
-    "window": {
-      "partitionBy": [],
-      "orderBy": [{"field": "month", "direction": "asc"}],
-      "lag": {"offset": 1}
-    },
-    "outputExpression": "(current - lag) / NULLIF(lag, 0) * 100",
-    "entity": "monthly_revenue"
-  },
-  ...
-}
-
-**6. Case KPI** - Conditional value aggregation:
-{
-  "name": "Premium Revenue",
-  "description": "Revenue from premium category only",
-  "category": "revenue",
-  "kpiDefinition": {
-    "type": "case",
-    "aggregation": "SUM",
-    "cases": [
-      {"when": "category = 'premium'", "then": "amount"},
-      {"else": "0"}
-    ],
-    "entity": "orders"
-  },
-  ...
-}
-
-**7. Composite KPI** - Multi-table joins:
-{
-  "name": "Revenue per Segment",
-  "description": "Total revenue grouped by customer segment",
-  "category": "revenue",
-  "kpiDefinition": {
-    "type": "composite",
-    "aggregation": "SUM",
-    "expression": "o.amount",
-    "sources": [
-      {"alias": "o", "table": "orders"},
-      {"alias": "c", "table": "customers", "join": {"type": "LEFT", "on": "o.customer_id = c.id"}}
-    ],
-    "groupBy": ["c.segment"],
-    "entity": "orders"
-  },
-  ...
-}
-
-## CRITICAL RULES
-
-1. **NEVER write SQL syntax** - Use structured definitions only
-   - WRONG: "expression": "COUNT(DISTINCT customer_id)"
-   - RIGHT: "aggregation": "COUNT_DISTINCT", "expression": "customer_id"
-
-2. **expression = column(s) only** - No SQL functions in expressions
-   - WRONG: "expression": "SUM(price) / COUNT(*)"
-   - RIGHT: Use "type": "ratio" with numerator/denominator
-
-3. **Aggregation types** (all converted to correct SQL by compiler):
-   - Basic: SUM, COUNT, COUNT_DISTINCT, AVG, MIN, MAX
-   - Statistical: MEDIAN, PERCENTILE_25, PERCENTILE_75, PERCENTILE_90, PERCENTILE_95, PERCENTILE_99, STDDEV, VARIANCE
-   - Array: ARRAY_AGG, STRING_AGG
-
-4. **ONLY use columns from the schema** - never invent column names
-
-5. **Use exact column names** from the schema
-
-6. **Confidence scoring**:
-   - 0.9-1.0: Perfect data fit
-   - 0.7-0.9: Good fit with minor assumptions
-   - 0.5-0.7: Proxy calculation
-
-7. **Skip if not feasible** - don't force KPIs that can't be calculated
-
-8. **Choose simplest type** - Prefer in this order: simple > ratio > filtered > window > case > composite
-   - Only use advanced types when simpler types cannot express the metric
-
-9. **Window KPIs require pre-aggregated data** - Window functions work best with time-series tables or views that already have period-level aggregation
-
-## Quality Check
-Before finalizing each KPI:
-- Is the definition type correct (simple vs ratio vs filtered vs window vs case vs composite)?
-- Are all column names from the schema?
-- Would an executive find this actionable?
-
-Return ONLY a valid JSON array. No markdown, no explanation.`;
+  const startTime = Date.now();
 
   try {
     const response = await anthropic.messages.create({
@@ -425,6 +740,29 @@ Return ONLY a valid JSON array. No markdown, no explanation.`;
       temperature: 0.3,
       messages: [{ role: "user", content: prompt }],
     });
+
+    const latencyMs = Date.now() - startTime;
+
+    // Capture initial generation trace (for debugging/analytics)
+    const initialGenerationTrace: ValidationLog = {
+      timestamp: new Date().toISOString(),
+      attempt: 0, // Initial generation, not a repair attempt
+      stage: "schema",
+      result: "success",
+      promptName: generationTrace.promptName,
+      promptVersion: generationTrace.promptVersion,
+      fullPrompt: generationTrace.fullPrompt,
+      model,
+      latencyMs,
+      tokensIn: response.usage?.input_tokens,
+      tokensOut: response.usage?.output_tokens,
+    };
+
+    console.log(
+      `[SchemaFirstKPI] Initial generation: ${latencyMs}ms, ` +
+      `${response.usage?.input_tokens ?? "?"} tokens in, ` +
+      `${response.usage?.output_tokens ?? "?"} tokens out`
+    );
 
     const content = response.content[0];
     if (!content || content.type !== "text") {
@@ -440,23 +778,112 @@ Return ONLY a valid JSON array. No markdown, no explanation.`;
     }
 
     // Validate each recipe using new KPIRecipeSchema (DSL format)
-    // Then convert to legacy format for backward compatibility
+    // Then validate compilation and repair if needed
+    // Finally convert to legacy format for backward compatibility
     const recipes: CalculatedMetricRecipe[] = [];
+    const failedRecipes: FailedRecipe[] = [];
     const warnings: string[] = [];
 
+    // Detailed stats tracking
+    const stats: GenerationStats = {
+      attempted: parsed.length,
+      passedSchema: 0,
+      passedCompile: 0,
+      repairedByHaiku: 0,
+      repairedBySonnet: 0,
+      finalSuccess: 0,
+      finalFailed: 0,
+    };
+
     for (const item of parsed) {
-      try {
-        // Validate against new DSL-based schema
-        const validated = KPIRecipeSchema.parse(item);
+      const itemName = (item as { name?: string })?.name ?? "unknown";
+
+      // Step 1: Validate against Zod schema (with repair if needed)
+      const schemaResult = await validateAndRepairSchema(item, {
+        maxAttempts: 2,
+        schemaContext: schemaMarkdown,
+      });
+
+      if (!schemaResult.success) {
+        stats.finalFailed++;
+        const lastError = schemaResult.validationLog
+          .filter((log) => log.error)
+          .pop()?.error || "Unknown error";
+
+        // Track failed recipe for storage
+        failedRecipes.push({
+          name: itemName,
+          originalDefinition: item,
+          failureStage: "schema",
+          lastError,
+          validationLog: schemaResult.validationLog as ValidationLogEntry[],
+        });
+
+        warnings.push(`KPI "${itemName}" failed schema validation: ${lastError}`);
+        console.warn(`[SchemaFirstKPI] Failed KPI (schema): ${itemName}`);
+        continue;
+      }
+
+      stats.passedSchema++;
+      const validated = schemaResult.recipe!;
+
+      // Track repairs from schema stage
+      for (const log of schemaResult.validationLog) {
+        if (log.stage === "repair" && log.result === "fixed") {
+          if (log.model === "haiku") stats.repairedByHaiku++;
+          else if (log.model === "sonnet") stats.repairedBySonnet++;
+        }
+      }
+
+      // Step 2: Validate compilation and repair if needed
+      const validationResult = await validateAndRepairKPI(validated, {
+        maxAttempts: 2,
+        schemaContext: schemaMarkdown,
+      });
+
+      if (validationResult.success && validationResult.recipe) {
+        stats.passedCompile++;
+        stats.finalSuccess++;
+
+        // Track repairs from compile stage
+        for (const log of validationResult.validationLog) {
+          if (log.stage === "repair" && log.result === "fixed") {
+            if (log.model === "haiku") stats.repairedByHaiku++;
+            else if (log.model === "sonnet") stats.repairedBySonnet++;
+          }
+        }
 
         // Convert to legacy format for backward compatibility
-        const legacyRecipe = convertKPIRecipeToLegacy(validated);
+        const legacyRecipe = convertKPIRecipeToLegacy(validationResult.recipe);
         recipes.push(legacyRecipe);
-      } catch (e) {
-        const itemName = (item as { name?: string })?.name ?? "unknown";
-        warnings.push(`Invalid recipe "${itemName}": ${e}`);
+      } else {
+        // Compilation validation failed after max attempts
+        stats.finalFailed++;
+        const lastError = validationResult.validationLog
+          .filter((log) => log.error)
+          .pop()?.error || "Unknown error";
+
+        // Combine logs from both stages
+        const allLogs = [...schemaResult.validationLog, ...validationResult.validationLog];
+
+        // Track failed recipe for storage
+        failedRecipes.push({
+          name: itemName,
+          originalDefinition: validated,
+          failureStage: "compile",
+          lastError,
+          validationLog: allLogs as ValidationLogEntry[],
+        });
+
+        warnings.push(`KPI "${itemName}" failed compilation: ${lastError}`);
+        console.warn(`[SchemaFirstKPI] Failed KPI (compile): ${itemName}`);
       }
     }
+
+    console.log(
+      `[SchemaFirstKPI] Stats: ${stats.attempted} attempted, ${stats.finalSuccess} success, ${stats.finalFailed} failed, ` +
+      `${stats.repairedByHaiku} fixed by Haiku, ${stats.repairedBySonnet} fixed by Sonnet`
+    );
 
     // Calculate statistics
     const feasibleRecipes = recipes.filter((r) => r.feasible);
@@ -469,6 +896,8 @@ Return ONLY a valid JSON array. No markdown, no explanation.`;
 
     return {
       recipes,
+      failedRecipes: failedRecipes.length > 0 ? failedRecipes : undefined,
+      generationStats: stats,
       totalGenerated: recipes.length,
       feasibleCount: feasibleRecipes.length,
       infeasibleCount: recipes.length - feasibleRecipes.length,

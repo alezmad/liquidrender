@@ -294,16 +294,62 @@ pnpm with-env -F @turbostarter/db db:setup   # First-time DB
 # Development server (use this, not `pnpm dev`)
 pnpm with-env turbo dev --filter=web --concurrency 11   # Web app on :3000
 
-# Database
-pnpm with-env -F @turbostarter/db db:generate  # Generate migration
-pnpm with-env -F @turbostarter/db db:migrate   # Apply migrations
-pnpm with-env -F @turbostarter/db db:studio    # Drizzle Studio
+# Database (Note: need `pnpm` after `with-env` for filter to work)
+pnpm with-env pnpm -F @turbostarter/db db:generate  # Generate migration
+pnpm with-env pnpm -F @turbostarter/db db:migrate   # Apply migrations
+pnpm with-env pnpm -F @turbostarter/db db:studio    # Drizzle Studio
 
 # Quality
 pnpm typecheck && pnpm lint && pnpm format
 ```
 
 > **Note:** `pnpm dev` fails due to turbo concurrency + mobile interactive task issues. Always use the filtered command above.
+
+---
+
+## Testing the Full Onboarding Pipeline
+
+Tests the complete Knosia onboarding flow: connection → schema extraction → profiling → vocabulary detection → KPI generation with tracing.
+
+### Prerequisites
+
+```bash
+# 1. Start LiquidGym databases (if not running)
+cd ~/Desktop/liquidgym/infra
+docker compose --profile loader up -d   # Loads Northwind, Pagila, Chinook, AdventureWorks
+```
+
+### Running the Test
+
+```bash
+# Full pipeline test with Northwind
+pnpm with-env pnpm tsx packages/api/scripts/test-full-onboarding-pipeline.ts
+```
+
+### What It Tests
+
+1. **Cleanup** - Deletes existing Northwind connection and related data
+2. **Connection** - Creates new database connection record
+3. **Schema Extraction** - Uses DuckDB Universal Adapter to extract tables/columns
+4. **Profiling** - Analyzes data distributions, cardinality, null rates
+5. **Vocabulary Detection** - Applies hard rules to identify metrics/dimensions
+6. **KPI Generation** - Uses AI to generate business KPIs with validation + repair pipeline
+
+### Verifying Tracing
+
+The test outputs trace data for failed KPIs:
+- Prompt name and version (e.g., `schema-repair v1.0.0`)
+- Latency in milliseconds
+- Token counts (in/out)
+
+Expected output shows ~60% success rate with repair attempts logged.
+
+### Related Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `packages/api/scripts/check-orgs.ts` | List existing organizations |
+| `.scratch/test-kpi-tracing-simple.ts` | Quick tracing test (no DB) |
 
 ---
 
@@ -414,6 +460,40 @@ ls .workflows/active/  # Check for interrupted workflows
 ## Context7 MCP
 
 Auto-use for: library docs lookup, external library code generation, setup/config
+
+---
+
+## Test Datasets (LiquidGym)
+
+Test Knosia with sample databases via Docker from `~/Desktop/liquidgym/infra/`.
+
+```bash
+cd ~/Desktop/liquidgym/infra
+docker compose --profile loader up    # Load all datasets into PostgreSQL
+```
+
+### Available Datasets
+
+| Dataset | Domain | Tables | Good For Testing |
+|---------|--------|--------|------------------|
+| **northwind** | B2B Trading | ~13 | Orders, products, customers - classic e-commerce KPIs |
+| **pagila** | DVD Rental | ~15 | Film rentals, payments - time-series, customer analytics |
+| **chinook** | Music Store | ~11 | Albums, tracks, invoices - catalog + sales metrics |
+| **adventureworks** | Manufacturing | 68+20 views | HR, production, purchasing - complex enterprise schema |
+| **netflix** | Entertainment | ~5 | Shows, ratings, cast - content analytics |
+| **lego** | Product Catalog | ~8 | Parts, themes, inventories - product hierarchy |
+
+### Connection (PostgreSQL)
+
+| Setting | Value |
+|---------|-------|
+| Host | `localhost` |
+| Port | `5433` |
+| User | `postgres` |
+| Password | `postgres` |
+| Database | `postgres` (datasets loaded as schemas) |
+
+Each dataset is loaded as a separate schema (e.g., `northwind.orders`, `pagila.film`).
 
 ---
 

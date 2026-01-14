@@ -123,3 +123,11 @@ export {
   buildCardinalityQuery,
   determineAdaptiveSampleRate,
 } from "./profiler-queries";
+
+// Column Semantics Detection
+export {
+  detectColumnSemantic,
+  generateSemanticContext,
+  type ColumnSemantic,
+  type ColumnSemanticResult,
+} from "./column-semantics";

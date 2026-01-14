@@ -44,7 +44,9 @@ export const knosiaConnectionStatusEnum = pgEnum("knosia_connection_status", [
 ]);
 
 export const knosiaVocabularyTypeEnum = pgEnum("knosia_vocabulary_type", [
-  "metric",
+  "metric", // Legacy - renamed to "measure" for new items
+  "measure", // Raw numeric column (replaces "metric")
+  "kpi", // Business formula (calculated metric)
   "dimension",
   "entity",
   "event",
@@ -415,11 +417,115 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     formulaSql?: string;
     sourceTables?: string[];
     sourceColumn?: string; // DB column name for simple mappings
+    sourceSchema?: string; // Schema name (e.g., "public")
     caveats?: string[];
     exampleValues?: { low?: string; typical?: string; high?: string };
+    // KPI-specific: metric slugs this KPI references (for lineage/dependency tracking)
+    metricDependencies?: string[];
+    // KPI-specific: quality scoring for user visibility
+    qualityScore?: {
+      overall: number;
+      dataFit: number;
+      businessRelevance: number;
+      calculationConfidence: number;
+      actionability: number;
+      dataQuality: number;
+      flags: Array<
+        | "proxy_calculation"
+        | "high_null_rate"
+        | "stale_data"
+        | "low_coverage"
+        | "complex_formula"
+        | "missing_time_field"
+        | "low_cardinality"
+        | "derived_metric"
+      >;
+    };
+    // KPI-specific: compiled aggregation expression (separate from full SQL)
+    formulaExpression?: string;
+    // KPI-specific: original DSL definition for re-compilation if needed
+    // Supports KPI DSL v2.0 with 7 types and 16 aggregation types
+    kpiDefinition?: {
+      type: "simple" | "ratio" | "derived" | "filtered" | "window" | "case" | "composite";
+      aggregation?:
+        | "SUM" | "COUNT" | "COUNT_DISTINCT" | "AVG" | "MIN" | "MAX"
+        | "MEDIAN" | "PERCENTILE_25" | "PERCENTILE_75" | "PERCENTILE_90" | "PERCENTILE_95" | "PERCENTILE_99"
+        | "STDDEV" | "VARIANCE" | "ARRAY_AGG" | "STRING_AGG";
+      expression?: string;
+      numerator?: { aggregation: string; expression: string };
+      denominator?: { aggregation: string; expression: string };
+      multiplier?: number;
+      entity: string;
+      timeField?: string;
+      dependencies?: string[];
+      // Filtered KPI: subquery-based aggregation
+      subquery?: { groupBy: string | string[]; having: string };
+      // Window KPI: window function specification
+      window?: {
+        partitionBy?: string[];
+        orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+        lag?: { offset: number; default?: number };
+        lead?: { offset: number; default?: number };
+        frame?: string;
+      };
+      outputExpression?: string;
+      // Case KPI: conditional aggregation
+      cases?: Array<{ when?: string; then?: string; else?: string }>;
+      // Composite KPI: multi-table joins
+      sources?: Array<{
+        alias: string;
+        table: string;
+        join?: { type: "INNER" | "LEFT" | "RIGHT" | "FULL"; on: string };
+      }>;
+      groupBy?: string[];
+      // Filters (all KPI types)
+      filters?: Array<{
+        field: string;
+        operator: string;
+        value?: unknown;
+      }>;
+    };
+    // Entity-specific fields
+    primaryKey?: string | string[];
+    columns?: Array<{
+      name: string;
+      dataType: string;
+      isNullable: boolean;
+      isPrimaryKey: boolean;
+      isForeignKey: boolean;
+      references?: { table: string; column: string };
+    }>;
+    selectSql?: string;
   }>(),
   // Role-based suggestions: which archetypes should see this item suggested
   suggestedForRoles: jsonb().$type<string[]>(), // ["strategist", "operator", "analyst", "builder"]
+
+  // ========================================
+  // KPI-specific fields (null for non-KPIs)
+  // ========================================
+  // Formula fields (for type='kpi')
+  formulaSql: text(), // e.g., "SUM(unit_price * quantity)"
+  formulaHuman: text(), // e.g., "Total of price × quantity"
+
+  // KPI metadata
+  confidence: decimal({ precision: 3, scale: 2 }), // 0.00-1.00
+  feasible: boolean().default(true),
+  source: text().$type<"ai_generated" | "user_created" | "detected">(), // .default("detected") applied at insert time
+
+  // Lineage - which vocabulary items this KPI is built from
+  sourceVocabularyIds: jsonb().$type<string[]>(),
+
+  // Execution tracking (for KPI caching)
+  executionCount: integer().default(0),
+  lastExecutedAt: timestamp({ withTimezone: true }),
+  lastExecutionResult: jsonb().$type<{
+    value: number | string;
+    formattedValue?: string;
+    executedAt: string;
+    executionTimeMs: number;
+    fromCache?: boolean;
+  }>(),
+
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
     .notNull()
@@ -475,7 +581,7 @@ export const knosiaCalculatedMetric = pgTable("knosia_calculated_metric", {
     entity?: string;
     timeField?: string;
     timeGranularity?: string;
-    filters?: Array<{ field: string; operator: string; value: unknown }>;
+    filters?: { field: string; operator: string; value: unknown }[];
     dependencies?: string[];
     label?: string;
     description?: string;

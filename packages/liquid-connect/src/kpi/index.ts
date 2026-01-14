@@ -30,15 +30,28 @@ export {
 
 // KPI Semantic Types (dialect-agnostic definitions)
 export {
+  // Types
   type KPISemanticDefinition,
   type SimpleKPIDefinition,
   type RatioKPIDefinition,
   type DerivedKPIDefinition,
+  type FilteredAggregationKPIDefinition,
+  type WindowKPIDefinition,
+  type CaseKPIDefinition,
+  type CompositeKPIDefinition,
   type AggregationComponent,
   type KPIFilter,
+  type FilterCondition as KPIFilterCondition, // Renamed to avoid conflict with recipe-builder
+  type CompoundFilter,
+  // Type guards
   isSimpleKPI,
   isRatioKPI,
   isDerivedKPI,
+  isFilteredKPI,
+  isWindowKPI,
+  isCaseKPI,
+  isCompositeKPI,
+  // Validation
   validateKPIDefinition,
 } from './types';
 

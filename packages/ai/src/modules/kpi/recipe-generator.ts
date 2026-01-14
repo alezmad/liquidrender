@@ -387,8 +387,10 @@ Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
    - WRONG: "expression": "SUM(price) / COUNT(*)"
    - RIGHT: Use "type": "ratio" with numerator/denominator
 
-3. **Aggregation types**: SUM, AVG, COUNT, COUNT_DISTINCT, MIN, MAX
-   - These are converted to correct SQL by the compiler
+3. **Aggregation types** (all converted to correct SQL by compiler):
+   - Basic: SUM, COUNT, COUNT_DISTINCT, AVG, MIN, MAX
+   - Statistical: MEDIAN, PERCENTILE_25, PERCENTILE_75, PERCENTILE_90, PERCENTILE_95, PERCENTILE_99, STDDEV, VARIANCE
+   - Array: ARRAY_AGG, STRING_AGG
 
 4. **ONLY use columns from the schema** - never invent column names
 

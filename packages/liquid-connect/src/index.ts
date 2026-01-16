@@ -174,35 +174,6 @@ export {
 } from './emitters';
 
 // =============================================================================
-// QUERY EXECUTOR
-// =============================================================================
-
-export {
-  QueryExecutor,
-  createExecutor,
-  executeQuery,
-  TimeoutError,
-  // Provenance (Block Trust Metadata)
-  calculateConfidence,
-  generateProvenance,
-  formatFreshness,
-  truncateQuery,
-  extractTablesFromQuery,
-  detectAssumptions,
-  getConfidenceLevelDescription,
-  getConfidenceLevelColor,
-  formatConfidenceScore,
-  type ExecutorConfig,
-  type ExecutorStatus,
-  type QueryResult as ExecutorQueryResult,
-  // Provenance types
-  type Provenance,
-  type ProvenanceSource,
-  type ConfidenceLevel,
-  type ConfidenceResult,
-} from './executor';
-
-// =============================================================================
 // UNIVERSAL VOCABULARY BUILDER (UVB)
 // =============================================================================
 

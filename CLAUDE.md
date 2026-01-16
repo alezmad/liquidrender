@@ -322,14 +322,17 @@ docker compose --profile loader up -d   # Loads Northwind, Pagila, Chinook, Adve
 ### Running the Tests
 
 ```bash
-# Northwind - B2B Trading (14 tables, ecommerce KPIs)
-pnpm with-env pnpm tsx packages/api/scripts/test-full-onboarding-pipeline.ts
+# Universal test script - supports all databases
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts northwind    # B2B Trading
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts pagila       # DVD Rental
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts chinook      # Music Store
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts adventureworks  # Manufacturing
 
-# Pagila - DVD Rental (22 tables, subscription KPIs)
-pnpm with-env pnpm tsx packages/api/scripts/test-pipeline-pagila.ts
+# List available databases
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --list
 
-# Chinook - Music Store (11 tables, ecommerce KPIs)
-pnpm with-env pnpm tsx packages/api/scripts/test-pipeline-chinook.ts
+# Run all databases sequentially
+pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --all
 ```
 
 ### What It Tests
@@ -360,6 +363,7 @@ The test outputs trace data for repairs:
 
 | Script | Purpose |
 |--------|---------|
+| `packages/api/scripts/test-pipeline.ts` | Universal pipeline test (all DBs) |
 | `packages/api/scripts/check-orgs.ts` | List existing organizations |
 | `.scratch/test-kpi-tracing-simple.ts` | Quick tracing test (no DB) |
 

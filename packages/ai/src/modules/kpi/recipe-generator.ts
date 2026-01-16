@@ -23,6 +23,11 @@ import { CalculatedMetricRecipeSchema, KPIRecipeSchema, ExtendedKPIRecipeSchema,
 import { createEmitter } from "@repo/liquid-connect";
 import { compileKPIFormula, type KPISemanticDefinition } from "@repo/liquid-connect/kpi";
 import {
+  detectColumnSemantic,
+  generateSemanticContext,
+  type ColumnSemantic,
+} from "@repo/liquid-connect/uvb";
+import {
   SCHEMA_FIRST_GENERATION_PROMPT,
   SCHEMA_REPAIR_PROMPT,
   COMPILE_REPAIR_PROMPT,
@@ -585,7 +590,10 @@ export async function generateKPIRecipes(
  * The DSL definition is preserved in semanticDefinition.kpiDefinition for
  * downstream compilation by the KPI compiler.
  */
-function convertKPIRecipeToLegacy(recipe: ExtendedKPIRecipe | KPIRecipe): CalculatedMetricRecipe {
+function convertKPIRecipeToLegacy(
+  recipe: ExtendedKPIRecipe | KPIRecipe,
+  validationLog?: ValidationLog[]
+): CalculatedMetricRecipe {
   const { kpiDefinition } = recipe;
 
   // Build legacy semanticDefinition from DSL definition
@@ -665,16 +673,21 @@ function convertKPIRecipeToLegacy(recipe: ExtendedKPIRecipe | KPIRecipe): Calcul
   // This is used by the KPI compiler to generate proper SQL
   (semanticDefinition as Record<string, unknown>)._kpiDefinition = kpiDefinition;
 
+  // Build validation log for training data (only if repairs occurred)
+  const repairsOccurred = validationLog?.some((l) => l.stage === "repair");
+
   return {
     name: recipe.name,
     description: recipe.description,
-    category: recipe.category as "revenue" | "growth" | "retention" | "engagement" | "efficiency" | "custom",
+    category: recipe.category as "revenue" | "growth" | "retention" | "engagement" | "efficiency" | "fulfillment" | "inventory" | "finance" | "pricing" | "logistics" | "operational" | "risk" | "custom",
     semanticDefinition,
     businessType: recipe.businessType,
     confidence: recipe.confidence,
     feasible: recipe.feasible,
     infeasibilityReason: recipe.infeasibilityReason,
     requiredColumns: recipe.requiredColumns,
+    // Only include validation log if repairs occurred (saves space)
+    validationLog: repairsOccurred ? validationLog : undefined,
   };
 }
 
@@ -853,8 +866,11 @@ async function generateSchemaFirstKPIs(
           }
         }
 
-        // Convert to legacy format for backward compatibility
-        const legacyRecipe = convertKPIRecipeToLegacy(validationResult.recipe);
+        // Combine logs from both schema and compile stages for training data
+        const combinedLogs = [...schemaResult.validationLog, ...validationResult.validationLog];
+
+        // Convert to legacy format for backward compatibility (with validation logs for training)
+        const legacyRecipe = convertKPIRecipeToLegacy(validationResult.recipe, combinedLogs);
         recipes.push(legacyRecipe);
       } else {
         // Compilation validation failed after max attempts
@@ -1075,10 +1091,23 @@ Return ONLY a valid JSON object (no markdown, no explanation):
 }
 
 /**
- * Build schema context string for LLM prompt
+ * Build schema context string for LLM prompt.
+ *
+ * Enhanced with automatic column semantics detection:
+ * - Detects percentage columns (0-1 = percentage)
+ * - Detects currency, quantity, identifier columns
+ * - Injects semantic hints into the prompt for accurate KPI generation
  */
 function buildSchemaContext(vocabularyContext: GenerateRecipeRequest["vocabularyContext"]): string {
   const lines: string[] = [];
+
+  // Collect detected semantics for context injection
+  const detectedSemantics: Array<{
+    tableName: string;
+    columnName: string;
+    semantic: ColumnSemantic;
+    confidence: number;
+  }> = [];
 
   vocabularyContext.tables.forEach((table) => {
     lines.push(`\nTable: ${table.name}`);
@@ -1095,6 +1124,33 @@ function buildSchemaContext(vocabularyContext: GenerateRecipeRequest["vocabulary
         parts.push(`[business: ${col.businessType}]`);
       }
 
+      // Detect column semantics from profiling statistics
+      if (col.statistics) {
+        const minValue = typeof col.statistics.min === "number" ? col.statistics.min : null;
+        const maxValue = typeof col.statistics.max === "number" ? col.statistics.max : null;
+
+        const semanticResult = detectColumnSemantic(col.name, {
+          dataType: col.type,
+          minValue,
+          maxValue,
+          distinctCount: col.statistics.distinctCount,
+          nullPercentage: col.statistics.nullPercentage,
+        });
+
+        // Only track high-confidence detections
+        if (semanticResult.confidence >= 0.7 && semanticResult.semantic !== "UNKNOWN") {
+          detectedSemantics.push({
+            tableName: table.name,
+            columnName: col.name,
+            semantic: semanticResult.semantic,
+            confidence: semanticResult.confidence,
+          });
+
+          // Add semantic annotation to column description
+          parts.push(`[detected: ${semanticResult.semantic}]`);
+        }
+      }
+
       lines.push(parts.join(" "));
     });
   });
@@ -1107,6 +1163,12 @@ function buildSchemaContext(vocabularyContext: GenerateRecipeRequest["vocabulary
   if (vocabularyContext.detectedDimensions?.length) {
     lines.push("\nDetected Dimensions:");
     vocabularyContext.detectedDimensions.forEach((d) => lines.push(`  - ${d}`));
+  }
+
+  // Inject semantic context if we detected meaningful column semantics
+  if (detectedSemantics.length > 0) {
+    const semanticContext = generateSemanticContext(detectedSemantics);
+    lines.push("\n" + semanticContext);
   }
 
   return lines.join("\n");

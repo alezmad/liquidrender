@@ -204,7 +204,11 @@ export const KPIRecipeSchema = z.object({
   // Display metadata
   name: z.string().describe("Business-friendly name (e.g., 'Average Order Value')"),
   description: z.string().describe("What this KPI measures and why it matters"),
-  category: z.enum(["revenue", "growth", "retention", "engagement", "efficiency", "fulfillment", "inventory", "custom"]),
+  category: z.enum([
+    "revenue", "growth", "retention", "engagement", "efficiency",
+    "fulfillment", "inventory", "finance", "pricing", "logistics",
+    "operational", "risk", "custom"
+  ]),
 
   // DSL-based semantic definition (dialect-agnostic)
   kpiDefinition: KPISemanticDefinitionSchema,
@@ -244,7 +248,11 @@ export const CalculatedMetricRecipeSchema = z.object({
   // Display metadata
   name: z.string().describe("Business-friendly name (e.g., 'Monthly Recurring Revenue')"),
   description: z.string().describe("What this metric measures and why it matters"),
-  category: z.enum(["revenue", "growth", "retention", "engagement", "efficiency", "custom"]),
+  category: z.enum([
+    "revenue", "growth", "retention", "engagement", "efficiency",
+    "fulfillment", "inventory", "finance", "pricing", "logistics",
+    "operational", "risk", "custom"
+  ]),
 
   // Semantic definition (database-agnostic)
   semanticDefinition: SemanticMetricDefinitionSchema,
@@ -1337,15 +1345,16 @@ const ExtendedKPIBaseSchema = z.object({
 // ============================================================================
 
 // Filtered KPI (v2)
+// Note: subquery fields are optional to allow LLM flexibility - compiler handles missing fields gracefully
 export const FilteredKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
   type: z.literal('filtered'),
   aggregation: ExtendedAggregationTypeSchema,
   expression: z.string(),
   subquery: z.object({
-    groupBy: z.union([z.string(), z.array(z.string())]),
-    having: z.string(),
+    groupBy: z.union([z.string(), z.array(z.string())]).optional(),
+    having: z.string().optional(),
     subqueryEntity: z.string().optional(),
-  }),
+  }).optional(),
   // percentOf: Required for percentage KPIs - calculates (filtered_count / total_count) * 100
   percentOf: z.string().optional().describe("Expression to calculate percentage against (required when format.type='percent')"),
 });
@@ -1465,7 +1474,11 @@ export const ExtendedKPIRecipeSchema = z.object({
   // Display metadata
   name: z.string().describe("Business-friendly name (e.g., 'Average Order Value')"),
   description: z.string().describe("What this KPI measures and why it matters"),
-  category: z.enum(["revenue", "growth", "retention", "engagement", "efficiency", "fulfillment", "inventory", "custom"]),
+  category: z.enum([
+    "revenue", "growth", "retention", "engagement", "efficiency",
+    "fulfillment", "inventory", "finance", "pricing", "logistics",
+    "operational", "risk", "custom"
+  ]),
 
   // DSL-based semantic definition (supports all 7 types)
   kpiDefinition: ExtendedKPISemanticDefinitionSchema,

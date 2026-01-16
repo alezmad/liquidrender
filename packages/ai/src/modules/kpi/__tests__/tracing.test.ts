@@ -103,12 +103,15 @@ describe("KPI Tracing", () => {
       // If there were failures, check for trace data
       if (result.failedRecipes && result.failedRecipes.length > 0) {
         const firstFailed = result.failedRecipes[0];
+        if (!firstFailed) return; // Guard against undefined
+
         const repairLogs = firstFailed.validationLog.filter(
           (log) => log.stage === "repair"
         );
 
         if (repairLogs.length > 0) {
           const repairLog = repairLogs[0];
+          if (!repairLog) return; // Guard against undefined
 
           // Verify NEW trace fields are captured
           expect(repairLog.promptName).toBeDefined();

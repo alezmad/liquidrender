@@ -171,6 +171,13 @@ export const previewVocabularySchema = z.object({
   workspaceId: z.string().min(1, "Workspace ID is required"),
 });
 
+/**
+ * Query schema for preview endpoint (used by Hono zValidator)
+ */
+export const previewVocabularyQuerySchema = z.object({
+  workspaceId: z.string().min(1, "Workspace ID is required"),
+});
+
 // ============================================================================
 // RESPONSE TYPES
 // ============================================================================

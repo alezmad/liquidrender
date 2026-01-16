@@ -30,7 +30,7 @@ export interface ResolvedVocabularyItem {
   slug: string;
   canonicalName: string;
   abbreviation: string | null;
-  type: "metric" | "dimension" | "entity" | "event";
+  type: "metric" | "measure" | "kpi" | "dimension" | "entity" | "event";
   category: string | null;
   scope: "org" | "workspace" | "private";
   definition: {

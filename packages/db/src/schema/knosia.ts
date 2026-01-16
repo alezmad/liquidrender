@@ -180,6 +180,43 @@ export const knosiaActivityTypeEnum = pgEnum("knosia_activity_type", [
 ]);
 
 // ============================================================================
+// KPI REPAIR TRAINING ENUMS
+// ============================================================================
+
+export const knosiaRepairClassificationEnum = pgEnum(
+  "knosia_repair_classification",
+  [
+    "systemic", // Same error 3+ times across different KPIs → fix prompt
+    "contextual", // Domain-specific pattern → add example
+    "hallucination", // One-off nonsense → ignore
+    "edge_case", // Valid but unusual → accept repair cost
+  ],
+);
+
+export const knosiaRepairConfidenceEnum = pgEnum("knosia_repair_confidence", [
+  "high", // >90% - Auto-apply + notify
+  "medium", // 70-90% - A/B test then apply
+  "low", // <70% - Queue for human review
+]);
+
+export const knosiaPromptActionEnum = pgEnum("knosia_prompt_action", [
+  "fix_prompt", // Add/modify rule in generation prompt
+  "add_example", // Add domain-specific example
+  "ignore", // Don't act (hallucination)
+  "accept_repair", // Keep using repair (edge case)
+  "pending", // Not yet classified
+]);
+
+export const knosiaPromptFixStatusEnum = pgEnum("knosia_prompt_fix_status", [
+  "proposed", // Fix generated, awaiting test
+  "testing", // A/B test in progress
+  "approved", // Ready to apply
+  "applied", // Live in production
+  "rejected", // Human rejected
+  "rolled_back", // Applied then reverted
+]);
+
+// ============================================================================
 // PLATFORM TABLES
 // ============================================================================
 
@@ -444,13 +481,25 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     // KPI-specific: compiled aggregation expression (separate from full SQL)
     formulaExpression?: string;
     // KPI-specific: original DSL definition for re-compilation if needed
-    // Supports KPI DSL v2.0 with 7 types and 16 aggregation types
+    // Supports KPI DSL v2.1 with 10 types and extended aggregation functions
     kpiDefinition?: {
-      type: "simple" | "ratio" | "derived" | "filtered" | "window" | "case" | "composite";
+      type: "simple" | "ratio" | "derived" | "filtered" | "window" | "case" | "composite" | "moving_average" | "ranking" | "conditional";
       aggregation?:
+        // Core aggregations
         | "SUM" | "COUNT" | "COUNT_DISTINCT" | "AVG" | "MIN" | "MAX"
+        // Statistical aggregations
         | "MEDIAN" | "PERCENTILE_25" | "PERCENTILE_75" | "PERCENTILE_90" | "PERCENTILE_95" | "PERCENTILE_99"
-        | "STDDEV" | "VARIANCE" | "ARRAY_AGG" | "STRING_AGG";
+        | "STDDEV" | "VARIANCE"
+        // Array aggregations
+        | "ARRAY_AGG" | "STRING_AGG"
+        // Conditional aggregations (v2.1)
+        | "COUNT_IF" | "SUM_IF" | "AVG_IF"
+        // Boolean aggregations (v2.1)
+        | "BOOL_AND" | "BOOL_OR" | "EVERY" | "ANY"
+        // Positional aggregations (v2.1)
+        | "FIRST_VALUE" | "LAST_VALUE"
+        // Ranking functions (v2.1)
+        | "RANK" | "DENSE_RANK" | "ROW_NUMBER" | "NTILE";
       expression?: string;
       numerator?: { aggregation: string; expression: string };
       denominator?: { aggregation: string; expression: string };
@@ -464,8 +513,8 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
       window?: {
         partitionBy?: string[];
         orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
-        lag?: { offset: number; default?: number };
-        lead?: { offset: number; default?: number };
+        lag?: { offset: number; default?: unknown };
+        lead?: { offset: number; default?: unknown };
         frame?: string;
       };
       outputExpression?: string;
@@ -478,12 +527,11 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
         join?: { type: "INNER" | "LEFT" | "RIGHT" | "FULL"; on: string };
       }>;
       groupBy?: string[];
-      // Filters (all KPI types)
-      filters?: Array<{
-        field: string;
-        operator: string;
-        value?: unknown;
-      }>;
+      // Filters (all KPI types) - supports both simple and compound filters
+      filters?: Array<
+        | { field: string; operator: string; value?: unknown }
+        | { type: "compound"; operator: "AND" | "OR"; conditions: Array<unknown> }
+      >;
     };
     // Entity-specific fields
     primaryKey?: string | string[];
@@ -525,6 +573,29 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     executionTimeMs: number;
     fromCache?: boolean;
   }>(),
+
+  // ========================================
+  // Validation tracking (for KPI quality assurance)
+  // ========================================
+  validationStatus: text()
+    .$type<"pending" | "validating" | "validated" | "failing" | "repairing" | "failed">()
+    .default("pending"),
+  validationErrorType: text()
+    .$type<"parse_error" | "schema_error" | "compile_error" | "sql_error">(),
+  validationError: text(), // Human-readable error message
+  validationAttempts: integer().default(0), // Total repair attempts
+  validationLog: jsonb().$type<Array<{
+    timestamp: string;
+    attempt: number;
+    stage: "parse" | "schema" | "compile" | "execute" | "repair";
+    errorType?: string;
+    error?: string;
+    action?: string;
+    llmModel?: string;
+    result?: "success" | "failed" | "fixed";
+    changes?: string;
+  }>>().default([]),
+  validatedAt: timestamp({ withTimezone: true }),
 
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp()
@@ -1322,6 +1393,168 @@ export const knosiaAiInsight = pgTable("knosia_ai_insight", {
 });
 
 // ============================================================================
+// KPI REPAIR TRAINING TABLES
+// ============================================================================
+
+/**
+ * KPI Repair Training Data - Captures before/after for every repair
+ *
+ * Used to:
+ * 1. Detect systemic patterns that should improve the generation prompt
+ * 2. Build training data for fine-tuning or few-shot examples
+ * 3. Track repair success rates by error type
+ */
+export const knosiaKpiRepairTraining = pgTable("knosia_kpi_repair_training", {
+  id: text().primaryKey().$defaultFn(generateId),
+
+  // Context
+  workspaceId: text().references(() => knosiaWorkspace.id, {
+    onDelete: "cascade",
+  }),
+  vocabularyItemId: text().references(() => knosiaVocabularyItem.id, {
+    onDelete: "set null",
+  }),
+
+  // Error identification
+  errorType: text().notNull(), // parse_error, schema_error, compile_error, sql_error
+  errorMessage: text().notNull(),
+  errorSignature: text().notNull(), // Normalized hash for grouping similar errors
+
+  // Before/after definitions (the actual training data)
+  originalDefinition: jsonb().notNull(), // What the LLM generated
+  repairedDefinition: jsonb(), // What the fix produced (null if repair failed)
+
+  // KPI context for pattern detection
+  kpiType: text(), // simple, filtered, ratio, derived, window, case, composite
+  kpiCategory: text(), // revenue, growth, retention, engagement, etc.
+  entityType: text(), // orders, customers, products, etc.
+  aggregationType: text(), // SUM, COUNT, AVG, etc.
+
+  // Repair metadata
+  repairModel: text().notNull(), // haiku, sonnet
+  repairSuccess: boolean().notNull(),
+  repairLatencyMs: integer(),
+  repairTokensIn: integer(),
+  repairTokensOut: integer(),
+
+  // Classification (auto-computed, can be overridden)
+  classification: knosiaRepairClassificationEnum().default("hallucination"),
+  confidence: knosiaRepairConfidenceEnum().default("low"),
+  promptAction: knosiaPromptActionEnum().default("pending"),
+
+  // Pattern tracking
+  patternId: text(), // Links related errors together
+  frequencyCount: integer().default(1), // How many times this pattern occurred
+
+  // Prompt improvement linkage
+  promptFixId: text().references(() => knosiaPromptFix.id, {
+    onDelete: "set null",
+  }),
+
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+/**
+ * Prompt Fix Proposals - Tracks proposed and applied prompt improvements
+ *
+ * When systemic patterns are detected, this stores the proposed fix
+ * and tracks its lifecycle through testing to deployment.
+ */
+export const knosiaPromptFix = pgTable("knosia_prompt_fix", {
+  id: text().primaryKey().$defaultFn(generateId),
+
+  // What this fixes
+  errorSignature: text().notNull(), // The pattern being addressed
+  errorType: text().notNull(),
+  patternDescription: text().notNull(), // Human-readable description
+
+  // The fix itself
+  fixType: text().notNull(), // "add_rule", "add_example", "modify_rule", "add_constraint"
+  proposedChange: text().notNull(), // The actual prompt modification
+  targetPromptSection: text(), // Which part of the prompt to modify
+
+  // Statistics that triggered this fix
+  triggerFrequency: integer().notNull(), // How many repairs triggered this
+  triggerKpiTypes: jsonb().$type<string[]>(), // Which KPI types were affected
+  triggerTimespan: text(), // e.g., "7 days"
+
+  // Classification
+  confidence: knosiaRepairConfidenceEnum().notNull(),
+  status: knosiaPromptFixStatusEnum().notNull().default("proposed"),
+
+  // A/B test results
+  abTestId: text(),
+  abTestStartedAt: timestamp(),
+  abTestCompletedAt: timestamp(),
+  abTestResults: jsonb().$type<{
+    controlRepairRate: number;
+    treatmentRepairRate: number;
+    controlSampleSize: number;
+    treatmentSampleSize: number;
+    improvement: number; // Percentage improvement
+    significant: boolean; // p < 0.05
+  }>(),
+
+  // Deployment
+  appliedAt: timestamp(),
+  appliedBy: text(), // "auto" or user ID
+  rolledBackAt: timestamp(),
+  rollbackReason: text(),
+
+  // Audit
+  proposedAt: timestamp().notNull().defaultNow(),
+  reviewedAt: timestamp(),
+  reviewedBy: text().references(() => user.id),
+  reviewNotes: text(),
+});
+
+/**
+ * Error Pattern Index - Aggregated view of error patterns
+ *
+ * Maintained by a background job that groups repairs by error signature
+ * and computes statistics for classification.
+ */
+export const knosiaErrorPattern = pgTable(
+  "knosia_error_pattern",
+  {
+    id: text().primaryKey().$defaultFn(generateId),
+
+    // Pattern identification
+    errorSignature: text().notNull().unique(),
+    errorType: text().notNull(),
+    errorMessageTemplate: text().notNull(), // Normalized error with placeholders
+
+    // Aggregated statistics
+    totalOccurrences: integer().notNull().default(0),
+    repairSuccessCount: integer().notNull().default(0),
+    repairFailureCount: integer().notNull().default(0),
+
+    // Pattern analysis
+    distinctKpiTypes: jsonb().$type<string[]>().default([]),
+    distinctEntities: jsonb().$type<string[]>().default([]),
+    distinctWorkspaces: integer().default(0),
+
+    // Auto-classification
+    classification: knosiaRepairClassificationEnum(),
+    confidence: knosiaRepairConfidenceEnum(),
+    promptAction: knosiaPromptActionEnum().default("pending"),
+
+    // Linked fix
+    activeFixId: text().references(() => knosiaPromptFix.id, {
+      onDelete: "set null",
+    }),
+
+    // Timestamps
+    firstSeenAt: timestamp().notNull().defaultNow(),
+    lastSeenAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [uniqueIndex("idx_error_pattern_signature").on(table.errorSignature)],
+);
+
+// ============================================================================
 // ZOD SCHEMAS & TYPES
 // ============================================================================
 
@@ -1638,4 +1871,39 @@ export type InsertKnosiaColumnProfile = z.infer<
 >;
 export type SelectKnosiaColumnProfile = z.infer<
   typeof selectKnosiaColumnProfileSchema
+>;
+
+// KPI Repair Training
+export const insertKnosiaKpiRepairTrainingSchema = createInsertSchema(
+  knosiaKpiRepairTraining,
+);
+export const selectKnosiaKpiRepairTrainingSchema = createSelectSchema(
+  knosiaKpiRepairTraining,
+);
+export type InsertKnosiaKpiRepairTraining = z.infer<
+  typeof insertKnosiaKpiRepairTrainingSchema
+>;
+export type SelectKnosiaKpiRepairTraining = z.infer<
+  typeof selectKnosiaKpiRepairTrainingSchema
+>;
+
+// Prompt Fixes
+export const insertKnosiaPromptFixSchema = createInsertSchema(knosiaPromptFix);
+export const selectKnosiaPromptFixSchema = createSelectSchema(knosiaPromptFix);
+export const updateKnosiaPromptFixSchema = createUpdateSchema(knosiaPromptFix);
+export type InsertKnosiaPromptFix = z.infer<typeof insertKnosiaPromptFixSchema>;
+export type SelectKnosiaPromptFix = z.infer<typeof selectKnosiaPromptFixSchema>;
+
+// Error Patterns
+export const insertKnosiaErrorPatternSchema =
+  createInsertSchema(knosiaErrorPattern);
+export const selectKnosiaErrorPatternSchema =
+  createSelectSchema(knosiaErrorPattern);
+export const updateKnosiaErrorPatternSchema =
+  createUpdateSchema(knosiaErrorPattern);
+export type InsertKnosiaErrorPattern = z.infer<
+  typeof insertKnosiaErrorPatternSchema
+>;
+export type SelectKnosiaErrorPattern = z.infer<
+  typeof selectKnosiaErrorPatternSchema
 >;

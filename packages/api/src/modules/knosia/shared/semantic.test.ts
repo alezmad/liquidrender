@@ -86,6 +86,13 @@ const createVocabItem = (
   executionCount: 0,
   lastExecutedAt: null,
   lastExecutionResult: null,
+  // Validation tracking fields
+  validationStatus: null,
+  validationErrorType: null,
+  validationError: null,
+  validationAttempts: null,
+  validationLog: null,
+  validatedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,

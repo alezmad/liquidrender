@@ -261,6 +261,21 @@ export const CalculatedMetricRecipeSchema = z.object({
     columnName: z.string(),
     purpose: z.string().describe("How this column is used in the calculation"),
   })).optional().describe("Column dependencies (informational only)"),
+
+  // Validation log for training data collection (optional - only present if repairs occurred)
+  validationLog: z.array(z.object({
+    timestamp: z.string(),
+    attempt: z.number(),
+    stage: z.string(),
+    error: z.string().optional(),
+    result: z.string().optional(),
+    model: z.string().optional(),
+    rawInput: z.unknown().optional(),
+    rawOutput: z.unknown().optional(),
+    latencyMs: z.number().optional(),
+    tokensIn: z.number().optional(),
+    tokensOut: z.number().optional(),
+  })).optional().describe("Validation and repair attempts for training"),
 });
 
 export type CalculatedMetricRecipe = z.infer<typeof CalculatedMetricRecipeSchema>;
@@ -1331,6 +1346,8 @@ export const FilteredKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
     having: z.string(),
     subqueryEntity: z.string().optional(),
   }),
+  // percentOf: Required for percentage KPIs - calculates (filtered_count / total_count) * 100
+  percentOf: z.string().optional().describe("Expression to calculate percentage against (required when format.type='percent')"),
 });
 
 // Window KPI (v2)
@@ -1441,6 +1458,8 @@ export type ExtendedKPISemanticDefinitionType = z.infer<typeof ExtendedKPISemant
 /**
  * Extended KPI Recipe Schema - Supports all 7 KPI types.
  * Use this for LLM validation instead of KPIRecipeSchema.
+ *
+ * Includes refinement to enforce percentOf requirement for filtered percentage KPIs.
  */
 export const ExtendedKPIRecipeSchema = z.object({
   // Display metadata
@@ -1472,6 +1491,22 @@ export const ExtendedKPIRecipeSchema = z.object({
     columnName: z.string(),
     purpose: z.string(),
   })).optional().describe("Column dependencies"),
-});
+}).refine(
+  (data) => {
+    // Enforce: filtered KPIs with percent format MUST have percentOf
+    if (
+      data.kpiDefinition.type === 'filtered' &&
+      data.format?.type === 'percent' &&
+      !('percentOf' in data.kpiDefinition && data.kpiDefinition.percentOf)
+    ) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Filtered KPIs with format.type='percent' must include 'percentOf' field to calculate percentage. Without it, you get a raw count instead of a percentage.",
+    path: ["kpiDefinition", "percentOf"],
+  }
+);
 
 export type ExtendedKPIRecipe = z.infer<typeof ExtendedKPIRecipeSchema>;

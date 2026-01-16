@@ -37,6 +37,14 @@ function createMockDetectedVocabulary(): DetectedVocabulary {
         columnCount: 6,
         certainty: 0.95,
         isJunction: false,
+        columns: [
+          { name: "id", dataType: "uuid", isNullable: false, isPrimaryKey: true, isForeignKey: false },
+          { name: "amount", dataType: "decimal", isNullable: false, isPrimaryKey: false, isForeignKey: false },
+          { name: "status", dataType: "text", isNullable: false, isPrimaryKey: false, isForeignKey: false },
+          { name: "plan_type", dataType: "text", isNullable: true, isPrimaryKey: false, isForeignKey: false },
+          { name: "created_at", dataType: "timestamp", isNullable: false, isPrimaryKey: false, isForeignKey: false },
+          { name: "user_id", dataType: "uuid", isNullable: false, isPrimaryKey: false, isForeignKey: true },
+        ],
       },
     ],
     metrics: [

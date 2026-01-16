@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 
 import { enforceAuth } from "../../../middleware";
 
@@ -37,6 +38,7 @@ import {
   getUserVocabularyPrefsSchema,
   getSuggestionsSchema,
   previewVocabularySchema,
+  previewVocabularyQuerySchema,
 } from "./schemas";
 import { previewVocabularyItem } from "./preview";
 
@@ -504,18 +506,14 @@ export const knosiaVocabularyRouter = new Hono<{ Variables: Variables }>()
    * Executes the vocabulary item's definition against the connected
    * database and returns the calculated value or sample data.
    */
-  .get("/items/:id/preview", async (c) => {
-    const itemId = c.req.param("id");
-    const workspaceId = c.req.query("workspaceId");
+  .get(
+    "/items/:id/preview",
+    zValidator("query", previewVocabularyQuerySchema),
+    async (c) => {
+      const itemId = c.req.param("id");
+      const { workspaceId } = c.req.valid("query");
 
-    const parseResult = previewVocabularySchema.safeParse({ itemId, workspaceId });
-    if (!parseResult.success) {
-      return c.json(
-        { error: parseResult.error.issues[0]?.message ?? "Invalid input" },
-        400
-      );
+      const preview = await previewVocabularyItem({ itemId, workspaceId });
+      return c.json(preview);
     }
-
-    const preview = await previewVocabularyItem(parseResult.data);
-    return c.json(preview);
-  });
+  );

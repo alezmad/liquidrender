@@ -105,7 +105,7 @@ export function useMetrics({
         abbreviation: string | null;
         category: string | null;
         slug: string;
-        type: "metric" | "dimension" | "entity" | "event";
+        type: "metric" | "measure" | "kpi" | "dimension" | "entity" | "event";
         scope: "org" | "workspace" | "private";
         definition: {
           descriptionHuman?: string;

@@ -1,16 +1,18 @@
 /**
- * Full Onboarding Pipeline Test with Chinook (Music Store)
+ * Unified Pipeline Test Script
  *
- * Deletes existing Chinook data and runs complete onboarding:
- * 1. Clean up existing data
- * 2. Create connection
- * 3. Extract schema
- * 4. Profile tables
- * 5. Detect vocabulary
- * 6. Generate KPIs with tracing
+ * Tests the full onboarding pipeline against any LiquidGym database.
  *
  * Usage:
- *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline-chinook.ts
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts <database>
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --list
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --all
+ *
+ * Examples:
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts northwind
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts pagila
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts chinook
+ *   pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --all
  */
 
 import { db } from "@turbostarter/db/server";
@@ -35,35 +37,130 @@ import {
 import { generateKPIRecipes, type GenerateRecipeInput } from "@turbostarter/ai/kpi";
 import { generateId } from "@turbostarter/shared/utils";
 
-// Chinook via LiquidGym PostgreSQL (port 5433)
-// Music store database - albums, tracks, invoices
-const DB_CONNECTION = "postgresql://superadmin:superadmin@localhost:5433/chinook";
-const DB_SCHEMA = "public";
-const DB_NAME = "Chinook";
-const BUSINESS_TYPE = "ecommerce"; // Digital music sales
+// =============================================================================
+// DATABASE CONFIGURATIONS
+// =============================================================================
 
-// Use existing test organization (run check-orgs.ts to see available orgs)
+interface DatabaseConfig {
+  name: string;
+  displayName: string;
+  connectionString: string;
+  schema: string;
+  businessType: string;
+  description: string;
+}
+
+const DATABASES: Record<string, DatabaseConfig> = {
+  northwind: {
+    name: "northwind",
+    displayName: "Northwind",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/northwind",
+    schema: "public",
+    businessType: "ecommerce",
+    description: "B2B Trading - Orders, products, customers",
+  },
+  pagila: {
+    name: "pagila",
+    displayName: "Pagila",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/pagila",
+    schema: "public",
+    businessType: "subscription",
+    description: "DVD Rental - Film rentals, payments",
+  },
+  chinook: {
+    name: "chinook",
+    displayName: "Chinook",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/chinook",
+    schema: "public",
+    businessType: "ecommerce",
+    description: "Music Store - Albums, tracks, invoices",
+  },
+  adventureworks: {
+    name: "adventureworks",
+    displayName: "AdventureWorks",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/adventureworks",
+    schema: "public",
+    businessType: "manufacturing",
+    description: "Manufacturing - HR, production, purchasing",
+  },
+  netflix: {
+    name: "netflix",
+    displayName: "Netflix",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/netflix",
+    schema: "public",
+    businessType: "entertainment",
+    description: "Entertainment - Shows, ratings",
+  },
+  lego: {
+    name: "lego",
+    displayName: "Lego",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/lego",
+    schema: "public",
+    businessType: "ecommerce",
+    description: "Product Catalog - Parts, themes, inventories",
+  },
+  employees: {
+    name: "employees",
+    displayName: "Employees",
+    connectionString: "postgresql://superadmin:superadmin@localhost:5433/employees",
+    schema: "public",
+    businessType: "hr",
+    description: "HR - Employee records, departments",
+  },
+};
+
+// Use existing test organization
 const TEST_ORG_ID = "user-36tZoyvgjnq1EvalhwH5VUyvZ0aJcaO1";
 
-async function main() {
-  console.log("═".repeat(70));
-  console.log(`  FULL ONBOARDING PIPELINE TEST - ${DB_NAME.toUpperCase()}`);
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+// Helper to create URL-safe slug
+const toSlug = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+// =============================================================================
+// PIPELINE RUNNER
+// =============================================================================
+
+interface PipelineResult {
+  database: string;
+  tables: number;
+  vocabularyItems: number;
+  kpisGenerated: number;
+  kpisFailed: number;
+  repairRate: number;
+  duration: number;
+  success: boolean;
+}
+
+async function runPipeline(config: DatabaseConfig, verbose = true): Promise<PipelineResult> {
+  const startTime = Date.now();
+  const { name, displayName, connectionString, schema, businessType } = config;
+
+  console.log("\n" + "═".repeat(70));
+  console.log(`  PIPELINE TEST - ${displayName.toUpperCase()}`);
+  console.log(`  ${config.description}`);
   console.log("═".repeat(70));
 
   // =========================================================================
   // STEP 1: Clean up existing data
   // =========================================================================
   console.log("\n┌─────────────────────────────────────────────────────────────────────┐");
-  console.log(`│ STEP 1: Cleaning up existing ${DB_NAME} data                          │`);
+  console.log(`│ STEP 1: Cleaning up existing ${displayName} data`.padEnd(70) + "│");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
   const existingConnections = await db
     .select({ id: knosiaConnection.id, name: knosiaConnection.name })
     .from(knosiaConnection)
-    .where(like(knosiaConnection.name, `%${DB_NAME}%`));
+    .where(like(knosiaConnection.name, `%${displayName}%`));
 
   if (existingConnections.length > 0) {
-    console.log(`\n  Found ${existingConnections.length} existing ${DB_NAME} connection(s):`);
+    console.log(`\n  Found ${existingConnections.length} existing connection(s):`);
     existingConnections.forEach((c) => console.log(`    - ${c.name} (${c.id})`));
 
     const connectionIds = existingConnections.map((c) => c.id);
@@ -106,14 +203,14 @@ async function main() {
       .returning({ id: knosiaConnection.id });
     console.log(`    ✓ Deleted ${deletedConnections.length} connections`);
   } else {
-    console.log(`\n  No existing ${DB_NAME} connections found.`);
+    console.log("\n  No existing connections found.");
   }
 
   // =========================================================================
   // STEP 2: Create new connection
   // =========================================================================
   console.log("\n┌─────────────────────────────────────────────────────────────────────┐");
-  console.log(`│ STEP 2: Creating new ${DB_NAME} connection                            │`);
+  console.log(`│ STEP 2: Creating new ${displayName} connection`.padEnd(70) + "│");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
   const connectionId = generateId();
@@ -123,12 +220,12 @@ async function main() {
     .values({
       id: connectionId,
       orgId: TEST_ORG_ID,
-      name: `${DB_NAME} (Test)`,
+      name: `${displayName} (Test)`,
       type: "postgres",
       host: "localhost",
       port: 5433,
-      database: DB_NAME.toLowerCase(),
-      schema: DB_SCHEMA,
+      database: name,
+      schema,
       createdAt: now,
       updatedAt: now,
     })
@@ -144,24 +241,26 @@ async function main() {
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
   const adapter = new DuckDBUniversalAdapter();
-  await adapter.connect(DB_CONNECTION);
+  await adapter.connect(connectionString);
   console.log("\n  ✓ Connected to LiquidGym PostgreSQL");
 
-  const schema = await adapter.extractSchema(DB_SCHEMA);
-  console.log(`  ✓ Found ${schema.tables.length} tables:`);
-  schema.tables.forEach((t) => {
-    console.log(`    - ${t.name} (${t.columns.length} columns)`);
-  });
+  const extractedSchema = await adapter.extractSchema(schema);
+  console.log(`  ✓ Found ${extractedSchema.tables.length} tables:`);
+  if (verbose) {
+    extractedSchema.tables.forEach((t) => {
+      console.log(`    - ${t.name} (${t.columns.length} columns)`);
+    });
+  }
 
   const [savedSchema] = await db
     .insert(knosiaConnectionSchema)
     .values({
       id: generateId(),
       connectionId,
-      schemaName: DB_SCHEMA,
-      extractedSchema: schema as any,
-      tablesCount: schema.tables.length,
-      columnsCount: schema.tables.reduce((sum, t) => sum + t.columns.length, 0),
+      schemaName: schema,
+      extractedSchema: extractedSchema as any,
+      tablesCount: extractedSchema.tables.length,
+      columnsCount: extractedSchema.tables.reduce((sum, t) => sum + t.columns.length, 0),
     })
     .returning();
 
@@ -174,18 +273,19 @@ async function main() {
   console.log("│ STEP 4: Profiling tables                                           │");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
-  const profiles = await profileSchema(adapter, schema, {
-    sampleSize: 1000,
-    analyzeDistributions: true,
+  const profileResult = await profileSchema(adapter, extractedSchema, {
+    enableTier2: true,
+    maxConcurrentTables: 3,
   });
 
+  // profileSchema returns ProfileResult with schema: ProfiledSchema inside
+  const profiledSchema = profileResult.schema;
   const safeProfiles = {
-    ...profiles,
-    columnProfiles: profiles.columnProfiles ?? {},
-    tableProfiles: profiles.tableProfiles ?? {},
+    ...profiledSchema,
+    columnProfiles: profiledSchema.columnProfiles ?? {},
+    tableProfiles: profiledSchema.tableProfiles ?? {},
   };
   const profilingData = extractProfilingData(safeProfiles);
-
   console.log(`\n  ✓ Profiled ${Object.keys(profilingData.tableProfiles).length} tables`);
 
   // =========================================================================
@@ -195,13 +295,14 @@ async function main() {
   console.log("│ STEP 5: Detecting vocabulary                                       │");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
-  const vocabulary = applyHardRules(schema, profilingData);
+  const vocabulary = applyHardRules(extractedSchema, profilingData);
 
   console.log(`\n  ✓ Detected vocabulary:`);
   console.log(`    - ${vocabulary.metrics?.length ?? 0} metrics`);
   console.log(`    - ${vocabulary.dimensions?.length ?? 0} dimensions`);
   console.log(`    - ${vocabulary.entities?.length ?? 0} entities`);
 
+  // Create an analysis record (required for profiles)
   const analysisId = generateId();
   await db.insert(knosiaAnalysis).values({
     id: analysisId,
@@ -210,7 +311,7 @@ async function main() {
     currentStep: 5,
     totalSteps: 5,
     summary: {
-      tables: schema.tables.length,
+      tables: extractedSchema.tables.length,
       metrics: vocabulary.metrics?.length ?? 0,
       dimensions: vocabulary.dimensions?.length ?? 0,
       entities: vocabulary.entities?.map((e) => e.name) ?? [],
@@ -224,6 +325,7 @@ async function main() {
   });
   console.log(`  ✓ Created analysis record: ${analysisId}`);
 
+  // Save profiles to database
   let tableProfileCount = 0;
   let columnProfileCount = 0;
 
@@ -244,6 +346,7 @@ async function main() {
     });
     tableProfileCount++;
 
+    // Save column profiles for this table
     for (const [key, colProfile] of Object.entries(profilingData.columnProfiles)) {
       const [tbl, columnName] = key.split(".");
       if (tbl !== tableName) continue;
@@ -255,7 +358,7 @@ async function main() {
         profile: {
           columnName,
           dataType: colProfile.dataType ?? "unknown",
-          nullCount: Math.round((colProfile.nullPercentage ?? 0) * (profile.rowCount ?? 0) / 100),
+          nullCount: Math.round(((colProfile.nullPercentage ?? 0) * (profile.rowCount ?? 0)) / 100),
           nullPercentage: colProfile.nullPercentage ?? 0,
           ...(colProfile.distinctCount !== undefined && {
             categorical: {
@@ -274,8 +377,8 @@ async function main() {
 
   console.log(`  ✓ Saved ${tableProfileCount} table profiles, ${columnProfileCount} column profiles`);
 
+  // Save vocabulary items to database
   let vocabCount = 0;
-  const toSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   for (const metric of vocabulary.metrics ?? []) {
     await db.insert(knosiaVocabularyItem).values({
@@ -316,14 +419,14 @@ async function main() {
   console.log(`  ✓ Saved ${vocabCount} vocabulary items`);
 
   // =========================================================================
-  // STEP 6: Generate KPIs with tracing
+  // STEP 6: Generate KPIs
   // =========================================================================
   console.log("\n┌─────────────────────────────────────────────────────────────────────┐");
   console.log("│ STEP 6: Generating KPIs (with tracing)                             │");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
   const vocabularyContext: GenerateRecipeInput["vocabularyContext"] = {
-    tables: schema.tables.map((t) => ({
+    tables: extractedSchema.tables.map((t) => ({
       name: t.name,
       columns: t.columns.map((c) => ({
         name: c.name,
@@ -336,10 +439,10 @@ async function main() {
 
   console.log("\n  Generating KPIs (this may take 30-60 seconds)...\n");
 
-  const startTime = Date.now();
+  const kpiStartTime = Date.now();
   const result = await generateKPIRecipes(
     {
-      businessType: BUSINESS_TYPE,
+      businessType,
       vocabularyContext,
       useSchemaFirstGeneration: true,
     },
@@ -348,9 +451,9 @@ async function main() {
       maxRecipes: 15,
     }
   );
-  const duration = Date.now() - startTime;
+  const kpiDuration = Date.now() - kpiStartTime;
 
-  console.log(`  ✓ Generation completed in ${(duration / 1000).toFixed(1)}s`);
+  console.log(`  ✓ Generation completed in ${(kpiDuration / 1000).toFixed(1)}s`);
 
   if (result.generationStats) {
     const stats = result.generationStats;
@@ -364,18 +467,45 @@ async function main() {
     console.log(`    Final Failed:      ${stats.finalFailed}`);
   }
 
+  const successCount = result.recipes.length;
+  const failedCount = result.failedRecipes?.length ?? 0;
+  const repairRate = result.generationStats
+    ? ((result.generationStats.repairedByHaiku + result.generationStats.repairedBySonnet) /
+        (result.generationStats.attempted || 1)) *
+      100
+    : 0;
+
+  // Log successful KPIs
   console.log("\n  ✅ Successful KPIs:");
-  let kpiCount = 0;
-  for (const recipe of result.recipes) {
-    kpiCount++;
-    console.log(`    ${kpiCount}. ${recipe.name} (${recipe.category})`);
-    if (recipe.semanticDefinition) {
+  result.recipes.forEach((recipe, i) => {
+    console.log(`    ${i + 1}. ${recipe.name} (${recipe.category})`);
+    if (verbose && recipe.semanticDefinition) {
       const def = recipe.semanticDefinition as { type?: string; entity?: string };
       console.log(`       Type: ${def.type}, Entity: ${def.entity}`);
     }
-  }
-  console.log(`\n  ✓ Generated ${kpiCount} KPIs (not persisted - test mode)`);
+    // Show repair info for successful KPIs that needed fixing
+    if (recipe.validationLog && recipe.validationLog.length > 0) {
+      const repairLogs = recipe.validationLog.filter(
+        (log: { stage?: string }) => log.stage === "repair"
+      );
+      const errorLogs = recipe.validationLog.filter(
+        (log: { error?: string }) => log.error
+      );
+      if (repairLogs.length > 0) {
+        console.log(`       ⚠️  REPAIRED (${repairLogs.length} attempt(s)):`);
+        errorLogs.forEach((log: { error?: string }) => {
+          if (log.error) {
+            console.log(
+              `          Error: ${log.error.substring(0, 100)}${log.error.length > 100 ? "..." : ""}`
+            );
+          }
+        });
+      }
+    }
+  });
+  console.log(`\n  ✓ Generated ${successCount} KPIs (not persisted - test mode)`);
 
+  // Show failed KPIs with trace data
   if (result.failedRecipes && result.failedRecipes.length > 0) {
     console.log("\n  ❌ Failed KPIs (with trace data):");
     result.failedRecipes.forEach((f, i) => {
@@ -383,23 +513,30 @@ async function main() {
       console.log(`       Stage: ${f.failureStage}`);
       console.log(`       Error: ${f.lastError.substring(0, 80)}...`);
 
-      const repairLogs = f.validationLog.filter((log) => log.stage === "repair");
-      if (repairLogs.length > 0) {
-        console.log(`       Repair Attempts: ${repairLogs.length}`);
-        repairLogs.forEach((log) => {
-          if (log.promptName) {
-            console.log(`         📝 Prompt: ${log.promptName} v${log.promptVersion}`);
-          }
-          if (log.latencyMs !== undefined) {
-            console.log(`         ⏱️  Latency: ${log.latencyMs}ms`);
-          }
-          if (log.tokensIn !== undefined) {
-            console.log(`         🔢 Tokens: ${log.tokensIn} in / ${log.tokensOut} out`);
-          }
-        });
+      if (verbose) {
+        const repairLogs = f.validationLog.filter((log) => log.stage === "repair");
+        if (repairLogs.length > 0) {
+          console.log(`       Repair Attempts: ${repairLogs.length}`);
+          repairLogs.forEach((log) => {
+            if (log.promptName) {
+              console.log(`         📝 Prompt: ${log.promptName} v${log.promptVersion}`);
+            }
+            if (log.latencyMs !== undefined) {
+              console.log(`         ⏱️  Latency: ${log.latencyMs}ms`);
+            }
+            if (log.tokensIn !== undefined) {
+              console.log(`         🔢 Tokens: ${log.tokensIn} in / ${log.tokensOut} out`);
+            }
+          });
+        }
       }
     });
   }
+
+  // Cleanup
+  await adapter.disconnect();
+
+  const duration = (Date.now() - startTime) / 1000;
 
   // =========================================================================
   // SUMMARY
@@ -409,22 +546,139 @@ async function main() {
   console.log("╚═════════════════════════════════════════════════════════════════════╝");
 
   console.log(`
-  Database:         ${DB_NAME}
-  Business Type:    ${BUSINESS_TYPE}
   Connection:       ${newConnection.name} (${newConnection.id})
-  Tables:           ${schema.tables.length}
+  Database:         ${displayName}
+  Business Type:    ${businessType}
+  Tables:           ${extractedSchema.tables.length}
   Vocabulary Items: ${vocabCount}
-  KPIs Generated:   ${result.recipes.length} successful, ${result.failedRecipes?.length ?? 0} failed
-  Total Duration:   ${(duration / 1000).toFixed(1)}s
+  KPIs Generated:   ${successCount} successful, ${failedCount} failed
+  Total Duration:   ${duration.toFixed(1)}s
 
-  Success Rate:     ${result.generationStats ? ((result.generationStats.finalSuccess / result.generationStats.attempted) * 100).toFixed(1) : "N/A"}%
-  Repair Rate:      ${result.generationStats ? (((result.generationStats.repairedByHaiku + result.generationStats.repairedBySonnet) / result.generationStats.attempted) * 100).toFixed(1) : "N/A"}%
+  Success Rate:     ${((successCount / (successCount + failedCount)) * 100).toFixed(1)}%
+  Repair Rate:      ${repairRate.toFixed(1)}%
   `);
 
-  await adapter.disconnect();
   console.log("  ✓ Pipeline complete\n");
 
-  process.exit(0);
+  return {
+    database: displayName,
+    tables: extractedSchema.tables.length,
+    vocabularyItems: vocabCount,
+    kpisGenerated: successCount,
+    kpisFailed: failedCount,
+    repairRate,
+    duration,
+    success: failedCount === 0,
+  };
+}
+
+// =============================================================================
+// MAIN
+// =============================================================================
+
+function printUsage() {
+  console.log(`
+Usage: pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts <database|option>
+
+Options:
+  --list, -l    List available databases
+  --all, -a     Run pipeline for all databases
+
+Available databases:`);
+  Object.entries(DATABASES).forEach(([key, config]) => {
+    console.log(`  ${key.padEnd(15)} ${config.description}`);
+  });
+  console.log(`
+Examples:
+  pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts northwind
+  pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts --all
+`);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const arg = args[0]?.toLowerCase();
+
+  if (!arg || arg === "--help" || arg === "-h") {
+    printUsage();
+    process.exit(0);
+  }
+
+  if (arg === "--list" || arg === "-l") {
+    console.log("\nAvailable databases:\n");
+    Object.entries(DATABASES).forEach(([key, config]) => {
+      console.log(`  ${key.padEnd(15)} ${config.description}`);
+    });
+    process.exit(0);
+  }
+
+  if (arg === "--all" || arg === "-a") {
+    console.log("\n" + "█".repeat(70));
+    console.log("  RUNNING ALL DATABASE PIPELINES");
+    console.log("█".repeat(70));
+
+    const results: PipelineResult[] = [];
+    for (const config of Object.values(DATABASES)) {
+      try {
+        const result = await runPipeline(config, false); // Less verbose for --all
+        results.push(result);
+      } catch (error) {
+        console.error(`\n❌ Failed to run pipeline for ${config.displayName}:`, error);
+        results.push({
+          database: config.displayName,
+          tables: 0,
+          vocabularyItems: 0,
+          kpisGenerated: 0,
+          kpisFailed: 0,
+          repairRate: 0,
+          duration: 0,
+          success: false,
+        });
+      }
+    }
+
+    // Print summary table
+    console.log("\n\n" + "█".repeat(70));
+    console.log("  ALL PIPELINES COMPLETE - SUMMARY");
+    console.log("█".repeat(70));
+    console.log("\n  Database         Tables  Vocab  KPIs   Failed  Repair%  Time    Status");
+    console.log("  " + "─".repeat(72));
+    results.forEach((r) => {
+      const status = r.success ? "✅" : "❌";
+      console.log(
+        `  ${r.database.padEnd(17)} ${String(r.tables).padStart(5)}  ${String(r.vocabularyItems).padStart(5)}  ${String(r.kpisGenerated).padStart(4)}   ${String(r.kpisFailed).padStart(5)}   ${r.repairRate.toFixed(1).padStart(6)}%  ${r.duration.toFixed(1).padStart(5)}s   ${status}`
+      );
+    });
+
+    const totalKPIs = results.reduce((sum, r) => sum + r.kpisGenerated, 0);
+    const totalFailed = results.reduce((sum, r) => sum + r.kpisFailed, 0);
+    const avgRepair = results.reduce((sum, r) => sum + r.repairRate, 0) / results.length;
+    const totalTime = results.reduce((sum, r) => sum + r.duration, 0);
+    const allSuccess = results.every((r) => r.success);
+
+    console.log("  " + "─".repeat(72));
+    console.log(
+      `  ${"TOTAL".padEnd(17)} ${String(results.reduce((s, r) => s + r.tables, 0)).padStart(5)}  ${String(results.reduce((s, r) => s + r.vocabularyItems, 0)).padStart(5)}  ${String(totalKPIs).padStart(4)}   ${String(totalFailed).padStart(5)}   ${avgRepair.toFixed(1).padStart(6)}%  ${totalTime.toFixed(1).padStart(5)}s   ${allSuccess ? "✅" : "❌"}`
+    );
+
+    process.exit(allSuccess ? 0 : 1);
+  }
+
+  // Single database
+  const config = DATABASES[arg];
+  if (!config) {
+    console.error(`\n❌ Unknown database: ${arg}`);
+    printUsage();
+    process.exit(1);
+  }
+
+  try {
+    const result = await runPipeline(config, true); // Verbose for single db
+    process.exit(result.success ? 0 : 1);
+  } catch (error) {
+    console.error("\n❌ Pipeline failed:", error);
+    process.exit(1);
+  }
 }
 
 main().catch((error) => {

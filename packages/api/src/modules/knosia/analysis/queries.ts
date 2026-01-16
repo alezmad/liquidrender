@@ -587,49 +587,6 @@ export async function* runAnalysis(
       },
     };
 
-    // Step 7.5: Generate Calculated Metrics (KPI Recipes)
-    // This step enriches vocabulary with business KPIs calculated from raw data
-    let calculatedMetricsResult: {
-      enrichedVocabulary: typeof quickEnrichedVocab & { calculatedMetrics?: any[] };
-      recipes: any[];
-      stats: { feasibleCount: number; totalGenerated: number; averageConfidence: number; infeasibleCount: number };
-    } | null = null;
-
-    if (businessType.detected) {
-      try {
-        const { enrichVocabularyWithCalculatedMetrics } = await import("./calculated-metrics");
-
-        console.log("[Analysis] Generating calculated metrics for business type:", businessType.detected);
-
-        calculatedMetricsResult = await enrichVocabularyWithCalculatedMetrics(
-          quickEnrichedVocab,
-          schema,
-          businessType.detected,
-          {
-            maxRecipes: 10,
-            model: "haiku",
-            enabled: true, // Enable by default
-          }
-        );
-
-        // Use enriched vocabulary for canvas creation
-        if (calculatedMetricsResult.enrichedVocabulary.calculatedMetrics?.length) {
-          quickEnrichedVocab = calculatedMetricsResult.enrichedVocabulary;
-          console.log(`[Analysis] Added ${calculatedMetricsResult.enrichedVocabulary.calculatedMetrics.length} calculated metrics to vocabulary`);
-        }
-
-        console.log("[Analysis] Calculated metrics generation complete:", {
-          totalGenerated: calculatedMetricsResult.stats.totalGenerated,
-          feasible: calculatedMetricsResult.stats.feasibleCount,
-          avgConfidence: calculatedMetricsResult.stats.averageConfidence.toFixed(2),
-        });
-      } catch (error) {
-        console.warn("[Analysis] Calculated metrics generation skipped:", error);
-      }
-    } else {
-      console.log("[Analysis] Skipping calculated metrics - no business type detected");
-    }
-
     // Optional: Data Profiling UI Steps (Steps 6-8)
     // Note: Profiling was already done before step 4 for vocabulary enhancement
     if (includeDataProfiling) {

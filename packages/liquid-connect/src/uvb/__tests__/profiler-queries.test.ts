@@ -153,18 +153,18 @@ describe('Tier 1: Database Statistics', () => {
       const query = buildTableStatisticsQuery('orders', 'public');
 
       expect(query).toContain('WITH table_stats AS');
-      expect(query).toContain('pg_class c');
-      expect(query).toContain('pg_namespace n');
+      expect(query).toContain('source_db.pg_catalog.pg_class c');
+      expect(query).toContain('source_db.pg_catalog.pg_namespace n');
       expect(query).toContain("n.nspname = 'public'");
       expect(query).toContain("c.relname = 'orders'");
     });
 
-    it('includes system catalog joins', () => {
+    it('includes system catalog joins with DuckDB prefix', () => {
       const query = buildTableStatisticsQuery('users', 'public');
 
-      expect(query).toContain('pg_class');
-      expect(query).toContain('pg_namespace');
-      expect(query).toContain('pg_stat_user_tables');
+      expect(query).toContain('source_db.pg_catalog.pg_class');
+      expect(query).toContain('source_db.pg_catalog.pg_namespace');
+      expect(query).toContain('source_db.pg_catalog.pg_stat_user_tables');
     });
 
     it('selects required columns', () => {
@@ -202,7 +202,7 @@ describe('Tier 1: Database Statistics', () => {
       const query = buildColumnStatisticsQuery('orders', 'public');
 
       expect(query).toContain('SELECT');
-      expect(query).toContain('pg_stats s');
+      expect(query).toContain('source_db.pg_catalog.pg_stats s');
       expect(query).toContain("s.schemaname = 'public'");
       expect(query).toContain("s.tablename = 'orders'");
     });
@@ -290,10 +290,10 @@ describe('Tier 1: Database Statistics', () => {
       expect(query).toContain('ORDER BY row_type, column_name');
     });
 
-    it('uses LEFT JOIN for pg_stat_user_tables', () => {
+    it('uses LEFT JOIN for pg_stat_user_tables with DuckDB prefix', () => {
       const query = buildCombinedStatisticsQuery('orders', 'public');
 
-      expect(query).toContain('LEFT JOIN pg_stat_user_tables');
+      expect(query).toContain('LEFT JOIN source_db.pg_catalog.pg_stat_user_tables');
     });
   });
 
@@ -378,10 +378,10 @@ describe('Tier 1: Database Statistics', () => {
       expect(query).toContain('ORDER BY c.reltuples DESC');
     });
 
-    it('uses LEFT JOIN for stats', () => {
+    it('uses LEFT JOIN for stats with DuckDB prefix', () => {
       const query = buildSchemaStatisticsQuery('public');
 
-      expect(query).toContain('LEFT JOIN pg_stat_user_tables');
+      expect(query).toContain('LEFT JOIN source_db.pg_catalog.pg_stat_user_tables');
     });
   });
 });

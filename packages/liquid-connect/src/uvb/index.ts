@@ -122,6 +122,11 @@ export {
   buildFreshnessQuery,
   buildCardinalityQuery,
   determineAdaptiveSampleRate,
+  // DuckDB SUMMARIZE - universal profiling (works for all databases via DuckDB)
+  buildSummarizeQuery,
+  buildDuckDBRowCountQuery,
+  parseSummarizeResults,
+  type SummarizeResult,
 } from "./profiler-queries";
 
 // Column Semantics Detection

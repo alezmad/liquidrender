@@ -431,12 +431,21 @@ describe('profileTable() via profileSchema', () => {
     });
 
     const mockAdapter = createMockAdapter();
+    // Return SUMMARIZE format with count=0 for empty table
     (mockAdapter.query as any).mockResolvedValue([
       {
-        row_count_estimate: 0,
-        table_size_bytes: 8192,
-        last_vacuum: null,
-        last_analyze: null,
+        column_name: 'id',
+        column_type: 'INTEGER',
+        min: null,
+        max: null,
+        approx_unique: 0,
+        avg: null,
+        std: null,
+        q25: null,
+        q50: null,
+        q75: null,
+        count: 0,
+        null_percentage: 0,
       },
     ]);
 
@@ -475,39 +484,24 @@ describe('profileTable() via profileSchema', () => {
     });
 
     const mockAdapter = createMockAdapter();
-    let callCount = 0;
 
-    (mockAdapter.query as any).mockImplementation(async (query: string) => {
-      callCount++;
-
-      if (callCount === 1) {
-        // Tier 1: table statistics
-        return [
-          {
-            row_count_estimate: 5000,
-            table_size_bytes: 65536,
-            last_vacuum: null,
-            last_analyze: null,
-          },
-        ];
-      }
-
-      // Tier 2: sampling data
-      return [
-        {
-          column_name: 'value',
-          column_type: 'numeric',
-          null_count: 50,
-          null_percentage: 1.0,
-          cardinality: 4500,
-          numeric_min: 0,
-          numeric_max: 100,
-          numeric_avg: 50.5,
-          numeric_stddev: 28.8,
-          sample_row_count: 5000,
-        },
-      ];
-    });
+    // Now using SUMMARIZE format which provides both table and column stats
+    (mockAdapter.query as any).mockResolvedValue([
+      {
+        column_name: 'value',
+        column_type: 'INTEGER',
+        min: '0',
+        max: '100',
+        approx_unique: 4500,
+        avg: 50.5,
+        std: 28.8,
+        q25: 25,
+        q50: 50,
+        q75: 75,
+        count: 5000, // Row count derived from first column
+        null_percentage: 1.0, // 1% null = 50 null rows out of 5000
+      },
+    ]);
 
     const result = await profileSchema(
       mockAdapter as any,
@@ -517,11 +511,12 @@ describe('profileTable() via profileSchema', () => {
 
     const profile = result.schema.tableProfiles['test_table'];
     expect(profile.rowCountEstimate).toBe(5000);
-    expect(profile.tableSizeBytes).toBe(65536);
+    // Note: tableSizeBytes not available from SUMMARIZE
+    expect(profile.tableSizeBytes).toBe(0);
 
     const colProfile = result.schema.columnProfiles['test_table']?.['value'];
     expect(colProfile).toBeDefined();
-    expect(colProfile?.nullCount).toBe(50);
+    expect(colProfile?.nullCount).toBe(50); // 1% of 5000
   });
 });
 

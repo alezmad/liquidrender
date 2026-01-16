@@ -34,6 +34,11 @@ import {
   buildFreshnessQuery,
   buildCardinalityQuery,
   determineAdaptiveSampleRate,
+  // DuckDB SUMMARIZE - universal profiling
+  buildSummarizeQuery,
+  buildDuckDBRowCountQuery,
+  parseSummarizeResults,
+  type SummarizeResult,
 } from './profiler-queries';
 
 // =============================================================================
@@ -164,7 +169,17 @@ interface TableProfilingResult {
 }
 
 /**
- * Profile a single table (all tiers)
+ * Profile a single table using DuckDB SUMMARIZE
+ *
+ * Uses DuckDB's built-in SUMMARIZE command which works across ALL databases
+ * (PostgreSQL, MySQL, SQLite) via DuckDB scanners.
+ *
+ * SUMMARIZE provides comprehensive statistics in a single query:
+ * - Row count
+ * - Null percentage per column
+ * - Cardinality (approx_unique) per column
+ * - Min/Max values
+ * - Mean, std deviation, quartiles for numeric columns
  */
 async function profileTable(
   adapter: DuckDBUniversalAdapter,
@@ -176,21 +191,24 @@ async function profileTable(
   let tier2Duration = 0;
   let tier3Duration = 0;
 
+
   try {
-    // Tier 1: Database statistics (always enabled)
-    const tier1Start = Date.now();
-    const stats = await executeTier1(adapter, table);
-    tier1Duration = Date.now() - tier1Start;
+    // Use DuckDB SUMMARIZE for universal profiling (works for all databases)
+    const summarizeStart = Date.now();
+    const summarizeResult = await executeSummarize(adapter, table);
+    tier1Duration = Date.now() - summarizeStart;
+
+    const { rowCount, columnStats } = summarizeResult;
 
     // Skip empty tables
-    if (stats.rowCountEstimate === 0) {
+    if (rowCount === 0) {
       return {
         success: true,
         tableName,
         tableProfile: {
           tableName,
           rowCountEstimate: 0,
-          tableSizeBytes: stats.tableSizeBytes,
+          tableSizeBytes: 0,
           samplingRate: 0,
           emptyColumnCount: table.columns.length,
           sparseColumnCount: 0,
@@ -202,15 +220,97 @@ async function profileTable(
       };
     }
 
-    // Tier 2: Sample-based profiling
-    let tier2Results: any = null;
-    if (options.enableTier2) {
-      const tier2Start = Date.now();
-      tier2Results = await executeTier2(adapter, table, stats.rowCountEstimate, options);
-      tier2Duration = Date.now() - tier2Start;
+    // Build table profile from SUMMARIZE results
+    let emptyColumnCount = 0;
+    let sparseColumnCount = 0;
+
+    for (const [_, stats] of columnStats) {
+      if (stats.nullPercentage === 100) {
+        emptyColumnCount++;
+      } else if (stats.nullPercentage > 50) {
+        sparseColumnCount++;
+      }
     }
 
-    // Tier 3: Detailed profiling (selective)
+    const tableProfile: TableProfile = {
+      tableName,
+      rowCountEstimate: rowCount,
+      tableSizeBytes: 0, // Not available from SUMMARIZE
+      samplingRate: 1.0, // SUMMARIZE uses full table
+      emptyColumnCount,
+      sparseColumnCount,
+    };
+
+    // Build column profiles from SUMMARIZE results
+    const columnProfiles: Record<string, ColumnProfile> = {};
+
+    for (const column of table.columns) {
+      const stats = columnStats.get(column.name);
+      if (!stats) continue;
+
+      const profile: ColumnProfile = {
+        columnName: column.name,
+        dataType: stats.dataType || column.dataType,
+        nullCount: Math.round((stats.nullPercentage / 100) * rowCount),
+        nullPercentage: stats.nullPercentage,
+      };
+
+      // Add categorical profile (cardinality info)
+      profile.categorical = {
+        cardinality: stats.distinctCount,
+        topValues: [], // SUMMARIZE doesn't provide top values
+        isHighCardinality: stats.distinctCount > 1000,
+        isLowCardinality: stats.distinctCount < 20,
+        possiblyUnique: stats.distinctCount >= rowCount * 0.95,
+      };
+
+      // Add numeric profile if applicable
+      const isNumeric = ['INTEGER', 'BIGINT', 'SMALLINT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT'].some(
+        t => stats.dataType?.toUpperCase().includes(t)
+      );
+
+      if (isNumeric && stats.avg !== null && stats.min !== null && stats.max !== null) {
+        profile.numeric = {
+          mean: stats.avg,
+          min: parseFloat(stats.min),
+          max: parseFloat(stats.max),
+          stdDev: stats.std ?? undefined,
+          percentiles: stats.q25 !== null && stats.q50 !== null && stats.q75 !== null
+            ? {
+                p25: stats.q25,
+                p50: stats.q50,
+                p75: stats.q75,
+                p90: stats.q75, // Approximate - SUMMARIZE doesn't provide p90/p95/p99
+                p95: stats.q75,
+                p99: stats.max !== null ? parseFloat(stats.max) : stats.q75,
+              }
+            : undefined,
+        };
+      }
+
+      // Add temporal profile if applicable
+      const isTemporal = ['DATE', 'TIME', 'TIMESTAMP', 'DATETIME'].some(
+        t => stats.dataType?.toUpperCase().includes(t)
+      );
+
+      if (isTemporal && stats.min !== null && stats.max !== null) {
+        const minDate = new Date(stats.min);
+        const maxDate = new Date(stats.max);
+        const spanDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        profile.temporal = {
+          min: minDate,
+          max: maxDate,
+          spanDays,
+          hasTime: stats.dataType?.toUpperCase().includes('TIME') || stats.dataType?.toUpperCase().includes('TIMESTAMP') || false,
+          uniqueDates: stats.distinctCount,
+        };
+      }
+
+      columnProfiles[column.name] = profile;
+    }
+
+    // Tier 3: Detailed profiling (selective) - unchanged
     let tier3Results: any = null;
     if (options.enableTier3) {
       const tier3Start = Date.now();
@@ -218,17 +318,13 @@ async function profileTable(
       tier3Duration = Date.now() - tier3Start;
     }
 
-    // Merge results into TableProfile and ColumnProfiles
-    const tableProfile = buildTableProfile(table, stats, tier2Results, tier3Results);
-    const columnProfiles = buildColumnProfiles(table, stats, tier2Results, tier3Results);
-
     return {
       success: true,
       tableName,
       tableProfile,
       columnProfiles,
       tier1Duration,
-      tier2Duration,
+      tier2Duration: 0, // Tier 2 is now merged into SUMMARIZE
       tier3Duration,
     };
   } catch (error) {
@@ -249,6 +345,43 @@ async function profileTable(
 // Tier Execution
 // =============================================================================
 
+/**
+ * Execute DuckDB SUMMARIZE for comprehensive profiling
+ *
+ * This is the preferred method as it works across ALL databases
+ * (PostgreSQL, MySQL, SQLite) via DuckDB scanners.
+ *
+ * Returns both table-level stats (row count) and column-level stats
+ * (null %, cardinality, min/max, quartiles) in a single query.
+ */
+async function executeSummarize(
+  adapter: DuckDBUniversalAdapter,
+  table: Table
+): Promise<{
+  rowCount: number;
+  columnStats: Map<string, {
+    nullPercentage: number;
+    distinctCount: number;
+    min: string | null;
+    max: string | null;
+    avg: number | null;
+    std: number | null;
+    q25: number | null;
+    q50: number | null;
+    q75: number | null;
+    dataType: string;
+  }>;
+}> {
+  const queryStr = buildSummarizeQuery(table.name, table.schema);
+  const results = await adapter.query<SummarizeResult>(queryStr);
+  return parseSummarizeResults(results, table.name);
+}
+
+/**
+ * Legacy Tier 1 execution - tries pg_catalog first, falls back to COUNT(*)
+ *
+ * @deprecated Use executeSummarize instead for universal database support
+ */
 async function executeTier1(
   adapter: DuckDBUniversalAdapter,
   table: Table
@@ -258,24 +391,57 @@ async function executeTier1(
   lastVacuum?: Date;
   lastAnalyze?: Date;
 }> {
-  const queryStr = buildTableStatisticsQuery(table.name, table.schema);
-  const result = await adapter.query<any>(queryStr);
+  // First, try to get stats from pg_catalog (direct PostgreSQL only)
+  try {
+    const queryStr = buildTableStatisticsQuery(table.name, table.schema);
+    const result = await adapter.query<any>(queryStr);
 
-  if (!result || result.length === 0) {
+    if (result && result.length > 0) {
+      return {
+        rowCountEstimate: result[0].row_count_estimate ?? 0,
+        tableSizeBytes: result[0].table_size_bytes ?? 0,
+        lastVacuum: result[0].last_vacuum ? new Date(result[0].last_vacuum) : undefined,
+        lastAnalyze: result[0].last_analyze ? new Date(result[0].last_analyze) : undefined,
+      };
+    }
+  } catch (error) {
+    // Check if this is a pg_catalog unavailability error (DuckDB postgres_scanner)
+    // vs a real connection/query error that should be propagated
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isCatalogError = errorMessage.includes('pg_catalog') ||
+                           errorMessage.includes('does not exist') ||
+                           errorMessage.includes('Catalog Error');
+
+    if (!isCatalogError) {
+      throw error; // Re-throw non-catalog errors
+    }
+    // pg_catalog not available - fall through to SUMMARIZE fallback
+  }
+
+  // Fallback: Use SUMMARIZE to get row count (works for all databases)
+  try {
+    const summarizeResult = await executeSummarize(adapter, table);
     return {
-      rowCountEstimate: 0,
+      rowCountEstimate: summarizeResult.rowCount,
+      tableSizeBytes: 0, // Not available without pg_catalog
+    };
+  } catch {
+    // Final fallback: simple COUNT(*)
+    const countQuery = buildDuckDBRowCountQuery(table.name, table.schema);
+    const countResult = await adapter.query<{ row_count: bigint }>(countQuery);
+    const rowCount = countResult?.[0]?.row_count;
+    return {
+      rowCountEstimate: rowCount !== undefined ? Number(rowCount) : 0,
       tableSizeBytes: 0,
     };
   }
-
-  return {
-    rowCountEstimate: result[0].row_count_estimate,
-    tableSizeBytes: result[0].table_size_bytes,
-    lastVacuum: result[0].last_vacuum ? new Date(result[0].last_vacuum) : undefined,
-    lastAnalyze: result[0].last_analyze ? new Date(result[0].last_analyze) : undefined,
-  };
 }
 
+/**
+ * Legacy Tier 2 execution - uses custom sample queries
+ *
+ * @deprecated Use executeSummarize instead for universal database support
+ */
 async function executeTier2(
   adapter: DuckDBUniversalAdapter,
   table: Table,

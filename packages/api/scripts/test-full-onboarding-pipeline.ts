@@ -186,15 +186,17 @@ async function main() {
   console.log("│ STEP 4: Profiling tables                                           │");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
-  const profiles = await profileSchema(adapter, schema, {
-    sampleSize: 1000,
-    analyzeDistributions: true,
+  const profileResult = await profileSchema(adapter, schema, {
+    enableTier2: true,
+    maxConcurrentTables: 3,
   });
 
+  // profileSchema returns ProfileResult with schema: ProfiledSchema inside
+  const profiledSchema = profileResult.schema;
   const safeProfiles = {
-    ...profiles,
-    columnProfiles: profiles.columnProfiles ?? {},
-    tableProfiles: profiles.tableProfiles ?? {},
+    ...profiledSchema,
+    columnProfiles: profiledSchema.columnProfiles ?? {},
+    tableProfiles: profiledSchema.tableProfiles ?? {},
   };
   const profilingData = extractProfilingData(safeProfiles);
 
@@ -391,6 +393,19 @@ async function main() {
     if (recipe.semanticDefinition) {
       const def = recipe.semanticDefinition as { type?: string; entity?: string };
       console.log(`       Type: ${def.type}, Entity: ${def.entity}`);
+    }
+    // Show repair details for KPIs that were fixed
+    if (recipe.validationLog && recipe.validationLog.length > 0) {
+      const repairLogs = recipe.validationLog.filter((log: any) => log.stage === "repair");
+      const errorLogs = recipe.validationLog.filter((log: any) => log.error);
+      if (repairLogs.length > 0) {
+        console.log(`       ⚠️  REPAIRED (${repairLogs.length} attempt(s)):`);
+        errorLogs.forEach((log: any) => {
+          if (log.error) {
+            console.log(`          Error: ${log.error.substring(0, 100)}${log.error.length > 100 ? '...' : ''}`);
+          }
+        });
+      }
     }
   }
   console.log(`\n  ✓ Generated ${kpiCount} KPIs (not persisted - test mode)`);

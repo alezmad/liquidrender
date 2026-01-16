@@ -11,6 +11,20 @@
 
 import type { Table, Column } from './models';
 
+// =============================================================================
+// DuckDB Catalog Prefix
+// =============================================================================
+
+/**
+ * PostgreSQL system catalog prefix for DuckDB's postgres_scanner
+ *
+ * When PostgreSQL is attached via DuckDB's postgres_scanner, system catalog
+ * tables (pg_class, pg_stat_user_tables, etc.) are accessible via:
+ * - source_db.pg_catalog.<table_name>
+ *
+ * This prefix is required for Tier 1 queries that read from system catalogs.
+ */
+const PG_CATALOG = 'source_db.pg_catalog';
 
 // =============================================================================
 // Types
@@ -68,8 +82,8 @@ WITH table_stats AS (
   SELECT
     c.reltuples::bigint AS row_count_estimate,
     (c.relpages * 8192)::bigint AS table_size_bytes
-  FROM pg_class c
-  JOIN pg_namespace n ON n.oid = c.relnamespace
+  FROM ${PG_CATALOG}.pg_class c
+  JOIN ${PG_CATALOG}.pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname = '${schemaName}'
     AND c.relname = '${tableName}'
     AND c.relkind = 'r'
@@ -78,7 +92,7 @@ maintenance_stats AS (
   SELECT
     last_vacuum::text AS last_vacuum,
     last_analyze::text AS last_analyze
-  FROM pg_stat_user_tables
+  FROM ${PG_CATALOG}.pg_stat_user_tables
   WHERE schemaname = '${schemaName}'
     AND relname = '${tableName}'
 )
@@ -133,7 +147,7 @@ SELECT
   s.n_distinct,
   s.null_frac,
   s.avg_width
-FROM pg_stats s
+FROM ${PG_CATALOG}.pg_stats s
 WHERE s.schemaname = '${schemaName}'
   AND s.tablename = '${tableName}'
   ${columnFilter}
@@ -184,9 +198,9 @@ SELECT
   NULL::numeric AS n_distinct,
   NULL::real AS null_frac,
   NULL::integer AS avg_width
-FROM pg_class c
-JOIN pg_namespace n ON n.oid = c.relnamespace
-LEFT JOIN pg_stat_user_tables st
+FROM ${PG_CATALOG}.pg_class c
+JOIN ${PG_CATALOG}.pg_namespace n ON n.oid = c.relnamespace
+LEFT JOIN ${PG_CATALOG}.pg_stat_user_tables st
   ON st.schemaname = n.nspname
   AND st.relname = c.relname
 WHERE n.nspname = '${schemaName}'
@@ -206,7 +220,7 @@ SELECT
   s.n_distinct,
   s.null_frac,
   s.avg_width
-FROM pg_stats s
+FROM ${PG_CATALOG}.pg_stats s
 WHERE s.schemaname = '${schemaName}'
   AND s.tablename = '${tableName}'
   ${columnFilter}
@@ -249,7 +263,7 @@ SELECT
     ELSE EXTRACT(EPOCH FROM (NOW() - last_analyze)) / 86400
   END AS days_since_analyze,
   last_analyze::text AS last_analyze_timestamp
-FROM pg_stat_user_tables
+FROM ${PG_CATALOG}.pg_stat_user_tables
 WHERE schemaname = '${schemaName}'
   AND relname = '${tableName}';
   `.trim();
@@ -289,9 +303,9 @@ SELECT
   st.last_analyze::text AS last_analyze,
   st.n_live_tup AS live_tuples,
   st.n_dead_tup AS dead_tuples
-FROM pg_class c
-JOIN pg_namespace n ON n.oid = c.relnamespace
-LEFT JOIN pg_stat_user_tables st
+FROM ${PG_CATALOG}.pg_class c
+JOIN ${PG_CATALOG}.pg_namespace n ON n.oid = c.relnamespace
+LEFT JOIN ${PG_CATALOG}.pg_stat_user_tables st
   ON st.schemaname = n.nspname
   AND st.relname = c.relname
 WHERE n.nspname = '${schemaName}'
@@ -1166,3 +1180,217 @@ export const tier3Queries = {
   updateFrequency: buildUpdateFrequencyQuery,
   cardinalityDistribution: buildCardinalityDistributionQuery,
 } as const;
+
+// =============================================================================
+// DuckDB SUMMARIZE - Universal Profiling (Works for ALL databases)
+// =============================================================================
+
+/**
+ * DuckDB SUMMARIZE result structure
+ *
+ * SUMMARIZE returns one row per column with comprehensive statistics.
+ * Works across ALL databases via DuckDB scanners (postgres, mysql, sqlite).
+ */
+export interface SummarizeResult {
+  column_name: string;
+  column_type: string;
+  min: string | null;
+  max: string | null;
+  approx_unique: number;
+  avg: number | null;
+  std: number | null;
+  q25: number | null;
+  q50: number | null;
+  q75: number | null;
+  count: number;
+  null_percentage: number;
+}
+
+/**
+ * Build DuckDB SUMMARIZE query for universal database profiling
+ *
+ * DuckDB's SUMMARIZE command provides comprehensive column statistics:
+ * - count: Non-null row count
+ * - null_percentage: Percentage of NULL values
+ * - approx_unique: Approximate distinct count (cardinality)
+ * - min/max: Value range
+ * - avg/std: Mean and standard deviation (numeric columns)
+ * - q25/q50/q75: Quartiles (numeric columns)
+ *
+ * **Key advantage**: Works for ALL databases via DuckDB scanners!
+ * - PostgreSQL via postgres_scanner ✅
+ * - MySQL via mysql_scanner ✅
+ * - SQLite via sqlite_scanner ✅
+ *
+ * @param tableName - Name of the table
+ * @param schemaName - Schema name (default: 'public')
+ * @param attachedDbName - DuckDB attached database name (default: 'source_db')
+ * @returns SQL query string for SUMMARIZE
+ *
+ * @example
+ * ```typescript
+ * const query = buildSummarizeQuery('orders', 'public');
+ * // Returns: SUMMARIZE source_db."public"."orders"
+ *
+ * // Result columns:
+ * // column_name | column_type | min | max | approx_unique | avg | std | q25 | q50 | q75 | count | null_percentage
+ * ```
+ */
+export function buildSummarizeQuery(
+  tableName: string,
+  schemaName: string = 'public',
+  attachedDbName: string = 'source_db'
+): string {
+  return `SUMMARIZE ${attachedDbName}."${schemaName}"."${tableName}"`;
+}
+
+/**
+ * Build query to get row count using DuckDB
+ *
+ * Simple COUNT(*) query that works across all databases.
+ * Used as a lightweight alternative when only row count is needed.
+ *
+ * @param tableName - Name of the table
+ * @param schemaName - Schema name (default: 'public')
+ * @param attachedDbName - DuckDB attached database name (default: 'source_db')
+ * @returns SQL query string for row count
+ */
+export function buildDuckDBRowCountQuery(
+  tableName: string,
+  schemaName: string = 'public',
+  attachedDbName: string = 'source_db'
+): string {
+  return `SELECT COUNT(*) as row_count FROM ${attachedDbName}."${schemaName}"."${tableName}"`;
+}
+
+/**
+ * Parse SUMMARIZE results into TableProfile and ColumnProfiles
+ *
+ * Transforms DuckDB SUMMARIZE output into our profiling data structures.
+ *
+ * @param summarizeResults - Array of SummarizeResult from DuckDB
+ * @param tableName - Name of the table being profiled
+ * @returns Object containing tableProfile and columnProfiles
+ */
+/**
+ * Convert DuckDB decimal value to number
+ * DuckDB returns decimals as { width, scale, value } where value is BigInt
+ * The actual number is value / 10^scale
+ */
+function toNumber(val: unknown): number {
+  if (val === null || val === undefined) return 0;
+
+  // Handle DuckDBDecimalValue: { width, scale, value: BigInt }
+  if (typeof val === 'object' && val !== null && 'scale' in val && 'value' in val) {
+    const decimalVal = val as { width: number; scale: number; value: bigint };
+    const divisor = Math.pow(10, decimalVal.scale);
+    return Number(decimalVal.value) / divisor;
+  }
+
+  // Handle BigInt
+  if (typeof val === 'bigint') {
+    return Number(val);
+  }
+
+  // Handle number
+  if (typeof val === 'number') {
+    return val;
+  }
+
+  // Handle string
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  return 0;
+}
+
+/**
+ * Convert DuckDB value to number or null
+ */
+function toNumberOrNull(val: unknown): number | null {
+  if (val === null || val === undefined) return null;
+
+  // Handle DuckDBDecimalValue
+  if (typeof val === 'object' && val !== null && 'scale' in val && 'value' in val) {
+    const decimalVal = val as { width: number; scale: number; value: bigint };
+    const divisor = Math.pow(10, decimalVal.scale);
+    return Number(decimalVal.value) / divisor;
+  }
+
+  // Handle BigInt
+  if (typeof val === 'bigint') {
+    return Number(val);
+  }
+
+  // Handle number
+  if (typeof val === 'number') {
+    return val;
+  }
+
+  // Handle string
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+}
+
+export function parseSummarizeResults(
+  summarizeResults: SummarizeResult[],
+  tableName: string
+): {
+  rowCount: number;
+  columnStats: Map<string, {
+    nullPercentage: number;
+    distinctCount: number;
+    min: string | null;
+    max: string | null;
+    avg: number | null;
+    std: number | null;
+    q25: number | null;
+    q50: number | null;
+    q75: number | null;
+    dataType: string;
+  }>;
+} {
+  // Row count is the same for all columns (use first column's count)
+  // Note: DuckDB may return BigInt for count
+  const rowCount = summarizeResults.length > 0
+    ? toNumber(summarizeResults[0].count)
+    : 0;
+
+  const columnStats = new Map<string, {
+    nullPercentage: number;
+    distinctCount: number;
+    min: string | null;
+    max: string | null;
+    avg: number | null;
+    std: number | null;
+    q25: number | null;
+    q50: number | null;
+    q75: number | null;
+    dataType: string;
+  }>();
+
+  for (const row of summarizeResults) {
+    columnStats.set(row.column_name, {
+      // DuckDB returns null_percentage as DuckDBDecimalValue { width, scale, value }
+      nullPercentage: toNumber(row.null_percentage),
+      // DuckDB may return BigInt for approx_unique
+      distinctCount: toNumber(row.approx_unique),
+      min: row.min,
+      max: row.max,
+      avg: toNumberOrNull(row.avg),
+      std: toNumberOrNull(row.std),
+      q25: toNumberOrNull(row.q25),
+      q50: toNumberOrNull(row.q50),
+      q75: toNumberOrNull(row.q75),
+      dataType: row.column_type ?? 'unknown',
+    });
+  }
+
+  return { rowCount, columnStats };
+}

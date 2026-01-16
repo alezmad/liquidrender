@@ -15,10 +15,10 @@ describe("KPI Tracing", () => {
   describe("Prompt Templates", () => {
     it("should have versioned prompts", () => {
       expect(SCHEMA_FIRST_GENERATION_PROMPT.name).toBe("schema-first-kpi-generation");
-      expect(SCHEMA_FIRST_GENERATION_PROMPT.version).toBe("1.0.0");
+      expect(SCHEMA_FIRST_GENERATION_PROMPT.version).toBe("1.4.0");
 
       expect(SCHEMA_REPAIR_PROMPT.name).toBe("schema-repair");
-      expect(SCHEMA_REPAIR_PROMPT.version).toBe("1.0.0");
+      expect(SCHEMA_REPAIR_PROMPT.version).toBe("1.2.0");
 
       expect(COMPILE_REPAIR_PROMPT.name).toBe("compile-repair");
       expect(COMPILE_REPAIR_PROMPT.version).toBe("1.0.0");

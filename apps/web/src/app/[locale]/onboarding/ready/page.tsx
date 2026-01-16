@@ -5,6 +5,7 @@ import { useEffect, useCallback } from "react";
 
 import { pathsConfig } from "~/config/paths";
 import { useOnboardingState } from "~/modules/onboarding";
+import { useBriefingKPIs } from "~/modules/onboarding/hooks/use-briefing-kpis";
 import { ReadyScreen } from "~/modules/onboarding/components/ready";
 
 /**
@@ -14,6 +15,14 @@ import { ReadyScreen } from "~/modules/onboarding/components/ready";
 export default function ReadyPage() {
   const router = useRouter();
   const { progress, completeStep, isHydrated } = useOnboardingState();
+
+  // Fetch real KPIs and analysis summary
+  const { kpis, summary, isLoading: isLoadingKPIs } = useBriefingKPIs({
+    workspaceId: progress.workspaceId,
+    analysisId: progress.analysisId,
+    enabled: isHydrated && !!progress.workspaceId,
+    maxKPIs: 4,
+  });
 
   // Redirect if no confirmation answers (need to complete previous steps first)
   useEffect(() => {
@@ -34,8 +43,8 @@ export default function ReadyPage() {
     router.push(pathsConfig.knosia.briefing);
   }, [router]);
 
-  // Show loading while hydrating
-  if (!isHydrated) {
+  // Show loading while hydrating or fetching data
+  if (!isHydrated || isLoadingKPIs) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -43,18 +52,11 @@ export default function ReadyPage() {
     );
   }
 
-  // Get summary from stored analysis (mock for now)
-  const mockSummary = {
-    tables: 24,
-    metrics: 18,
-    dimensions: 12,
-    entities: ["Customer", "Subscription", "Invoice"],
-  };
-
   return (
     <ReadyScreen
       role={progress.selectedRole ?? "executive"}
-      summary={mockSummary}
+      summary={summary}
+      kpis={kpis}
       onGoToDashboard={handleGoToDashboard}
     />
   );

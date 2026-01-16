@@ -60,7 +60,9 @@ export function compileKPIFormula(
   options: CompileKPIOptions = {}
 ): CompileKPIResult {
   const traits = emitter.getTraits();
-  const { schema, quoteIdentifiers = true } = options;
+  // Use options.schema if provided, otherwise fall back to emitter's defaultSchema
+  const schema = options.schema ?? emitter.getDefaultSchema();
+  const { quoteIdentifiers = true } = options;
 
   try {
     let expression: string;

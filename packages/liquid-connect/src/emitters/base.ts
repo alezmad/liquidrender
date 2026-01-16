@@ -184,6 +184,13 @@ export abstract class BaseEmitter {
   abstract getDialect(): string;
 
   /**
+   * Get default schema (if configured)
+   */
+  getDefaultSchema(): string | undefined {
+    return this.options.defaultSchema || undefined;
+  }
+
+  /**
    * Emit SQL from LiquidFlow
    */
   emit(flow: LiquidFlow): EmitResult {

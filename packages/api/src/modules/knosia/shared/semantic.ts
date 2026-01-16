@@ -14,6 +14,11 @@ import type {
   RelationshipDefinition,
   FieldDefinition,
 } from "@repo/liquid-connect";
+import { createEmitter } from "@repo/liquid-connect";
+import {
+  compileKPIFormula,
+  type KPISemanticDefinition,
+} from "@repo/liquid-connect/kpi";
 
 import type {
   SelectKnosiaVocabularyItem,
@@ -29,10 +34,13 @@ interface VocabDefinition {
   descriptionHuman?: string;
   formulaHuman?: string;
   formulaSql?: string;
+  formulaExpression?: string;
   sourceTables?: string[];
   sourceColumn?: string;
   caveats?: string[];
   exampleValues?: { low?: string; typical?: string; high?: string };
+  /** DSL definition for KPIs - used for proper compilation */
+  kpiDefinition?: KPISemanticDefinition;
 }
 
 interface JoinsToEntry {
@@ -45,6 +53,8 @@ interface BuildSemanticLayerInput {
   workspace: SelectKnosiaWorkspace;
   vocabularyItems: SelectKnosiaVocabularyItem[];
   connection?: SelectKnosiaConnection;
+  /** Override schema name (e.g., for DuckDB attached databases: conn_<id>) */
+  duckdbSchema?: string;
 }
 
 // =============================================================================
@@ -57,21 +67,23 @@ interface BuildSemanticLayerInput {
  * Generated on-the-fly because it needs fresh schema data
  */
 export function buildSemanticLayer(input: BuildSemanticLayerInput): SemanticLayer {
-  const { workspace, vocabularyItems, connection } = input;
+  const { workspace, vocabularyItems, connection, duckdbSchema } = input;
 
   // Group vocabulary items by source table
   const tableMap = groupBySourceTable(vocabularyItems);
   const tables = Object.keys(tableMap);
 
   // Build sources (one per unique table)
-  const sources = buildSources(tables, connection);
+  // Use duckdbSchema if provided (for attached databases), otherwise use connection schema
+  const sources = buildSources(tables, connection, duckdbSchema);
 
   // Build entities (one per table that has items)
   const entities = buildEntities(tableMap);
 
-  // Build metrics
+  // Build metrics (includes both "metric" and "kpi" types)
+  // KPIs are derived metrics - they need to be in the registry for Q @kpi_slug resolution
   const metrics = buildMetrics(
-    vocabularyItems.filter((i) => i.type === "metric")
+    vocabularyItems.filter((i) => i.type === "metric" || i.type === "kpi")
   );
 
   // Build dimensions
@@ -124,16 +136,20 @@ function groupBySourceTable(
 
 function buildSources(
   tables: string[],
-  connection?: SelectKnosiaConnection
+  connection?: SelectKnosiaConnection,
+  duckdbSchema?: string
 ): Record<string, SourceDefinition> {
   const sources: Record<string, SourceDefinition> = {};
+
+  // Use duckdbSchema for DuckDB attached databases, otherwise use connection schema
+  const schemaName = duckdbSchema ?? connection?.schema ?? "public";
 
   for (const table of tables) {
     if (table === "default") continue;
 
     sources[table] = {
       type: "table",
-      schema: connection?.schema ?? "public",
+      schema: schemaName,
       table: table,
     };
   }
@@ -142,7 +158,7 @@ function buildSources(
   if (Object.keys(sources).length === 0) {
     sources["default"] = {
       type: "table",
-      schema: connection?.schema ?? "public",
+      schema: schemaName,
       table: "default",
     };
   }
@@ -204,11 +220,28 @@ function buildMetrics(
     const table = def?.sourceTables?.[0] ?? "default";
     const column = def?.sourceColumn ?? item.slug;
 
-    // Use expression if it's a computed metric, otherwise column
-    const expression = def?.formulaSql ?? column;
+    let expression: string;
+    let metricType: "simple" | "derived" = "simple";
+
+    // For KPIs with DSL definition, compile to get proper SQL
+    if (item.type === "kpi" && def?.kpiDefinition) {
+      const compiled = compileKPIFromDefinition(def.kpiDefinition);
+      if (compiled) {
+        expression = compiled;
+        metricType = "derived";
+      } else {
+        // Compilation failed, try formulaExpression or formulaSql
+        expression = def.formulaExpression ?? def.formulaSql ?? column;
+        metricType = expression !== column ? "derived" : "simple";
+      }
+    } else {
+      // Regular metrics or KPIs without DSL definition
+      expression = def?.formulaSql ?? column;
+      metricType = def?.formulaSql ? "derived" : "simple";
+    }
 
     metrics[item.slug] = {
-      type: def?.formulaSql ? "derived" : "simple",
+      type: metricType,
       aggregation: mapAggregation(item.aggregation),
       expression,
       entity: table,
@@ -218,6 +251,28 @@ function buildMetrics(
   }
 
   return metrics;
+}
+
+/**
+ * Compile a KPI definition to SQL expression using DuckDB emitter.
+ * Returns null if compilation fails.
+ */
+function compileKPIFromDefinition(kpiDef: KPISemanticDefinition): string | null {
+  try {
+    const emitter = createEmitter("duckdb", { defaultSchema: undefined });
+    const result = compileKPIFormula(kpiDef, emitter, {
+      quoteIdentifiers: true,
+    });
+
+    if (result.success) {
+      return result.expression;
+    }
+    console.warn(`[SemanticLayer] KPI compilation failed: ${result.error}`);
+    return null;
+  } catch (error) {
+    console.warn(`[SemanticLayer] KPI compilation error:`, error);
+    return null;
+  }
 }
 
 function buildDimensions(

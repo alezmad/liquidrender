@@ -7,7 +7,7 @@
 
 export const SCHEMA_FIRST_GENERATION_PROMPT = {
   name: "schema-first-kpi-generation",
-  version: "1.2.0",
+  version: "1.4.0",
 
   /**
    * Template with placeholders for dynamic content.
@@ -119,7 +119,11 @@ Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
   "feasible": true,
   "requiredColumns": [{"tableName": "orders", "columnName": "customer_id", "purpose": "customer identifier for grouping"}]
 }
-Note: Use "percentOf" when the KPI is a percentage (filtered / total * 100). The value should be the same expression being counted.
+**IMPORTANT for filtered KPIs:**
+- "percentOf" is REQUIRED when format.type = "percent"
+- Without "percentOf", you get a raw count (e.g., 772) instead of a percentage (e.g., 95.4%)
+- "percentOf" value should match the "expression" field (the column being counted)
+- Formula: (filtered_count / total_count) * 100
 
 **5. Window KPI** - Running totals, period comparisons:
 {
@@ -262,6 +266,16 @@ These terms have specific meanings - use them correctly:
 
 9. **Window KPIs require pre-aggregated data** - Window functions work best with time-series tables or views that already have period-level aggregation
 
+10. **Filtered KPIs with percent format MUST include "percentOf"**
+   - WRONG: type="filtered", format.type="percent", NO percentOf → returns raw count (772)
+   - RIGHT: type="filtered", format.type="percent", percentOf="order_id" → returns percentage (95.4%)
+
+11. **Filtered/Ratio KPIs: Use 'having' with 'groupBy' for conditional filtering**
+   - For filtered and ratio KPI types, always use 'having' instead of 'where' or 'filter'
+   - Include a 'groupBy' clause when using conditional aggregation
+   - Ensure subqueries follow standard SQL aggregation patterns
+   - The 'category' field must be one of: revenue | growth | retention | engagement | efficiency | fulfillment | inventory | custom
+
 ## Quality Check
 Before finalizing each KPI:
 - Is the definition type correct (simple vs ratio vs filtered vs window vs case vs composite)?
@@ -296,6 +310,16 @@ Return ONLY a valid JSON array. No markdown, no explanation.`,
    * Changelog for tracking prompt evolution
    */
   changelog: [
+    {
+      version: "1.4.0",
+      date: "2026-01-15",
+      changes: "AUTO-APPLIED: Added CRITICAL RULE #11 - having/groupBy for filtered/ratio KPIs (fix ID: vIaM6DjSULMiMwwl18d7cuJsV0hsac2M)",
+    },
+    {
+      version: "1.3.0",
+      date: "2026-01-14",
+      changes: "Added explicit percentOf requirement for filtered KPIs with percent format (CRITICAL RULE #10)",
+    },
     {
       version: "1.2.0",
       date: "2026-01-14",

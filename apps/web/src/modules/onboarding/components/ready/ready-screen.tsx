@@ -6,7 +6,7 @@ import { Icons } from "@turbostarter/ui-web/icons";
 
 import { BriefingPreviewCard } from "./briefing-preview";
 
-import type { BriefingPreview, UserRole, AnalysisSummary } from "../../types";
+import type { BriefingPreview, BriefingKPI, UserRole, AnalysisSummary } from "../../types";
 
 /** Role-specific greetings */
 const roleGreetings: Record<UserRole, string> = {
@@ -21,6 +21,7 @@ const roleGreetings: Record<UserRole, string> = {
 interface ReadyScreenProps {
   role: UserRole;
   summary: AnalysisSummary | null;
+  kpis?: BriefingKPI[];
   onGoToDashboard: () => void;
 }
 
@@ -31,47 +32,22 @@ interface ReadyScreenProps {
 export function ReadyScreen({
   role,
   summary,
+  kpis = [],
   onGoToDashboard,
 }: ReadyScreenProps) {
   const { t } = useTranslation("knosia");
 
-  // Generate a mock briefing preview
+  // Build briefing preview from real KPIs (or show placeholder if none)
   const preview: BriefingPreview = {
     greeting: roleGreetings[role],
-    kpis: [
+    kpis: kpis.length > 0 ? kpis : [
       {
-        id: "kpi-1",
-        label: "Monthly Recurring Revenue",
-        value: "$142,500",
-        trend: { direction: "up", value: "+12%", isPositive: true },
-      },
-      {
-        id: "kpi-2",
-        label: "Active Customers",
-        value: "1,247",
-        trend: { direction: "up", value: "+8%", isPositive: true },
-      },
-      {
-        id: "kpi-3",
-        label: "Churn Rate",
-        value: "2.1%",
-        trend: { direction: "down", value: "-0.3%", isPositive: true },
-      },
-      {
-        id: "kpi-4",
-        label: "Net Revenue Retention",
-        value: "108%",
-        trend: { direction: "flat", value: "Stable", isPositive: true },
+        id: "placeholder-1",
+        label: "Loading KPIs...",
+        value: "—",
       },
     ],
-    alerts: [
-      {
-        id: "alert-1",
-        severity: "medium",
-        title: "Q4 target tracking",
-        description: "You're 78% to your quarterly revenue target with 3 weeks remaining.",
-      },
-    ],
+    alerts: [], // No mock alerts - only show real alerts when implemented
   };
 
   return (

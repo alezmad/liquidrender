@@ -20,6 +20,7 @@ export { useAnalysis } from "./hooks/use-analysis";
 export { useOnboardingState } from "./hooks/use-onboarding-state";
 export { useKnosiaOrg } from "./hooks/use-knosia-org";
 export { useConnectionSummaries, toConnectionSummary } from "./hooks/use-connection-summaries";
+export { useBriefingKPIs } from "./hooks/use-briefing-kpis";
 
 // Connect Components (Wave 2)
 export { ConnectionForm } from "./components/connect/connection-form";

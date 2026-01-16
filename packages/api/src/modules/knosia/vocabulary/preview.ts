@@ -430,6 +430,16 @@ async function executeKPIPreview(
       };
     }
 
+    // Check for cross-entity KPIs that require JOINs (not yet supported in preview)
+    const definition = item.definition as { sourceTables?: string[] } | null;
+    const sourceTables = definition?.sourceTables ?? [];
+    if (sourceTables.length > 1) {
+      return {
+        type: "unsupported",
+        message: `Cross-table KPI: requires JOIN between ${sourceTables.join(" and ")}. Preview not yet supported for multi-table KPIs.`,
+      };
+    }
+
     // 3. Emit SQL via DuckDB emitter (reuse duckdbSchema from semantic layer)
     const emitter = createDuckDBEmitter({
       parameterized: false,

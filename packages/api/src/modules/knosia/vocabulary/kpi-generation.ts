@@ -30,10 +30,11 @@ import {
 } from "@repo/liquid-connect/kpi";
 import { createEmitter, type Dialect } from "@repo/liquid-connect";
 import { generateKPIRecipes, type GenerateRecipeInput } from "@turbostarter/ai/kpi";
-import type { CalculatedMetricRecipe } from "@turbostarter/ai/kpi";
+import type { CalculatedMetricRecipe, FailedRecipe, GenerationStats } from "@turbostarter/ai/kpi";
 import { db } from "@turbostarter/db/server";
 import { knosiaVocabularyItem } from "@turbostarter/db/schema/knosia";
 import { generateId } from "@turbostarter/shared/utils";
+import { recordRepair } from "./repair-training";
 
 // ============================================================================
 // Types
@@ -82,6 +83,7 @@ interface GenerateAndStoreKPIsResult {
   totalGenerated: number;
   feasibleCount: number;
   storedCount: number;
+  failedCount: number;
   categories: string[];
   kpis: Array<{
     id: string;
@@ -90,6 +92,7 @@ interface GenerateAndStoreKPIsResult {
     confidence: number | null;
     qualityScore: KPIQualityScore;
   }>;
+  generationStats?: GenerationStats;
 }
 
 /**
@@ -1128,6 +1131,7 @@ export async function generateAndStoreKPIs(
       totalGenerated: 0,
       feasibleCount: 0,
       storedCount: 0,
+      failedCount: 0,
       categories: [],
       kpis: [],
     };
@@ -1168,7 +1172,90 @@ export async function generateAndStoreKPIs(
       feasible: response.feasibleCount,
       infeasible: response.infeasibleCount,
       avgConfidence: response.averageConfidence.toFixed(2),
+      stats: response.generationStats,
     });
+
+    // Record repairs for training data collection
+    await recordRepairsForTraining(response.recipes, response.failedRecipes ?? [], workspaceId);
+
+    // Store failed KPIs for situational awareness
+    const failedRecipes = response.failedRecipes ?? [];
+    let storedFailedCount = 0;
+
+    if (failedRecipes.length > 0) {
+      console.log(`[KPIGeneration] Storing ${failedRecipes.length} failed KPIs for tracking`);
+
+      // Cast validation log to match schema type
+      type ValidationLogEntry = {
+        timestamp: string;
+        attempt: number;
+        stage: "parse" | "schema" | "compile" | "execute" | "repair";
+        errorType?: string;
+        error?: string;
+        action?: string;
+        llmModel?: string;
+        result?: "success" | "failed" | "fixed";
+        changes?: string;
+      };
+
+      for (const failed of failedRecipes) {
+        try {
+          const kpiId = generateId();
+
+          const typedValidationLog = failed.validationLog.map((log) => ({
+            timestamp: log.timestamp,
+            attempt: log.attempt,
+            stage: log.stage as ValidationLogEntry["stage"],
+            error: log.error,
+            llmModel: log.model,
+            result: log.result as ValidationLogEntry["result"],
+          }));
+
+          // Calculate max attempt number from logs
+          const maxAttempt = Math.max(...failed.validationLog.map((log) => log.attempt), 0);
+
+          // Add timestamp to slug to avoid conflicts with previously failed KPIs
+          const uniqueSlug = `${slugify(failed.name)}_failed_${Date.now()}`;
+
+          await db.insert(knosiaVocabularyItem).values({
+            id: kpiId,
+            orgId,
+            workspaceId,
+            canonicalName: failed.name,
+            slug: uniqueSlug,
+            type: "kpi",
+            category: "unknown",
+            status: "draft", // Not approved - needs attention
+            definition: {
+              descriptionHuman: `Failed to generate: ${failed.lastError}`,
+              caveats: [`Failed at ${failed.failureStage} stage`],
+            },
+            formulaSql: null,
+            formulaHuman: null,
+            confidence: null,
+            feasible: false,
+            source: "ai_generated",
+            // Validation tracking - this is the key data
+            validationStatus: "failed",
+            validationErrorType: failed.failureStage === "schema" ? "schema_error" : "compile_error",
+            validationError: JSON.stringify({
+              lastError: failed.lastError,
+              failureStage: failed.failureStage,
+              originalDefinition: failed.originalDefinition,
+            }),
+            validationAttempts: maxAttempt,
+            validationLog: typedValidationLog,
+          });
+
+          storedFailedCount++;
+        } catch (insertError) {
+          // Log but don't fail the whole generation
+          console.error(`[KPIGeneration] Failed to store failed KPI "${failed.name}":`, insertError);
+        }
+      }
+
+      console.log(`[KPIGeneration] Stored ${storedFailedCount}/${failedRecipes.length} failed KPIs`);
+    }
 
     // Filter feasible recipes with high confidence
     const feasibleRecipes = response.recipes.filter(
@@ -1311,6 +1398,11 @@ export async function generateAndStoreKPIs(
         formulaExpression = recipe.semanticDefinition.expression;
       }
 
+      // Determine validation status based on whether kpiDefinition exists and compiled
+      // KPIs from the new pipeline are pre-validated; legacy KPIs need validation
+      const hasValidDefinition = kpiDefinition !== null && formulaExpression !== null;
+      const validationStatus = hasValidDefinition ? "validated" : "pending";
+
       await db.insert(knosiaVocabularyItem).values({
         id: kpiId,
         orgId,
@@ -1343,6 +1435,13 @@ export async function generateAndStoreKPIs(
         source: "ai_generated",
         sourceVocabularyIds,
         executionCount: 0,
+        // Validation tracking
+        validationStatus,
+        validationAttempts: hasValidDefinition ? 1 : 0,
+        validatedAt: hasValidDefinition ? new Date() : null,
+        validationLog: hasValidDefinition
+          ? [{ timestamp: new Date().toISOString(), attempt: 1, stage: "compile", result: "success" }]
+          : [],
       });
 
       storedKPIs.push({
@@ -1363,8 +1462,10 @@ export async function generateAndStoreKPIs(
       totalGenerated: response.totalGenerated,
       feasibleCount: response.feasibleCount,
       storedCount: storedKPIs.length,
+      failedCount: storedFailedCount,
       categories,
       kpis: storedKPIs,
+      generationStats: response.generationStats,
     };
   } catch (error) {
     console.error("[KPIGeneration] Failed to generate KPIs:", error);
@@ -1372,8 +1473,136 @@ export async function generateAndStoreKPIs(
       totalGenerated: 0,
       feasibleCount: 0,
       storedCount: 0,
+      failedCount: 0,
       categories: [],
       kpis: [],
     };
+  }
+}
+
+// ============================================================================
+// Repair Training Data Collection
+// ============================================================================
+
+/**
+ * Record all repair attempts from generated recipes for training data
+ */
+async function recordRepairsForTraining(
+  successfulRecipes: CalculatedMetricRecipe[],
+  failedRecipes: FailedRecipe[],
+  workspaceId?: string
+): Promise<void> {
+  let recordedCount = 0;
+
+  // Process successful recipes - these had repairs that worked
+  for (const recipe of successfulRecipes) {
+    if (!recipe.validationLog) continue;
+
+    // Extract kpiDefinition from semanticDefinition._kpiDefinition
+    const semanticDef = recipe.semanticDefinition as Record<string, unknown>;
+    const kpiDef = (semanticDef?._kpiDefinition ?? {}) as { type?: string; entity?: string; aggregation?: string };
+
+    const repairLogs = recipe.validationLog.filter(
+      (log) => log.stage === "repair"
+    );
+
+    for (const log of repairLogs) {
+      // Find the compile error that triggered this repair
+      const compileError = recipe.validationLog.find(
+        (l) => l.stage === "compile" && l.attempt === log.attempt && l.error
+      );
+
+      if (!compileError?.error) continue;
+
+      try {
+        // rawOutput might be a string or already parsed object
+        let repairedDef = log.rawOutput;
+        if (typeof repairedDef === "string") {
+          try {
+            repairedDef = JSON.parse(repairedDef);
+          } catch {
+            // Keep as string if not valid JSON
+          }
+        }
+
+        await recordRepair({
+          workspaceId,
+          errorType: "compile_error",
+          errorMessage: compileError.error,
+          originalDefinition: log.rawInput ?? compileError.rawInput ?? {},
+          repairedDefinition: repairedDef,
+          kpiType: kpiDef.type,
+          kpiCategory: recipe.category,
+          entityType: kpiDef.entity,
+          aggregationType: kpiDef.aggregation,
+          repairModel: log.model ?? "unknown",
+          repairSuccess: log.result === "fixed",
+          repairLatencyMs: log.latencyMs,
+          repairTokensIn: log.tokensIn,
+          repairTokensOut: log.tokensOut,
+        });
+        recordedCount++;
+      } catch (err) {
+        console.warn("[KPIGeneration] Failed to record repair:", err);
+      }
+    }
+  }
+
+  // Process failed recipes - these had repairs that didn't work
+  for (const recipe of failedRecipes) {
+    if (!recipe.validationLog) continue;
+
+    // For failed recipes, originalDefinition contains the raw KPI definition
+    const kpiDef = (recipe.originalDefinition ?? {}) as { type?: string; entity?: string };
+
+    const repairLogs = recipe.validationLog.filter(
+      (log) => log.stage === "repair"
+    );
+
+    for (const log of repairLogs) {
+      // Find the error that triggered this repair
+      const errorLog = recipe.validationLog.find(
+        (l) =>
+          (l.stage === "compile" || l.stage === "schema") &&
+          l.attempt === log.attempt &&
+          l.error
+      );
+
+      if (!errorLog?.error) continue;
+
+      try {
+        // rawOutput might be a string or already parsed object
+        let repairedDef = log.rawOutput;
+        if (typeof repairedDef === "string") {
+          try {
+            repairedDef = JSON.parse(repairedDef);
+          } catch {
+            // Keep as string if not valid JSON
+          }
+        }
+
+        await recordRepair({
+          workspaceId,
+          errorType: errorLog.stage === "schema" ? "schema_error" : "compile_error",
+          errorMessage: errorLog.error,
+          originalDefinition: log.rawInput ?? errorLog.rawInput ?? {},
+          repairedDefinition: repairedDef,
+          kpiType: kpiDef.type,
+          entityType: kpiDef.entity,
+          repairModel: log.model ?? "unknown",
+          repairSuccess: log.result === "fixed",
+          repairLatencyMs: log.latencyMs,
+          repairTokensIn: log.tokensIn,
+          repairTokensOut: log.tokensOut,
+        });
+        recordedCount++;
+      } catch (err) {
+        console.warn("[KPIGeneration] Failed to record repair:", err);
+      }
+    }
+  }
+
+  if (recordedCount > 0) {
+    console.log(`[KPIGeneration] Recorded ${recordedCount} repairs for training`);
   }
 }

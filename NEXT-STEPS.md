@@ -1,8 +1,22 @@
 # NEXT-STEPS.md
 
 > **Purpose:** Living document tracking immediate implementation priorities.
-> **Updated:** 2026-01-03 (realigned with architecture)
+> **Updated:** 2026-01-17 (Phase 1 quality improvements complete)
 > **Rule:** Complete items in order. Check off when done. Add new items at bottom.
+
+**URGENT - START HERE (2026-01-17):**
+- 🚀 **KPI Pipeline Phase 2**: Quality improvements (74% → 85% target)
+- 📄 **Read First**: `.artifacts/2026-01-17-kpi-pipeline-v2-continuation-prompt.md`
+- ✅ **Phase 1 Complete**: 98% execution, 76% value quality
+- 🎯 **Phase 2 Goal**: Add time-series detection, grain awareness, semantic validation
+- ⏱️ **Estimate**: 4-6 hours (Wave 3 parallel tasks)
+
+**Recent Updates (2026-01-17):**
+- ✅ Phase 1 KPI Quality Improvements (commit `ad85dd1`)
+- ✅ V1 Validation Integration (execution + value validation)
+- ✅ Universal SQL fixes (COUNT_DISTINCT, composite JOINs)
+- ✅ Context-aware value validation (B2B vs B2C patterns)
+- ✅ Tested on 3 databases (Northwind, Pagila, Chinook)
 
 **Recent Updates (2026-01-03):**
 - ✅ Corrected table count: 26 tables (was 15)

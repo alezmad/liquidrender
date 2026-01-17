@@ -432,6 +432,59 @@ pnpm with-env pnpm tsx packages/api/scripts/test-pipeline.ts chinook --v2
 | Chinook | 15 | 15 | 0 | 100% | 0% |
 | **Total** | **45** | **44** | **1** | **100%** | **2.2%** |
 
+**Important Note**: These results measure **Schema + Compilation** validation only. See below for full execution validation.
+
+### V1 Validation Integration (Execution + Value Validation)
+
+After integrating V1's `validateKPIValues()` function into V2 test pipeline, we discovered that "100% success" only means KPIs pass schema and compilation checks - NOT that they execute correctly or return sensible values.
+
+**Northwind Results with Full Validation:**
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| Total KPIs Generated | 15 | 100% |
+| **Schema + Compilation** | 15 | 100% ✅ |
+| **Execution Success** | 9 | 60% ⚠️ |
+| **Business Value Valid** | 6 | 40% |
+| **Business Value Suspicious** | 3 | 20% |
+| **Execution Errors** | 6 | 40% ❌ |
+
+**Execution Errors Found (6 KPIs):**
+
+1. **COUNT_DISTINCT Syntax** (3 KPIs)
+   - Generated: `COUNT_DISTINCT(column)`
+   - DuckDB expects: `COUNT(DISTINCT column)`
+   - Affected: Total Orders, Average Order Value, Repeat Customer Rate
+
+2. **Table Alias Issues** (3 KPIs)
+   - Generated: `od.unit_price` without defining `od` alias
+   - Composite KPIs not properly handling multi-table queries
+   - Affected: Revenue by Product, Revenue by Customer, Revenue by Employee
+
+**Suspicious Values (LLM Validation):**
+
+1. **Average Items Per Order: 23.8** ⚠️
+   - LLM: "Above typical B2C range (1-5), might indicate B2B or calculation error"
+   - Actual: Northwind IS B2B, so this is valid but flagged
+
+2. **Monthly Revenue Trend: $1.35M** ⚠️
+   - LLM: "Identical to total revenue, monthly aggregation likely broken"
+   - Actual: Missing time grouping in query
+
+3. **On-Time Delivery Rate: 100%** ⚠️
+   - LLM: "Perfect 100% is extremely unlikely in real operations"
+   - Actual: Possible data quality issue or filter error
+
+**Key Insight**: V2's VALIDATE phase only checks schema + compilation. Real-world validation requires:
+- ✅ Schema validation (Zod)
+- ✅ Compilation (SQL generation)
+- ❌ **Execution** (runs without SQL errors) - NOW INTEGRATED
+- ❌ **Value validation** (LLM business sense check) - NOW INTEGRATED
+
+**Integration Status**: V1's `validateKPIValues()` now runs after V2 pipeline in test script, providing full validation coverage.
+
+**Next Steps**: Fix SQL generation bugs (COUNT_DISTINCT syntax, composite table aliases) to achieve true 100% execution success.
+
 ---
 
 ## Rollback Plan

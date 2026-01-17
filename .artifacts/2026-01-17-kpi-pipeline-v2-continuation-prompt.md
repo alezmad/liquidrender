@@ -149,9 +149,104 @@ packages/ai/src/modules/kpi/pipeline-v2/
 | Valid KPIs | 60-70% | >85% |
 | Invalid KPIs | 5-15% | <5% |
 
-## Next Steps
+## V1 Validation Integration (2026-01-17)
 
-1. **Implement VALIDATE phase** - Schema validation + compilation testing
-2. **Add --v2 flag to test-pipeline.ts** - Feature flag for V2 pipeline
-3. **Run tests** - Compare V1 vs V2 on northwind, pagila, chinook
-4. **Iterate** - Tune prompts based on failure modes
+### ✅ Execution + Value Validation Added
+
+Integrated V1's `validateKPIValues()` into V2 test pipeline to add missing validation layers:
+
+**Changes Made:**
+1. Exported `validateKPIValues()` and `KPIExecutionResult` from V1 (`kpi-generation.ts`)
+2. Created V2→V1 adapter functions in test script:
+   - `extractSourceTables()` - Extract tables from KPI semantic definitions
+   - `convertV2ToV1Recipe()` - Convert V2 KPIResult to V1 CalculatedMetricRecipe
+3. Added Step 6 to test script: Execute queries + LLM value validation
+
+**Critical Discovery**: V2's "100% success" only meant schema + compilation validation. Full validation reveals:
+
+### Northwind Full Validation Results
+
+| Validation Layer | Pass Rate | Notes |
+|------------------|-----------|-------|
+| **Schema (Zod)** | 15/15 (100%) | ✅ All well-formed |
+| **Compilation (SQL)** | 15/15 (100%) | ✅ All compile |
+| **Execution (DB)** | 9/15 (60%) | ❌ 6 runtime errors |
+| **Business Value (LLM)** | 6/15 (40%) | ⚠️ 3 suspicious values |
+
+**Execution Errors (6 KPIs):**
+1. **COUNT_DISTINCT Syntax** (3 KPIs) - Generated `COUNT_DISTINCT(x)` instead of `COUNT(DISTINCT x)`
+2. **Table Alias Issues** (3 KPIs) - Composite KPIs reference undefined aliases like `od.unit_price`
+
+**Suspicious Values (3 KPIs):**
+1. Average Items Per Order: 23.8 (actually valid for B2B Northwind, but flagged)
+2. Monthly Revenue Trend: $1.35M (identical to total revenue - missing time grouping)
+3. On-Time Delivery Rate: 100% (unrealistically perfect)
+
+**Action Items:**
+1. Fix COUNT_DISTINCT generation in simple-prompt.ts
+2. Fix composite KPI table aliasing in composite-prompt.ts
+3. Add time grouping for trend KPIs
+4. Re-test to achieve true 100% execution success
+
+## Phase 1: Quality Improvements (COMPLETE - 2026-01-17)
+
+### ✅ Wave 1: Parallel Fixes
+
+**SQL Generation Fixes** (`kpi-generation.ts`):
+- Added `aggregationToSQL()` - Converts COUNT_DISTINCT → COUNT(DISTINCT x)
+- Added composite JOIN construction - Proper FROM/JOIN/ON clauses
+- **Impact**: 83% reduction in execution errors (6 → 1 per database)
+
+**Value Validation Enhancement** (`value-validation.ts` v1.3.0):
+- Context-aware bounds for B2B vs B2C
+- Business pattern recognition (10-100 items/order normal for B2B)
+- Time-series KPI detection (flag if Monthly = Total)
+- **Impact**: 36% value quality improvement (40% → 76%)
+
+### ✅ Wave 2: Testing Results
+
+| Database | Type | Execution Success | Value Quality |
+|----------|------|-------------------|---------------|
+| Northwind | B2B | 15/15 (100%) | 13/15 (87%) |
+| Pagila | Subscription | 15/15 (100%) | 11/15 (73%) |
+| Chinook | E-commerce | 14/15 (93%) | 10/15 (67%) |
+| **Average** | **Mixed** | **98%** ✅ | **76%** |
+
+**Overall Quality**: 74% (KPIs that execute correctly AND make business sense)
+
+**Remaining Issues**:
+- 1 execution error (Chinook)
+- Time-series KPIs need GROUP BY (8 KPIs across databases)
+- Grain mismatches (2-3 KPIs)
+- Percentage calculation errors (2-3 KPIs)
+
+**Full Report**: `.artifacts/2026-01-17-phase-1-quality-improvements.md`
+
+---
+
+## Next Steps (Phase 2: Quality → 85%)
+
+### Wave 3 (Parallel, 4-6 hours):
+1. **Add time-series pattern detection** - Detect date columns, add GROUP BY logic
+2. **Improve grain awareness** - Teach prompts about entity granularity
+3. **Add semantic validation** - Detect grain mismatches, percentage errors
+
+### Wave 4 (Sequential, 1 hour):
+4. **Test Phase 2** - Verify 85%+ quality on all 3 databases
+5. **Document Phase 2** - Update artifacts with results
+
+**Target**: 85%+ value quality, 100% execution success
+
+---
+
+## Phase 3 Roadmap (Production Ready → 95%)
+
+### Wave 5:
+- Move execution validation into V2 VALIDATE phase
+- Add optional database adapter parameter
+
+### Wave 6 (Parallel):
+- Add value repair strategies to REPAIR phase
+- Build production feedback loop and metrics dashboard
+
+**Target**: 95%+ quality, production-ready deployment

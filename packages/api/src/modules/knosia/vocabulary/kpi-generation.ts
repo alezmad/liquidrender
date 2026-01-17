@@ -31,10 +31,12 @@ import {
 import { createEmitter, type Dialect } from "@repo/liquid-connect";
 import { generateKPIRecipes, type GenerateRecipeInput } from "@turbostarter/ai/kpi";
 import type { CalculatedMetricRecipe, FailedRecipe, GenerationStats } from "@turbostarter/ai/kpi";
+import { VALUE_VALIDATION_PROMPT, type KPIValueValidation } from "@turbostarter/ai/kpi/prompts";
 import { db } from "@turbostarter/db/server";
 import { knosiaVocabularyItem } from "@turbostarter/db/schema/knosia";
 import { generateId } from "@turbostarter/shared/utils";
 import { recordRepair } from "./repair-training";
+import Anthropic from "@anthropic-ai/sdk";
 
 // ============================================================================
 // Types
@@ -77,6 +79,12 @@ interface GenerateAndStoreKPIsInput {
   extractedSchema: ExtractedSchema;
   orgId: string;
   workspaceId: string;
+  /** Optional: Connection details for value validation (executes KPIs against real data) */
+  connection?: {
+    connectionString: string;
+    defaultSchema?: string;
+    type: "postgres" | "mysql" | "duckdb";
+  };
 }
 
 interface GenerateAndStoreKPIsResult {
@@ -93,6 +101,14 @@ interface GenerateAndStoreKPIsResult {
     qualityScore: KPIQualityScore;
   }>;
   generationStats?: GenerationStats;
+  /** Value validation stats (only if connection provided) */
+  valueValidation?: {
+    executed: number;
+    valid: number;
+    suspicious: number;
+    invalid: number;
+    executionErrors: number;
+  };
 }
 
 /**
@@ -1103,6 +1119,258 @@ function calculateKPIQualityScore(
 }
 
 // ============================================================================
+// Value Validation
+// ============================================================================
+
+/**
+ * Result of executing and validating a KPI against real data
+ */
+export interface KPIExecutionResult {
+  kpiName: string;
+  kpiSlug: string;
+  value: number | string | null;
+  sql: string;
+  executionTimeMs: number;
+  error?: string;
+  validation?: KPIValueValidation;
+}
+
+/**
+ * Build SQL query from a KPI's semantic definition
+ *
+ * This mirrors the logic in test-pipeline-with-validation.ts
+ * to generate executable SQL from the semantic definition.
+ */
+/**
+ * Convert aggregation type to SQL function.
+ * Handles COUNT_DISTINCT → COUNT(DISTINCT x) conversion for SQL compatibility.
+ */
+function aggregationToSQL(aggregation: string, expression: string): string {
+  if (aggregation === 'COUNT_DISTINCT') {
+    return `COUNT(DISTINCT ${expression})`;
+  }
+  return `${aggregation}(${expression})`;
+}
+
+function buildKPISQL(
+  semanticDef: CalculatedMetricRecipe["semanticDefinition"],
+  schema?: string
+): string {
+  const schemaPrefix = schema ? `"source_db"."${schema}".` : `"source_db".`;
+  const entity = `${schemaPrefix}"${semanticDef.entity}"`;
+
+  // If aggregation is defined and type is simple
+  if (semanticDef.aggregation && semanticDef.type === "simple") {
+    return `SELECT ${aggregationToSQL(semanticDef.aggregation, semanticDef.expression)} AS value FROM ${entity}`;
+  }
+
+  // For ratio types with numerator/denominator
+  const def = semanticDef as any;
+  if (def.type === "ratio" && def.numerator && def.denominator) {
+    const num = aggregationToSQL(def.numerator.aggregation, def.numerator.expression);
+    const den = aggregationToSQL(def.denominator.aggregation, def.denominator.expression);
+    const multiplier = def.multiplier || 1;
+    return `SELECT (CAST(${num} AS FLOAT) / NULLIF(${den}, 0)) * ${multiplier} AS value FROM ${entity}`;
+  }
+
+  // For composite types with sources (multi-table joins)
+  if (def.type === "composite" && def.sources && Array.isArray(def.sources)) {
+    // Build FROM clause with joins
+    const firstSource = def.sources[0];
+    const firstTable = firstSource.schema
+      ? `${schemaPrefix}"${firstSource.schema}"."${firstSource.table}"`
+      : `${schemaPrefix}"${firstSource.table}"`;
+    let fromClause = `${firstTable} AS "${firstSource.alias}"`;
+
+    // Add JOIN clauses for additional sources
+    for (let i = 1; i < def.sources.length; i++) {
+      const source = def.sources[i];
+      const table = source.schema
+        ? `${schemaPrefix}"${source.schema}"."${source.table}"`
+        : `${schemaPrefix}"${source.table}"`;
+      const joinType = source.join?.type || 'INNER';
+      fromClause += ` ${joinType} JOIN ${table} AS "${source.alias}"`;
+      if (source.join?.on) {
+        fromClause += ` ON ${source.join.on}`;
+      }
+    }
+
+    // Build aggregation with expression
+    const agg = def.aggregation || "SUM";
+    const aggSQL = aggregationToSQL(agg, def.expression);
+
+    // Build GROUP BY if specified
+    const groupBy = def.groupBy && def.groupBy.length > 0
+      ? ` GROUP BY ${def.groupBy.join(', ')}`
+      : '';
+
+    return `SELECT ${aggSQL} AS value FROM ${fromClause}${groupBy}`;
+  }
+
+  // If expression already contains SQL aggregations
+  if (semanticDef.expression && /\b(SUM|COUNT|AVG|MIN|MAX)\s*\(/i.test(semanticDef.expression)) {
+    let expr = semanticDef.expression
+      .replace(/COUNT_DISTINCT\(([^)]+)\)/gi, "COUNT(DISTINCT $1)")
+      .replace(/count_distinct\(([^)]+)\)/gi, "COUNT(DISTINCT $1)");
+    return `SELECT ${expr} AS value FROM ${entity}`;
+  }
+
+  // Fallback: try to build a simple query
+  const agg = semanticDef.aggregation || "SUM";
+  return `SELECT ${aggregationToSQL(agg, semanticDef.expression)} AS value FROM ${entity}`;
+}
+
+/**
+ * Execute KPIs against real data and validate values using LLM
+ *
+ * This is the value validation step that:
+ * 1. Executes each KPI against the database
+ * 2. Uses LLM to check if values make business sense
+ * 3. Returns validation results to flag suspicious/invalid KPIs
+ *
+ * @param recipes - Validated recipes to execute
+ * @param connection - Database connection details
+ * @param businessType - Business context for validation
+ * @returns Execution and validation results
+ */
+export async function validateKPIValues(
+  recipes: Array<{ recipe: CalculatedMetricRecipe; sourceTables: string[] }>,
+  connection: NonNullable<GenerateAndStoreKPIsInput["connection"]>,
+  businessType: string
+): Promise<{
+  results: KPIExecutionResult[];
+  stats: NonNullable<GenerateAndStoreKPIsResult["valueValidation"]>;
+}> {
+  const { DuckDBUniversalAdapter } = await import("@repo/liquid-connect/uvb");
+
+  const results: KPIExecutionResult[] = [];
+  let executionErrors = 0;
+
+  // Execute each KPI
+  const adapter = new DuckDBUniversalAdapter();
+  await adapter.connect(connection.connectionString);
+
+  try {
+    for (const { recipe } of recipes) {
+      const startTime = Date.now();
+      const slug = slugify(recipe.name);
+      let sql = "";
+
+      try {
+        // Phase 1: Build SQL (may throw on invalid semanticDefinition)
+        sql = buildKPISQL(recipe.semanticDefinition, connection.defaultSchema);
+
+        // Phase 2: Execute SQL (may throw on invalid query or connection issues)
+        const rows = await adapter.query<{ value: unknown }>(sql);
+        const rawValue = rows[0]?.value ?? null;
+
+        // Convert BigInt to Number if needed
+        const value = typeof rawValue === "bigint" ? Number(rawValue) : rawValue;
+
+        results.push({
+          kpiName: recipe.name,
+          kpiSlug: slug,
+          value: value as number | string | null,
+          sql,
+          executionTimeMs: Date.now() - startTime,
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        // Categorize error type for better debugging
+        const errorType = sql
+          ? errorMsg.includes("syntax")
+            ? "[SQL_SYNTAX]"
+            : errorMsg.includes("not exist") || errorMsg.includes("not found")
+              ? "[SCHEMA_ERROR]"
+              : "[EXECUTION]"
+          : "[BUILD_FAILED]";
+
+        results.push({
+          kpiName: recipe.name,
+          kpiSlug: slug,
+          value: null,
+          sql, // Preserve SQL even on execution failure for debugging
+          executionTimeMs: Date.now() - startTime,
+          error: `${errorType} ${errorMsg.substring(0, 180)}`,
+        });
+        executionErrors++;
+      }
+    }
+  } finally {
+    await adapter.disconnect();
+  }
+
+  // Filter to successful executions for LLM validation
+  const successfulResults = results.filter((r) => r.value !== null && !r.error);
+
+  // LLM Value Validation
+  let validCount = 0;
+  let suspiciousCount = 0;
+  let invalidCount = 0;
+
+  if (successfulResults.length > 0 && process.env.ANTHROPIC_API_KEY) {
+    try {
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+      const prompt = VALUE_VALIDATION_PROMPT.render({
+        businessType,
+        kpiResults: successfulResults.map((r) => ({
+          name: r.kpiName,
+          description: "", // Could pull from recipe if needed
+          value: r.value,
+          sql: r.sql,
+        })),
+      });
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const content = response.content[0];
+      if (content && content.type === "text") {
+        try {
+          const validations = JSON.parse(content.text) as KPIValueValidation[];
+
+          // Attach validations to results
+          for (const validation of validations) {
+            const result = results.find((r) => r.kpiName === validation.kpiName);
+            if (result) {
+              result.validation = validation;
+
+              // Count by status
+              if (validation.status === "VALID") validCount++;
+              else if (validation.status === "SUSPICIOUS") suspiciousCount++;
+              else invalidCount++;
+            }
+          }
+
+          console.log(
+            `[KPIGeneration] Value validation: ${validCount} valid, ${suspiciousCount} suspicious, ${invalidCount} invalid`
+          );
+        } catch (parseError) {
+          console.warn("[KPIGeneration] Failed to parse LLM validation response:", parseError);
+        }
+      }
+    } catch (llmError) {
+      console.warn("[KPIGeneration] LLM value validation failed:", llmError);
+    }
+  }
+
+  return {
+    results,
+    stats: {
+      executed: results.length,
+      valid: validCount,
+      suspicious: suspiciousCount,
+      invalid: invalidCount,
+      executionErrors,
+    },
+  };
+}
+
+// ============================================================================
 // Main Function
 // ============================================================================
 
@@ -1122,6 +1390,7 @@ export async function generateAndStoreKPIs(
     extractedSchema,
     orgId,
     workspaceId,
+    connection,
   } = input;
 
   // Skip if no ANTHROPIC_API_KEY
@@ -1343,6 +1612,27 @@ export async function generateAndStoreKPIs(
       }
     );
 
+    // =========================================================================
+    // VALUE VALIDATION (Optional - requires connection)
+    // =========================================================================
+    let valueValidationResults: KPIExecutionResult[] = [];
+    let valueValidationStats: GenerateAndStoreKPIsResult["valueValidation"];
+
+    if (connection && validatedRecipes.length > 0) {
+      console.log(`[KPIGeneration] Running value validation against ${connection.type} database...`);
+
+      const valueValidation = await validateKPIValues(
+        validatedRecipes,
+        connection,
+        businessType
+      );
+
+      valueValidationResults = valueValidation.results;
+      valueValidationStats = valueValidation.stats;
+
+      console.log(`[KPIGeneration] Value validation complete:`, valueValidationStats);
+    }
+
     // Store KPIs in vocabulary table
     const storedKPIs: GenerateAndStoreKPIsResult["kpis"] = [];
 
@@ -1401,7 +1691,76 @@ export async function generateAndStoreKPIs(
       // Determine validation status based on whether kpiDefinition exists and compiled
       // KPIs from the new pipeline are pre-validated; legacy KPIs need validation
       const hasValidDefinition = kpiDefinition !== null && formulaExpression !== null;
-      const validationStatus = hasValidDefinition ? "validated" : "pending";
+
+      // Check for value validation results
+      const valueResult = valueValidationResults.find((r) => r.kpiSlug === slugify(recipe.name));
+      const valueValidation = valueResult?.validation;
+
+      // Determine final validation status using DB enum values
+      // DB schema: "pending" | "validating" | "validated" | "failing" | "repairing" | "failed"
+      // Value validation results are stored in validationError JSON field
+      let validationStatus: "pending" | "validating" | "validated" | "failing" | "repairing" | "failed";
+      let validationErrorType: "parse_error" | "schema_error" | "compile_error" | "sql_error" | null = null;
+
+      if (valueValidation?.status === "INVALID") {
+        // Value is clearly wrong - mark as failed
+        validationStatus = "failed";
+        validationErrorType = "sql_error"; // Closest match for value issues
+      } else if (valueValidation?.status === "SUSPICIOUS") {
+        // Value is suspicious but might be valid - mark as validated with warning in validationError
+        validationStatus = "validated";
+        // No error type - warning stored in validationError JSON
+      } else if (hasValidDefinition) {
+        validationStatus = "validated";
+      } else {
+        validationStatus = "pending";
+      }
+
+      // Build validation log with value validation step if present
+      // Note: Using DB schema types for stage ("parse" | "schema" | "compile" | "execute" | "repair")
+      // and result ("success" | "failed" | "fixed")
+      type ValidationLogEntry = {
+        timestamp: string;
+        attempt: number;
+        stage: "parse" | "schema" | "compile" | "execute" | "repair";
+        errorType?: string;
+        error?: string;
+        action?: string;
+        llmModel?: string;
+        result?: "success" | "failed" | "fixed";
+        changes?: string;
+      };
+
+      const validationLog: ValidationLogEntry[] = hasValidDefinition
+        ? [{ timestamp: new Date().toISOString(), attempt: 1, stage: "compile", result: "success" }]
+        : [];
+
+      if (valueResult) {
+        // Log the execution step
+        validationLog.push({
+          timestamp: new Date().toISOString(),
+          attempt: 1,
+          stage: "execute",
+          result: valueResult.error ? "failed" : "success",
+          error: valueResult.error,
+        });
+
+        // Log value validation result (using "execute" stage with action field for details)
+        if (valueValidation) {
+          // Map LLM validation status to DB result type
+          const valueCheckResult: "success" | "failed" =
+            valueValidation.status === "INVALID" ? "failed" : "success";
+
+          validationLog.push({
+            timestamp: new Date().toISOString(),
+            attempt: 2, // Different attempt number to distinguish from execution
+            stage: "execute", // Using execute since it's runtime validation
+            result: valueCheckResult,
+            action: `value_validation: ${valueValidation.status}`,
+            error: valueValidation.status !== "VALID" ? valueValidation.reasoning : undefined,
+          });
+        }
+      }
 
       await db.insert(knosiaVocabularyItem).values({
         id: kpiId,
@@ -1437,11 +1796,23 @@ export async function generateAndStoreKPIs(
         executionCount: 0,
         // Validation tracking
         validationStatus,
-        validationAttempts: hasValidDefinition ? 1 : 0,
-        validatedAt: hasValidDefinition ? new Date() : null,
-        validationLog: hasValidDefinition
-          ? [{ timestamp: new Date().toISOString(), attempt: 1, stage: "compile", result: "success" }]
-          : [],
+        validationErrorType,
+        validationAttempts: validationLog.length,
+        validatedAt: validationLog.length > 0 ? new Date() : null,
+        validationLog,
+        // Store computed value if available (for debugging/display)
+        // Note: Use replacer to handle BigInt values from COUNT queries
+        validationError: valueValidation
+          ? JSON.stringify(
+              {
+                computedValue: valueResult?.value,
+                status: valueValidation.status,
+                reasoning: valueValidation.reasoning,
+                suggestedFix: valueValidation.suggestedFix,
+              },
+              (_, v) => (typeof v === "bigint" ? Number(v) : v)
+            )
+          : null,
       });
 
       storedKPIs.push({
@@ -1466,6 +1837,7 @@ export async function generateAndStoreKPIs(
       categories,
       kpis: storedKPIs,
       generationStats: response.generationStats,
+      valueValidation: valueValidationStats,
     };
   } catch (error) {
     console.error("[KPIGeneration] Failed to generate KPIs:", error);

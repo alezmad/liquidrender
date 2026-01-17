@@ -21,8 +21,15 @@ import {
   createPipelineConfig,
   type PipelineOutput,
   type TableSchema,
+  type KPIResult,
 } from "@turbostarter/ai/kpi";
 import { generateId } from "@turbostarter/shared/utils";
+import {
+  validateKPIValues,
+  type KPIExecutionResult,
+} from "../src/modules/knosia/vocabulary/kpi-generation";
+import type { CalculatedMetricRecipe } from "@repo/liquid-connect";
+import type { KPISemanticDefinition } from "@turbostarter/ai/kpi";
 
 // =============================================================================
 // DATABASE CONFIGURATIONS
@@ -63,6 +70,61 @@ const DATABASES: Record<string, DatabaseConfig> = {
     description: "Music Store - Albums, tracks, invoices",
   },
 };
+
+// =============================================================================
+// V2 TO V1 CONVERSION HELPERS
+// =============================================================================
+
+/**
+ * Extract source tables from a KPI semantic definition
+ */
+function extractSourceTables(def: KPISemanticDefinition): string[] {
+  switch (def.type) {
+    case "simple":
+    case "filtered":
+      return [def.entity];
+    case "ratio":
+      return Array.from(new Set([def.numerator.entity, def.denominator.entity]));
+    case "composite": {
+      // Composite KPIs use sources instead of components
+      const compositeDef = def as any;
+      if (compositeDef.sources) {
+        return Array.from(new Set(compositeDef.sources.map((s: any) => s.table)));
+      }
+      // Fallback to entity if sources not available
+      return [def.entity];
+    }
+    default:
+      return [def.entity];
+  }
+}
+
+/**
+ * Convert V2 KPIResult to V1 CalculatedMetricRecipe format
+ */
+function convertV2ToV1Recipe(
+  kpi: KPIResult,
+  businessType: string
+): { recipe: CalculatedMetricRecipe; sourceTables: string[] } {
+  if (!kpi.definition) {
+    throw new Error(`KPI ${kpi.plan.name} has no definition`);
+  }
+
+  const sourceTables = extractSourceTables(kpi.definition);
+
+  return {
+    recipe: {
+      name: kpi.plan.name,
+      description: kpi.plan.description,
+      category: kpi.plan.category as CalculatedMetricRecipe["category"],
+      semanticDefinition: kpi.definition as CalculatedMetricRecipe["semanticDefinition"],
+      businessType: [businessType],
+      confidence: kpi.plan.confidence,
+      feasible: true,
+    },
+    sourceTables,
+  };
+}
 
 // =============================================================================
 // MAIN TEST FUNCTION
@@ -283,6 +345,81 @@ async function testPipelineV2(dbName: string) {
   if (output.errors && output.errors.length > 0) {
     console.log("\n  🚨 Errors:");
     output.errors.forEach((e) => console.log(`    - ${e}`));
+  }
+
+  // =========================================================================
+  // STEP 6: Value Validation (Execute + LLM Check)
+  // =========================================================================
+  console.log("\n╔═════════════════════════════════════════════════════════════════════╗");
+  console.log("║                      VALUE VALIDATION (V1)                          ║");
+  console.log("╚═════════════════════════════════════════════════════════════════════╝");
+
+  const validKPIs = [...byStatus.valid, ...byStatus.repaired];
+
+  if (validKPIs.length === 0) {
+    console.log("\n  ⚠️  No valid KPIs to validate");
+  } else {
+    console.log(`\n  Testing ${validKPIs.length} KPIs against database...`);
+
+    // Convert V2 results to V1 format
+    const v1Recipes = validKPIs.map((kpi) => convertV2ToV1Recipe(kpi, businessType));
+
+    // Run V1 value validation
+    const validationStartTime = Date.now();
+    const validation = await validateKPIValues(
+      v1Recipes,
+      {
+        connectionString,
+        defaultSchema: schema,
+        type: "postgres",
+      },
+      businessType
+    );
+    const validationDuration = (Date.now() - validationStartTime) / 1000;
+
+    console.log(`\n  ✓ Validation completed in ${validationDuration.toFixed(1)}s`);
+
+    // Display stats
+    console.log("\n  🔍 Value Validation Results:");
+    console.log(`    Executed:          ${validation.stats.executed}`);
+    console.log(`    Valid:             ${validation.stats.valid} ✅`);
+    console.log(`    Suspicious:        ${validation.stats.suspicious} ⚠️`);
+    console.log(`    Invalid:           ${validation.stats.invalid} ❌`);
+    console.log(`    Execution Errors:  ${validation.stats.executionErrors}`);
+
+    // Show details for suspicious/invalid KPIs
+    const problemKPIs = validation.results.filter(
+      (r) =>
+        r.error ||
+        r.validation?.status === "SUSPICIOUS" ||
+        r.validation?.status === "INVALID"
+    );
+
+    if (problemKPIs.length > 0) {
+      console.log("\n  ⚠️  Problem KPIs:");
+      problemKPIs.forEach((result) => {
+        const status = result.error
+          ? "ERROR"
+          : result.validation?.status || "UNKNOWN";
+        const icon =
+          status === "ERROR" ? "❌" : status === "INVALID" ? "🔴" : "⚠️";
+
+        console.log(`\n    ${icon} ${result.kpiName}`);
+        console.log(`       Value: ${result.value ?? "null"}`);
+
+        if (result.error) {
+          console.log(`       Error: ${result.error}`);
+        } else if (result.validation) {
+          console.log(`       Status: ${result.validation.status}`);
+          console.log(`       Reason: ${result.validation.reasoning}`);
+          if (result.validation.suggestedFix) {
+            console.log(`       Fix: ${result.validation.suggestedFix}`);
+          }
+        }
+      });
+    } else {
+      console.log("\n  ✅ All KPIs passed value validation!");
+    }
   }
 
   // Cleanup

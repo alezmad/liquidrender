@@ -8,7 +8,7 @@
 import type { KPIPlan } from '../types';
 
 export const PROMPT_NAME = 'ratio-kpi-generation';
-export const PROMPT_VERSION = '1.0.0';
+export const PROMPT_VERSION = '1.1.0';
 
 /**
  * Build the prompt for generating ratio KPIs.
@@ -123,6 +123,12 @@ ${planDescriptions}
 4. expression = column name or arithmetic expression (NO SQL functions)
 5. Only use columns that exist in the schema
 6. For rate calculations, ensure denominator cannot be zero (use appropriate filters)
+7. **CRITICAL - Grain Matching**: Numerator and denominator MUST be at the same grain
+   - ✅ CORRECT: Revenue / Order Count where both aggregations are on order_details with same grouping
+   - ❌ WRONG: SUM(order_details.quantity) / COUNT(orders.order_id) - different grains cause incorrect results
+   - Fix: Use COUNT(DISTINCT order_id) from order_details, not COUNT from orders table
+   - Both aggregations should reference columns from the SAME entity or use proper JOINs
+8. **Time-series KPIs**: Include timeField if KPI name contains "Monthly", "Daily", "Weekly", "Trend"
 
 ## Output Format
 Return a JSON array with one object per KPI. Each object must have:

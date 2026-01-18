@@ -4,19 +4,20 @@
 > **Updated:** 2026-01-17 (Phase 1 quality improvements complete)
 > **Rule:** Complete items in order. Check off when done. Add new items at bottom.
 
-**URGENT - START HERE (2026-01-17):**
-- 🚀 **KPI Pipeline Phase 2**: Quality improvements (74% → 85% target)
-- 📄 **Read First**: `.artifacts/2026-01-17-kpi-pipeline-v2-continuation-prompt.md`
-- ✅ **Phase 1 Complete**: 98% execution, 76% value quality
-- 🎯 **Phase 2 Goal**: Add time-series detection, grain awareness, semantic validation
-- ⏱️ **Estimate**: 4-6 hours (Wave 3 parallel tasks)
+**URGENT - START HERE (2026-01-18):**
+- 🔧 **KPI Pipeline Phase 2 Debug**: Investigate why time-series patterns aren't applied
+- 📄 **Read First**: `.artifacts/2026-01-18-phase-2-test-results.md`
+- ⚠️ **Phase 2 Status**: Implementation complete, but NO net improvement (67% vs 74% before)
+- 🎯 **Issue**: TIME_SERIES patterns detected but LLM not adding timeField
+- 🔍 **Next**: Debug prompt chain (ANALYZE → PLAN → GENERATE) to find where pattern guidance is lost
 
-**Recent Updates (2026-01-17):**
-- ✅ Phase 1 KPI Quality Improvements (commit `ad85dd1`)
-- ✅ V1 Validation Integration (execution + value validation)
-- ✅ Universal SQL fixes (COUNT_DISTINCT, composite JOINs)
-- ✅ Context-aware value validation (B2B vs B2C patterns)
-- ✅ Tested on 3 databases (Northwind, Pagila, Chinook)
+**Recent Updates (2026-01-18):**
+- ✅ Phase 2 Wave 3 Implementation (time-series detection, grain awareness, semantic validation)
+- ✅ Phase 2 Wave 4 Testing (all 3 databases tested)
+- ⚠️ **Unexpected Result**: No net improvement - 67% combined quality (vs 74% Phase 1)
+- 🔍 **Root Cause**: TIME_SERIES patterns detected but LLM ignores guidance
+- ❌ **Regression**: Chinook -20% (value validation false positives on low prices)
+- 📊 **Detailed Analysis**: `.artifacts/2026-01-18-phase-2-test-results.md`
 
 **Recent Updates (2026-01-03):**
 - ✅ Corrected table count: 26 tables (was 15)

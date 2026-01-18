@@ -89,6 +89,27 @@ function validateSchema(definition: unknown): {
       });
     }
 
+    // Check for filtered KPIs with percentOf mismatch
+    if (
+      def.type === 'filtered' &&
+      'subquery' in def &&
+      'percentOf' in def &&
+      def.percentOf &&
+      'expression' in def &&
+      def.expression !== def.percentOf
+    ) {
+      errors.push({
+        stage: 'schema',
+        code: 'GRAIN_MISMATCH_PERCENT_OF',
+        message: `Filtered KPI percentOf field "${def.percentOf}" does not match expression "${def.expression}"`,
+        context: {
+          field: 'percentOf',
+          expected: String(def.expression),
+          actual: String(def.percentOf),
+        },
+      });
+    }
+
     // Check for ratio KPIs with potential division by zero
     if (def.type === 'ratio') {
       warnings.push({
@@ -97,6 +118,22 @@ function validateSchema(definition: unknown): {
         suggestion: 'Consider adding NULLIF or COALESCE handling',
       });
     }
+
+    // Check for ratio KPIs with grain mismatch (different entities)
+    if (def.type === 'ratio' && 'numerator' in def && 'denominator' in def) {
+      const numEntity = (def.numerator as any)?.entity;
+      const denEntity = (def.denominator as any)?.entity;
+
+      // If both have entity specified and they differ, it's a grain mismatch
+      if (numEntity && denEntity && numEntity !== denEntity) {
+        warnings.push({
+          code: 'GRAIN_MISMATCH_RATIO',
+          message: `Ratio KPI numerator uses entity "${numEntity}" but denominator uses "${denEntity}" - possible grain mismatch`,
+          suggestion: 'Ensure both aggregations are at the same grain. Use DISTINCT aggregations if needed.',
+        });
+      }
+    }
+
   }
 
   return {
@@ -104,6 +141,40 @@ function validateSchema(definition: unknown): {
     errors,
     warnings,
   };
+}
+
+// ============================================================================
+// Semantic Validation (KPI Name + Definition)
+// ============================================================================
+
+/**
+ * Validate semantic consistency between KPI name and definition
+ * This requires access to both the plan (name) and definition
+ */
+function validateSemantics(result: GenerationResult): {
+  warnings: ValidationWarning[];
+} {
+  const warnings: ValidationWarning[] = [];
+  const kpiName = result.plan.name;
+  const def = result.definition;
+
+  if (!def) {
+    return { warnings };
+  }
+
+  // Check for time-series KPIs missing timeField
+  const hasTimeKeywords = /monthly|daily|weekly|quarterly|trend/i.test(kpiName);
+  const hasTimeField = 'timeField' in def && def.timeField;
+
+  if (hasTimeKeywords && !hasTimeField) {
+    warnings.push({
+      code: 'TIME_SERIES_MISSING_TIME_FIELD',
+      message: `KPI name "${kpiName}" suggests time-series aggregation but definition is missing timeField`,
+      suggestion: 'Add timeField to enable proper temporal grouping (otherwise "Monthly Revenue" = "Total Revenue")',
+    });
+  }
+
+  return { warnings };
 }
 
 // ============================================================================
@@ -189,6 +260,10 @@ function validateSingle(
       latencyMs: Date.now() - startTime,
     };
   }
+
+  // Gate 1.5: Semantic Validation (name + definition consistency)
+  const semanticResult = validateSemantics(result);
+  allWarnings.push(...semanticResult.warnings);
 
   // Gate 2: Compilation
   const compileResult = validateCompilation(result.definition, config.dialect);

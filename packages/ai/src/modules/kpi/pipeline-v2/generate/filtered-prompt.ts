@@ -8,7 +8,7 @@
 import type { KPIPlan } from '../types';
 
 export const PROMPT_NAME = 'filtered-kpi-generation';
-export const PROMPT_VERSION = '1.0.0';
+export const PROMPT_VERSION = '1.1.0';
 
 /**
  * Build the prompt for generating filtered KPIs.
@@ -112,9 +112,15 @@ ${planDescriptions}
 3. **percentOf is REQUIRED when format.type = 'percent'**
    - Without percentOf: returns raw count (e.g., 772 repeat customers)
    - With percentOf: returns percentage (e.g., 58.3% repeat rate)
+   - percentOf should reference the SAME column as expression for proper percentage calculation
 4. groupBy and expression should typically match (both are the entity identifier)
 5. The having clause uses SQL syntax: COUNT(*), SUM(column), etc.
 6. Only use columns that exist in the schema
+7. **Percentage Calculation**: When format.type = 'percent', ensure percentOf matches expression
+   - ✅ CORRECT: expression: "customer_id", percentOf: "customer_id" → (filtered customers / total customers) * 100
+   - ❌ WRONG: expression: "customer_id", percentOf: "order_id" → comparing apples to oranges
+8. **Grain Awareness**: Aggregations in HAVING must reference columns at the grouped entity's grain
+   - If groupBy: "customer_id", HAVING can use COUNT(order_id), SUM(total), etc. from that customer's rows
 
 ## When to Use Filtered KPIs
 Use type='filtered' when you need to:

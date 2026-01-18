@@ -8,7 +8,7 @@
 import type { KPIPlan } from '../types';
 
 export const PROMPT_NAME = 'simple-kpi-generation';
-export const PROMPT_VERSION = '1.0.0';
+export const PROMPT_VERSION = '1.1.0';
 
 /**
  * Build the prompt for generating simple KPIs.
@@ -92,7 +92,14 @@ ${planDescriptions}
 3. Use COUNT(*) via: aggregation: "COUNT", expression: "*"
 4. Use COUNT DISTINCT via: aggregation: "COUNT_DISTINCT", expression: "column_name"
 5. Only use columns that exist in the schema
-6. Include timeField if the table has a timestamp column
+6. **CRITICAL - Time-series KPIs**: If KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include timeField
+   - Without timeField: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
+   - With timeField: The compiler will add proper DATE_TRUNC/GROUP BY logic
+   - Example: { "type": "simple", "aggregation": "SUM", "expression": "amount", "entity": "orders", "timeField": "order_date" }
+7. **Grain Awareness**: Ensure expression matches the entity's natural grain
+   - For order-level metrics: Use order table, aggregate order columns
+   - For line-item metrics: Use order_details/line_items table, aggregate quantities
+   - Don't mix: SUM(order_details.quantity) should be on order_details entity, not orders
 
 ## Output Format
 Return a JSON array with one object per KPI. Each object must have:

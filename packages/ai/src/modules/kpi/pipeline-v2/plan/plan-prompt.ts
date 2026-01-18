@@ -21,7 +21,7 @@ import {
 // ============================================================================
 
 export const PLAN_PROMPT_NAME = 'kpi-plan';
-export const PLAN_PROMPT_VERSION = '1.1.0';
+export const PLAN_PROMPT_VERSION = '1.2.0';
 
 // ============================================================================
 // KPI Plan Prompt
@@ -114,11 +114,13 @@ For **simple** type:
 - expression: the column(s) to aggregate
 - aggregation (optional): suggested aggregation
 - timeField (optional): timestamp column for time-series aggregation (REQUIRED for Monthly/Daily/Weekly KPIs)
+- grain (optional): temporal grain - 'hour', 'day', 'week', 'month', 'quarter', or 'year' (REQUIRED for Monthly/Daily/Weekly KPIs)
 
 For **ratio** type:
 - numerator: what to aggregate in numerator
 - denominator: what to aggregate in denominator
 - timeField (optional): timestamp column for time-series KPIs
+- grain (optional): temporal grain for time-series KPIs
 
 For **filtered** type:
 - groupBy: field to group by
@@ -130,13 +132,15 @@ For **composite** type:
 - sources: tables involved
 - expression: the value expression
 - timeField (optional): timestamp column for time-series grouping
+- grain (optional): temporal grain for time-series grouping
 
 ## Time-Series KPIs (CRITICAL)
 
-If a KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include timeField:
-- Without timeField: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
-- With timeField: The compiler adds proper DATE_TRUNC/GROUP BY logic
-- Example: For "Monthly Revenue Trend" on orders table with order_date column, set timeField: "order_date"
+If a KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include BOTH timeField AND grain:
+- Without timeField/grain: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
+- With timeField/grain: The compiler adds proper DATE_TRUNC/GROUP BY logic
+- Grain mapping: "Hourly" → "hour", "Daily" → "day", "Weekly" → "week", "Monthly" → "month", "Quarterly" → "quarter", "Yearly/Annual" → "year"
+- Example: For "Monthly Revenue Trend" on orders table with order_date column, set timeField: "order_date" AND grain: "month"
 
 ## Output Format
 
@@ -164,12 +168,13 @@ Return a JSON array of KPIPlan objects:
     "description": "Total revenue aggregated by month",
     "businessValue": "Tracks revenue patterns over time to identify seasonality and growth trends. Essential for forecasting and goal setting.",
     "type": "simple",
-    "typeRationale": "Single aggregation (SUM) with time-based grouping - perfect for simple type with timeField",
+    "typeRationale": "Single aggregation (SUM) with time-based grouping - perfect for simple type with timeField and grain",
     "entity": "order_details",
     "columns": {
       "expression": "unit_price * quantity",
       "aggregation": "SUM",
-      "timeField": "order_date"
+      "timeField": "order_date",
+      "grain": "month"
     },
     "category": "revenue",
     "format": {"type": "currency", "decimals": 2},
@@ -243,6 +248,11 @@ Return ONLY a valid JSON array. No markdown code blocks, no explanations.`,
       version: '1.0.0',
       date: '2026-01-17',
       changes: 'Initial version - Opus planning prompt for Pipeline V2 cognitive decomposition',
+    },
+    {
+      version: '1.2.0',
+      date: '2026-01-18',
+      changes: 'Added grain field to column hints for time-series KPIs. Updated examples and rules to require both timeField AND grain for Monthly/Daily/Weekly KPIs.',
     },
   ],
 };

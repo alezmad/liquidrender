@@ -205,7 +205,7 @@ function validateCompilation(
     if (result.success) {
       return {
         valid: true,
-        sql: result.expression,
+        sql: result.sql,  // Use full SQL, not just expression
         errors: [],
       };
     }

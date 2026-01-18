@@ -75,6 +75,22 @@ export type DateRangePreset =
   | 'last_year';
 
 // ============================================================================
+// Time-Series Types
+// ============================================================================
+
+/**
+ * Time-series aggregation grain (temporal grouping unit)
+ * Used for KPIs that aggregate over time periods (e.g., Monthly Revenue)
+ */
+export type TimeSeriesGrain =
+  | 'hour'
+  | 'day'
+  | 'week'
+  | 'month'
+  | 'quarter'
+  | 'year';
+
+// ============================================================================
 // Aggregation Component (Enhanced)
 // ============================================================================
 
@@ -113,6 +129,8 @@ export interface SimpleKPIDefinition extends KPIDefinitionBase {
   type: 'simple';
   aggregation: AggregationType;
   expression: string;
+  /** Time-series grain for temporal aggregation (requires timeField) */
+  grain?: TimeSeriesGrain;
 }
 
 export interface RatioKPIDefinition extends KPIDefinitionBase {

@@ -106,6 +106,7 @@ export const SimpleKPIDefinitionSchema = z.object({
   expression: z.string().describe("Column name or arithmetic expression (e.g., 'unit_price * quantity'). Use '*' for COUNT(*)"),
   entity: z.string().describe("Source table name"),
   timeField: z.string().optional().describe("Timestamp column for time-series"),
+  grain: z.enum(['hour', 'day', 'week', 'month', 'quarter', 'year']).optional().describe("Time-series grain for temporal aggregation (requires timeField). Inferred from KPI name if not specified."),
   filters: z.array(FilterConditionSchema).optional().describe("WHERE conditions"),
 });
 

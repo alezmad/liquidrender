@@ -11,6 +11,7 @@ import type {
   MovingAverageKPIDefinition,
   RankingKPIDefinition,
   ConditionalKPIDefinition,
+  TimeSeriesGrain,
 } from '../types';
 import { DuckDBEmitter } from '../../emitters/duckdb';
 
@@ -658,6 +659,161 @@ describe('KPI Compiler v2.0', () => {
       expect(result.sql).toContain('previous_period');
       // DuckDB uses INTERVAL '-1' month format
       expect(result.sql).toMatch(/month/i);
+    });
+  });
+
+  describe('Time-Series KPI', () => {
+    it('compiles monthly revenue trend with explicit grain', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        timeField: 'order_date',
+        grain: 'month',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toBe('SUM(amount)');
+      // Should use DATE_TRUNC for temporal grouping
+      expect(result.sql).toMatch(/date_trunc\('month',\s*"order_date"\)/i);
+      // Should have GROUP BY
+      expect(result.sql).toMatch(/GROUP BY/i);
+      // Should have ORDER BY for chronological order
+      expect(result.sql).toMatch(/ORDER BY.*period.*ASC/i);
+      // Should return period and value columns
+      expect(result.columns).toEqual(['period', 'value']);
+    });
+
+    it('compiles daily active users', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'COUNT_DISTINCT',
+        expression: 'user_id',
+        entity: 'events',
+        timeField: 'event_timestamp',
+        grain: 'day',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.expression).toBe('COUNT(DISTINCT user_id)');
+      expect(result.sql).toMatch(/date_trunc\('day',\s*"event_timestamp"\)/i);
+      expect(result.sql).toMatch(/GROUP BY/i);
+    });
+
+    it('compiles weekly revenue with WHERE filter', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        timeField: 'order_date',
+        grain: 'week',
+        filters: [{ field: 'status', operator: '=', value: 'completed' }],
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toMatch(/date_trunc\('week',\s*"order_date"\)/i);
+      expect(result.sql).toContain('WHERE');
+      expect(result.sql).toContain('status');
+      expect(result.sql).toMatch(/GROUP BY/i);
+    });
+
+    it('compiles quarterly revenue', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'sales',
+        timeField: 'sale_date',
+        grain: 'quarter',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toMatch(/date_trunc\('quarter',\s*"sale_date"\)/i);
+      expect(result.sql).toMatch(/GROUP BY/i);
+    });
+
+    it('compiles yearly revenue', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'sales',
+        timeField: 'sale_date',
+        grain: 'year',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toMatch(/date_trunc\('year',\s*"sale_date"\)/i);
+    });
+
+    it('compiles hourly transaction volume', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'COUNT',
+        expression: '*',
+        entity: 'transactions',
+        timeField: 'created_at',
+        grain: 'hour',
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      expect(result.sql).toMatch(/date_trunc\('hour',\s*"created_at"\)/i);
+    });
+
+    it('falls back to regular aggregation if no grain specified', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        timeField: 'order_date', // Has timeField but no grain
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      // Should NOT have GROUP BY (regular aggregation)
+      expect(result.sql).not.toMatch(/GROUP BY/);
+      expect(result.sql).not.toMatch(/date_trunc/i);
+      // Should be simple SELECT aggregate
+      expect(result.sql).toContain('SELECT SUM(amount) AS value FROM "orders"');
+    });
+
+    it('uses comparison instead of time-series if comparison is specified', () => {
+      const def: SimpleKPIDefinition = {
+        type: 'simple',
+        aggregation: 'SUM',
+        expression: 'amount',
+        entity: 'orders',
+        timeField: 'order_date',
+        grain: 'month',
+        comparison: {
+          period: 'previous_month',
+        },
+      };
+
+      const result = compileKPIFormula(def, emitter);
+
+      expect(result.success).toBe(true);
+      // Should use comparison query instead of time-series
+      expect(result.sql).toContain('WITH current_period');
+      expect(result.sql).toContain('previous_period');
+      // Should NOT have the time-series GROUP BY pattern
+      expect(result.sql).not.toMatch(/SELECT.*AS "period".*GROUP BY/i);
     });
   });
 });

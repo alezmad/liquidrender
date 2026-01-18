@@ -854,6 +854,16 @@ function extractKPIDefinition(recipe: CalculatedMetricRecipe): KPISemanticDefini
     return kpiDef as KPISemanticDefinition;
   }
 
+  // Check if semanticDefinition itself is a KPI definition (e.g., from V2 pipeline)
+  if (
+    recipe.semanticDefinition &&
+    typeof recipe.semanticDefinition === "object" &&
+    "type" in recipe.semanticDefinition &&
+    "entity" in recipe.semanticDefinition
+  ) {
+    return recipe.semanticDefinition as KPISemanticDefinition;
+  }
+
   // Fallback: Infer DSL from legacy semanticDefinition
   // This ensures older recipes still get compiled correctly
   const { expression, aggregation, entity, filters } = recipe.semanticDefinition;
@@ -1284,7 +1294,26 @@ export async function validateKPIValues(
 
       try {
         // Phase 1: Build SQL (may throw on invalid semanticDefinition)
-        sql = buildKPISQL(recipe.semanticDefinition, connection.defaultSchema);
+        // Try to use DSL compiler first (supports time-series, grain, etc.)
+        const kpiDefinition = extractKPIDefinition(recipe);
+        if (kpiDefinition) {
+          const compiled = compileKPIToSQL(kpiDefinition, {
+            dialect: "duckdb",
+            // Don't pass schema to compiler - we'll add source_db prefix manually
+          });
+          if (compiled?.sql) {
+            // Add DuckDB source_db prefix for tables
+            // Compiler generates: FROM "entity" or FROM "schema"."entity"
+            // DuckDB needs: FROM "source_db"."schema"."entity" or FROM "source_db"."entity"
+            const schemaPrefix = connection.defaultSchema ? `"source_db"."${connection.defaultSchema}".` : `"source_db".`;
+            sql = compiled.sql.replace(/FROM "(\w+)"/g, `FROM ${schemaPrefix}"$1"`);
+          } else {
+            sql = buildKPISQL(recipe.semanticDefinition, connection.defaultSchema);
+          }
+        } else {
+          // Fallback to legacy SQL builder for old-style recipes
+          sql = buildKPISQL(recipe.semanticDefinition, connection.defaultSchema);
+        }
 
         // Phase 2: Execute SQL (may throw on invalid query or connection issues)
         const rows = await adapter.query<{ value: unknown }>(sql);

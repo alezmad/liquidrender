@@ -23,6 +23,7 @@ import type {
   KPIFilter,
   DateRangePreset,
   ComparisonPeriod,
+  TimeSeriesGrain,
 } from './types';
 import {
   isSimpleKPI,
@@ -147,7 +148,31 @@ export function compileKPIFormula(
 
     const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : null;
 
-    sql = buildFullQuery(expression, tableName, whereClause, columns);
+    // Check if this is a time-series KPI (simple KPI with timeField and grain)
+    if (isSimpleKPI(definition) && definition.timeField && !definition.comparison) {
+      // Determine grain: use explicit grain, or infer from KPI name
+      const grain = definition.grain;
+
+      if (grain) {
+        // Time-series aggregation with GROUP BY temporal grain
+        sql = buildTimeSeriesQuery(
+          expression,
+          tableName,
+          definition.timeField,
+          grain,
+          whereClause,
+          traits,
+          quoteIdentifiers
+        );
+        columns = ['period', 'value'];
+      } else {
+        // No grain specified, use regular aggregation
+        sql = buildFullQuery(expression, tableName, whereClause, columns);
+      }
+    } else {
+      // Regular aggregation (no time-series)
+      sql = buildFullQuery(expression, tableName, whereClause, columns);
+    }
 
     // Handle period comparison if specified
     if (definition.comparison && definition.timeField) {
@@ -640,6 +665,68 @@ function formatTableName(
     return `${quote}${schema}${quote}.${quote}${table}${quote}`;
   }
   return `${quote}${table}${quote}`;
+}
+
+// ============================================================================
+// Time-Series Helpers
+// ============================================================================
+
+/**
+ * Infer time-series grain from KPI name
+ * Looks for temporal keywords like "Monthly", "Daily", "Weekly", etc.
+ */
+function inferGrainFromName(kpiName: string): TimeSeriesGrain | null {
+  const nameLower = kpiName.toLowerCase();
+
+  if (/\b(hour|hourly)\b/.test(nameLower)) return 'hour';
+  if (/\b(day|daily)\b/.test(nameLower)) return 'day';
+  if (/\b(week|weekly)\b/.test(nameLower)) return 'week';
+  if (/\b(month|monthly)\b/.test(nameLower)) return 'month';
+  if (/\b(quarter|quarterly)\b/.test(nameLower)) return 'quarter';
+  if (/\b(year|yearly|annual)\b/.test(nameLower)) return 'year';
+
+  return null;
+}
+
+/**
+ * Check if a simple KPI should use time-series aggregation
+ */
+function isTimeSeriesKPI(def: SimpleKPIDefinition): boolean {
+  return !!(def.timeField && (def.grain || def.comparison));
+}
+
+/**
+ * Build time-series SQL with GROUP BY temporal grain
+ */
+function buildTimeSeriesQuery(
+  expression: string,
+  tableName: string,
+  timeField: string,
+  grain: TimeSeriesGrain,
+  whereClause: string | null,
+  traits: DialectTraits,
+  quoteIdentifiers: boolean
+): string {
+  const quote = quoteIdentifiers ? traits.identifierQuote : '';
+  const quotedTimeField = `${quote}${timeField}${quote}`;
+
+  // Build DATE_TRUNC expression for the grain
+  const periodExpr = traits.dateFunctions.dateTrunc(grain, quotedTimeField);
+
+  // Build SELECT clause
+  const selectClause = `${periodExpr} AS ${quote}period${quote}, ${expression} AS ${quote}value${quote}`;
+
+  // Build WHERE clause
+  const whereClauseSql = whereClause ? `WHERE ${whereClause}` : '';
+
+  // Build GROUP BY clause
+  const groupByClause = `GROUP BY ${periodExpr}`;
+
+  // Build ORDER BY clause (chronological order)
+  const orderByClause = `ORDER BY ${quote}period${quote} ASC`;
+
+  // Assemble SQL
+  return `SELECT ${selectClause} FROM ${tableName} ${whereClauseSql} ${groupByClause} ${orderByClause}`.trim();
 }
 
 function buildFullQuery(

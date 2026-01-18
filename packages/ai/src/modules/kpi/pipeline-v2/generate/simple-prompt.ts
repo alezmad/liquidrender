@@ -8,7 +8,7 @@
 import type { KPIPlan } from '../types';
 
 export const PROMPT_NAME = 'simple-kpi-generation';
-export const PROMPT_VERSION = '1.1.0';
+export const PROMPT_VERSION = '1.2.0';
 
 /**
  * Build the prompt for generating simple KPIs.
@@ -27,6 +27,7 @@ ${i + 1}. **${plan.name}**
    - Aggregation hint: ${plan.aggregation || 'infer from context'}
    - Expression hint: ${plan.columns.expression || 'infer from context'}
    - TimeField hint: ${plan.columns.timeField || 'none (use for time-series KPIs)'}
+   - Grain hint: ${plan.columns.grain || 'infer from KPI name if time-series'}
    - Format: ${plan.format ? `${plan.format.type}${plan.format.decimals !== undefined ? `, ${plan.format.decimals} decimals` : ''}` : 'number'}
 `).join('\n');
 
@@ -48,7 +49,8 @@ ${planDescriptions}
   aggregation: 'SUM' | 'COUNT' | 'COUNT_DISTINCT' | 'AVG' | 'MIN' | 'MAX',
   expression: string,  // Column name or arithmetic expression (e.g., "unit_price * quantity")
   entity: string,      // Source table
-  timeField?: string,  // Optional timestamp column
+  timeField?: string,  // Optional timestamp column for time-series
+  grain?: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year',  // Time-series grain (requires timeField)
   filters?: Array<{ field: string, operator: string, value?: unknown }>
 }
 \`\`\`
@@ -60,9 +62,20 @@ ${planDescriptions}
 {
   "type": "simple",
   "aggregation": "SUM",
-  "expression": "unit_price * quantity",
-  "entity": "order_details",
-  "timeField": "order_date"
+  "expression": "amount",
+  "entity": "orders"
+}
+\`\`\`
+
+**Example 2: Monthly Revenue Trend**
+\`\`\`json
+{
+  "type": "simple",
+  "aggregation": "SUM",
+  "expression": "amount",
+  "entity": "orders",
+  "timeField": "order_date",
+  "grain": "month"
 }
 \`\`\`
 
@@ -93,10 +106,11 @@ ${planDescriptions}
 3. Use COUNT(*) via: aggregation: "COUNT", expression: "*"
 4. Use COUNT DISTINCT via: aggregation: "COUNT_DISTINCT", expression: "column_name"
 5. Only use columns that exist in the schema
-6. **CRITICAL - Time-series KPIs**: If KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include timeField
-   - Without timeField: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
-   - With timeField: The compiler will add proper DATE_TRUNC/GROUP BY logic
-   - Example: { "type": "simple", "aggregation": "SUM", "expression": "amount", "entity": "orders", "timeField": "order_date" }
+6. **CRITICAL - Time-series KPIs**: If KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include both timeField AND grain
+   - Without grain: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
+   - With grain: The compiler will add proper DATE_TRUNC/GROUP BY logic
+   - Grain must match the KPI name: "Monthly" → "month", "Daily" → "day", "Weekly" → "week", etc.
+   - Example: { "type": "simple", "aggregation": "SUM", "expression": "amount", "entity": "orders", "timeField": "order_date", "grain": "month" }
 7. **Grain Awareness**: Ensure expression matches the entity's natural grain
    - For order-level metrics: Use order table, aggregate order columns
    - For line-item metrics: Use order_details/line_items table, aggregate quantities

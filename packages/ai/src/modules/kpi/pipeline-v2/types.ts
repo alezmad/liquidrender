@@ -36,6 +36,8 @@ export type KPIType =
 export interface KPIPlanColumns {
   /** For simple: the expression to aggregate */
   expression?: string;
+  /** For simple: aggregation hint (SUM, AVG, COUNT, etc.) */
+  aggregation?: string;
   /** For ratio: numerator expression */
   numerator?: string;
   /** For ratio: denominator expression */
@@ -54,6 +56,8 @@ export interface KPIPlanColumns {
   sources?: string[];
   /** Time field for time-series */
   timeField?: string;
+  /** Time-series grain (hour, day, week, month, quarter, year) - REQUIRED for Monthly/Daily/Weekly KPIs */
+  grain?: 'hour' | 'day' | 'week' | 'month' | 'quarter' | 'year';
   /** Filter conditions */
   filters?: string[];
 }

@@ -27,6 +27,7 @@ ${i + 1}. **${plan.name}**
    - GroupBy hint: ${plan.columns.groupBy || 'infer from context'}
    - Having hint: ${plan.columns.having || 'infer from context'}
    - PercentOf hint: ${plan.columns.percentOf || 'required if format is percent'}
+   - TimeField hint: ${plan.columns.timeField || 'none (use for time-series KPIs)'}
    - Format: ${plan.format ? `${plan.format.type}${plan.format.decimals !== undefined ? `, ${plan.format.decimals} decimals` : ''}` : 'number'}
 `).join('\n');
 

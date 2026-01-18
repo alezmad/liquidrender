@@ -44,6 +44,13 @@ export interface StepEvent {
     feasible: number;
     stored?: number; // Number of KPIs stored in vocabulary
     categories: string[];
+    valueValidation?: {
+      executed: number;
+      valid: number;
+      suspicious: number;
+      invalid: number;
+      executionErrors: number;
+    };
   };
 }
 

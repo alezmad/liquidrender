@@ -7,7 +7,7 @@
 
 export const VALUE_VALIDATION_PROMPT = {
   name: "kpi-value-validation",
-  version: "1.3.0",
+  version: "1.4.0",
 
   /**
    * Template for validating KPI values against business expectations.
@@ -39,6 +39,7 @@ For each KPI, determine if the value makes business sense:
 | wholesale, distribution, trading | B2B | $500-5000 | 10-100 | Bulk orders to retailers |
 | manufacturing, industrial | B2B | $1000-50000 | 20-200 | Large equipment, materials |
 | saas, subscription | Recurring | N/A | N/A | Monthly/Annual billing |
+| media, music, streaming, digital goods | Digital/Micro | $0.99-$20 | 1-10 | Low-price digital content |
 
 **B2B / Wholesale / Trading / Distribution:**
 - Average Order Value: $500-10000 is NORMAL (large bulk orders)
@@ -59,6 +60,14 @@ For each KPI, determine if the value makes business sense:
 - MRR/ARR metrics dominate
 - Churn rate: 2-8% monthly is typical
 
+**Media / Music / Streaming / Digital Goods:**
+- Average Order Value: $0.99-$20 is NORMAL (songs, tracks, movies, ebooks)
+- Unit Price: $0.99-$9.99 is NORMAL for individual digital items
+- Items per order: 1-10 is NORMAL (albums, track bundles)
+- **$1-$5 unit prices are VERY COMMON for music tracks, ebooks, apps**
+- Repeat customer rates 30-60% typical (subscription models higher)
+- If business type mentions "music", "media", "streaming", "digital" → treat as Digital Goods
+
 ## Sanity Bounds (context-aware)
 
 ### B2C / Retail Bounds
@@ -74,6 +83,14 @@ For each KPI, determine if the value makes business sense:
 | Items per order | 10-100 | > 200 (check if SUM(qty) vs COUNT confusion) |
 | Repeat purchase rate | 70-95% | < 50% (B2B should have regular customers) |
 | On-time delivery | 95-100% | Never flag (achievable in B2B) |
+
+### Media / Digital Goods / Streaming Bounds
+| KPI Type | Normal Range | Flag as SUSPICIOUS If |
+|----------|--------------|----------------------|
+| Unit price | $0.99-$9.99 | > $100 (digital content is low-price) |
+| Invoice value | $1-$50 | > $200 (few items per transaction) |
+| Items per order | 1-10 | > 50 (not bulk purchases) |
+| Revenue per customer | $10-$200 | Never flag low values (micro-transactions valid) |
 
 ### Universal Bounds (applies to all business types)
 | KPI Type | Always INVALID If |
@@ -136,6 +153,11 @@ Return ONLY valid JSON, no markdown.`,
    * Changelog for tracking prompt evolution
    */
   changelog: [
+    {
+      version: "1.4.0",
+      date: "2026-01-18",
+      changes: "Added Digital Goods / Media / Streaming business type with $0.99-$20 price ranges. Prevents false positives on music stores, ebooks, apps with $1-5 unit prices. Added specific bounds for digital content micro-transactions.",
+    },
     {
       version: "1.3.0",
       date: "2026-01-17",

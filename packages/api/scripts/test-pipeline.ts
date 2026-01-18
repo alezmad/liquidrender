@@ -16,7 +16,7 @@
  */
 
 import { db } from "@turbostarter/db/server";
-import { like, inArray } from "drizzle-orm";
+import { like, inArray, eq } from "drizzle-orm";
 import {
   knosiaConnection,
   knosiaConnectionSchema,
@@ -27,6 +27,7 @@ import {
   knosiaColumnProfile,
   knosiaAnalysis,
   knosiaWorkspaceConnection,
+  knosiaWorkspace,
 } from "@turbostarter/db/schema";
 import {
   DuckDBUniversalAdapter,
@@ -34,7 +35,7 @@ import {
   profileSchema,
   extractProfilingData,
 } from "@repo/liquid-connect/uvb";
-import { generateKPIRecipes, type GenerateRecipeInput } from "@turbostarter/ai/kpi";
+import { generateAndStoreKPIs } from "../src/modules/knosia/vocabulary/kpi-generation";
 import { generateId } from "@turbostarter/shared/utils";
 
 // =============================================================================
@@ -136,6 +137,13 @@ interface PipelineResult {
   repairRate: number;
   duration: number;
   success: boolean;
+  valueValidation?: {
+    executed: number;
+    valid: number;
+    suspicious: number;
+    invalid: number;
+    executionErrors: number;
+  };
 }
 
 async function runPipeline(config: DatabaseConfig, verbose = true): Promise<PipelineResult> {
@@ -325,6 +333,28 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
   });
   console.log(`  ✓ Created analysis record: ${analysisId}`);
 
+  // Create or get workspace for KPI storage
+  let workspaceId: string;
+  const existingWorkspace = await db
+    .select()
+    .from(knosiaWorkspace)
+    .where(eq(knosiaWorkspace.orgId, TEST_ORG_ID))
+    .limit(1);
+
+  if (existingWorkspace.length > 0) {
+    workspaceId = existingWorkspace[0].id;
+    console.log(`  ✓ Using existing workspace: ${workspaceId}`);
+  } else {
+    workspaceId = generateId();
+    await db.insert(knosiaWorkspace).values({
+      id: workspaceId,
+      orgId: TEST_ORG_ID,
+      name: "Test Workspace",
+      slug: "test-workspace",
+    });
+    console.log(`  ✓ Created workspace: ${workspaceId}`);
+  }
+
   // Save profiles to database
   let tableProfileCount = 0;
   let columnProfileCount = 0;
@@ -419,38 +449,28 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
   console.log(`  ✓ Saved ${vocabCount} vocabulary items`);
 
   // =========================================================================
-  // STEP 6: Generate KPIs
+  // STEP 6: Generate KPIs (Full Pipeline with Value Validation)
   // =========================================================================
   console.log("\n┌─────────────────────────────────────────────────────────────────────┐");
-  console.log("│ STEP 6: Generating KPIs (with tracing)                             │");
+  console.log("│ STEP 6: Generating KPIs (full pipeline + value validation)         │");
   console.log("└─────────────────────────────────────────────────────────────────────┘");
 
-  const vocabularyContext: GenerateRecipeInput["vocabularyContext"] = {
-    tables: extractedSchema.tables.map((t) => ({
-      name: t.name,
-      columns: t.columns.map((c) => ({
-        name: c.name,
-        type: c.dataType,
-      })),
-    })),
-    detectedMetrics: vocabulary.metrics?.map((m) => m.name) ?? [],
-    detectedDimensions: vocabulary.dimensions?.map((d) => d.name) ?? [],
-  };
-
-  console.log("\n  Generating KPIs (this may take 30-60 seconds)...\n");
+  console.log("\n  Generating KPIs (this may take 60-90 seconds with validation)...\n");
 
   const kpiStartTime = Date.now();
-  const result = await generateKPIRecipes(
-    {
-      businessType,
-      vocabularyContext,
-      useSchemaFirstGeneration: true,
+  const result = await generateAndStoreKPIs({
+    detectedVocabulary: vocabulary.detected,
+    profilingData,
+    businessType,
+    extractedSchema,
+    orgId: TEST_ORG_ID,
+    workspaceId,
+    connection: {
+      connectionString,
+      defaultSchema: schema,
+      type: "postgres",
     },
-    {
-      model: "haiku",
-      maxRecipes: 15,
-    }
-  );
+  });
   const kpiDuration = Date.now() - kpiStartTime;
 
   console.log(`  ✓ Generation completed in ${(kpiDuration / 1000).toFixed(1)}s`);
@@ -467,8 +487,19 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
     console.log(`    Final Failed:      ${stats.finalFailed}`);
   }
 
-  const successCount = result.recipes.length;
-  const failedCount = result.failedRecipes?.length ?? 0;
+  // Value validation results
+  const valueValidation = result.valueValidation;
+  if (valueValidation) {
+    console.log("\n  🔍 Value Validation Results:");
+    console.log(`    Executed:          ${valueValidation.executed}`);
+    console.log(`    Valid:             ${valueValidation.valid} ✅`);
+    console.log(`    Suspicious:        ${valueValidation.suspicious} ⚠️`);
+    console.log(`    Invalid:           ${valueValidation.invalid} ❌`);
+    console.log(`    Execution Errors:  ${valueValidation.executionErrors}`);
+  }
+
+  const successCount = result.storedCount;
+  const failedCount = result.failedCount;
   const repairRate = result.generationStats
     ? ((result.generationStats.repairedByHaiku + result.generationStats.repairedBySonnet) /
         (result.generationStats.attempted || 1)) *
@@ -476,62 +507,12 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
     : 0;
 
   // Log successful KPIs
-  console.log("\n  ✅ Successful KPIs:");
-  result.recipes.forEach((recipe, i) => {
-    console.log(`    ${i + 1}. ${recipe.name} (${recipe.category})`);
-    if (verbose && recipe.semanticDefinition) {
-      const def = recipe.semanticDefinition as { type?: string; entity?: string };
-      console.log(`       Type: ${def.type}, Entity: ${def.entity}`);
-    }
-    // Show repair info for successful KPIs that needed fixing
-    if (recipe.validationLog && recipe.validationLog.length > 0) {
-      const repairLogs = recipe.validationLog.filter(
-        (log: { stage?: string }) => log.stage === "repair"
-      );
-      const errorLogs = recipe.validationLog.filter(
-        (log: { error?: string }) => log.error
-      );
-      if (repairLogs.length > 0) {
-        console.log(`       ⚠️  REPAIRED (${repairLogs.length} attempt(s)):`);
-        errorLogs.forEach((log: { error?: string }) => {
-          if (log.error) {
-            console.log(
-              `          Error: ${log.error.substring(0, 100)}${log.error.length > 100 ? "..." : ""}`
-            );
-          }
-        });
-      }
-    }
+  console.log("\n  ✅ Stored KPIs:");
+  result.kpis.forEach((kpi, i) => {
+    const qualityIcon = kpi.qualityScore === "high" ? "🟢" : kpi.qualityScore === "medium" ? "🟡" : "🔴";
+    console.log(`    ${i + 1}. ${kpi.name} (${kpi.category}) ${qualityIcon}`);
   });
-  console.log(`\n  ✓ Generated ${successCount} KPIs (not persisted - test mode)`);
-
-  // Show failed KPIs with trace data
-  if (result.failedRecipes && result.failedRecipes.length > 0) {
-    console.log("\n  ❌ Failed KPIs (with trace data):");
-    result.failedRecipes.forEach((f, i) => {
-      console.log(`\n    ${i + 1}. ${f.name}`);
-      console.log(`       Stage: ${f.failureStage}`);
-      console.log(`       Error: ${f.lastError.substring(0, 80)}...`);
-
-      if (verbose) {
-        const repairLogs = f.validationLog.filter((log) => log.stage === "repair");
-        if (repairLogs.length > 0) {
-          console.log(`       Repair Attempts: ${repairLogs.length}`);
-          repairLogs.forEach((log) => {
-            if (log.promptName) {
-              console.log(`         📝 Prompt: ${log.promptName} v${log.promptVersion}`);
-            }
-            if (log.latencyMs !== undefined) {
-              console.log(`         ⏱️  Latency: ${log.latencyMs}ms`);
-            }
-            if (log.tokensIn !== undefined) {
-              console.log(`         🔢 Tokens: ${log.tokensIn} in / ${log.tokensOut} out`);
-            }
-          });
-        }
-      }
-    });
-  }
+  console.log(`\n  ✓ Stored ${successCount} KPIs to database`);
 
   // Cleanup
   await adapter.disconnect();
@@ -545,17 +526,24 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
   console.log("║                           PIPELINE SUMMARY                          ║");
   console.log("╚═════════════════════════════════════════════════════════════════════╝");
 
+  // Build value validation summary
+  let valueValidationSummary = "";
+  if (valueValidation) {
+    valueValidationSummary = `
+  Value Validation: ${valueValidation.valid} valid, ${valueValidation.suspicious} suspicious, ${valueValidation.invalid} invalid`;
+  }
+
   console.log(`
   Connection:       ${newConnection.name} (${newConnection.id})
   Database:         ${displayName}
   Business Type:    ${businessType}
   Tables:           ${extractedSchema.tables.length}
   Vocabulary Items: ${vocabCount}
-  KPIs Generated:   ${successCount} successful, ${failedCount} failed
+  KPIs Stored:      ${successCount} successful, ${failedCount} failed
   Total Duration:   ${duration.toFixed(1)}s
 
-  Success Rate:     ${((successCount / (successCount + failedCount)) * 100).toFixed(1)}%
-  Repair Rate:      ${repairRate.toFixed(1)}%
+  Success Rate:     ${((successCount / (successCount + failedCount || 1)) * 100).toFixed(1)}%
+  Repair Rate:      ${repairRate.toFixed(1)}%${valueValidationSummary}
   `);
 
   console.log("  ✓ Pipeline complete\n");
@@ -569,6 +557,7 @@ async function runPipeline(config: DatabaseConfig, verbose = true): Promise<Pipe
     repairRate,
     duration,
     success: failedCount === 0,
+    valueValidation,
   };
 }
 

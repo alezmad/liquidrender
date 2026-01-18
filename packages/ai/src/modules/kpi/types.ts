@@ -1345,15 +1345,15 @@ const ExtendedKPIBaseSchema = z.object({
 // ============================================================================
 
 // Filtered KPI (v2)
-// Note: subquery fields are optional to allow LLM flexibility - compiler handles missing fields gracefully
+// subquery.groupBy is REQUIRED when subquery is present - prevents undefined in SQL output
 export const FilteredKPIDefinitionSchema = ExtendedKPIBaseSchema.extend({
   type: z.literal('filtered'),
   aggregation: ExtendedAggregationTypeSchema,
   expression: z.string(),
   subquery: z.object({
-    groupBy: z.union([z.string(), z.array(z.string())]).optional(),
-    having: z.string().optional(),
-    subqueryEntity: z.string().optional(),
+    groupBy: z.union([z.string(), z.array(z.string())]),  // REQUIRED - prevents "SELECT undefined" in SQL
+    having: z.string(),  // REQUIRED - filtered KPIs must have a condition
+    subqueryEntity: z.string().optional(),  // Optional - defaults to main entity
   }).optional(),
   // percentOf: Required for percentage KPIs - calculates (filtered_count / total_count) * 100
   percentOf: z.string().optional().describe("Expression to calculate percentage against (required when format.type='percent')"),

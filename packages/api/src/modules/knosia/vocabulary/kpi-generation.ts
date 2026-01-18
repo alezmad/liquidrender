@@ -1173,6 +1173,32 @@ function buildKPISQL(
     return `SELECT (CAST(${num} AS FLOAT) / NULLIF(${den}, 0)) * ${multiplier} AS value FROM ${entity}`;
   }
 
+  // For filtered types with subquery (groupBy/having)
+  if (def.type === "filtered" && def.subquery) {
+    const agg = def.aggregation || "COUNT_DISTINCT";
+    const aggSQL = aggregationToSQL(agg, def.expression);
+
+    // Build the filtered subquery
+    const groupByFields = Array.isArray(def.subquery.groupBy)
+      ? def.subquery.groupBy.join(', ')
+      : def.subquery.groupBy;
+
+    const subqueryEntity = def.subquery.subqueryEntity
+      ? `${schemaPrefix}"${def.subquery.subqueryEntity}"`
+      : entity;
+
+    const subquery = `SELECT ${groupByFields} FROM ${subqueryEntity} GROUP BY ${groupByFields} HAVING ${def.subquery.having}`;
+
+    // If percentOf is specified, calculate percentage
+    if (def.percentOf) {
+      const totalAgg = aggregationToSQL(agg, def.percentOf);
+      return `SELECT (CAST(${aggSQL} AS FLOAT) / NULLIF(${totalAgg}, 0)) * 100 AS value FROM ${entity} WHERE ${def.expression} IN (${subquery})`;
+    }
+
+    // Otherwise just count the filtered entities
+    return `SELECT ${aggSQL} AS value FROM ${entity} WHERE ${def.expression} IN (${subquery})`;
+  }
+
   // For composite types with sources (multi-table joins)
   if (def.type === "composite" && def.sources && Array.isArray(def.sources)) {
     // Build FROM clause with joins

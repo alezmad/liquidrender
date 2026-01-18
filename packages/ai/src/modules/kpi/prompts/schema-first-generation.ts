@@ -7,7 +7,7 @@
 
 export const SCHEMA_FIRST_GENERATION_PROMPT = {
   name: "schema-first-kpi-generation",
-  version: "1.4.0",
+  version: "1.6.0",
 
   /**
    * Template with placeholders for dynamic content.
@@ -25,6 +25,8 @@ For a {businessType} business, these KPIs typically matter most:
 
 ## Available Data
 {schemaMarkdown}
+
+{detectedPatterns}
 
 ## Task
 
@@ -97,7 +99,7 @@ Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
   "requiredColumns": [{"tableName": "order_details", "columnName": "discount", "purpose": "discount amount"}, {"tableName": "order_details", "columnName": "unit_price", "purpose": "base price"}]
 }
 
-**4. Filtered KPI** - Conditional aggregation with subquery:
+**4. Filtered KPI** - For GROUPED aggregations with HAVING conditions:
 {
   "name": "Repeat Purchase Rate",
   "description": "Percentage of customers with more than one order",
@@ -119,11 +121,34 @@ Return a JSON array. Each KPI uses a **structured definition** (NOT raw SQL).
   "feasible": true,
   "requiredColumns": [{"tableName": "orders", "columnName": "customer_id", "purpose": "customer identifier for grouping"}]
 }
+
+**CRITICAL: When to use "filtered" vs "ratio" types:**
+
+Use **type="filtered"** ONLY when you need to:
+- Group by an entity (like customer_id)
+- Apply a HAVING condition (like COUNT(*) > 1)
+- Count distinct entities matching the having condition
+- Example: "Repeat customers" = customers who placed >1 order
+
+Use **type="ratio" with filterCondition** for ROW-LEVEL conditions:
+- When you check a condition on each row (like shipped_date <= required_date)
+- Example: "On-Time Delivery Rate" = orders where shipped_date <= required_date
+{
+  "name": "On-Time Delivery Rate",
+  "kpiDefinition": {
+    "type": "ratio",
+    "numerator": {"aggregation": "COUNT", "expression": "*", "filterCondition": "shipped_date <= required_date"},
+    "denominator": {"aggregation": "COUNT", "expression": "*"},
+    "multiplier": 100,
+    "entity": "orders"
+  }
+}
+
 **IMPORTANT for filtered KPIs:**
+- subquery.groupBy is REQUIRED - must specify which column to group by
+- subquery.having is REQUIRED - the condition to apply
 - "percentOf" is REQUIRED when format.type = "percent"
-- Without "percentOf", you get a raw count (e.g., 772) instead of a percentage (e.g., 95.4%)
-- "percentOf" value should match the "expression" field (the column being counted)
-- Formula: (filtered_count / total_count) * 100
+- groupBy should typically match the expression (e.g., both are "customer_id")
 
 **5. Window KPI** - Running totals, period comparisons:
 {
@@ -292,6 +317,7 @@ Return ONLY a valid JSON array. No markdown, no explanation.`,
     priorityKPIs: string[];
     schemaMarkdown: string;
     maxRecipes: number;
+    detectedPatterns?: string;  // NEW: Pattern context from schema-intelligence
   }): string {
     const priorityKpisCount = Math.min(vars.maxRecipes - 5, 15);
     const priorityKPIsFormatted = vars.priorityKPIs
@@ -303,13 +329,24 @@ Return ONLY a valid JSON array. No markdown, no explanation.`,
       .replace(/{businessType_upper}/g, vars.businessType.toUpperCase())
       .replace(/{priorityKPIs}/g, priorityKPIsFormatted)
       .replace(/{priorityKpisCount}/g, String(priorityKpisCount))
-      .replace(/{schemaMarkdown}/g, vars.schemaMarkdown);
+      .replace(/{schemaMarkdown}/g, vars.schemaMarkdown)
+      .replace(/{detectedPatterns}/g, vars.detectedPatterns || '');
   },
 
   /**
    * Changelog for tracking prompt evolution
    */
   changelog: [
+    {
+      version: "1.6.0",
+      date: "2026-01-17",
+      changes: "Added CRITICAL guidance on when to use 'filtered' vs 'ratio' type. Filtered is for GROUPED aggregations (like repeat customers). Ratio with filterCondition is for ROW-LEVEL conditions (like on-time delivery). Added explicit On-Time Delivery Rate example using ratio type.",
+    },
+    {
+      version: "1.5.0",
+      date: "2026-01-16",
+      changes: "Added {detectedPatterns} placeholder for schema-intelligence pattern injection (Pipeline V2 Phase 1)",
+    },
     {
       version: "1.4.0",
       date: "2026-01-15",

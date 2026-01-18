@@ -460,6 +460,11 @@ export async function* runAnalysis(
         extractedSchema: schema,
         orgId: kpiOrgId,
         workspaceId: kpiWorkspaceId,
+        connection: {
+          connectionString,
+          defaultSchema: connection.schema ?? "public",
+          type: connection.type as "postgres" | "mysql" | "duckdb",
+        },
       });
 
       // Update analysis record
@@ -471,18 +476,26 @@ export async function* runAnalysis(
         })
         .where(eq(knosiaAnalysis.id, analysis.id));
 
+      // Build detail string with optional value validation info
+      let detailStr = `Generated ${kpiResult.totalGenerated} KPIs (${kpiResult.feasibleCount} feasible, ${kpiResult.storedCount} stored)`;
+      if (kpiResult.valueValidation) {
+        const vv = kpiResult.valueValidation;
+        detailStr += ` | Values: ${vv.valid} valid, ${vv.suspicious} suspicious, ${vv.invalid} invalid`;
+      }
+
       yield {
         event: "step",
         data: {
           step: 4.5,
           status: "completed",
           label: "KPIs generated",
-          detail: `Generated ${kpiResult.totalGenerated} KPIs (${kpiResult.feasibleCount} feasible, ${kpiResult.storedCount} stored)`,
+          detail: detailStr,
           metrics: {
             total: kpiResult.totalGenerated,
             feasible: kpiResult.feasibleCount,
             stored: kpiResult.storedCount,
             categories: kpiResult.categories,
+            valueValidation: kpiResult.valueValidation,
           },
         },
       };

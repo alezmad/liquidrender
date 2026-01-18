@@ -26,6 +26,7 @@ ${i + 1}. **${plan.name}**
    - Category: ${plan.category}
    - Sources hint: ${plan.columns.sources?.join(', ') || 'infer from context'}
    - Expression hint: ${plan.columns.expression || 'infer from context'}
+   - TimeField hint: ${plan.columns.timeField || 'none (use for time-series KPIs)'}
    - Format: ${plan.format ? `${plan.format.type}${plan.format.decimals !== undefined ? `, ${plan.format.decimals} decimals` : ''}` : 'number'}
 `).join('\n');
 

@@ -32,6 +32,15 @@ import {
   SCHEMA_REPAIR_PROMPT,
   COMPILE_REPAIR_PROMPT,
 } from "./prompts";
+import {
+  detectPatterns,
+  formatPatternsForPrompt,
+  analyzeSchema,
+  formatSchemaAnalysisForPrompt,
+  analyzeCoverage,
+  formatCoverageForPrompt,
+  type TableSchema,
+} from "./schema-intelligence";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -724,16 +733,68 @@ async function generateSchemaFirstKPIs(
     request.vocabularyContext.enrichedSchemaMarkdown ||
     buildSchemaContext(request.vocabularyContext);
 
-  // Get business-relevant KPIs for this type
-  const businessKPIs = COMMON_KPIS_BY_BUSINESS_TYPE[request.businessType] || [];
-  const priorityKPIs = businessKPIs.slice(0, 15); // Top priority KPIs for this business
+  // =========================================================================
+  // PIPELINE V2: Schema Intelligence - Full Analysis
+  // =========================================================================
+  // Convert vocabulary context to TableSchema format
+  const tableSchemas: TableSchema[] = request.vocabularyContext.tables.map(t => ({
+    name: t.name,
+    columns: t.columns.map(c => ({
+      name: c.name,
+      type: c.type,
+      isPrimaryKey: c.name.toLowerCase() === 'id' || c.name.toLowerCase().endsWith('_id'),
+      isForeignKey: c.name.toLowerCase().endsWith('_id') && c.name.toLowerCase() !== 'id',
+      referencedTable: c.name.toLowerCase().endsWith('_id') && c.name.toLowerCase() !== 'id'
+        ? c.name.toLowerCase().replace(/_id$/, 's') // Simple pluralization heuristic
+        : undefined,
+    })),
+    primaryKey: t.columns.find(c => c.name.toLowerCase() === 'id')?.name ||
+                t.columns.find(c => c.name.toLowerCase() === `${t.name}_id`)?.name,
+  }));
 
-  // Use versioned prompt template
+  // 1. Analyze schema to understand entities, metrics, dimensions
+  const schemaAnalysis = analyzeSchema(tableSchemas);
+  const schemaAnalysisMarkdown = formatSchemaAnalysisForPrompt(schemaAnalysis);
+
+  // 2. Detect patterns (deadline comparison, variance, lifecycle)
+  const detectedPatterns = detectPatterns(tableSchemas);
+  const patternsMarkdown = formatPatternsForPrompt(detectedPatterns);
+
+  // 3. Analyze coverage requirements
+  const coverageAnalysis = analyzeCoverage(schemaAnalysis);
+  const coverageMarkdown = formatCoverageForPrompt(coverageAnalysis);
+
+  // Log analysis results
+  console.log(`[SchemaFirstKPI] Schema analysis: ${schemaAnalysis.inferredDomain.type} (${(schemaAnalysis.inferredDomain.confidence * 100).toFixed(0)}% confidence)`);
+  console.log(`[SchemaFirstKPI] Entities: ${schemaAnalysis.entities.length} (${schemaAnalysis.entities.filter(e => e.type === 'transaction').length} transactions)`);
+  console.log(`[SchemaFirstKPI] Metrics: ${schemaAnalysis.metrics.length}, Dimensions: ${schemaAnalysis.dimensions.length}`);
+  console.log(`[SchemaFirstKPI] Coverage: ${coverageAnalysis.totalRequired} required, ${coverageAnalysis.totalRecommended} recommended`);
+
+  if (detectedPatterns.length > 0) {
+    console.log(`[SchemaFirstKPI] Detected ${detectedPatterns.length} patterns:`);
+    for (const p of detectedPatterns) {
+      console.log(`  - ${p.type}: ${p.suggestedKPI?.name || 'no suggested KPI'} (confidence: ${(p.confidence * 100).toFixed(0)}%)`);
+    }
+  }
+
+  // Combine all intelligence into detected patterns section
+  const fullIntelligence = [
+    schemaAnalysisMarkdown,
+    patternsMarkdown,
+    coverageMarkdown,
+  ].filter(Boolean).join('\n\n');
+
+  // Get business-relevant KPIs for this type (as fallback hints only)
+  const businessKPIs = COMMON_KPIS_BY_BUSINESS_TYPE[request.businessType] || [];
+  const priorityKPIs = businessKPIs.slice(0, 15);
+
+  // Use versioned prompt template (with full schema intelligence)
   const prompt = SCHEMA_FIRST_GENERATION_PROMPT.render({
-    businessType: request.businessType,
+    businessType: schemaAnalysis.inferredDomain.type, // Use inferred domain, not input
     priorityKPIs,
     schemaMarkdown,
     maxRecipes,
+    detectedPatterns: fullIntelligence, // Now includes schema analysis + patterns + coverage
   });
 
   // Log initial generation context for tracing

@@ -467,16 +467,14 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
       calculationConfidence: number;
       actionability: number;
       dataQuality: number;
-      flags: Array<
-        | "proxy_calculation"
+      flags: (| "proxy_calculation"
         | "high_null_rate"
         | "stale_data"
         | "low_coverage"
         | "complex_formula"
         | "missing_time_field"
         | "low_cardinality"
-        | "derived_metric"
-      >;
+        | "derived_metric")[];
     };
     // KPI-specific: compiled aggregation expression (separate from full SQL)
     formulaExpression?: string;
@@ -512,37 +510,35 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
       // Window KPI: window function specification
       window?: {
         partitionBy?: string[];
-        orderBy?: Array<{ field: string; direction: "asc" | "desc" }>;
+        orderBy?: { field: string; direction: "asc" | "desc" }[];
         lag?: { offset: number; default?: unknown };
         lead?: { offset: number; default?: unknown };
         frame?: string;
       };
       outputExpression?: string;
       // Case KPI: conditional aggregation
-      cases?: Array<{ when?: string; then?: string; else?: string }>;
+      cases?: { when?: string; then?: string; else?: string }[];
       // Composite KPI: multi-table joins
-      sources?: Array<{
+      sources?: {
         alias: string;
         table: string;
         join?: { type: "INNER" | "LEFT" | "RIGHT" | "FULL"; on: string };
-      }>;
+      }[];
       groupBy?: string[];
       // Filters (all KPI types) - supports both simple and compound filters
-      filters?: Array<
-        | { field: string; operator: string; value?: unknown }
-        | { type: "compound"; operator: "AND" | "OR"; conditions: Array<unknown> }
-      >;
+      filters?: (| { field: string; operator: string; value?: unknown }
+        | { type: "compound"; operator: "AND" | "OR"; conditions: unknown[] })[];
     };
     // Entity-specific fields
     primaryKey?: string | string[];
-    columns?: Array<{
+    columns?: {
       name: string;
       dataType: string;
       isNullable: boolean;
       isPrimaryKey: boolean;
       isForeignKey: boolean;
       references?: { table: string; column: string };
-    }>;
+    }[];
     selectSql?: string;
   }>(),
   // Role-based suggestions: which archetypes should see this item suggested
@@ -584,7 +580,7 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     .$type<"parse_error" | "schema_error" | "compile_error" | "sql_error">(),
   validationError: text(), // Human-readable error message
   validationAttempts: integer().default(0), // Total repair attempts
-  validationLog: jsonb().$type<Array<{
+  validationLog: jsonb().$type<{
     timestamp: string;
     attempt: number;
     stage: "parse" | "schema" | "compile" | "execute" | "repair";
@@ -594,7 +590,7 @@ export const knosiaVocabularyItem = pgTable("knosia_vocabulary_item", {
     llmModel?: string;
     result?: "success" | "failed" | "fixed";
     changes?: string;
-  }>>().default([]),
+  }[]>().default([]),
   validatedAt: timestamp({ withTimezone: true }),
 
   createdAt: timestamp().notNull().defaultNow(),

@@ -21,7 +21,7 @@ import {
 // ============================================================================
 
 export const PLAN_PROMPT_NAME = 'kpi-plan';
-export const PLAN_PROMPT_VERSION = '1.0.0';
+export const PLAN_PROMPT_VERSION = '1.1.0';
 
 // ============================================================================
 // KPI Plan Prompt
@@ -113,19 +113,30 @@ For EACH KPI, provide:
 For **simple** type:
 - expression: the column(s) to aggregate
 - aggregation (optional): suggested aggregation
+- timeField (optional): timestamp column for time-series aggregation (REQUIRED for Monthly/Daily/Weekly KPIs)
 
 For **ratio** type:
 - numerator: what to aggregate in numerator
 - denominator: what to aggregate in denominator
+- timeField (optional): timestamp column for time-series KPIs
 
 For **filtered** type:
 - groupBy: field to group by
 - having: the HAVING condition
 - percentOf: field for percentage calculation
+- timeField (optional): timestamp column for time-series filtering
 
 For **composite** type:
 - sources: tables involved
 - expression: the value expression
+- timeField (optional): timestamp column for time-series grouping
+
+## Time-Series KPIs (CRITICAL)
+
+If a KPI name contains "Monthly", "Daily", "Weekly", "Quarterly", or "Trend", you MUST include timeField:
+- Without timeField: "Monthly Revenue Trend" will equal "Total Revenue" (no time grouping)
+- With timeField: The compiler adds proper DATE_TRUNC/GROUP BY logic
+- Example: For "Monthly Revenue Trend" on orders table with order_date column, set timeField: "order_date"
 
 ## Output Format
 
@@ -143,6 +154,22 @@ Return a JSON array of KPIPlan objects:
     "columns": {
       "numerator": "unit_price * quantity",
       "denominator": "order_id"
+    },
+    "category": "revenue",
+    "format": {"type": "currency", "decimals": 2},
+    "confidence": 0.95
+  },
+  {
+    "name": "Monthly Revenue Trend",
+    "description": "Total revenue aggregated by month",
+    "businessValue": "Tracks revenue patterns over time to identify seasonality and growth trends. Essential for forecasting and goal setting.",
+    "type": "simple",
+    "typeRationale": "Single aggregation (SUM) with time-based grouping - perfect for simple type with timeField",
+    "entity": "order_details",
+    "columns": {
+      "expression": "unit_price * quantity",
+      "aggregation": "SUM",
+      "timeField": "order_date"
     },
     "category": "revenue",
     "format": {"type": "currency", "decimals": 2},

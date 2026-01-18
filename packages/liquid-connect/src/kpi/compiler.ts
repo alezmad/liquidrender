@@ -224,9 +224,39 @@ function compileFilteredKPI(
 ): string {
   const { aggregation, expression, subquery, entity, percentOf } = def;
   const quote = quoteIdentifiers ? traits.identifierQuote : '';
-  const groupByColumns = Array.isArray(subquery.groupBy)
-    ? subquery.groupBy.join(', ')
-    : subquery.groupBy;
+
+  // Validate subquery.having is required
+  if (!subquery.having) {
+    throw new Error(
+      `Filtered KPI compilation failed: subquery.having is required but was ${subquery.having}. ` +
+      `Entity: ${entity}, Expression: ${expression}`
+    );
+  }
+
+  // Defensive fallback: if groupBy is missing but having exists, infer groupBy from expression
+  // This handles malformed LLM output gracefully while still producing valid SQL
+  let effectiveGroupBy = subquery.groupBy;
+  if (!effectiveGroupBy) {
+    // Check if expression looks like a simple column reference (no operators, functions, etc.)
+    const isSimpleColumn = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(expression);
+    if (isSimpleColumn) {
+      console.warn(
+        `[KPI Compiler] Filtered KPI missing groupBy, inferring from expression: ${expression}`
+      );
+      effectiveGroupBy = expression;
+    } else {
+      throw new Error(
+        `Filtered KPI compilation failed: subquery.groupBy is required for filtered KPIs. ` +
+        `Could not infer from expression "${expression}" (not a simple column). ` +
+        `Entity: ${entity}. ` +
+        `Hint: For row-level conditions like "shipped_date <= required_date", use type="ratio" with filterCondition instead of type="filtered".`
+      );
+    }
+  }
+
+  const groupByColumns = Array.isArray(effectiveGroupBy)
+    ? effectiveGroupBy.join(', ')
+    : effectiveGroupBy;
   const subqueryEntity = subquery.subqueryEntity || entity;
   const tableName = schema
     ? `${quote}${schema}${quote}.${quote}${subqueryEntity}${quote}`

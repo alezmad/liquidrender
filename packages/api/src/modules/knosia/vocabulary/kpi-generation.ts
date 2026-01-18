@@ -1296,6 +1296,20 @@ export async function validateKPIValues(
         // Phase 1: Build SQL (may throw on invalid semanticDefinition)
         // Try to use DSL compiler first (supports time-series, grain, etc.)
         const kpiDefinition = extractKPIDefinition(recipe);
+
+        // Skip validation for time-series KPIs - they return result sets, not single values
+        if (kpiDefinition && kpiDefinition.type === 'simple' && 'grain' in kpiDefinition && kpiDefinition.grain) {
+          results.push({
+            kpiName: recipe.name,
+            success: true,
+            value: null,
+            executionTimeMs: 0,
+            sql: '',
+            validationStatus: 'SKIPPED',
+            validationMessage: 'Time-series KPI - returns result set, not single value',
+          });
+          continue;
+        }
         if (kpiDefinition) {
           const compiled = compileKPIToSQL(kpiDefinition, {
             dialect: "duckdb",
@@ -1306,7 +1320,10 @@ export async function validateKPIValues(
             // Compiler generates: FROM "entity" or FROM "schema"."entity"
             // DuckDB needs: FROM "source_db"."schema"."entity" or FROM "source_db"."entity"
             const schemaPrefix = connection.defaultSchema ? `"source_db"."${connection.defaultSchema}".` : `"source_db".`;
-            sql = compiled.sql.replace(/FROM "(\w+)"/g, `FROM ${schemaPrefix}"$1"`);
+            // Replace in both FROM and JOIN clauses
+            sql = compiled.sql
+              .replace(/FROM "(\w+)"/g, `FROM ${schemaPrefix}"$1"`)
+              .replace(/((?:INNER|LEFT|RIGHT|FULL|CROSS)?\s*JOIN) "(\w+)"/gi, `$1 ${schemaPrefix}"$2"`);
           } else {
             sql = buildKPISQL(recipe.semanticDefinition, connection.defaultSchema);
           }
